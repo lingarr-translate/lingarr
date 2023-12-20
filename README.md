@@ -6,7 +6,33 @@ Lingarr is an application that utilizes LibreTranslate to translate subtitle fil
 
 ### Docker Compose
 
-To run Lingarr using Docker Compose, add the following configuration to your `docker-compose.yml` file:
+LibreTranslate doesn't natively support Docker Compose and needs to be built locally. Follow [these](https://docs.portainer.io/user/docker/images/build) docs on how to build an image in Portainer using the below Dockerfile. There are also options to make use of CUDA; more info [here](https://github.com/LibreTranslate/LibreTranslate).
+
+Change `languages` and set `filter` to true to only include preferred languages. If `filter` is set to false, all languages will be installed.
+
+```dockerfile
+FROM libretranslate/libretranslate:latest AS models_cache
+
+ARG filter=false
+ARG languages="nl,en,tr"
+
+USER libretranslate
+
+WORKDIR /app
+
+RUN if [ "$filter" = "true" ]; then \
+        ./venv/bin/python ../app/scripts/install_models.py --load_only_lang_codes "$languages"; \
+    else \
+        ./venv/bin/python ../app/scripts/install_models.py; \
+    fi
+
+RUN ./venv/bin/pip install . && ./venv/bin/pip cache purge
+
+FROM models_cache AS final
+ENTRYPOINT [ "./venv/bin/libretranslate", "--host", "0.0.0.0" ]
+```
+
+Then, to run Lingarr using Docker Compose, add the following configuration to your `docker-compose.yml` file:
 
 ```yaml
 networks:
@@ -71,32 +97,6 @@ If desired, add a `languages.json` file with the following content to limit the 
         "code": "tr"
     }
 ]
-```
-
-LibreTranslate doesn't natively support Docker Compose and needs to be built locally. Follow [these](https://docs.portainer.io/user/docker/images/build) docs on how to build an image in Portainer using the below Dockerfile. There are also options to make use of CUDA; more info [here](https://github.com/LibreTranslate/LibreTranslate).
-
-Change `languages` and set `filter` to true to only include preferred languages. If `filter` is set to false, all languages will be installed.
-
-```dockerfile
-FROM libretranslate/libretranslate:latest AS models_cache
-
-ARG filter=false
-ARG languages="nl,en,tr"
-
-USER libretranslate
-
-WORKDIR /app
-
-RUN if [ "$filter" = "true" ]; then \
-        ./venv/bin/python ../app/scripts/install_models.py --load_only_lang_codes "$languages"; \
-    else \
-        ./venv/bin/python ../app/scripts/install_models.py; \
-    fi
-
-RUN ./venv/bin/pip install . && ./venv/bin/pip cache purge
-
-FROM models_cache AS final
-ENTRYPOINT [ "./venv/bin/libretranslate", "--host", "0.0.0.0" ]
 ```
 
 Feel free to contribute to the development of Lingarr or report any issues on the [Lingarr](https://github.com/lingarr-translate/lingarr) GitHub repository.
