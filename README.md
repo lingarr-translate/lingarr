@@ -46,7 +46,7 @@ services:
     container_name: lingarr
     restart: unless-stopped
     environment:
-      - LIBRETRANSLATE_API="http://libretranslate:5000"
+      - LIBRETRANSLATE_API=http://libretranslate:5000
     ports:
       - "9876:9876"
     volumes:
