@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+}
+/* width */
+::-webkit-scrollbar {
+    @apply w-1;
+}
+/* Track */
+::-webkit-scrollbar-track {
+    @apply bg-neutral-500;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    @apply bg-neutral-700;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-neutral-700;
+}

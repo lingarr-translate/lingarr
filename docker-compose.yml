@@ -1,57 +1,49 @@
-version: '3'
+version: '3.4'
 
 networks:
   lingarr:
     external: true
 
 services:
-  lingarr:
-    image: node:alpine
-    container_name: lingarr
-    working_dir: /app
+  Lingarr.Client:
+    image: ${DOCKER_REGISTRY-}lingarrclient
+    container_name: Lingarr.Client
+    build:
+      context: ./Lingarr.Client/
+      dockerfile: Dockerfile
     ports:
-      - "9877:9877"
+      - "9876:9876"
     volumes:
-      - ./lingarr:/app:rw
-      - ./lingarr/node_modules:/app/node_modules
+      - ./Lingarr.Client:/app:rw
+      - ./Lingarr.Client/node_modules:/app/node_modules
     tty: true
     command: /bin/sh -c "npm install && npm run dev"
     networks:
       - lingarr
 
-  lingarr_api:
-    image: node:alpine
-    container_name: lingarr_api
-    working_dir: /app
+  Lingarr.Server:
+    container_name: Lingarr.Server
+    image: ${DOCKER_REGISTRY-}lingarrserver
+    build:
+      context: .
+      dockerfile: Lingarr.Server/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
     ports:
-      - "9876:9876"
-    volumes:
-      - ./lingarr_api:/app:rw
-      - ./lingarr_api/node_modules:/app/node_modules
-    tty: true
-    command: /bin/sh -c "npm install && npm run dev"
+      - "9877:8080"
     networks:
       - lingarr
-      
-  libretranslate:
-    image: libretranslate/libretranslate:latest-cuda
-    container_name: libretranslate
-    working_dir: /libretranslate
+
+  LibreTranslate:
+    image: ${DOCKER_REGISTRY-}libretranslate
+    build:
+      context: .
+      dockerfile: Dockerfile.libretranslate
+    container_name: LibreTranslate
     restart: unless-stopped
     ports:
       - "5000:5000"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-    volumes:
-      - ./libtranslate/packages:/home/libretranslate/.local/share/argos-translate/packages:rw
-      - ./libtranslate/cache:/home/libretranslate/.local/cache/argos-translate:rw
     networks:
       - lingarr
-    entrypoint: bash -c 'python3 ../app/scripts/install_models.py --load_only_lang_codes "nl,en,tr" && exec libretranslate --host 0.0.0.0'
     healthcheck:
-      test: ['CMD-SHELL', 'python3 ../app/scripts/healthcheck.py']
+      test: ['CMD-SHELL', './venv/bin/python scripts/healthcheck.py']

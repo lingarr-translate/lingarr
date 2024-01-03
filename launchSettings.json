@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "Lingarr": {
+      "commandName": "DockerCompose",
+      "commandVersion": "1.0",
+      "composeLaunchAction": "LaunchBrowser",
+      "composeLaunchServiceName": "Lingarr.Server",
+      "composeLaunchUrl": "{Scheme}://localhost:{ServicePort}/swagger",
+      "serviceActions": {
+        "Lingarr.Server": "StartDebugging",
+        "Lingarr.Client": "StartWithoutDebugging",
+        "LibreTranslate": "StartWithoutDebugging"
+      }
+    }
+  }
+}
