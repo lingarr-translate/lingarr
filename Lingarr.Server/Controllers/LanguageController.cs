@@ -19,7 +19,7 @@ public class LanguageController : ControllerBase
     {
         try
         {
-            var languageList = await _languageService.GetLanguages();
+            var languageList = await _languageService.GetLanguagesAsync();
             return Ok(languageList);
         }
         catch (Exception ex)

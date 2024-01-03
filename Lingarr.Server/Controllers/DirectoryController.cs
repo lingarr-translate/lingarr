@@ -15,7 +15,7 @@ public class DirectoryController : ControllerBase
         _directoryService = directoryService;
     }
 
-    [HttpGet("List")]
+    [HttpGet]
     public IActionResult GetDirectoryList([FromQuery] string mediaType = "movies")
     {
         try

@@ -14,51 +14,37 @@ public class DirectoryService
         _logger = logger;
     }
 
-    public FileStream ReadFileStream(string FilePath)
-    {
-        if (File.Exists(FilePath))
-        {
-            return new FileStream(FilePath, FileMode.Open, FileAccess.Read);
-        }
-        else 
-        {
-            throw new FileNotFoundException($"File not found: {FilePath}");
-        }
-    }
-
-    public FileStream WriteFileStream(string FilePath, string subtitleStream)
-    {
-        return new FileStream(FilePath, FileMode.OpenOrCreate, FileAccess.Write);
-    }
-
     public List<DirectoryItem> GetDirectoryList(string mediaType)
     {
         // Validate directoryType parameter
         if (string.IsNullOrWhiteSpace(mediaType) ||
             !IsValidDirectoryType(mediaType))
         {
+            _logger.LogError($"Invalid directoryType: {mediaType}");
             throw new ArgumentException("Invalid directoryType. Supported values: tvshows, movies");
         }
 
         // Define a unique key for caching based on the directory type
-        string cacheKey = $"MediaListCache_{mediaType}";
+        var cacheKey = $"MediaListCache_{mediaType}";
 
         // Try to retrieve the directory list from the cache
-        if (!_memoryCache.TryGetValue<List<DirectoryItem>>(cacheKey, out var directoryList))
+        if (_memoryCache.TryGetValue<List<DirectoryItem>>(cacheKey, out var directoryList) && directoryList?.Count > 0)
         {
-            // If the cache is not available, read the directory and its contents
-            string directoryPath = GetDirectoryPath(mediaType);
-            directoryList = GetDirectoryContents(directoryPath, mediaType);
-
-            // Cache the directory list with a specified expiration time (e.g., 1 hour)
-            var cacheEntryOptions = new MemoryCacheEntryOptions
-            {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
-            };
-            _memoryCache.Set(cacheKey, directoryList, cacheEntryOptions);
+            return directoryList;
         }
+        
+        // If the cache is not available, read the directory and its contents
+        var directoryPath = GetDirectoryPath(mediaType);
+        directoryList = GetDirectoryContents(directoryPath, mediaType);
 
-        return directoryList ?? new List<DirectoryItem>();
+        // Cache the directory list with a specified expiration time (e.g., 1 hour)
+        var cacheEntryOptions = new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1)
+        };
+        _memoryCache.Set(cacheKey, directoryList, cacheEntryOptions);
+
+        return directoryList;
     }
 
     private bool IsValidDirectoryType(string directoryType)
@@ -69,7 +55,7 @@ public class DirectoryService
 
     private string GetDirectoryPath(string directoryType)
     {
-        string baseDirectory = "Media/";
+        var baseDirectory = "Media/";
 
         switch (directoryType.ToLower())
         {
@@ -95,7 +81,7 @@ public class DirectoryService
         catch (Exception exception)
         {
             // Exceptions (e.g., directory not found, access denied)
-            _logger.LogError(exception.Message, exception.StackTrace);
+            _logger.LogError(exception, "An error occurred when retrieving the directory: {ErrorMessage}", exception.Message);
             return new List<DirectoryItem>();
         }
     }
@@ -103,10 +89,10 @@ public class DirectoryService
     private void GetContentsRecursively(string directoryPath, List<DirectoryItem> directoryContents, string rootDirectoryName)
     {
         // Get all files in the directory with the .srt extension
-        string[] srtFiles = Directory.GetFiles(directoryPath, "*.srt");
+        var srtFiles = Directory.GetFiles(directoryPath, "*.srt");
 
         // Extract the folder name from the directory path
-        string folderName = Path.GetFileName(directoryPath);
+        var folderName = Path.GetFileName(directoryPath);
 
         // Check if the folder is not the root directory
         if (!string.Equals(folderName, rootDirectoryName, StringComparison.OrdinalIgnoreCase) && (srtFiles.Length > 0 || Directory.GetDirectories(directoryPath).Length > 0))
@@ -120,10 +106,10 @@ public class DirectoryService
         }
 
         // Get all subdirectories
-        string[] subdirectories = Directory.GetDirectories(directoryPath);
+        var subdirectories = Directory.GetDirectories(directoryPath);
 
         // Recursively process subdirectories
-        foreach (string subdirectory in subdirectories)
+        foreach (var subdirectory in subdirectories)
         {
             GetContentsRecursively(subdirectory, directoryContents, rootDirectoryName);
         }

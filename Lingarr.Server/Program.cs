@@ -42,7 +42,7 @@ app.UseStaticFiles();
 
 app.UseSpa(spa =>
 {
-    spa.Options.SourcePath = "wwwroot";
+    spa.Options.SourcePath = "ClientApp";
 });
 
 app.Run();

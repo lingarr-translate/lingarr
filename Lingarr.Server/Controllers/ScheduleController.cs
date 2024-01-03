@@ -15,21 +15,21 @@ public class ScheduleController : ControllerBase
     }
 
     [HttpPost("EnableJob")]
-    async public Task<IActionResult> EnableJob([FromBody] int intervalInSeconds = 900)
+    public async Task<IActionResult> EnableJob([FromBody] int intervalInSeconds = 900)
     {
         await _schedulerService.StartAsync(intervalInSeconds);
         return Ok();
     }
 
     [HttpPost("DisableJob")]
-    async public Task<IActionResult> DisableJob()
+    public async Task<IActionResult> DisableJob()
     {
         await _schedulerService.StopAsync();
         return Ok();
     }
 
     [HttpPost("ConfigureJob")]
-    async public Task<IActionResult> ConfigureJob([FromBody] int intervalInSeconds)
+    public async Task<IActionResult> ConfigureJob([FromBody] int intervalInSeconds)
     {
         await _schedulerService.UpdateInterval(intervalInSeconds);
         return Ok();

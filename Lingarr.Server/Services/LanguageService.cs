@@ -14,11 +14,11 @@ public class LanguageService
     {
         try
         {
-            string languageConfigPath = Path.Combine(Directory.GetCurrentDirectory(), "Statics/config", "languages.json");
-            string languagePath = Path.Combine(Directory.GetCurrentDirectory(), "Statics/replace", "languages.json");
+            var languageConfigPath = Path.Combine(Directory.GetCurrentDirectory(), "Statics/config", "languages.json");
+            var languagePath = Path.Combine(Directory.GetCurrentDirectory(), "Statics/replace", "languages.json");
 
             // If no custom config for languages is provided, use the default.
-            string fileContent = File.Exists(languageConfigPath)
+            var fileContent = File.Exists(languageConfigPath)
                 ? await File.ReadAllTextAsync(languageConfigPath)
                 : await File.ReadAllTextAsync(languagePath);
 

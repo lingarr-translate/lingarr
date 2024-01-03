@@ -2,6 +2,6 @@
 
 public class DirectoryItem
 {
-    public string Name { get; set; }
-    public string[] Subtitles { get; set; }
+    public string Name { get; set; } = "";
+    public string[] Subtitles { get; set; } = Array.Empty<string>();
 }
