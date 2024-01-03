@@ -24,10 +24,12 @@
                 <a
                     v-for="usedLanguage in usedLanguages"
                     :key="usedLanguage.code"
-                    class="mb-1 block cursor-pointer rounded-md py-2 text-sm"
-                    role="menuitem"
-                    @click="selectOption(usedLanguage)">
-                    Translate to {{ usedLanguage.name }}
+                    class="mb-1 flex items-center justify-between text-sm"
+                    role="menuitem">
+                    <span class="cursor-pointer py-2" @click="selectOption(usedLanguage)">
+                        Translate to {{ usedLanguage.name }}
+                    </span>
+                    <CloseIcon class="cursor-pointer" @click="removeUsedLanguage(usedLanguage)" />
                 </a>
             </div>
         </div>
@@ -36,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref } from 'vue'
+import { computed, ref, Ref } from 'vue'
 import { IResource } from '@/ts/resource'
 import { ILanguage } from '@/ts/language'
 import { useLanguageStore } from '@/store/language'
@@ -44,6 +46,7 @@ import { useTranslateStore } from '@/store/translate'
 import useClickOutside from '@/composables/useClickOutside'
 import ContextIcon from '@/components/icons/ContextIcon.vue'
 import ModalOverlay from '@/components/ModalOverlay.vue'
+import CloseIcon from '@/components/icons/CloseIcon.vue'
 
 interface Props {
     item: IResource
@@ -51,12 +54,11 @@ interface Props {
 const props = defineProps<Props>()
 
 const translateStore = useTranslateStore()
+const languageStore = useLanguageStore()
 const isOpen: Ref<boolean> = ref(false)
 const openModal: Ref<boolean> = ref(false)
 const clickOutside: Ref = ref()
 const excludeClickOutside: Ref = ref()
-
-const usedLanguages = useLanguageStore().getUsedLanguages
 
 async function selectOption(option: ILanguage) {
     const subtitles = props.item.subtitles
@@ -64,6 +66,12 @@ async function selectOption(option: ILanguage) {
     if (!subtitle || !option.code) return
     await translateStore.translateSubtitles(subtitle, option)
 }
+
+function removeUsedLanguage(usedLanguage: ILanguage) {
+    languageStore.removeUsedLanguage(usedLanguage)
+}
+
+const usedLanguages = computed(() => languageStore.getUsedLanguages)
 
 useClickOutside(
     clickOutside,

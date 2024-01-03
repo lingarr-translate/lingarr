@@ -13,23 +13,22 @@ export const useLanguageStore = defineStore({
         getLanguages(): ILanguage[] {
             return this.languages
         },
-        getUsedLanguages(): ILanguage[] {
+        getUsedLanguages(state): ILanguage[] {
             const storage = useLocalStorage()
-            const usedLanguages = storage.getItem<ILanguage[] | null>('mostUsedLanguages')
-            // Sort most used values by count in descending order
-            return usedLanguages?.sort((a, b) => b.count - a.count).slice(0, 3) ?? []
+            state.usedLanguages = storage.getItem<ILanguage[] | null>('mostUsedLanguages')
+            return state.usedLanguages?.sort((a, b) => b.count - a.count).slice(0, 3) ?? []
         }
     },
     actions: {
         async setLanguages() {
             this.languages = await services.language.list<ILanguage[]>()
         },
-        addUsedLanguages(language: ILanguage) {
+        addUsedLanguage(language: ILanguage) {
             const storage = useLocalStorage()
             const usedLanguages = this.getUsedLanguages
             // Add the value to the most used values list
             const existingValueIndex = usedLanguages.findIndex(
-                (item) => item.code === language.code
+                (item: ILanguage) => item.code === language.code
             )
             if (existingValueIndex !== -1) {
                 usedLanguages[existingValueIndex].count += 1
@@ -38,6 +37,19 @@ export const useLanguageStore = defineStore({
                 usedLanguages.push(language)
             }
             storage.setItem('mostUsedLanguages', usedLanguages)
+        },
+        removeUsedLanguage(language: ILanguage) {
+            const storage = useLocalStorage()
+            const usedLanguages = this.getUsedLanguages
+            // Find the index of the language to remove
+            const languageIndexToRemove = usedLanguages.findIndex(
+                (item: ILanguage) => item.code === language.code
+            )
+            if (languageIndexToRemove !== -1) {
+                usedLanguages.splice(languageIndexToRemove, 1)
+                this.usedLanguages = [...usedLanguages]
+                storage.setItem('mostUsedLanguages', usedLanguages)
+            }
         }
     }
 })

@@ -10,7 +10,7 @@ export const useTranslateStore = defineStore({
     actions: {
         async translateSubtitles(path: string, language: ILanguage) {
             useInstanceStore().setLoading(true)
-            useLanguageStore().addUsedLanguages(language)
+            useLanguageStore().addUsedLanguage(language)
 
             services.translate
                 .translate(path, language.code)

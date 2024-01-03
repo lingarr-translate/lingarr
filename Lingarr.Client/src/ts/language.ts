@@ -6,5 +6,5 @@ export interface ILanguage {
 
 export interface ILanguageState {
     languages: ILanguage[]
-    usedLanguages: ILanguage[]
+    usedLanguages: ILanguage[] | null
 }
