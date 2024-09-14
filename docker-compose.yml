@@ -1,0 +1,101 @@
+version: "3.9"
+
+networks:
+  lingarr:
+    external: true
+
+services:
+  Lingarr.Server:
+    container_name: Lingarr.Server
+    image: ${DOCKER_REGISTRY-}lingarrserver
+    build:
+      context: .
+      dockerfile: Lingarr.Server/Dockerfile
+      args:
+        BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Debug}
+    environment:
+      - PUID=0
+      - PGID=0
+      - ASPNETCORE_ENVIRONMENT=Development
+      - LIBRETRANSLATE_API=http://LibreTranslate:5000
+      - DB_CONNECTION=mysql
+      - DB_HOST=Lingarr.Mysql
+      - DB_PORT=3306
+      - DB_DATABASE=LingarrMysql
+      - DB_USERNAME=LingarrMysql
+      - DB_PASSWORD=Secret1234
+    volumes:
+      - /mnt/hdd/media/tvshows:/app/media/tv
+      - /mnt/hdd/media/movies:/app/media/movies
+    ports:
+      - "9877:8080"
+    networks:
+      - lingarr
+    depends_on:
+      Lingarr.Mysql:
+        condition: service_healthy
+
+  Lingarr.Client:
+    image: ${DOCKER_REGISTRY-}lingarrclient
+    container_name: Lingarr.Client
+    build:
+      context: ./Lingarr.Client/
+      dockerfile: Dockerfile
+    ports:
+      - "9876:9876"
+    volumes:
+      - ./Lingarr.Client:/app:rw
+      - ./Lingarr.Client/node_modules:/app/node_modules
+    tty: true
+    command: /bin/sh -c "npm install && npm run dev"
+    networks:
+      - lingarr
+
+  LibreTranslate:
+    image: ${DOCKER_REGISTRY-}libretranslate
+    build:
+      context: .
+      dockerfile: Dockerfile.libretranslate
+    container_name: LibreTranslate
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    networks:
+      - lingarr
+    healthcheck:
+      test: ["CMD-SHELL", "./venv/bin/python scripts/healthcheck.py"]
+
+  Lingarr.Mysql:
+    image: mariadb:10.5
+    container_name: Lingarr.Mysql
+    tty: true
+    ports:
+      - "1433:3306"
+    environment:
+      MYSQL_DATABASE: LingarrMysql
+      MYSQL_USER: LingarrMysql
+      MYSQL_PASSWORD: Secret1234
+      MYSQL_ROOT_PASSWORD: Secret1234
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mariadb
+    networks:
+      - lingarr
+    command: mysqld --sql_mode=""
+    healthcheck:
+      test: "mysql $$MYSQL_DATABASE -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1;'"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  Lingarr.PHPMyAdmin:
+    image: phpmyadmin/phpmyadmin:5.0.1
+    container_name: Lingarr.PHPMyAdmin
+    environment:
+      PMA_HOST: Lingarr.Mysql
+      PMA_USER: LingarrMysql
+      PMA_PASSWORD: Secret1234
+      UPLOAD_LIMIT: 500M
+    ports:
+      - "9878:80"
+    networks:
+      - lingarr
