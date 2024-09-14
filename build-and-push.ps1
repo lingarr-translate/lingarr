@@ -16,18 +16,22 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# Tag the image with today's date
-$DATE_TAG = Get-Date -Format "yyyyMMdd"
-docker tag ${IMAGE_NAME}:$Tag ${IMAGE_NAME}:$DATE_TAG
 
 # Push the images to Docker Hub
-docker push ${IMAGE_NAME}:$Tag
-Write-Host "Pushing tag=$Tag image to Docker Hub" -ForegroundColor Cyan
-
-# If the tag isn't 'latest', also tag and push as 'latest'
-if ($Tag -ne "dev") {
-    docker push ${IMAGE_NAME}:$DATE_TAG
-    Write-Host "Also tagged and pushed as '$DATE_TAG'" -ForegroundColor Cyan
+if ($Tag -eq "dev") {
+    # Push only the dev tag
+    docker push ${IMAGE_NAME}:$Tag
+    Write-Host "Pushing dev tag to Docker Hub" -ForegroundColor Cyan
+} elseif ($Tag -ne "latest") {
+    # Push the specified tag and latest
+    docker push ${IMAGE_NAME}:$Tag
+    docker tag ${IMAGE_NAME}:$Tag ${IMAGE_NAME}:latest
+    docker push ${IMAGE_NAME}:latest
+    Write-Host "Pushing $Tag and latest tags to Docker Hub" -ForegroundColor Cyan
+} else {
+    # Push only the latest tag
+    docker push ${IMAGE_NAME}:latest
+    Write-Host "Pushing latest tag to Docker Hub" -ForegroundColor Cyan
 }
 
 Write-Host "Build and push completed successfully" -ForegroundColor Green
