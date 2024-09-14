@@ -1,0 +1,19 @@
+# https://editorconfig.org
+
+root = true
+
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+insert_final_newline = false
+trim_trailing_whitespace = false
+
+[*.vue]
+ij_html_space_inside_empty_tag = true
+ij_javascript_spaces_within_object_literal_braces = true
