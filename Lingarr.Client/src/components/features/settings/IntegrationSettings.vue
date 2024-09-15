@@ -53,8 +53,8 @@
 </template>
 <script setup lang="ts">
 import { WritableComputedRef, computed, ref, Ref } from 'vue'
-import CardComponent from '@/components/CardComponent.vue'
-import InputComponent from '@/components/InputComponent.vue'
+import CardComponent from '@/components/common/CardComponent.vue'
+import InputComponent from '@/components/common/InputComponent.vue'
 
 import { useSettingStore } from '@/store/setting'
 const settingsStore = useSettingStore()

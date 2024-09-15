@@ -59,7 +59,7 @@
 import { ref, Ref, computed, ComputedRef } from 'vue'
 import { ITheme, THEMES } from '@/ts'
 import { useInstanceStore } from '@/store/instance'
-import AsideNavigation from '@/components/AsideNavigation.vue'
+import AsideNavigation from '@/components/layout/AsideNavigation.vue'
 import useClickOutside from '@/composables/useClickOutside'
 import MenuIcon from '@/components/icons/MenuIcon.vue'
 

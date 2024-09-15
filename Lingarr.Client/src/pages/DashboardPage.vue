@@ -7,6 +7,6 @@
 </template>
 
 <script setup lang="ts">
-import PageLayout from '@/components/PageLayout.vue'
-import RoadmapComponent from '@/components/RoadmapComponent.vue'
+import PageLayout from '@/components/layout/PageLayout.vue'
+import RoadmapComponent from '@/components/features/dashboard/RoadmapComponent.vue'
 </script>
