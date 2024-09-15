@@ -1,5 +1,5 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { IUseInstanceStore, ITheme, THEMES, IMovie, IShow } from '@/ts'
+import { IUseInstanceStore, ITheme, THEMES, IMovie, IShow, IVersion } from '@/ts'
 import { useLocalStorage } from '@/composables/useLocalStorage'
 import services from '@/services'
 
@@ -8,14 +8,20 @@ const localStorage = useLocalStorage()
 export const useInstanceStore = defineStore({
     id: 'instance',
     state: (): IUseInstanceStore => ({
+        version: {
+            newVersion: false,
+            currentVersion: '',
+            latestVersion: ''
+        },
         isOpen: false,
         theme: THEMES.LINGARR,
         poster: ''
     }),
     getters: {
-        getTheme: (state): ITheme => state.theme,
-        getIsOpen: (state): boolean => state.isOpen,
-        getPoster: (state): string => state.poster
+        getVersion: (state: IUseInstanceStore): IVersion => state.version,
+        getTheme: (state: IUseInstanceStore): ITheme => state.theme,
+        getIsOpen: (state: IUseInstanceStore): boolean => state.isOpen,
+        getPoster: (state: IUseInstanceStore): string => state.poster
     },
     actions: {
         setIsOpen(isOpen: boolean): void {
@@ -28,6 +34,15 @@ export const useInstanceStore = defineStore({
             }
             const posterMedia = content.media.find((media) => media.type === 'poster')
             this.poster = posterMedia ? `${type}${posterMedia.path}` : ''
+        },
+        async applyVersionOnLoad(): Promise<void> {
+            let version = localStorage.getItem<IVersion>('version')
+            version = (await services.version.getVersion<IVersion>()) ?? version
+            this.setVersion(version)
+        },
+        setVersion(version: IVersion): void {
+            localStorage.setItem('version', version)
+            this.version = version
         },
         async applyThemeOnLoad(): Promise<void> {
             let theme = localStorage.getItem<ITheme>('theme')

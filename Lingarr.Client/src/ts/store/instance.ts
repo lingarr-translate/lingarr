@@ -1,4 +1,7 @@
+import { IVersion } from '@/ts/version'
+
 export interface IUseInstanceStore {
+    version: IVersion
     isOpen: boolean
     theme: ITheme
     poster: string
