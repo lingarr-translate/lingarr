@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 import { IFilter, IMovie, IPagedResult, IUseMovieStore } from '@/ts'
 import services from '@/services'
 
@@ -34,7 +34,7 @@ export const useMovieStore = defineStore({
     },
     actions: {
         async setFilter(filterVal: IFilter) {
-            this.filter = filterVal
+            this.filter = filterVal.searchQuery ? { ...filterVal, pageNumber: 1 } : filterVal
             await this.fetch()
         },
         async fetch() {
@@ -47,3 +47,7 @@ export const useMovieStore = defineStore({
         }
     }
 })
+
+if (import.meta.hot) {
+    import.meta.hot.accept(acceptHMRUpdate(useMovieStore, import.meta.hot))
+}
