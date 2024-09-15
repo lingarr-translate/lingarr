@@ -1,6 +1,6 @@
 FROM libretranslate/libretranslate:latest AS models_cache
 
-ARG filter=false
+ARG filter=true
 ARG languages="nl,en,tr"
 
 USER libretranslate
