@@ -27,7 +27,9 @@
                 <div class="grid grid-cols-12 border-b border-accent font-bold">
                     <div class="col-span-6 px-4 py-2">Title</div>
                     <div class="col-span-4 px-4 py-2">Subtitles</div>
-                    <div class="col-span-2 px-4 py-2"></div>
+                    <div class="col-span-2 flex justify-end px-4 py-2">
+                        <ReloadComponent @toggle:update="movieStore.fetch()" />
+                    </div>
                 </div>
                 <div v-for="item in movies.items" :key="item.id">
                     <div class="grid grid-cols-12 border-b border-accent">
@@ -71,6 +73,7 @@ import SortControls from '@/components/common/SortControls.vue'
 import SearchComponent from '@/components/common/SearchComponent.vue'
 import ContextMenu from '@/components/layout/ContextMenu.vue'
 import useDebounce from '@/composables/useDebounce'
+import ReloadComponent from '@/components/common/ReloadComponent.vue'
 
 const instanceStore = useInstanceStore()
 const movieStore = useMovieStore()
@@ -80,7 +83,9 @@ const subtitles: Ref<ISubtitle[]> = ref([])
 const movies: ComputedRef<IPagedResult<IMovie>> = computed(() => movieStore.get)
 const filter: ComputedRef<IFilter> = computed({
     get: () => movieStore.getFilter,
-    set: (value: IFilter) => movieStore.setFilter(value)
+    set: useDebounce((value: IFilter) => {
+        movieStore.setFilter(value)
+    }, 400)
 })
 
 const toggleMovie = useDebounce(async (movie: IMovie) => {
