@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 import services from '@/services'
 import { IFilter, IUseShowStore, IPagedResult, IShow } from '@/ts'
 
@@ -24,7 +24,7 @@ export const useShowStore = defineStore({
     },
     actions: {
         async setFilter(filterVal: IFilter) {
-            this.filter = filterVal
+            this.filter = filterVal.searchQuery ? { ...filterVal, pageNumber: 1 } : filterVal
             await this.fetch()
         },
         async fetch() {
@@ -37,3 +37,7 @@ export const useShowStore = defineStore({
         }
     }
 })
+
+if (import.meta.hot) {
+    import.meta.hot.accept(acceptHMRUpdate(useShowStore, import.meta.hot))
+}
