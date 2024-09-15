@@ -7,7 +7,7 @@ namespace Lingarr.Server.Services.Subtitle;
 /// Forked from: https://github.com/AlexPoint/SubtitlesParser
 /// Writer for the .srt sub rip subtitle files
 /// </summary>
-public class SubRipWriter : ISubtitlesWriter
+public class SubRipWriter : ISubRipWriter
 {
     /// <summary>
     /// Converts a subtitle item into the lines for an SRT subtitle entry

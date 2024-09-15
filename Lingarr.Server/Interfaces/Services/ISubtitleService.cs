@@ -16,5 +16,5 @@ public interface ISubtitleService
     /// file name (excluding language code), and detected language code extracted from the file name. If the language code cannot be determined, 
     /// it is set to "unknown".
     /// </returns>
-    List<Subtitles> Collect(string path);
+    Task<List<Subtitles>> Collect(string path);
 }

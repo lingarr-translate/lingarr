@@ -1,17 +1,17 @@
 ﻿using Lingarr.Server.Interfaces.Providers;
+using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
-using Lingarr.Server.Services;
 
 namespace Lingarr.Server.Providers;
 
 public class SonarrSettingsProvider : ISonarrSettingsProvider
 {
-    private readonly SettingService _settingService;
-    private readonly ILogger<RadarrSettingsProvider> _logger;
+    private readonly ISettingService _settingService;
+    private readonly ILogger<ISonarrSettingsProvider> _logger;
 
     public SonarrSettingsProvider(
-        SettingService settingService,
-        ILogger<RadarrSettingsProvider> logger)
+        ISettingService settingService,
+        ILogger<ISonarrSettingsProvider> logger)
     {
         _settingService = settingService;
         _logger = logger;

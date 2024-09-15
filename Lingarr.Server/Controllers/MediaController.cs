@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Lingarr.Server.Services;
+﻿using Lingarr.Server.Interfaces.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Lingarr.Server.Controllers;
 
@@ -7,9 +7,9 @@ namespace Lingarr.Server.Controllers;
 [Route("api/[controller]")]
 public class MediaController : ControllerBase
 {
-    private readonly MediaService _mediaService;
+    private readonly IMediaService _mediaService;
 
-    public MediaController(MediaService mediaService)
+    public MediaController(IMediaService mediaService)
     {
         _mediaService = mediaService;
     }
@@ -24,14 +24,14 @@ public class MediaController : ControllerBase
     /// <param name="pageNumber">The page number to retrieve (default is 1).</param>
     /// <returns>Returns an HTTP 200 OK response with a paginated list of movies.</returns>
     [HttpGet("movies")]
-    public IActionResult GetMovies(
+    public async Task<IActionResult> GetMovies(
         string? searchQuery,
         string? orderBy,
         bool ascending = true,
         int pageSize = 20,
         int pageNumber = 1)
     {
-        var value = _mediaService.GetMovies(
+        var value = await _mediaService.GetMovies(
             searchQuery,
             orderBy,
             ascending,
@@ -51,14 +51,14 @@ public class MediaController : ControllerBase
     /// <param name="pageNumber">The page number to retrieve (default is 1).</param>
     /// <returns>Returns an HTTP 200 OK response with a paginated list of shows.</returns>
     [HttpGet("shows")]
-    public IActionResult GetShows(
+    public async Task<IActionResult> GetShows(
         string? searchQuery,
         string? orderBy,
         bool ascending = true,
         int pageSize = 20,
         int pageNumber = 1)
     {
-        var value = _mediaService.GetShows(
+        var value = await _mediaService.GetShows(
             searchQuery,
             orderBy,
             ascending,

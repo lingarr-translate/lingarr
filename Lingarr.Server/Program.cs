@@ -5,7 +5,11 @@ using Hangfire;
 using Hangfire.MemoryStorage;
 using Lingarr.Core.Data;
 using Lingarr.Server.Filters;
+using Lingarr.Server.Interfaces.Providers;
+using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Interfaces.Services.Subtitle;
 using Lingarr.Server.Providers;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,7 +26,7 @@ builder.Services.AddMemoryCache();
 // Register Http client
 builder.Services.AddHttpClient();
 // Register DbContext
-builder.Services.AddDbContext<LingarrDbContext>((options)  =>
+builder.Services.AddDbContext<LingarrDbContext>(options  =>
 {
     var dbConnection = Environment.GetEnvironmentVariable("DB_CONNECTION")?.ToLower() ?? "sqlite";
     if (dbConnection == "mysql")
@@ -46,31 +50,33 @@ builder.Services.AddDbContext<LingarrDbContext>((options)  =>
         var connectionString =
             $"Server={variables["DB_HOST"]};Port={variables["DB_PORT"]};Database={variables["DB_DATABASE"]};Uid={variables["DB_USERNAME"]};Pwd={variables["DB_PASSWORD"]};Allow User Variables=True";
         options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString),
-                mysqlOptions => mysqlOptions.MigrationsAssembly("Lingarr.Migrations.MySQL"))
+                mysqlOptions => mysqlOptions.MigrationsAssembly("Lingarr.Migrations.MySQL")
+                    .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
             .UseSnakeCaseNamingConvention();
     }
     else
     {
         var sqliteDbPath = Environment.GetEnvironmentVariable("SQLITE_DB_PATH") ?? "local.db";
         options.UseSqlite($"Data Source=/app/config/{sqliteDbPath}",
-                sqliteOptions => sqliteOptions.MigrationsAssembly("Lingarr.Migrations.SQLite"))
+                sqliteOptions => sqliteOptions.MigrationsAssembly("Lingarr.Migrations.SQLite")
+                    .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
             .UseSnakeCaseNamingConvention();
     }
 });
 // Register Providers
-builder.Services.AddScoped<SonarrSettingsProvider>();
-builder.Services.AddScoped<RadarrSettingsProvider>();
+builder.Services.AddScoped<ISonarrSettingsProvider, SonarrSettingsProvider>();
+builder.Services.AddScoped<IRadarrSettingsProvider, RadarrSettingsProvider>();
 // Register services
-builder.Services.AddScoped<TranslateService>();
-builder.Services.AddScoped<SubtitleService>();
-builder.Services.AddScoped<SettingService>();
-builder.Services.AddScoped<RadarrService>();
-builder.Services.AddScoped<SonarrService>();
-builder.Services.AddScoped<MediaService>();
-builder.Services.AddScoped<SubRipParser>();
-builder.Services.AddScoped<SubRipWriter>();
-builder.Services.AddScoped<ImageService>();
-builder.Services.AddSingleton<ScheduleService>();
+builder.Services.AddScoped<ITranslateService, TranslateService>();
+builder.Services.AddScoped<ISubtitleService, SubtitleService>();
+builder.Services.AddScoped<ISettingService, SettingService>();
+builder.Services.AddScoped<IRadarrService, RadarrService>();
+builder.Services.AddScoped<ISonarrService, SonarrService>();
+builder.Services.AddScoped<IMediaService, MediaService>();
+builder.Services.AddScoped<ISubRipParser, SubRipParser>();
+builder.Services.AddScoped<ISubRipWriter, SubRipWriter>();
+builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddSingleton<IScheduleService, ScheduleService>();
 builder.Services.AddHostedService<ScheduleInitializationService>();
 
 builder.Services.AddHangfireServer(options =>

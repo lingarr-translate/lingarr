@@ -1,15 +1,16 @@
-using Lingarr.Server.Services;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Exceptions;
+using Lingarr.Server.Interfaces.Services;
 
 namespace Lingarr.Server.Jobs;
 
 public class TranslateJob
 {
-    private readonly TranslateService _translateService;
+    private readonly ITranslateService _translateService;
     private readonly ILogger<TranslateJob> _logger;
 
-    public TranslateJob(TranslateService translateService, ILogger<TranslateJob> logger)
+    public TranslateJob(ITranslateService translateService, 
+        ILogger<TranslateJob> logger)
     {
         _translateService = translateService;
         _logger = logger;

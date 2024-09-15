@@ -10,7 +10,7 @@ namespace Lingarr.Server.Interfaces.Services;
 public interface IMediaService
 {
     /// <summary>
-    /// Retrieves a paginated and optionally filtered and ordered list of movies.
+    /// Retrieves a paginated and optionally filtered and ordered list of movies asynchronously.
     /// </summary>
     /// <param name="searchQuery">An optional search query to filter movies by title. If null or empty, no filtering is applied.</param>
     /// <param name="orderBy">An optional field to order the results by. Possible values include "Id", "Title", and "DateAdded".</param>
@@ -18,10 +18,10 @@ public interface IMediaService
     /// <param name="pageNumber">The number of the page to retrieve. Must be greater than or equal to 1.</param>
     /// <param name="pageSize">The number of items per page. Must be greater than or equal to 1.</param>
     /// <returns>
-    /// A <see cref="PagedResult{MovieResponse}"/> containing the list of movies for the specified page, 
+    /// A task result containing a <see cref="PagedResult{MovieResponse}"/> a list of movies, 
     /// along with the total count of movies that match the criteria.
     /// </returns>
-    PagedResult<MovieResponse> GetMovies(
+    Task<PagedResult<MovieResponse>> GetMovies(
         string? searchQuery,
         string? orderBy,
         bool ascending,
@@ -29,7 +29,7 @@ public interface IMediaService
         int pageSize);
 
     /// <summary>
-    /// Retrieves a paginated and optionally filtered and ordered list of shows.
+    /// Retrieves a paginated and optionally filtered and ordered list of shows asynchronously.
     /// </summary>
     /// <param name="searchQuery">An optional search query to filter shows by title. If null or empty, no filtering is applied.</param>
     /// <param name="orderBy">An optional field to order the results by. Possible values include "Id", "Title", and "DateAdded".</param>
@@ -37,10 +37,10 @@ public interface IMediaService
     /// <param name="pageNumber">The number of the page to retrieve. Must be greater than or equal to 1.</param>
     /// <param name="pageSize">The number of items per page. Must be greater than or equal to 1.</param>
     /// <returns>
-    /// A <see cref="PagedResult{Show}"/> containing the list of shows for the specified page, 
+    /// A task result containing a <see cref="PagedResult{Show}"/> a list of shows, 
     /// along with the total count of shows that match the criteria.
     /// </returns>
-    PagedResult<Show> GetShows(
+    Task<PagedResult<Show>> GetShows(
         string? searchQuery,
         string? orderBy,
         bool ascending,

@@ -1,13 +1,15 @@
-﻿namespace Lingarr.Server.Services;
+﻿using Lingarr.Server.Interfaces.Services;
+
+namespace Lingarr.Server.Services;
 
 public class ScheduleInitializationService : IHostedService
 {
-    private readonly ScheduleService _scheduleService;
+    private readonly IScheduleService _scheduleService;
     private readonly IHostApplicationLifetime _appLifetime;
     private readonly ILogger<ScheduleInitializationService> _logger;
 
     public ScheduleInitializationService(
-        ScheduleService scheduleService,
+        IScheduleService scheduleService,
         IHostApplicationLifetime appLifetime,
         ILogger<ScheduleInitializationService> logger)
     {

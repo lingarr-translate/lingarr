@@ -1,5 +1,5 @@
-﻿using Lingarr.Server.Providers;
-using Lingarr.Server.Services;
+﻿using Lingarr.Server.Interfaces.Providers;
+using Lingarr.Server.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lingarr.Server.Controllers;
@@ -8,13 +8,13 @@ namespace Lingarr.Server.Controllers;
 [Route("api/[controller]")]
 public class ImageController : ControllerBase
 {
-    private readonly SonarrSettingsProvider _sonarrSettingsProvider;
-    private readonly RadarrSettingsProvider _radarrSettingsProvider;
-    private readonly ImageService _imageService;
+    private readonly ISonarrSettingsProvider _sonarrSettingsProvider;
+    private readonly IRadarrSettingsProvider _radarrSettingsProvider;
+    private readonly IImageService _imageService;
 
-    public ImageController(SonarrSettingsProvider sonarrSettingsProvider,
-        RadarrSettingsProvider radarrSettingsProvider,
-        ImageService imageService)
+    public ImageController(ISonarrSettingsProvider sonarrSettingsProvider,
+        IRadarrSettingsProvider radarrSettingsProvider,
+        IImageService imageService)
     {
         _sonarrSettingsProvider = sonarrSettingsProvider;
         _radarrSettingsProvider = radarrSettingsProvider;
