@@ -12,6 +12,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Folder Include="public" />
+    <Folder Include="src\components\features\" />
   </ItemGroup>
   <ItemGroup>
     <Content Update="src\statics\iso_languages.json">

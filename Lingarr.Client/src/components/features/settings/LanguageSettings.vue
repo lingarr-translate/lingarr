@@ -31,11 +31,11 @@
 import { WritableComputedRef, ComputedRef, computed } from 'vue'
 import { ILanguage } from '@/ts'
 
-import isoLanguages from './../statics/iso_languages.json'
-import libreLanguages from './../statics/libre_translate_languages.json'
+import isoLanguages from '@/statics/iso_languages.json'
+import libreLanguages from '@/statics/libre_translate_languages.json'
 
-import CardComponent from '@/components/CardComponent.vue'
-import LanguageSelect from '@/components/LanguageSelect.vue'
+import CardComponent from '@/components/common/CardComponent.vue'
+import LanguageSelect from '@/components/features/settings/LanguageSelect.vue'
 import { useSettingStore } from '@/store/setting'
 const settingsStore = useSettingStore()
 

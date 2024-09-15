@@ -40,7 +40,7 @@ import NotificationIcon from '@/components/icons/NotificationIcon.vue'
 import HistoryIcon from '@/components/icons/HistoryIcon.vue'
 import LanguageIcon from '@/components/icons/LanguageIcon.vue'
 import BuildingIcon from '@/components/icons/BuildingIcon.vue'
-import CardComponent from '@/components/CardComponent.vue'
+import CardComponent from '@/components/common/CardComponent.vue'
 
 const roadmapItems = shallowRef([
     {
