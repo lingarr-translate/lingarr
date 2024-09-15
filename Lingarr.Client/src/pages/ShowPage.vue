@@ -28,7 +28,9 @@
                     <div class="col-span-1 px-4 py-2"></div>
                     <div class="col-span-5 px-4 py-2">Title</div>
                     <div class="col-span-4 px-4 py-2">Subtitles</div>
-                    <div class="col-span-2 px-4 py-2"></div>
+                    <div class="col-span-2 flex justify-end px-4 py-2">
+                        <ReloadComponent @toggle:update="showStore.fetch()" />
+                    </div>
                 </div>
                 <div v-for="item in shows.items" :key="item.id">
                     <div
@@ -121,7 +123,7 @@
 <script setup lang="ts">
 import { ref, Ref, computed, onMounted, ComputedRef } from 'vue'
 import { IFilter, IPagedResult, ISeason, IShow, ISubtitle } from '@/ts'
-
+import useDebounce from '@/composables/useDebounce'
 import { useInstanceStore } from '@/store/instance'
 import { useShowStore } from '@/store/show'
 import services from '@/services'
@@ -132,6 +134,7 @@ import ToggleButton from '@/components/common/ToggleButton.vue'
 import SortControls from '@/components/common/SortControls.vue'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
 import ContextMenu from '@/components/layout/ContextMenu.vue'
+import ReloadComponent from '@/components/common/ReloadComponent.vue'
 
 const instanceStore = useInstanceStore()
 const showStore = useShowStore()
@@ -143,7 +146,9 @@ const subtitles: Ref<ISubtitle[]> = ref([])
 const shows: ComputedRef<IPagedResult<IShow>> = computed(() => showStore.get)
 const filter: ComputedRef<IFilter> = computed({
     get: () => showStore.getFilter,
-    set: (value: IFilter) => showStore.setFilter(value)
+    set: useDebounce((value: IFilter) => {
+        showStore.setFilter(value)
+    }, 400)
 })
 
 async function toggleShow(show: IShow) {
