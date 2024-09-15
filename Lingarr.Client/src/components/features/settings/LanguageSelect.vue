@@ -12,7 +12,7 @@
                     class="flex cursor-pointer items-center rounded-md bg-accent px-3 py-1 text-sm font-medium text-secondary-content"
                     @click.stop="removeItem(item)">
                     <span class="mr-2">{{ item.name }}</span>
-                    <CloseIcon class="mt-0.5 h-4 w-4" />
+                    <TimesIcon class="mt-0.5 h-4 w-4" />
                 </span>
             </div>
             <CaretDownIcon
@@ -35,17 +35,7 @@
                     v-if="searchTerm"
                     class="absolute right-0 z-10 flex cursor-pointer items-center p-3"
                     @click="searchTerm = ''">
-                    <svg
-                        class="h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round">
-                        <path d="M18 6 6 18" />
-                        <path d="m6 6 12 12" />
-                    </svg>
+                    <TimesIcon class="h-4 w-4" />
                 </span>
             </li>
             <li
@@ -64,7 +54,7 @@
 import { Ref, ref, computed, watch, nextTick } from 'vue'
 import { ILanguage } from '@/ts'
 import CaretDownIcon from '@/components/icons/CaretDownIcon.vue'
-import CloseIcon from '@/components/icons/CloseIcon.vue'
+import TimesIcon from '@/components/icons/TimesIcon.vue'
 import useClickOutside from '@/composables/useClickOutside'
 
 const {
