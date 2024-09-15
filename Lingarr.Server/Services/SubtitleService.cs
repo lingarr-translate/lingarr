@@ -7,35 +7,35 @@ namespace Lingarr.Server.Services;
 public class SubtitleService : ISubtitleService
 {
     /// <inheritdoc />
-    public List<Subtitles> Collect(string path)
+    public async Task<List<Subtitles>> Collect(string path)
     {
-        List<Subtitles> srtFiles = new List<Subtitles>();
-
         if (!path.StartsWith("/"))
         {
             path = $"/{path}";
         }
 
-        string[] files = Directory.GetFiles($"media{path}", "*.srt", SearchOption.AllDirectories);
+        string fullPath = $"media{path}";
+        var files = await Task.Run(() => Directory.GetFiles(fullPath, "*.srt", SearchOption.AllDirectories));
         Regex languageRegex = new Regex(@"\.(?<lang>[a-z]{2,3})\.srt$", RegexOptions.IgnoreCase);
 
-        foreach (string file in files)
+        var subtitleTasks = files.Select(file =>
         {
             var fileName = Path.GetFileName(file);
             var languageMatch = languageRegex.Match(fileName);
 
             string language = languageMatch.Success ? languageMatch.Groups["lang"].Value : "unknown";
 
-            srtFiles.Add(new Subtitles
+            return Task.FromResult(new Subtitles
             {
                 Path = file,
                 FileName = languageMatch.Success
                     ? fileName.Substring(0, languageMatch.Index)
-                    : Path.GetFileNameWithoutExtension(file),
+                    : Path.GetFileNameWithoutExtension(fileName),
                 Language = language
             });
-        }
+        });
 
-        return srtFiles;
+        var srtFiles = await Task.WhenAll(subtitleTasks);
+        return srtFiles.ToList();
     }
 }

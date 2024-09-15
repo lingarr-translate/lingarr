@@ -1,17 +1,17 @@
 ﻿using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
-using Lingarr.Server.Services;
+using Lingarr.Server.Interfaces.Services;
 
 namespace Lingarr.Server.Jobs;
 
 public class GetMovieJob
 {
     private readonly LingarrDbContext _dbContext;
-    private readonly RadarrService _radarrService;
+    private readonly IRadarrService _radarrService;
     private readonly ILogger<GetMovieJob> _logger;
 
     public GetMovieJob(LingarrDbContext dbContext, 
-        RadarrService radarrService, 
+        IRadarrService radarrService, 
         ILogger<GetMovieJob> logger)
     {
         _dbContext = dbContext;

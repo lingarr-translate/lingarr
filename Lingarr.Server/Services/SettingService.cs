@@ -10,12 +10,12 @@ public class SettingService: ISettingService
 {
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly LingarrDbContext _dbContext;
-    private readonly ILogger<SettingService> _logger;
+    private readonly ILogger<ISettingService> _logger;
 
     public SettingService(
         IBackgroundJobClient backgroundJobClient,
         LingarrDbContext dbContext, 
-        ILogger<SettingService> logger)
+        ILogger<ISettingService> logger)
     {
         _backgroundJobClient = backgroundJobClient;
         _dbContext = dbContext;

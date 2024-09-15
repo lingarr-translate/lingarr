@@ -10,16 +10,16 @@ namespace Lingarr.Server.Services;
 public class MediaService : IMediaService
 {
     private readonly LingarrDbContext _dbContext;
-    private readonly SubtitleService _subtitleService;
+    private readonly ISubtitleService _subtitleService;
 
-    public MediaService(LingarrDbContext dbContext, SubtitleService subtitleService)
+    public MediaService(LingarrDbContext dbContext, ISubtitleService subtitleService)
     {
         _dbContext = dbContext;
         _subtitleService = subtitleService;
     }
     
     /// <inheritdoc />
-    public PagedResult<MovieResponse> GetMovies(
+    public async Task<PagedResult<MovieResponse>> GetMovies(
         string? searchQuery,
         string? orderBy,
         bool ascending,
@@ -28,6 +28,7 @@ public class MediaService : IMediaService
     {
         var query = _dbContext.Movies
             .Include(m => m.Media)
+            .AsSplitQuery()
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(searchQuery))
@@ -43,15 +44,16 @@ public class MediaService : IMediaService
             _ => ascending ? query.OrderBy(m => m.Title) : query.OrderByDescending(m => m.Title)
         };
 
-        var totalCount = query.Count();
-        var movies = query
+        var totalCount = await query.CountAsync();
+        var movies = await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .ToArray();
+            .ToListAsync();
 
         var enrichedMovies = new List<MovieResponse>();
         foreach (var movie in movies)
         {
+            var subtitles = await _subtitleService.Collect(movie.Path);
             var enrichedMovie = new MovieResponse
             {
                 Id = movie.Id,
@@ -60,9 +62,9 @@ public class MediaService : IMediaService
                 FileName = movie.FileName,
                 Path = movie.Path,
                 DateAdded = movie.DateAdded,
-                Media = movie.Media
+                Media = movie.Media,
+                Subtitles = subtitles
             };
-            enrichedMovie.Subtitles = _subtitleService.Collect(movie.Path);
             enrichedMovies.Add(enrichedMovie);
         }
 
@@ -76,7 +78,7 @@ public class MediaService : IMediaService
     }
     
     /// <inheritdoc />
-    public PagedResult<Show> GetShows(
+    public async Task<PagedResult<Show>> GetShows(
         string? searchQuery,
         string? orderBy,
         bool ascending,
@@ -87,6 +89,7 @@ public class MediaService : IMediaService
             .Include(s => s.Media)
             .Include(s => s.Seasons)
             .ThenInclude(season => season.Episodes)
+            .AsSplitQuery()
             .AsQueryable();
 
         if (!string.IsNullOrEmpty(searchQuery))
@@ -102,11 +105,11 @@ public class MediaService : IMediaService
             _ => ascending ? query.OrderBy(s => s.Title) : query.OrderByDescending(s => s.Title)
         };
 
-        var totalCount = query.Count();
-        var shows = query
+        var totalCount = await query.CountAsync();
+        var shows = await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
-            .ToArray();
+            .ToListAsync();
 
         return new PagedResult<Show>
         {

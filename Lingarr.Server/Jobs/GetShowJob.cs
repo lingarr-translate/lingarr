@@ -1,7 +1,7 @@
 ﻿using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
+using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models.Integrations;
-using Lingarr.Server.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Jobs;
@@ -9,12 +9,12 @@ namespace Lingarr.Server.Jobs;
 public class GetShowJob
 {
     private readonly LingarrDbContext _dbContext;
-    private readonly SonarrService _sonarrService;
+    private readonly ISonarrService _sonarrService;
     private readonly ILogger<GetShowJob> _logger;
 
     public GetShowJob(
         LingarrDbContext dbContext,
-        SonarrService sonarrService,
+        ISonarrService sonarrService,
         ILogger<GetShowJob> logger)
     {
         _dbContext = dbContext;

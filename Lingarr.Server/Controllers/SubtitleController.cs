@@ -1,4 +1,5 @@
-using Lingarr.Server.Services;
+using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Models.FileSystem;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lingarr.Server.Controllers;
@@ -7,9 +8,9 @@ namespace Lingarr.Server.Controllers;
 [Route("api/[controller]")]
 public class SubtitleController : ControllerBase
 {
-    private readonly SubtitleService _subtitleService;
+    private readonly ISubtitleService _subtitleService;
 
-    public SubtitleController(SubtitleService subtitleService)
+    public SubtitleController(ISubtitleService subtitleService)
     {
         _subtitleService = subtitleService;
     }
@@ -21,9 +22,9 @@ public class SubtitleController : ControllerBase
     /// and should not start with a forward slash.</param>
     /// <returns>Returns an HTTP 200 OK response with a list of <see cref="Subtitles"/> objects found at the specified path.</returns>
     [HttpGet("collect")]
-    public IActionResult Collect([FromQuery] string path)
+    public async Task<IActionResult> Collect([FromQuery] string path)
     {
-        var value = _subtitleService.Collect(path);
+        var value = await _subtitleService.Collect(path);
         return Ok(value);
     }
 }

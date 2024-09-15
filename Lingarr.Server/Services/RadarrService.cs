@@ -1,18 +1,18 @@
 ﻿using System.Text.Json;
+using Lingarr.Server.Interfaces.Providers;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models.Integrations;
-using Lingarr.Server.Providers;
 
 namespace Lingarr.Server.Services;
 
 public class RadarrService : IRadarrService
 {
     private readonly HttpClient _httpClient;
-    private readonly RadarrSettingsProvider _settingsProvider;
+    private readonly IRadarrSettingsProvider _settingsProvider;
 
     public RadarrService(
         HttpClient httpClient,
-        RadarrSettingsProvider settingsProvider)
+        IRadarrSettingsProvider settingsProvider)
     {
         _httpClient = httpClient;
         _settingsProvider = settingsProvider;

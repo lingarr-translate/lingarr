@@ -1,5 +1,5 @@
 ﻿using Lingarr.Core.Entities;
-using Lingarr.Server.Services;
+using Lingarr.Server.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lingarr.Server.Controllers;
@@ -8,9 +8,9 @@ namespace Lingarr.Server.Controllers;
 [Route("api/[controller]")]
 public class SettingController : ControllerBase
 {
-    private readonly SettingService _settingService;
+    private readonly ISettingService _settingService;
 
-    public SettingController(SettingService settingService)
+    public SettingController(ISettingService settingService)
     {
         _settingService = settingService;
     }

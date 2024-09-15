@@ -7,10 +7,10 @@ namespace Lingarr.Server.Services;
 public class ScheduleService : IScheduleService
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<ScheduleService> _logger;
+    private readonly ILogger<IScheduleService> _logger;
 
     public ScheduleService(IServiceProvider serviceProvider,
-    ILogger<ScheduleService> logger)
+    ILogger<IScheduleService> logger)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
@@ -20,7 +20,7 @@ public class ScheduleService : IScheduleService
     public async Task Initialize()
     {
         using var scope = _serviceProvider.CreateScope();
-        var settingService = scope.ServiceProvider.GetRequiredService<SettingService>();
+        var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
 
         var settings = await settingService.GetSettings(["movie_schedule", "show_schedule"]);
 

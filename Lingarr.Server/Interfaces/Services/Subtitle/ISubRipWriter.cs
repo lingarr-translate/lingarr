@@ -5,7 +5,7 @@ namespace Lingarr.Server.Interfaces.Services.Subtitle;
 /// <summary>
 /// Interface specifying the required method for a SubWriter
 /// </summary>
-public interface ISubtitlesWriter
+public interface ISubRipWriter
 {
     /// <summary>
     /// Write a list of subtitle items to a stream in the SubRip (SRT) format synchronously 

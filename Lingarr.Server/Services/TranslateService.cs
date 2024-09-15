@@ -13,11 +13,11 @@ namespace Lingarr.Server.Services;
 public class TranslateService : ITranslateService
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<TranslateService> _logger;
+    private readonly ILogger<ITranslateService> _logger;
 
     public TranslateService(
         IHttpClientFactory httpClientFactory,
-        ILogger<TranslateService> logger)
+        ILogger<ITranslateService> logger)
     {
         _httpClientFactory = httpClientFactory;
         _logger = logger;
