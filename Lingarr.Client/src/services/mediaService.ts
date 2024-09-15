@@ -5,7 +5,7 @@ const service = (http: AxiosStatic, resource = '/api/media'): IMediaService => (
     movies<T>(
         pageNumber: number,
         searchQuery: string,
-        sortBy: string,
+        orderBy: string,
         ascending: boolean
     ): Promise<T> {
         return new Promise((resolve, reject) => {
@@ -13,7 +13,7 @@ const service = (http: AxiosStatic, resource = '/api/media'): IMediaService => (
                 `${resource}/movies`.addParams({
                     pageNumber: pageNumber,
                     searchQuery: searchQuery,
-                    sortBy: sortBy,
+                    orderBy: orderBy,
                     ascending: ascending
                 })
             )
@@ -28,7 +28,7 @@ const service = (http: AxiosStatic, resource = '/api/media'): IMediaService => (
     shows<T>(
         pageNumber: number,
         searchQuery: string,
-        sortBy: string,
+        orderBy: string,
         ascending: boolean
     ): Promise<T> {
         return new Promise((resolve, reject) => {
@@ -36,7 +36,7 @@ const service = (http: AxiosStatic, resource = '/api/media'): IMediaService => (
                 `${resource}/shows`.addParams({
                     pageNumber: pageNumber,
                     searchQuery: searchQuery,
-                    sortBy: sortBy,
+                    orderBy: orderBy,
                     ascending: ascending
                 })
             )
