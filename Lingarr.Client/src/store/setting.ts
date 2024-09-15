@@ -27,7 +27,11 @@ export const useSettingStore = defineStore({
     },
     actions: {
         updateSetting(key: keyof ISettings, value: string) {
-            this.settings[key] = value
+            let setting = value
+            if(['radarr_url','sonarr_url'].includes(key)) {
+                setting = setting.replace(/\/+$/, '')
+            }
+            this.settings[key] = setting
             this.saveSettings()
         },
         saveSettings() {
