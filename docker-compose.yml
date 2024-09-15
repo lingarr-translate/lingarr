@@ -17,16 +17,12 @@ services:
       - PUID=0
       - PGID=0
       - ASPNETCORE_ENVIRONMENT=Development
-      - LIBRETRANSLATE_API=http://LibreTranslate:5000
       - DB_CONNECTION=mysql
       - DB_HOST=Lingarr.Mysql
       - DB_PORT=3306
       - DB_DATABASE=LingarrMysql
       - DB_USERNAME=LingarrMysql
       - DB_PASSWORD=Secret1234
-    volumes:
-      - /mnt/hdd/media/tvshows:/app/media/tv
-      - /mnt/hdd/media/movies:/app/media/movies
     ports:
       - "9877:8080"
     networks:

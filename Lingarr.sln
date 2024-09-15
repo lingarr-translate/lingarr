@@ -15,7 +15,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lingarr.Migrations.MySQL", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lingarr.Migrations.SQLite", "Lingarr.Migrations.SQLite\Lingarr.Migrations.SQLite.csproj", "{F8D79D22-4419-4AB7-913A-08BE282777B8}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LingarrRoot", "LingarrRoot", "{D3E4F0FF-5510-4B9E-AABA-ECD3791343B0}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lingarr.Root", "Lingarr.Root", "{D3E4F0FF-5510-4B9E-AABA-ECD3791343B0}"
 	ProjectSection(SolutionItems) = preProject
 		create-migrations.ps1 = create-migrations.ps1
 		build-and-push.ps1 = build-and-push.ps1
