@@ -30,6 +30,10 @@ public class ImageController : ControllerBase
     public async Task<IActionResult> ShowImages(string path)
     {
         var settings = await _sonarrSettingsProvider.GetSonarrSettings();
+        if (settings == null)
+        {
+            return BadRequest("Sonarr settings are not configured correctly.");
+        }
         var url = $"{settings.Url}/api/v3/{path}?apikey={settings.ApiKey}";
 
         return await _imageService.GetApiResponse(url);
@@ -44,6 +48,10 @@ public class ImageController : ControllerBase
     public async Task<IActionResult> MovieImages(string path)
     {
         var settings = await _radarrSettingsProvider.GetRadarrSettings();
+        if (settings == null)
+        {
+            return BadRequest("Radarr settings are not configured correctly.");
+        }
         var url = $"{settings.Url}/api/v3/{path}?apikey={settings.ApiKey}";
 
         return await _imageService.GetApiResponse(url);
