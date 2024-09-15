@@ -4,6 +4,7 @@ export interface Services {
     setting: ISettingService
     subtitle: ISubtitleService
     translate: ITranslateService
+    version: IVersionService
     media: IMediaService
 }
 
@@ -36,4 +37,8 @@ export interface ISubtitleService {
 
 export interface ITranslateService {
     translateSubtitle<T>(subtitle: ISubtitle, target: string): Promise<T>
+}
+
+export interface IVersionService {
+    getVersion<T>(): Promise<T>
 }

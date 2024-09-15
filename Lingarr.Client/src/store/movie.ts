@@ -19,7 +19,7 @@ export const useMovieStore = defineStore({
         }
     }),
     getters: {
-        getFilter: (state): IFilter => state.filter,
+        getFilter: (state: IUseMovieStore): IFilter => state.filter,
         get(): IPagedResult<IMovie> {
             this.movies.items = this.movies.items?.map((item) => {
                 return {

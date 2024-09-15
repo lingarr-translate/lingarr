@@ -19,6 +19,7 @@ new Promise((resolve) => resolve(true))
     })
     .then(async () => {
         await useSettingStore().applySettingsOnLoad()
+        await useInstanceStore().applyVersionOnLoad()
         await useInstanceStore().applyThemeOnLoad()
     })
     .finally(() => {

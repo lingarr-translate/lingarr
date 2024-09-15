@@ -16,7 +16,7 @@ export const useSettingStore = defineStore({
         }
     }),
     getters: {
-        getSettings: (state): ISettings => {
+        getSettings: (state: IUseSettingStore): ISettings => {
             return {
                 ...state.settings,
                 source_languages: JSON.parse(state.settings.source_languages as string),

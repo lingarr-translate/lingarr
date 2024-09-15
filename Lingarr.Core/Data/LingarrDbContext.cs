@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Lingarr.Core.Entities;
+
 namespace Lingarr.Core.Data;
 
 public class LingarrDbContext : DbContext

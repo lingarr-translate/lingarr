@@ -1,8 +1,10 @@
 <template>
     <div class="relative select-none items-center transition duration-300 ease-in-out">
+        <!-- Context -->
         <div ref="clickOutside" @click="toggle">
             <slot></slot>
         </div>
+        <!-- Menu -->
         <div
             v-show="isOpen"
             ref="excludeClickOutside"
