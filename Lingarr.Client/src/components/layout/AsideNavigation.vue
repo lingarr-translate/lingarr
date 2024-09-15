@@ -9,7 +9,7 @@
         <aside
             :class="isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
             class="fixed left-0 top-0 z-50 flex h-full w-64 flex-col overflow-hidden border-r border-accent bg-secondary transition-transform duration-300 ease-in-out md:sticky">
-            <CloseIcon
+            <TimesIcon
                 class="absolute right-1 top-1 block h-6 w-6 cursor-pointer md:hidden"
                 @click="isOpen = false" />
             <div class="flex h-16 items-center justify-center">
@@ -60,7 +60,7 @@ import HomeIcon from '@/components/icons/HomeIcon.vue'
 import MovieIcon from '@/components/icons/MovieIcon.vue'
 import ShowIcon from '@/components/icons/ShowIcon.vue'
 import SettingIcon from '@/components/icons/SettingIcon.vue'
-import CloseIcon from '@/components/icons/CloseIcon.vue'
+import TimesIcon from '@/components/icons/TimesIcon.vue'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
 
 const instanceStore = useInstanceStore()

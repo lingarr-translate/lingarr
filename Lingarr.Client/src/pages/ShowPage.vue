@@ -3,10 +3,8 @@
         <main>
             <!-- Search and Filters -->
             <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
-                <div class="relative flex-grow">
-                    <SearchComponent v-model="filter" />
-                </div>
-                <div class="flex space-x-2">
+                <SearchComponent v-model="filter" />
+                <div class="flex w-full justify-between space-x-2 md:w-fit">
                     <SortControls
                         v-model="filter"
                         :options="[
@@ -148,7 +146,7 @@ const filter: ComputedRef<IFilter> = computed({
     get: () => showStore.getFilter,
     set: useDebounce((value: IFilter) => {
         showStore.setFilter(value)
-    }, 400)
+    }, 300)
 })
 
 async function toggleShow(show: IShow) {
