@@ -2,14 +2,13 @@ using Lingarr.Server.Services;
 using Lingarr.Server.Services.Subtitle;
 using Microsoft.EntityFrameworkCore;
 using Hangfire;
-using Hangfire.MemoryStorage;
+using Hangfire.Storage.SQLite;
 using Lingarr.Core.Data;
 using Lingarr.Server.Filters;
 using Lingarr.Server.Interfaces.Providers;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Subtitle;
 using Lingarr.Server.Providers;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -86,14 +85,9 @@ builder.Services.AddHangfireServer(options =>
 });
 // Add Hangfire scheduler services
 builder.Services.AddHangfire(configuration => configuration
-    .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
-    .UseMemoryStorage());
-    // .UseStorage(new MySqlStorage(connectionString, new MySqlStorageOptions
-    // {
-    //     TablesPrefix = "Hangfire" // Customize table prefix if needed
-    // })));
+    .UseSQLiteStorage());
 
 var app = builder.Build();
 // Apply migrations

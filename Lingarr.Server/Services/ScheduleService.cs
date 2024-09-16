@@ -37,6 +37,7 @@ public class ScheduleService : IScheduleService
                 case "movie_schedule":
                     RecurringJob.AddOrUpdate<GetMovieJob>(
                         "GetMovieJob", 
+                        "movies",
                         job => job.Execute(), 
                         setting.Value,
                         options);
@@ -44,6 +45,7 @@ public class ScheduleService : IScheduleService
                 case "show_schedule":
                     RecurringJob.AddOrUpdate<GetShowJob>(
                         "GetShowJob", 
+                        "shows",
                         job => job.Execute(), 
                         setting.Value,
                         options);

@@ -117,11 +117,11 @@ public class SettingService: ISettingService
             {
                 case "Radarr":
                     _logger.LogInformation("Radarr settings completed, indexing media...");
-                    _backgroundJobClient.Enqueue<GetMovieJob>(x => x.Execute());
+                    _backgroundJobClient.Enqueue<GetMovieJob>("movies", x => x.Execute());
                     break;
                 case "Sonarr":
                     _logger.LogInformation("Sonarr settings completed, indexing media...");
-                    _backgroundJobClient.Enqueue<GetShowJob>(x => x.Execute());
+                    _backgroundJobClient.Enqueue<GetShowJob>("shows", x => x.Execute());
                     break;
             }
         }
