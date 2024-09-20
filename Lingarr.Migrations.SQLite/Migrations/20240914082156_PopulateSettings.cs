@@ -52,7 +52,27 @@ namespace Lingarr.Migrations.SQLite.Migrations
             migrationBuilder.DeleteData(
                 table: "Settings",
                 keyColumn: "key",
+                keyValues: new object[] { "source_languages" });
+
+            migrationBuilder.DeleteData(
+                table: "Settings",
+                keyColumn: "key",
+                keyValues: new object[] { "target_languages" });
+
+            migrationBuilder.DeleteData(
+                table: "Settings",
+                keyColumn: "key",
                 keyValues: new object[] { "theme" });
+            
+            migrationBuilder.DeleteData(
+                table: "Settings",
+                keyColumn: "key",
+                keyValues: new object[] { "movie_schedule" });
+            
+            migrationBuilder.DeleteData(
+                table: "Settings",
+                keyColumn: "key",
+                keyValues: new object[] { "show_schedule" });
         }
     }
 }
