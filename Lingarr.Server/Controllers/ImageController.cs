@@ -1,5 +1,6 @@
 ﻿using Lingarr.Server.Interfaces.Providers;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lingarr.Server.Controllers;
@@ -8,16 +9,12 @@ namespace Lingarr.Server.Controllers;
 [Route("api/[controller]")]
 public class ImageController : ControllerBase
 {
-    private readonly ISonarrSettingsProvider _sonarrSettingsProvider;
-    private readonly IRadarrSettingsProvider _radarrSettingsProvider;
+    private readonly IIntegrationSettingsProvider _settingsProvider;
     private readonly IImageService _imageService;
 
-    public ImageController(ISonarrSettingsProvider sonarrSettingsProvider,
-        IRadarrSettingsProvider radarrSettingsProvider,
-        IImageService imageService)
+    public ImageController(IIntegrationSettingsProvider settingsProvider, IImageService imageService)
     {
-        _sonarrSettingsProvider = sonarrSettingsProvider;
-        _radarrSettingsProvider = radarrSettingsProvider;
+        _settingsProvider = settingsProvider;
         _imageService = imageService;
     }
     
@@ -29,7 +26,12 @@ public class ImageController : ControllerBase
     [HttpGet("show/{*path}")]
     public async Task<IActionResult> ShowImages(string path)
     {
-        var settings = await _sonarrSettingsProvider.GetSonarrSettings();
+        var settings = await _settingsProvider.GetSettings(
+            new IntegrationSettingKeys
+            {
+                Url = "sonarr_url",
+                ApiKey = "sonarr_api_key"
+            });
         if (settings == null)
         {
             return BadRequest("Sonarr settings are not configured correctly.");
@@ -47,7 +49,12 @@ public class ImageController : ControllerBase
     [HttpGet("movie/{*path}")]
     public async Task<IActionResult> MovieImages(string path)
     {
-        var settings = await _radarrSettingsProvider.GetRadarrSettings();
+        var settings = await _settingsProvider.GetSettings(
+            new IntegrationSettingKeys
+            {
+                Url = "radarr_url",
+                ApiKey = "radarr_api_key"
+            });
         if (settings == null)
         {
             return BadRequest("Radarr settings are not configured correctly.");
