@@ -1,6 +1,6 @@
 ﻿<template>
     <PageLayout>
-        <div v-if="shows.totalCount" class="w-full">
+        <div v-if="settingsCompleted" class="w-full">
             <!-- Search and Filters -->
             <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
                 <SearchComponent v-model="filter" />
@@ -113,6 +113,7 @@
             </div>
 
             <PaginationComponent
+                v-if="shows.totalCount"
                 v-model="filter"
                 :total-count="shows.totalCount"
                 :page-size="shows.pageSize" />
@@ -127,6 +128,7 @@ import { IFilter, IPagedResult, ISeason, IShow, ISubtitle } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useInstanceStore } from '@/store/instance'
 import { useShowStore } from '@/store/show'
+import { useSettingStore } from '@/store/setting'
 import services from '@/services'
 import PaginationComponent from '@/components/common/PaginationComponent.vue'
 import PageLayout from '@/components/layout/PageLayout.vue'
@@ -139,12 +141,16 @@ import ReloadComponent from '@/components/common/ReloadComponent.vue'
 import NoMediaNotification from '@/components/common/NoMediaNotification.vue'
 
 const instanceStore = useInstanceStore()
+const settingStore = useSettingStore()
 const showStore = useShowStore()
 
 const expandedShow: Ref<boolean | number | null> = ref(null)
 const expandedSeason: Ref<ISeason | null> = ref(null)
 const subtitles: Ref<ISubtitle[]> = ref([])
 
+const settingsCompleted: ComputedRef<string> = computed(() =>
+    JSON.parse(settingStore.getSetting('sonarr_settings_completed') as string)
+)
 const shows: ComputedRef<IPagedResult<IShow>> = computed(() => showStore.get)
 const filter: ComputedRef<IFilter> = computed({
     get: () => showStore.getFilter,
@@ -185,7 +191,7 @@ const getSubtitle = (fileName: string | null) => {
         .sort((a, b) => a.language.localeCompare(b.language))
 }
 
-onMounted(() => {
-    showStore.fetch()
+onMounted(async () => {
+    await showStore.fetch()
 })
 </script>

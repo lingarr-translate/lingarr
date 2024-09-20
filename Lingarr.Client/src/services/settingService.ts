@@ -15,11 +15,7 @@ const service = (http: AxiosStatic, resource = '/api/setting'): ISettingService 
     },
     getSettings<T>(keys: string[]): Promise<T> {
         return new Promise((resolve, reject) => {
-            http.get(
-                `${resource}/multiple`.addParams({
-                    keys: keys
-                })
-            )
+            http.post(`${resource}/multiple/get`, keys)
                 .then((response: AxiosResponse<T>) => {
                     resolve(response.data)
                 })
@@ -44,7 +40,7 @@ const service = (http: AxiosStatic, resource = '/api/setting'): ISettingService 
     },
     setSettings<T>(settings: ISettings): void {
         new Promise((resolve, reject) => {
-            http.post(`${resource}/multiple`, settings)
+            http.post(`${resource}/multiple/set`, settings)
                 .then((response: AxiosResponse<T>) => {
                     resolve(response.data)
                 })

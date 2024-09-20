@@ -12,4 +12,6 @@ export interface ISettings {
     theme: string
     source_languages: string | ILanguage[]
     target_languages: string | ILanguage[]
+    sonarr_settings_completed: string
+    radarr_settings_completed: string
 }

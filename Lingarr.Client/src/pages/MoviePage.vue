@@ -1,6 +1,6 @@
 ﻿<template>
     <PageLayout>
-        <div v-if="movies.totalCount" class="w-full">
+        <div v-if="settingsCompleted" class="w-full">
             <!-- Search and Filters -->
             <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
                 <SearchComponent v-model="filter" />
@@ -50,6 +50,7 @@
             </div>
 
             <PaginationComponent
+                v-if="movies.totalCount"
                 v-model="filter"
                 :total-count="movies.totalCount"
                 :page-size="movies.pageSize" />
@@ -61,7 +62,9 @@
 <script setup lang="ts">
 import { ref, Ref, computed, onMounted, ComputedRef } from 'vue'
 import { IFilter, IMovie, IPagedResult, ISubtitle } from '@/ts'
+import useDebounce from '@/composables/useDebounce'
 import { useInstanceStore } from '@/store/instance'
+import { useSettingStore } from '@/store/setting'
 import { useMovieStore } from '@/store/movie'
 import services from '@/services'
 import PaginationComponent from '@/components/common/PaginationComponent.vue'
@@ -70,15 +73,18 @@ import BadgeComponent from '@/components/common/BadgeComponent.vue'
 import SortControls from '@/components/common/SortControls.vue'
 import SearchComponent from '@/components/common/SearchComponent.vue'
 import ContextMenu from '@/components/layout/ContextMenu.vue'
-import useDebounce from '@/composables/useDebounce'
 import ReloadComponent from '@/components/common/ReloadComponent.vue'
 import NoMediaNotification from '@/components/common/NoMediaNotification.vue'
 
 const instanceStore = useInstanceStore()
+const settingStore = useSettingStore()
 const movieStore = useMovieStore()
 
 const subtitles: Ref<ISubtitle[]> = ref([])
 
+const settingsCompleted: ComputedRef<string> = computed(() =>
+    JSON.parse(settingStore.getSetting('radarr_settings_completed') as string)
+)
 const movies: ComputedRef<IPagedResult<IMovie>> = computed(() => movieStore.get)
 const filter: ComputedRef<IFilter> = computed({
     get: () => movieStore.getFilter,
@@ -92,7 +98,7 @@ const toggleMovie = useDebounce(async (movie: IMovie) => {
     instanceStore.setPoster({ content: movie, type: 'movie' })
 }, 1000)
 
-onMounted(() => {
-    movieStore.fetch()
+onMounted(async () => {
+    await movieStore.fetch()
 })
 </script>

@@ -1,4 +1,5 @@
-﻿using Lingarr.Core.Data;
+﻿using Hangfire;
+using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Server.Interfaces.Services;
 
@@ -19,7 +20,9 @@ public class GetMovieJob
         _logger = logger;
     }
 
-    public async Task Execute()
+    [DisableConcurrentExecution(timeoutInSeconds: 10 * 60)]
+    [AutomaticRetry(Attempts = 0)]
+    public async Task Execute(IJobCancellationToken cancellationToken)
     {
         Console.WriteLine($"Radarr job initiated");
         try
