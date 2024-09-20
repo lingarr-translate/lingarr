@@ -55,7 +55,7 @@ const roadmapItems = shallowRef([
         title: 'Notifications',
         description: 'Implement a simple notification system for requested translations',
         date: '2024',
-        status: 'In Progress'
+        status: 'Completed'
     },
     {
         icon: AutomationIcon,

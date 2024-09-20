@@ -1,9 +1,11 @@
 <template>
     <div class="relative select-none items-center transition duration-300 ease-in-out">
         <!-- Context -->
-        <div ref="clickOutside" @click="toggle">
-            <slot></slot>
-        </div>
+        <TooltipComponent ref="tooltip">
+            <div ref="clickOutside" @click="toggle">
+                <slot></slot>
+            </div>
+        </TooltipComponent>
         <!-- Menu -->
         <div
             v-show="isOpen"
@@ -11,7 +13,6 @@
             class="absolute right-0 top-8 z-10 w-56 rounded-md border border-accent bg-primary bg-clip-border shadow-lg">
             <div class="px-3 py-1" role="menu" aria-orientation="vertical">
                 <span class="text-xs" role="menuitem">Translate to ...</span>
-
                 <a
                     v-for="language in languages"
                     :key="language.code"
@@ -31,6 +32,7 @@ import { ILanguage, ISubtitle } from '@/ts'
 import { useSettingStore } from '@/store/setting'
 import { useTranslateStore } from '@/store/translate'
 import useClickOutside from '@/composables/useClickOutside'
+import TooltipComponent from '@/components/common/TooltipComponent.vue'
 
 const emit = defineEmits(['update:toggle'])
 const { subtitle } = defineProps<{
@@ -39,6 +41,7 @@ const { subtitle } = defineProps<{
 const settingsStore = useSettingStore()
 const translateStore = useTranslateStore()
 
+const tooltip = ref<InstanceType<typeof TooltipComponent> | null>(null)
 const isOpen: Ref<boolean> = ref(false)
 const clickOutside: Ref = ref(null)
 const excludeClickOutside: Ref = ref(null)
@@ -55,6 +58,7 @@ function toggle() {
 function selectOption(option: ILanguage) {
     translateStore.translateSubtitle(subtitle, option)
     toggle()
+    tooltip.value?.showTooltip()
 }
 
 useClickOutside(

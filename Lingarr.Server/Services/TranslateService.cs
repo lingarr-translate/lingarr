@@ -24,7 +24,7 @@ public class TranslateService : ITranslateService
     }
     
     /// <inheritdoc />
-    public async Task<List<SubtitleItem>> TranslateAsync(
+    public async Task TranslateAsync(
         string jobId, 
         string subtitlePath, 
         string targetLanguage,
@@ -80,7 +80,7 @@ public class TranslateService : ITranslateService
             if (cancellationToken.IsCancellationRequested)
             {
                 _logger.LogInformation("Translation cancelled for subtitle: {subtitlePath}", subtitlePath);
-                break;
+                return;
             }
         }
 
@@ -95,7 +95,5 @@ public class TranslateService : ITranslateService
         }
         _logger.LogInformation("TranslateJob completed and created subtitle: {filePath}", filePath);
         await progressService.Emit(jobId, 100, true);
-
-        return subtitles;
     }
 }
