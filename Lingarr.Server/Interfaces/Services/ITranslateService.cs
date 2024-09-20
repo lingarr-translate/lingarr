@@ -21,7 +21,7 @@ public interface ITranslateService
     /// A task result that contains a <see cref="List{SubtitleItem}"/> with the translated subtitles.
     /// </returns>
     /// <exception cref="TranslationException">Thrown if the translation process fails or the translation service returns an error.</exception>
-    Task<List<SubtitleItem>> TranslateAsync(
+    Task TranslateAsync(
         string jobId,
         string subtitlePath, 
         string targetLanguage, 
