@@ -1,6 +1,6 @@
 ﻿<template>
     <PageLayout>
-        <main>
+        <div v-if="movies.totalCount" class="w-full">
             <!-- Search and Filters -->
             <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
                 <SearchComponent v-model="filter" />
@@ -50,11 +50,11 @@
             </div>
 
             <PaginationComponent
-                v-if="movies.totalCount"
                 v-model="filter"
                 :total-count="movies.totalCount"
                 :page-size="movies.pageSize" />
-        </main>
+        </div>
+        <NoMediaNotification v-else />
     </PageLayout>
 </template>
 
@@ -72,6 +72,7 @@ import SearchComponent from '@/components/common/SearchComponent.vue'
 import ContextMenu from '@/components/layout/ContextMenu.vue'
 import useDebounce from '@/composables/useDebounce'
 import ReloadComponent from '@/components/common/ReloadComponent.vue'
+import NoMediaNotification from '@/components/common/NoMediaNotification.vue'
 
 const instanceStore = useInstanceStore()
 const movieStore = useMovieStore()
