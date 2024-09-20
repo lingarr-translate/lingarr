@@ -17,7 +17,8 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Dockerfile.libretranslate" />
-    <Content Include="Lingarr.Server\Dockerfile" />
-    <Content Include="Readme.MD" />
+    <Content Include="Lingarr.Server\Dockerfile" >
+      <Link>Dockerfile</Link>
+    </Content>
   </ItemGroup>
 </Project>
