@@ -3,12 +3,8 @@ import vue from '@vitejs/plugin-vue'
 import * as path from 'path'
 
 export default defineConfig({
-    build: {
-        terserOptions: {
-            compress: {
-                drop_console: true
-            }
-        }
+    esbuild: {
+        drop: ['console']
     },
     plugins: [vue()],
     resolve: {

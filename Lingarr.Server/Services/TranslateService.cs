@@ -24,10 +24,12 @@ public class TranslateService : ITranslateService
     }
     
     /// <inheritdoc />
-    public async Task<List<SubtitleItem>> TranslateAsync(string jobId, 
+    public async Task<List<SubtitleItem>> TranslateAsync(
+        string jobId, 
         string subtitlePath, 
         string targetLanguage,
-        ProgressService progressService)
+        IProgressService progressService, 
+        CancellationToken cancellationToken)
     {
         List<SubtitleItem> subtitles;
 
@@ -74,6 +76,12 @@ public class TranslateService : ITranslateService
             iteration++;
             int progress = (int)Math.Round((double)iteration * 100 / subtitlesCount);
             await progressService.Emit(jobId, progress, false);
+            
+            if (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogInformation("Translation cancelled for subtitle: {subtitlePath}", subtitlePath);
+                break;
+            }
         }
 
         const string pattern = @"(\.([a-zA-Z]{2,3}))?\.srt$";

@@ -2,6 +2,9 @@ import { acceptHMRUpdate, defineStore } from 'pinia'
 import { ILanguage, ISubtitle } from '@/ts'
 import { useScheduleStore } from '@/store/schedule'
 import services from '@/services'
+import { useSignalR } from '@/plugins/signalR'
+
+const signalR = useSignalR()
 
 export const useTranslateStore = defineStore({
     id: 'translate',
@@ -13,6 +16,7 @@ export const useTranslateStore = defineStore({
                 language
             )
             scheduleStore.setRunningJob(jobId, subtitle)
+            await signalR.joinGroup({ group: jobId })
         }
     }
 })

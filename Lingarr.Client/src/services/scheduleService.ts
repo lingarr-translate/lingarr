@@ -4,7 +4,7 @@ import { IScheduleService } from '@/ts'
 const service = (http: AxiosStatic, resource = '/api/schedule'): IScheduleService => ({
     remove<T>(jobId: string): Promise<T> {
         return new Promise((resolve, reject) => {
-            http.delete(`${resource}/${jobId}`)
+            http.delete(`${resource}/job/remove/${jobId}`)
                 .then((response: AxiosResponse<T>) => {
                     resolve(response.data)
                 })
