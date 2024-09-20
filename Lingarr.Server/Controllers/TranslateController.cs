@@ -25,8 +25,9 @@ public class TranslateController : ControllerBase
     [HttpPost]
     public IActionResult Translate([FromBody] TranslateAbleSubtitle translateAbleSubtitle)
     {
-        string jobId = Guid.NewGuid().ToString();
-        _backgroundJobClient.Enqueue<TranslateJob>(x => x.Execute(jobId, translateAbleSubtitle));
+        string jobId = _backgroundJobClient.Enqueue<TranslateJob>(job => 
+            job.Execute(null, translateAbleSubtitle, CancellationToken.None)
+        );
         return Ok(new { JobId = jobId });
     }
 }

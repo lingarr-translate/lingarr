@@ -1,7 +1,7 @@
+using Hangfire.Server;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
-using Lingarr.Server.Services;
 
 namespace Lingarr.Server.Jobs;
 
@@ -9,26 +9,34 @@ public class TranslateJob
 {
     private readonly ITranslateService _translateService;
     private readonly ILogger<TranslateJob> _logger;
-    private readonly ProgressService _progressService;
+    private readonly IProgressService _progressService;
 
     public TranslateJob(ITranslateService translateService, 
-        ProgressService progressService, 
+        IProgressService progressService, 
         ILogger<TranslateJob> logger)
     {
         _translateService = translateService;
         _progressService = progressService;
         _logger = logger;
+        
     }
 
-    public async Task Execute(string jobId, TranslateAbleSubtitle translateAbleSubtitle)
+    public async Task Execute(
+        PerformContext context, 
+        TranslateAbleSubtitle translateAbleSubtitle,
+        CancellationToken cancellationToken)
     {
+        string jobId = context.BackgroundJob.Id;
+        
         _logger.LogInformation("TranslateJob started for subtitle: {SubtitlePath}", translateAbleSubtitle.SubtitlePath);
         try
         {
-            await _translateService.TranslateAsync(jobId,
+            await _translateService.TranslateAsync(
+                jobId,
                 translateAbleSubtitle.SubtitlePath,
                 translateAbleSubtitle.TargetLanguage,
-                _progressService);
+                _progressService,
+                cancellationToken);
         }
         catch (TranslationException ex)
         {

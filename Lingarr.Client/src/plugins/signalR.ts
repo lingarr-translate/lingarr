@@ -1,6 +1,8 @@
 ﻿import * as signalR from '@microsoft/signalr'
-import { reactive, inject } from 'vue'
-import { SignalRState, SignalRStore } from '@/ts'
+import { reactive } from 'vue'
+import type { SignalRState, SignalRStore } from '@/ts'
+
+let signalRInstance: SignalRStore | null = null
 
 export const createSignalRStore = (): SignalRStore => {
     const state = reactive<SignalRState>({
@@ -96,16 +98,16 @@ export const createSignalRStore = (): SignalRStore => {
     }
 }
 
-export const useSignalR = () => {
-    const signalR = inject<SignalRStore>('SignalR')
-    if (!signalR) throw new Error('No SignalR provided')
-    return signalR
+export const useSignalR = (): SignalRStore => {
+    if (!signalRInstance) {
+        signalRInstance = createSignalRStore()
+    }
+    return signalRInstance
 }
 
 export const createSignalRPlugin = (options: { url: string }) => ({
-    install: (app: any) => {
-        const signalRStore = createSignalRStore()
-        app.provide('SignalR', signalRStore)
+    install: () => {
+        const signalRStore = useSignalR()
         signalRStore.start(options.url)
     }
 })

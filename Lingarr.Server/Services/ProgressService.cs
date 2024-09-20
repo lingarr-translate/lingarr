@@ -30,7 +30,6 @@ public class ProgressService : IProgressService
         {
             var translationJob = await _dbContext.TranslationJobs
                 .FirstOrDefaultAsync(translationJob => translationJob.JobId == jobId);
-            ;
             if (translationJob != null)
             {
                 translationJob.Completed = true;
