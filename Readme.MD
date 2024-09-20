@@ -50,6 +50,7 @@ services:
       - PUID=0
       - PGID=0
       - LIBRETRANSLATE_API=http://LibreTranslate:5000
+      - MAX_CONCURRENT_JOBS=1 # Optional
       - DB_CONNECTION=mysql # Optional, defaults to `sqlite`
       - DB_HOST=Lingarr.Mysql # Optional, required when using MySQL
       - DB_PORT=3306 # Optional, required when using MySQL
@@ -91,6 +92,7 @@ docker run -d \
   -e PUID=0 \
   -e PGID=0 \
   -e LIBRETRANSLATE_API=http://LibreTranslate:5000 \
+  -e MAX_CONCURRENT_JOBS=1 \      # Optional
   -e DB_CONNECTION=mysql \        # Optional: defaults to 'sqlite' if not specified
   -e DB_HOST=Lingarr.Mysql \      # Optional: required when using MySQL
   -e DB_PORT=3306 \               # Optional: required when using MySQL
@@ -126,13 +128,14 @@ docker run -d \
 #### Parameters
 | Parameter                   | Function                                                                    |
 |-----------------------------|-----------------------------------------------------------------------------|
-| -p 9876:8080                | Maps port 9876 on the host to port 8080 for the Lingarr web interface        |
+| -p 9876:8080                | Maps port 9876 on the host to port 8080 for the Lingarr web interface       |
 | -e PUID=0                   | Sets the user ID for the container process                                  |
 | -e PGID=0                   | Sets the group ID for the container process                                 |
-| -e DB_CONNECTION=mysql      | Specifies the database connection type. Options are `mysql` or `sqlite`      |
-| -e DB_HOST=Lingarr.Mysql    | The hostname for the MySQL database (required when using `mysql`)            |
-| -e DB_PORT=3306             | The port for the MySQL database (required when using `mysql`)                |
-| -e DB_DATABASE=LingarrMysql | The name of the database (required when using `mysql`)                 |
+| -e MAX_CONCURRENT_JOBS=1    | Sets the amount of jobs that can run concurrently, defaults to 1            |
+| -e DB_CONNECTION=mysql      | Specifies the database connection type. Options are `mysql` or `sqlite`     |
+| -e DB_HOST=Lingarr.Mysql    | The hostname for the MySQL database (required when using `mysql`)           |
+| -e DB_PORT=3306             | The port for the MySQL database (required when using `mysql`)               |
+| -e DB_DATABASE=LingarrMysql | The name of the database (required when using `mysql`)                      |
 | -e DB_USERNAME=LingarrMysql | The username for the database (required when using `mysql`)                 |
 | -e DB_USERNAME=LingarrMysql | The password for the database (required when using `mysql`)                 |
 | -v /app/config              | Lingarr configuration directory. The SQLite database is stored here if used |

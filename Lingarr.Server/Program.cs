@@ -83,7 +83,10 @@ builder.Services.AddScoped<ISubRipWriter, SubRipWriter>();
 builder.Services.AddHangfireServer(options =>
 {
     options.Queues = ["movies", "shows", "default"];
-    options.WorkerCount = 5;
+    options.WorkerCount =
+        int.TryParse(Environment.GetEnvironmentVariable("MAX_CONCURRENT_JOBS"), out int maxConcurrentJobs)
+            ? maxConcurrentJobs
+            : 1;
 });
 // Add Hangfire scheduler services
 builder.Services.AddHangfire(configuration => configuration
