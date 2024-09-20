@@ -29,14 +29,15 @@
 import { ref, Ref, computed, ComputedRef } from 'vue'
 import { ILanguage, ISubtitle } from '@/ts'
 import { useSettingStore } from '@/store/setting'
+import { useTranslateStore } from '@/store/translate'
 import useClickOutside from '@/composables/useClickOutside'
-import services from '@/services'
 
 const emit = defineEmits(['update:toggle'])
 const { subtitle } = defineProps<{
     subtitle: ISubtitle
 }>()
 const settingsStore = useSettingStore()
+const translateStore = useTranslateStore()
 
 const isOpen: Ref<boolean> = ref(false)
 const clickOutside: Ref = ref(null)
@@ -51,8 +52,8 @@ function toggle() {
     isOpen.value = !isOpen.value
 }
 
-async function selectOption(option: ILanguage) {
-    await services.translate.translateSubtitle(subtitle, option.code)
+function selectOption(option: ILanguage) {
+    translateStore.translateSubtitle(subtitle, option)
     toggle()
 }
 

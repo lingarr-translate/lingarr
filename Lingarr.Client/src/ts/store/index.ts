@@ -2,3 +2,4 @@
 export * from './setting'
 export * from './movie'
 export * from './show'
+export * from './schedule'

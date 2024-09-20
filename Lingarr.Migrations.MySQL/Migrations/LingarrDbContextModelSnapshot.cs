@@ -256,6 +256,38 @@ namespace Lingarr.Migrations.MySQL.Migrations
                     b.ToTable("shows", (string)null);
                 });
 
+            modelBuilder.Entity("Lingarr.Core.Entities.TranslationJob", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Completed")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("completed");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("JobId")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("job_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_translation_jobs");
+
+                    b.ToTable("translation_jobs", (string)null);
+                });
+
             modelBuilder.Entity("Lingarr.Core.Entities.Episode", b =>
                 {
                     b.HasOne("Lingarr.Core.Entities.Season", "Season")

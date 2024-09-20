@@ -4,12 +4,13 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "dev": "concurrently \"vite\" \"vue-tsc --noEmit --watch\"",
+        "dev": "concurrently -m 2 \"vite\" \"vue-tsc --noEmit --watch\"",
         "build": "vue-tsc --noEmit && vite build",
         "preview": "vite preview",
         "format": "prettier ./src  --write"
     },
     "dependencies": {
+        "@microsoft/signalr": "^8.0.7",
         "axios": "^1.6.2",
         "pinia": "^2.1.7",
         "vue": "^3.5.0",

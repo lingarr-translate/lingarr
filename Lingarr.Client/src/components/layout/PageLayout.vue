@@ -1,9 +1,6 @@
 <template>
     <div
-        :class="[
-            `${instanceStore.getTheme}`,
-            'flex min-h-screen bg-primary text-primary-content '
-        ]">
+        :class="[`${instanceStore.getTheme}`, 'flex min-h-screen bg-primary text-primary-content']">
         <AsideNavigation />
 
         <div class="flex w-full flex-col">
@@ -13,23 +10,11 @@
                     <MenuIcon
                         class="block h-5 w-5 cursor-pointer md:hidden"
                         @click="isOpen = !isOpen" />
-                    <div ref="clickOutside" class="relative">
-                        <button
-                            class="hover:bg-secondary-focus rounded-full p-1 transition-colors"
-                            @click="themeDropdown = !themeDropdown">
-                            <svg
-                                class="h-5 w-5 text-secondary-content"
-                                viewBox="0 0 20 20"
-                                fill="currentColor">
-                                <path
-                                    fill-rule="evenodd"
-                                    d="M4 2a2 2 0 00-2 2v11a3 3 0 106 0V4a2 2 0 00-2-2H4zm1 14a1 1 0 100-2 1 1 0 000 2zm5-1.757l4.9-4.9a2 2 0 000-2.828L13.485 5.1a2 2 0 00-2.828 0L10 5.757v8.486zM16 18H9.071l6-6H16a2 2 0 012 2v2a2 2 0 01-2 2z"
-                                    clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                        <div
-                            v-if="themeDropdown"
-                            class="absolute right-0 z-10 mt-2 w-48 rounded-md bg-secondary shadow-lg ring-1 ring-black ring-opacity-5">
+                    <DropdownComponent width="medium">
+                        <template #button>
+                            <ThemeIcon class="h-5 w-5" />
+                        </template>
+                        <template #content>
                             <div
                                 class="py-1"
                                 aria-orientation="vertical"
@@ -43,12 +28,34 @@
                                     {{ theme }}
                                 </button>
                             </div>
-                        </div>
-                    </div>
+                        </template>
+                    </DropdownComponent>
+
+                    <DropdownComponent width="large">
+                        <template #button>
+                            <NotificationIcon class="h-5 w-5" />
+                            <span
+                                v-if="runningJobsCount > 0"
+                                class="absolute right-1 top-1 inline-flex items-center justify-center rounded-full bg-accent px-1 py-0.5 text-xs font-bold leading-none text-secondary-content">
+                                {{ runningJobsCount }}
+                            </span>
+                        </template>
+                        <template #content>
+                            <div v-if="runningJobs.length === 0" class="px-4 py-2 text-sm">
+                                No running translations
+                            </div>
+                            <div v-else class="max-h-60 overflow-y-auto p-1">
+                                <TranslationProgress
+                                    v-for="job in runningJobs"
+                                    :key="job.jobId"
+                                    :job="job" />
+                            </div>
+                        </template>
+                    </DropdownComponent>
                 </div>
             </header>
             <!-- Main Content -->
-            <main>
+            <main class="flex flex-grow">
                 <slot></slot>
             </main>
         </div>
@@ -57,15 +64,21 @@
 
 <script setup lang="ts">
 import { ref, Ref, computed, ComputedRef } from 'vue'
-import { ITheme, THEMES } from '@/ts'
+import { IRunningJob, ITheme, THEMES } from '@/ts'
 import { useInstanceStore } from '@/store/instance'
+import { useScheduleStore } from '@/store/schedule'
 import AsideNavigation from '@/components/layout/AsideNavigation.vue'
-import useClickOutside from '@/composables/useClickOutside'
+import DropdownComponent from '@/components/common/DropdownComponent.vue'
+import TranslationProgress from '@/components/common/TranslationProgress.vue'
+import NotificationIcon from '@/components/icons/NotificationIcon.vue'
+import ThemeIcon from '@/components/icons/ThemeIcon.vue'
 import MenuIcon from '@/components/icons/MenuIcon.vue'
 
 const instanceStore = useInstanceStore()
+const scheduleStore = useScheduleStore()
 const themeDropdown: Ref = ref(false)
-const clickOutside: Ref<HTMLElement | undefined> = ref()
+const runningJobs: ComputedRef<IRunningJob[]> = computed(() => scheduleStore.getRunningJobs)
+const runningJobsCount: ComputedRef<number> = computed(() => runningJobs.value.length)
 
 const isOpen: ComputedRef<boolean> = computed({
     get: () => instanceStore.getIsOpen,
@@ -76,10 +89,4 @@ const setTheme = (theme: ITheme) => {
     instanceStore.storeTheme(theme)
     themeDropdown.value = false
 }
-
-useClickOutside(clickOutside, () => {
-    if (themeDropdown.value) {
-        themeDropdown.value = false
-    }
-})
 </script>

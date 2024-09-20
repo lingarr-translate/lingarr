@@ -1,4 +1,4 @@
-import { ISettings, ISubtitle } from '@/ts'
+import { ILanguage, ISettings, ISubtitle } from '@/ts'
 
 export interface Services {
     setting: ISettingService
@@ -6,6 +6,7 @@ export interface Services {
     translate: ITranslateService
     version: IVersionService
     media: IMediaService
+    schedule: IScheduleService
 }
 
 export interface IMediaService {
@@ -35,10 +36,14 @@ export interface ISubtitleService {
     translate<T>(subtitle: ISubtitle, target: string): Promise<T>
 }
 
-export interface ITranslateService {
-    translateSubtitle<T>(subtitle: ISubtitle, target: string): Promise<T>
-}
-
 export interface IVersionService {
     getVersion<T>(): Promise<T>
+}
+
+export interface ITranslateService {
+    translateSubtitle<T>(subtitle: ISubtitle, language: ILanguage): Promise<T>
+}
+
+export interface IScheduleService {
+    remove<T>(jobId: string): Promise<T>
 }
