@@ -1,6 +1,6 @@
 ﻿<template>
     <PageLayout>
-        <main>
+        <div v-if="shows.totalCount" class="w-full">
             <!-- Search and Filters -->
             <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
                 <SearchComponent v-model="filter" />
@@ -45,13 +45,13 @@
                         <div
                             class="grid grid-cols-12 border-b-2 border-secondary bg-primary font-bold text-secondary-content">
                             <div class="col-span-1 px-4 py-2"></div>
-                            <div class="col-span-3 px-4 py-2">Season</div>
-                            <div class="col-span-8 px-4 py-2">Episodes</div>
+                            <div class="col-span-5 px-4 py-2 md:col-span-3">Season</div>
+                            <div class="col-span-6 px-4 py-2 md:col-span-8">Episodes</div>
                         </div>
                         <div
                             v-for="season in item.seasons"
                             :key="season.id"
-                            class="bg-primary text-accent-content">
+                            class="bg-primary text-sm text-accent-content md:text-base">
                             <div
                                 class="grid grid-cols-12"
                                 :class="{ 'cursor-pointer': season.episodes.length }"
@@ -59,30 +59,33 @@
                                 <div class="col-span-1 px-4 py-2">
                                     <ToggleButton
                                         v-if="season.episodes.length"
-                                        :is-expanded="expandedSeason !== season.id" />
+                                        :is-expanded="expandedSeason?.id !== season.id" />
                                 </div>
-                                <div class="col-span-3 select-none px-4 py-2">
+                                <div class="col-span-5 select-none px-4 py-2 md:col-span-3">
                                     Season {{ season.seasonNumber }}
                                 </div>
-                                <div class="col-span-8 select-none px-4 py-2">
+                                <div class="col-span-6 select-none px-4 py-2 md:col-span-8">
                                     {{ season.episodes.length }} episodes
                                 </div>
                             </div>
-                            <div v-if="expandedSeason === season.id" class="bg-secondary">
+                            <div v-if="expandedSeason?.id === season.id" class="bg-secondary">
                                 <div
                                     class="grid grid-cols-12 border-b-2 border-primary bg-tertiary font-bold text-secondary-content">
-                                    <div class="col-span-1 px-4 py-2"></div>
-                                    <div class="col-span-2 px-4 py-2">Episode</div>
-                                    <div class="col-span-5 px-4 py-2">Title</div>
-                                    <div class="col-span-4 px-4 py-2">Subtitles</div>
+                                    <div class="col-span-1 px-4 py-2 md:col-span-2">
+                                        <span class="hidden md:block">Episode</span>
+                                        <span class="block md:hidden">#</span>
+                                    </div>
+                                    <div class="col-span-7 px-4 py-2 md:col-span-5">Title</div>
+                                    <div class="col-span-4 px-4 py-2 md:col-span-5">Subtitles</div>
                                 </div>
                                 <div
                                     v-for="(episode, index) in season.episodes"
                                     :key="episode.id"
                                     class="grid grid-cols-12 bg-tertiary text-tertiary-content">
-                                    <div class="col-span-1 px-4 py-2"></div>
-                                    <div class="col-span-2 px-4 py-2">{{ index + 1 }}</div>
-                                    <div class="col-span-5 px-4 py-2">
+                                    <div class="col-span-1 px-4 py-2 md:col-span-2">
+                                        {{ index + 1 }}
+                                    </div>
+                                    <div class="col-span-7 px-4 py-2 md:col-span-5">
                                         {{ episode.title }}
                                     </div>
                                     <div
@@ -90,7 +93,7 @@
                                             episode?.fileName &&
                                             getSubtitle(episode.fileName).length
                                         "
-                                        class="col-span-2 flex items-center gap-2">
+                                        class="col-span-4 flex items-center gap-2 md:col-span-5">
                                         <ContextMenu
                                             v-for="(subtitle, jndex) in getSubtitle(
                                                 episode.fileName
@@ -110,11 +113,11 @@
             </div>
 
             <PaginationComponent
-                v-if="shows.totalCount"
                 v-model="filter"
                 :total-count="shows.totalCount"
                 :page-size="shows.pageSize" />
-        </main>
+        </div>
+        <NoMediaNotification v-else />
     </PageLayout>
 </template>
 
@@ -133,12 +136,13 @@ import SortControls from '@/components/common/SortControls.vue'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
 import ContextMenu from '@/components/layout/ContextMenu.vue'
 import ReloadComponent from '@/components/common/ReloadComponent.vue'
+import NoMediaNotification from '@/components/common/NoMediaNotification.vue'
 
 const instanceStore = useInstanceStore()
 const showStore = useShowStore()
 
 const expandedShow: Ref<boolean | number | null> = ref(null)
-const expandedSeason: Ref<boolean | number | null> = ref(null)
+const expandedSeason: Ref<ISeason | null> = ref(null)
 const subtitles: Ref<ISubtitle[]> = ref([])
 
 const shows: ComputedRef<IPagedResult<IShow>> = computed(() => showStore.get)
@@ -160,12 +164,18 @@ async function toggleShow(show: IShow) {
 
 async function toggleSeason(season: ISeason) {
     if (!season.episodes.length) return
-    if (expandedSeason.value === season.id) {
+    if (expandedSeason.value?.id === season.id) {
         expandedSeason.value = null
         return
     }
-    subtitles.value = await services.subtitle.collect(season.path)
-    expandedSeason.value = season.id
+    expandedSeason.value = season
+    await collectSubtitles()
+}
+
+async function collectSubtitles() {
+    if (expandedSeason.value?.path) {
+        subtitles.value = await services.subtitle.collect(expandedSeason.value.path)
+    }
 }
 
 const getSubtitle = (fileName: string | null) => {
