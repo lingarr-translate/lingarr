@@ -5,6 +5,7 @@ using Hangfire;
 using Hangfire.Storage.SQLite;
 using Lingarr.Core.Data;
 using Lingarr.Server.Filters;
+using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Providers;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Subtitle;
@@ -63,36 +64,43 @@ builder.Services.AddDbContext<LingarrDbContext>(options  =>
     }
 });
 // Register Providers
-builder.Services.AddScoped<ISonarrSettingsProvider, SonarrSettingsProvider>();
-builder.Services.AddScoped<IRadarrSettingsProvider, RadarrSettingsProvider>();
+builder.Services.AddScoped<IIntegrationSettingsProvider, IntegrationSettingsProvider>();
 // Register services
-builder.Services.AddScoped<ITranslateService, TranslateService>();
-builder.Services.AddScoped<ISubtitleService, SubtitleService>();
-builder.Services.AddScoped<ISettingService, SettingService>();
-builder.Services.AddScoped<IRadarrService, RadarrService>();
-builder.Services.AddScoped<ISonarrService, SonarrService>();
+builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<IIntegrationService, IntegrationService>();
 builder.Services.AddScoped<IMediaService, MediaService>();
+builder.Services.AddScoped<IProgressService, ProgressService>();
+builder.Services.AddScoped<IRadarrService, RadarrService>();
+builder.Services.AddHostedService<ScheduleInitializationService>();
+builder.Services.AddSingleton<IScheduleService, ScheduleService>();
+builder.Services.AddScoped<ISettingService, SettingService>();
+builder.Services.AddScoped<ISonarrService, SonarrService>();
+builder.Services.AddScoped<ISubtitleService, SubtitleService>();
+builder.Services.AddScoped<ITranslateService, TranslateService>();
+
 builder.Services.AddScoped<ISubRipParser, SubRipParser>();
 builder.Services.AddScoped<ISubRipWriter, SubRipWriter>();
-builder.Services.AddScoped<IImageService, ImageService>();
-builder.Services.AddSingleton<IScheduleService, ScheduleService>();
-builder.Services.AddHostedService<ScheduleInitializationService>();
-
 builder.Services.AddHangfireServer(options =>
 {
     options.Queues = ["movies", "shows", "default"];
     options.WorkerCount = 5;
 });
-
-// Added startup service to validate new settings
-builder.Services.AddHostedService<StartupService>();
 // Add Hangfire scheduler services
 builder.Services.AddHangfire(configuration => configuration
     .UseSimpleAssemblyNameTypeSerializer()
     .UseRecommendedSerializerSettings()
     .UseSQLiteStorage());
+// Add SignalR websockets
+builder.Services.AddSignalR().AddHubOptions<ScheduleProgressHub>(options =>
+{
+    options.EnableDetailedErrors = true;
+});
+// Added startup service to validate new settings
+builder.Services.AddHostedService<StartupService>();
 
 var app = builder.Build();
+// Add SignalR hubs
+app.MapHub<ScheduleProgressHub>("/hub/ScheduleProgress");
 // Apply migrations
 using (var scope = app.Services.CreateScope())
 {
@@ -126,7 +134,10 @@ app.UseAuthorization();
 app.MapControllers();
 app.UseStaticFiles();
 
-app.MapWhen(httpContext => httpContext.Request.Path.Value != null && !httpContext.Request.Path.Value.StartsWith("/api"),
+app.MapWhen(httpContext => 
+        httpContext.Request.Path.Value != null && 
+        !httpContext.Request.Path.Value.StartsWith("/api") && 
+        !httpContext.Request.Path.Value.StartsWith("/hub"),
     configBuilder =>
     {
         configBuilder.UseSpa(spa =>

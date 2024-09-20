@@ -11,6 +11,7 @@ public class LingarrDbContext : DbContext
     public DbSet<Episode> Episodes { get; set; }
     public DbSet<Media> Media { get; set; }
     public DbSet<Setting> Settings { get; set; }
+    public DbSet<TranslationJob> TranslationJobs { get; set; }
 
    public LingarrDbContext(DbContextOptions options) : base(options)
    {

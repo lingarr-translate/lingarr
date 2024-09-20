@@ -22,7 +22,7 @@ public class ScheduleController : ControllerBase
     [HttpGet("job/movie")]
     public IActionResult StartMovieJob()
     {
-        _backgroundJobClient.Enqueue<GetMovieJob>(x => x.Execute());
+        _backgroundJobClient.Enqueue<GetMovieJob>(job => job.Execute(JobCancellationToken.Null));
         return Ok();
     }
 
@@ -33,7 +33,28 @@ public class ScheduleController : ControllerBase
     [HttpGet("job/show")]
     public IActionResult StartShowJob()
     {
-        _backgroundJobClient.Enqueue<GetShowJob>(x => x.Execute());
+        _backgroundJobClient.Enqueue<GetShowJob>(job => job.Execute(JobCancellationToken.Null));
         return Ok();
+    }
+    
+    /// <summary>
+    /// Attempts to remove a background job from the queue or stop it if it's already running.
+    /// </summary>
+    /// <param name="jobId">The unique identifier of the job to be removed.</param>
+    /// <returns>
+    /// Returns an HTTP 200 OK response with a success message if the job was successfully removed or stopped.
+    /// Returns an HTTP 404 Not Found response if the job doesn't exist or couldn't be removed.
+    /// </returns>
+    [HttpDelete("job/remove/{jobId}")]
+    public IActionResult RemoveJob(string jobId)
+    {
+        bool result = _backgroundJobClient.Delete(jobId);
+    
+        if (result)
+        {
+            return Ok($"Job {jobId} has been successfully removed or stopped.");
+        }
+
+        return NotFound($"Job {jobId} not found or could not be removed.");
     }
 }

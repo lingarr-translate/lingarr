@@ -21,6 +21,10 @@ export default defineConfig({
             '/api': {
                 target: 'http://Lingarr.Server:8080',
                 changeOrigin: true
+            },
+            '/hub': {
+                target: 'http://Lingarr.Server:9876',
+                changeOrigin: true
             }
         },
         watch: {

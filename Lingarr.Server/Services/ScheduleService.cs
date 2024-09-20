@@ -26,31 +26,30 @@ public class ScheduleService : IScheduleService
 
         _logger.LogInformation("Configuring media indexers.");
         foreach (var setting in settings)
-        {
-            var options = new RecurringJobOptions
-            {
-                TimeZone = TimeZoneInfo.Utc
-            };
-                
+        { 
             switch (setting.Key)
             {
                 case "movie_schedule":
                     RecurringJob.AddOrUpdate<GetMovieJob>(
                         "GetMovieJob", 
                         "movies",
-                        job => job.Execute(), 
-                        setting.Value,
-                        options);
+                        job => job.Execute(JobCancellationToken.Null), 
+                        setting.Value);
                     break;
                 case "show_schedule":
                     RecurringJob.AddOrUpdate<GetShowJob>(
                         "GetShowJob", 
                         "shows",
-                        job => job.Execute(), 
-                        setting.Value,
-                        options);
+                        job => job.Execute(JobCancellationToken.Null), 
+                        setting.Value);
                     break;
             }
         }
+        
+        RecurringJob.AddOrUpdate<CleanupJob>(
+            "CleanupJob",
+            job => job.Execute(),
+            Cron.Weekly(),
+            new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
     }
 }

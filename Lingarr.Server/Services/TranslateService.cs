@@ -24,7 +24,10 @@ public class TranslateService : ITranslateService
     }
     
     /// <inheritdoc />
-    public async Task<List<SubtitleItem>> TranslateAsync(string subtitlePath, string targetLanguage)
+    public async Task<List<SubtitleItem>> TranslateAsync(string jobId, 
+        string subtitlePath, 
+        string targetLanguage,
+        ProgressService progressService)
     {
         List<SubtitleItem> subtitles;
 
@@ -37,6 +40,8 @@ public class TranslateService : ITranslateService
         using var httpClient = _httpClientFactory.CreateClient();
         var libreTranslateApi = Environment.GetEnvironmentVariable("LIBRETRANSLATE_API") ?? "http://libretranslate:5000";
 
+        var subtitlesCount = subtitles.Count;
+        var iteration = 0;
         foreach (var subtitle in subtitles)
         {
             for (var index = 0; index < subtitle.Lines.Count; index++)
@@ -65,6 +70,10 @@ public class TranslateService : ITranslateService
                     subtitle.Lines[index] = result.TranslatedText;
                 }
             }
+
+            iteration++;
+            int progress = (int)Math.Round((double)iteration * 100 / subtitlesCount);
+            await progressService.Emit(jobId, progress, false);
         }
 
         const string pattern = @"(\.([a-zA-Z]{2,3}))?\.srt$";
@@ -76,6 +85,8 @@ public class TranslateService : ITranslateService
         {
             await writer.WriteStreamAsync(fileStream, subtitles);
         }
+        _logger.LogInformation("TranslateJob completed and created subtitle: {filePath}", filePath);
+        await progressService.Emit(jobId, 100, true);
 
         return subtitles;
     }
