@@ -12,7 +12,9 @@ export const useSettingStore = defineStore({
             sonarr_url: '',
             theme: '',
             source_languages: '',
-            target_languages: ''
+            target_languages: '',
+            radarr_settings_completed: '',
+            sonarr_settings_completed: ''
         }
     }),
     getters: {
@@ -28,7 +30,7 @@ export const useSettingStore = defineStore({
     actions: {
         updateSetting(key: keyof ISettings, value: string) {
             let setting = value
-            if(['radarr_url','sonarr_url'].includes(key)) {
+            if (['radarr_url', 'sonarr_url'].includes(key)) {
                 setting = setting.replace(/\/+$/, '')
             }
             this.settings[key] = setting
@@ -49,7 +51,9 @@ export const useSettingStore = defineStore({
                 'sonarr_url',
                 'sonarr_api_key',
                 'source_languages',
-                'target_languages'
+                'target_languages',
+                'sonarr_settings_completed',
+                'radarr_settings_completed'
             ])
 
             this.settings = {

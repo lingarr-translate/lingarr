@@ -116,12 +116,20 @@ public class SettingService: ISettingService
             switch (jobName)
             {
                 case "Radarr":
+                    await SetSetting("radarr_settings_completed", "true");
+                    
                     _logger.LogInformation("Radarr settings completed, indexing media...");
-                    _backgroundJobClient.Enqueue<GetMovieJob>("movies", x => x.Execute());
+                    _backgroundJobClient.Schedule<GetMovieJob>("movies",
+                        job => job.Execute(JobCancellationToken.Null),
+                        TimeSpan.FromMinutes(1));
                     break;
                 case "Sonarr":
+                    await SetSetting("sonarr_settings_completed", "true");
+                    
                     _logger.LogInformation("Sonarr settings completed, indexing media...");
-                    _backgroundJobClient.Enqueue<GetShowJob>("shows", x => x.Execute());
+                    _backgroundJobClient.Schedule<GetShowJob>("shows",
+                        job => job.Execute(JobCancellationToken.Null),
+                        TimeSpan.FromMinutes(1));
                     break;
             }
         }

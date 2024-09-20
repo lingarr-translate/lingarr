@@ -83,6 +83,9 @@ builder.Services.AddHangfireServer(options =>
     options.Queues = ["movies", "shows", "default"];
     options.WorkerCount = 5;
 });
+
+// Added startup service to validate new settings
+builder.Services.AddHostedService<StartupService>();
 // Add Hangfire scheduler services
 builder.Services.AddHangfire(configuration => configuration
     .UseSimpleAssemblyNameTypeSerializer()

@@ -1,4 +1,5 @@
-﻿using Lingarr.Core.Data;
+﻿using Hangfire;
+using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models.Integrations;
@@ -22,7 +23,9 @@ public class GetShowJob
         _logger = logger;
     }
 
-    public async Task Execute()
+    [DisableConcurrentExecution(timeoutInSeconds: 10 * 60)]
+    [AutomaticRetry(Attempts = 0)]
+    public async Task Execute(IJobCancellationToken cancellationToken)
     {
         _logger.LogInformation("Sonarr job initiated");
         try

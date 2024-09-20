@@ -38,8 +38,8 @@ public class SettingController : ControllerBase
     /// </summary>
     /// <param name="keys">A list of keys for the settings to retrieve.</param>
     /// <returns>Returns an HTTP 200 OK response with a dictionary of setting keys and values.</returns>
-    [HttpGet("multiple")]
-    public async Task<IActionResult> GetSettings([FromQuery] IEnumerable<string> keys)
+    [HttpPost("multiple/get")]
+    public async Task<IActionResult> GetSettings([FromBody] IEnumerable<string> keys)
     {
         var settings = await _settingService.GetSettings(keys);
         return Ok(settings);
@@ -69,7 +69,7 @@ public class SettingController : ControllerBase
     /// <param name="settings">A dictionary where the keys are setting keys and the values are the new values to assign.</param>
     /// <returns>Returns an HTTP 200 OK response if all settings were successfully updated or created; otherwise,
     /// an HTTP 400 Bad Request response.</returns>
-    [HttpPost("multiple")]
+    [HttpPost("multiple/set")]
     public async Task<IActionResult> SetSettings([FromBody] Dictionary<string, string> settings)
     {
         var success = await _settingService.SetSettings(settings);
