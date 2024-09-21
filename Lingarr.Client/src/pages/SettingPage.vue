@@ -1,8 +1,10 @@
 <template>
     <PageLayout>
-        <div class="flex flex-col gap-4 p-4 md:flex-row">
-            <IntegrationSettings />
-            <LanguageSettings />
+        <div class="p-4">
+            <div class="flex flex-col gap-4 md:flex-row">
+                <IntegrationSettings />
+                <LanguageSettings />
+            </div>
         </div>
     </PageLayout>
 </template>

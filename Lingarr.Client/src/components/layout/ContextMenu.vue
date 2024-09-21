@@ -1,7 +1,7 @@
 <template>
     <div class="relative select-none items-center transition duration-300 ease-in-out">
         <!-- Context -->
-        <TooltipComponent ref="tooltip">
+        <TooltipComponent ref="tooltip" alignment="left">
             <div ref="clickOutside" @click="toggle">
                 <slot></slot>
             </div>
