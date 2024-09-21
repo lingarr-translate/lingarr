@@ -5,17 +5,7 @@ import services from '@/services'
 export const useSettingStore = defineStore({
     id: 'setting',
     state: (): IUseSettingStore => ({
-        settings: {
-            radarr_api_key: '',
-            radarr_url: '',
-            sonarr_api_key: '',
-            sonarr_url: '',
-            theme: '',
-            source_languages: '',
-            target_languages: '',
-            radarr_settings_completed: '',
-            sonarr_settings_completed: ''
-        }
+        settings: {} as ISettings
     }),
     getters: {
         getSettings: (state: IUseSettingStore): ISettings => {

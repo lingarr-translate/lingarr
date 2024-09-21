@@ -10,7 +10,8 @@
             leave-to-class="transform opacity-0 scale-95">
             <div
                 v-if="isVisible"
-                class="absolute -top-5 left-7 z-50 w-36 transform rounded border border-accent bg-secondary px-3 py-1 text-center text-sm shadow-lg">
+                :class="alignmentClass"
+                class="absolute -top-5 z-50 w-36 transform rounded border border-accent bg-secondary px-3 py-1 text-center text-sm shadow-lg">
                 {{ tooltip }}
             </div>
         </Transition>
@@ -18,14 +19,29 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, ComputedRef } from 'vue'
 
-const { tooltip = 'Translation started', duration = 2000 } = defineProps<{
+const {
+    tooltip = 'Translation started',
+    duration = 2000,
+    alignment = 'left'
+} = defineProps<{
     tooltip?: string
     duration?: number
+    alignment?: string
 }>()
 
 const isVisible = ref(false)
+const alignmentClass: ComputedRef<string> = computed(() => {
+    switch (alignment) {
+        case 'right':
+            return 'right-7'
+        case 'left':
+            return 'left-7'
+        default:
+            return 'left-1/2 -translate-x-1/2'
+    }
+})
 
 const showTooltip = () => {
     isVisible.value = true

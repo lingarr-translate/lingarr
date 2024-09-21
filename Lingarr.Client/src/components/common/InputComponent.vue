@@ -6,30 +6,20 @@
         <div class="relative">
             <input
                 id="apiInput"
-                v-model="inputModel"
+                :value="internalValue"
                 :class="[
-                    'w-full rounded-md border border-accent bg-transparent px-4 py-2 outline-none transition-colors duration-200',
+                    'w-full rounded-md border bg-transparent px-4 py-2 outline-none transition-colors duration-200',
                     isValid ? 'border-green-500' : 'border-accent',
                     isInvalid ? 'border-red-500' : ''
                 ]"
                 :placeholder="placeholder"
-                @input="validateInput" />
+                @input="handleInput" />
             <div class="absolute inset-y-0 right-0 flex items-center pr-3">
                 <span v-if="isValid" class="text-green-500">
-                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path
-                            fill-rule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                            clip-rule="evenodd" />
-                    </svg>
+                    <CheckMarkIcon class="h-5 w-5" />
                 </span>
                 <span v-if="isInvalid" class="text-red-500">
-                    <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path
-                            fill-rule="evenodd"
-                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                            clip-rule="evenodd" />
-                    </svg>
+                    <ExclamationIcon class="h-5 w-5" />
                 </span>
             </div>
         </div>
@@ -40,7 +30,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, ModelRef } from 'vue'
+import { ref, watch } from 'vue'
+import useDebounce from '@/composables/useDebounce'
+import ExclamationIcon from '@/components/icons/ExclamationIcon.vue'
+import CheckMarkIcon from '@/components/icons/CheckMarkIcon.vue'
 
 const {
     label,
@@ -57,24 +50,39 @@ const {
     maxLength?: number
     errorMessage?: string
 }>()
-const inputModel: ModelRef<string> = defineModel({ required: true })
 
-const isValid: Ref<boolean> = ref(false)
-const isInvalid: Ref<boolean> = ref(false)
-const error: Ref<string> = ref('')
+const emit = defineEmits(['validation-status', 'update:modelValue'])
+const inputModel = defineModel<string>({ required: true })
+const internalValue = ref(inputModel.value)
+const error = ref('')
+const isValid = ref(false)
+const isInvalid = ref(false)
 
-const validateInput = () => {
-    const value = inputModel.value
+const validateAndUpdate = useDebounce((value: string) => {
+    validateInput(value)
+    if (isValid.value) {
+        emit('update:modelValue', value)
+    }
+}, 500)
 
+const handleInput = (event: Event) => {
+    const value = (event.target as HTMLInputElement).value
+    internalValue.value = value
+    validateAndUpdate(value)
+}
+
+const validateInput = (value: string) => {
     switch (validationType) {
         case 'string':
-            isValid.value = value.length >= minLength && value.length <= maxLength
-            error.value = errorMessage.format({ minLength: minLength })
+            isValid.value = value.length >= (minLength ?? 0) && value.length <= (maxLength ?? 99)
+            error.value = isValid.value
+                ? ''
+                : errorMessage ?? `Length must be between ${minLength} and ${maxLength}`
             break
         case 'url':
             const urlPattern = /^(http:\/\/|https:\/\/)[\w\-]+(\.[\w\-]+)*(:\d+)?(\/.*)?$/
             isValid.value = urlPattern.test(value)
-            error.value = errorMessage
+            error.value = isValid.value ? '' : errorMessage ?? 'Invalid URL'
             break
         default:
             isValid.value = true
@@ -82,5 +90,11 @@ const validateInput = () => {
     }
 
     isInvalid.value = value !== '' && !isValid.value
+    emit('validation-status', isValid.value)
 }
+
+watch(inputModel, (newVal) => {
+    internalValue.value = newVal
+    validateInput(newVal)
+})
 </script>
