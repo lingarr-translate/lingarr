@@ -7,7 +7,7 @@ COPY ./Lingarr.Client/ /Client
 WORKDIR /Client
 # Install dependencies
 RUN echo "Current BUILD_CONFIGURATION: $BUILD_CONFIGURATION"
-RUN if [ "$BUILD_CONFIGURATION" = "Release" ] ; then npm ci --only=production ; else npm ci ; fi
+RUN if [ "$BUILD_CONFIGURATION" = "Release" ] ; then npm ci --only=production ; else npm install ; fi
 RUN npm run build
 
 # Step 2: Prepare the base image for the server
