@@ -27,17 +27,14 @@ export default {
 
     plugins: [
         function ({ addUtilities }) {
-            addUtilities(
-                {
-                    '.mask-gradient': {
-                        'mask-image':
-                            'linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.7) 100%)',
-                        '-webkit-mask-image':
-                            'linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.7) 100%)'
-                    }
-                },
-                ['responsive', 'hover']
-            )
+            addUtilities({
+                '.mask-gradient': {
+                    'mask-image':
+                        'linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.7) 100%)',
+                    '-webkit-mask-image':
+                        'linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.7) 100%)'
+                }
+            })
         },
         createThemes({
             'solarized-light': {
@@ -151,6 +148,5 @@ export default {
                 'accent-content': '#c0c8d2'
             }
         })
-    ],
-    keyframes: {}
+    ]
 }

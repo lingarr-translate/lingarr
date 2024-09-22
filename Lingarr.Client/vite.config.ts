@@ -22,7 +22,7 @@ export default defineConfig(({ command, mode }) => {
                     changeOrigin: true
                 },
                 '/hub': {
-                    target: 'http://Lingarr.Server:9876',
+                    target: 'http://Lingarr.Server:8080',
                     changeOrigin: true
                 }
             },
