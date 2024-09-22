@@ -57,7 +57,6 @@ function toggle() {
 
 function selectOption(option: ILanguage) {
     translateStore.translateSubtitle(subtitle, option)
-    toggle()
     tooltip.value?.showTooltip()
 }
 

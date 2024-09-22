@@ -4,6 +4,7 @@
             <div class="mb-2 flex items-center justify-between text-xs text-gray-300">
                 <span class="line-clamp-1">{{ job.fileName }}</span>
                 <span v-if="progress == 100">Completed</span>
+                <span v-else-if="progress == 0">Waiting</span>
                 <span v-else class="pl-1.5">{{ progress }}%</span>
             </div>
             <div class="h-2 w-full overflow-hidden rounded-full bg-gray-700">
