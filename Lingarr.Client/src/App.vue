@@ -25,6 +25,6 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-    signalR.off('GroupCompleted', () => null)
+    signalR.off('GroupCompleted', () => {})
 })
 </script>
