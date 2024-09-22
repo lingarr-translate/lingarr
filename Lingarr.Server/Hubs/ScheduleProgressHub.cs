@@ -3,6 +3,7 @@ using Lingarr.Core.Entities;
 using Lingarr.Server.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Hangfire;
 
 namespace Lingarr.Server.Hubs;
 
@@ -23,7 +24,7 @@ public class ScheduleProgressHub : Hub
         var translationJob = await _dbContext.TranslationJobs
             .FirstOrDefaultAsync(translationJob => translationJob.JobId == group);
 
-        if (translationJob == null)
+        if (translationJob == null && CheckIfJobExists(request.Group))
         {
             translationJob = new TranslationJob
             {
@@ -32,10 +33,6 @@ public class ScheduleProgressHub : Hub
             };
             _dbContext.TranslationJobs.Add(translationJob);
             await _dbContext.SaveChangesAsync();
-        }
-
-        if (!translationJob.Completed)
-        {
             await Groups.AddToGroupAsync(Context.ConnectionId, group);
             await Clients.Caller.SendAsync("JoinedGroup", group);
         }
@@ -49,5 +46,14 @@ public class ScheduleProgressHub : Hub
     {
         string group = request.Group;
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, group);
+    }
+    
+    private bool CheckIfJobExists(string jobId)
+    {
+        using (var connection = JobStorage.Current.GetConnection())
+        {
+            var job = connection.GetJobData(jobId);
+            return job != null;
+        }
     }
 }
