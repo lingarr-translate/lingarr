@@ -34,7 +34,7 @@
                     <div
                         class="grid cursor-pointer grid-cols-12 border-b border-accent"
                         @click="toggleShow(item)">
-                        <div class="col-span-1 px-4 py-2">
+                        <div class="col-span-1 px-2 py-2 md:px-4">
                             <ToggleButton :is-expanded="expandedShow !== item.id" />
                         </div>
                         <div class="col-span-11 px-4 py-2">
@@ -56,7 +56,7 @@
                                 class="grid grid-cols-12"
                                 :class="{ 'cursor-pointer': season.episodes.length }"
                                 @click="toggleSeason(season)">
-                                <div class="col-span-1 px-4 py-2">
+                                <div class="col-span-1 px-2 py-2 md:px-4">
                                     <ToggleButton
                                         v-if="season.episodes.length"
                                         :is-expanded="expandedSeason?.id !== season.id" />
@@ -68,9 +68,10 @@
                                     {{ season.episodes.length }} episodes
                                 </div>
                             </div>
-                            <div v-if="expandedSeason?.id === season.id" class="bg-secondary">
-                                <div
-                                    class="grid grid-cols-12 border-b-2 border-primary bg-tertiary font-bold text-secondary-content">
+                            <div
+                                v-if="expandedSeason?.id === season.id"
+                                class="w-full bg-tertiary text-tertiary-content">
+                                <div class="grid grid-cols-12 border-b-2 border-primary font-bold">
                                     <div class="col-span-1 px-4 py-2 md:col-span-2">
                                         <span class="hidden md:block">Episode</span>
                                         <span class="block md:hidden">#</span>
@@ -81,7 +82,7 @@
                                 <div
                                     v-for="(episode, index) in season.episodes"
                                     :key="episode.id"
-                                    class="grid grid-cols-12 bg-tertiary text-tertiary-content">
+                                    class="grid grid-cols-12">
                                     <div class="col-span-1 px-4 py-2 md:col-span-2">
                                         {{ index + 1 }}
                                     </div>
@@ -93,7 +94,7 @@
                                             episode?.fileName &&
                                             getSubtitle(episode.fileName).length
                                         "
-                                        class="col-span-4 flex items-center gap-2 md:col-span-5">
+                                        class="col-span-4 flex flex-wrap items-center gap-2 md:col-span-5">
                                         <ContextMenu
                                             v-for="(subtitle, jndex) in getSubtitle(
                                                 episode.fileName

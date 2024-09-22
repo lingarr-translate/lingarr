@@ -1,12 +1,9 @@
 ﻿<template>
     <div ref="clickOutside" class="relative z-10 inline-block text-left">
-        <div>
-            <button
-                type="button"
-                class="inline-flex h-10 w-10 items-center justify-center rounded-full"
-                @click="toggleDropdown">
-                <slot name="button"></slot>
-            </button>
+        <div
+            class="inline-flex h-10 w-10 cursor-pointer items-center justify-center"
+            @click="toggleDropdown">
+            <slot name="button"></slot>
         </div>
 
         <transition

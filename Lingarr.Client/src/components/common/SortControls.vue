@@ -11,7 +11,6 @@
         </option>
     </select>
     <button class="flex items-center space-x-2" @click="orderBy">
-        <span>Sort</span>
         <span>
             <svg
                 v-if="modelValue.isAscending"

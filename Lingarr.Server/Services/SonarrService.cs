@@ -16,9 +16,8 @@ public class SonarrService : ISonarrService
     /// <inheritdoc />
     public async Task<List<SonarrShow>?> GetShows()
     {
-        var apiUrl = "/api/v3/series/";
         return await _integrationService.GetApiResponse<List<SonarrShow>>(
-            apiUrl,
+            "/api/v3/series/",
             new IntegrationSettingKeys
             {
                 Url = "sonarr_url",
@@ -29,9 +28,8 @@ public class SonarrService : ISonarrService
     /// <inheritdoc />
     public async Task<List<SonarrEpisode>?> GetEpisodes(int seriesNumber, int seasonNumber)
     {
-        var apiUrl = $"/api/v3/episode?seriesId={seriesNumber}&seasonNumber={seasonNumber}&includeImages=true";
         return await _integrationService.GetApiResponse<List<SonarrEpisode>>(
-            apiUrl,
+            $"/api/v3/episode?seriesId={seriesNumber}&seasonNumber={seasonNumber}&includeImages=true",
             new IntegrationSettingKeys
             {
                 Url = "sonarr_url",
@@ -42,9 +40,8 @@ public class SonarrService : ISonarrService
     /// <inheritdoc />
     public async Task<SonarrEpisodePath?> GetEpisodePath(int episodeNumber)
     {
-        var apiUrl = $"/api/v3/episode/{episodeNumber}";
         return await _integrationService.GetApiResponse<SonarrEpisodePath>(
-            apiUrl,
+            $"/api/v3/episode/{episodeNumber}",
             new IntegrationSettingKeys
             {
                 Url = "sonarr_url",

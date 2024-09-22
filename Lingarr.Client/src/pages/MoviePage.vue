@@ -38,8 +38,7 @@
                             <ContextMenu
                                 v-for="(subtitle, index) in item.subtitles"
                                 :key="`${index}-${subtitle.fileName}`"
-                                :subtitle="subtitle"
-                                @update:toggle="toggleMovie(item)">
+                                :subtitle="subtitle">
                                 <BadgeComponent value="{{ subtitle.language }}">
                                     {{ subtitle.language.toUpperCase() }}
                                 </BadgeComponent>
@@ -60,13 +59,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, computed, onMounted, ComputedRef } from 'vue'
-import { IFilter, IMovie, IPagedResult, ISubtitle } from '@/ts'
+import { computed, onMounted, ComputedRef } from 'vue'
+import { IFilter, IMovie, IPagedResult } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
-import { useInstanceStore } from '@/store/instance'
 import { useSettingStore } from '@/store/setting'
 import { useMovieStore } from '@/store/movie'
-import services from '@/services'
 import PaginationComponent from '@/components/common/PaginationComponent.vue'
 import PageLayout from '@/components/layout/PageLayout.vue'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
@@ -76,11 +73,8 @@ import ContextMenu from '@/components/layout/ContextMenu.vue'
 import ReloadComponent from '@/components/common/ReloadComponent.vue'
 import NoMediaNotification from '@/components/common/NoMediaNotification.vue'
 
-const instanceStore = useInstanceStore()
 const settingStore = useSettingStore()
 const movieStore = useMovieStore()
-
-const subtitles: Ref<ISubtitle[]> = ref([])
 
 const settingsCompleted: ComputedRef<string> = computed(() =>
     JSON.parse(settingStore.getSetting('radarr_settings_completed') as string)
@@ -92,11 +86,6 @@ const filter: ComputedRef<IFilter> = computed({
         movieStore.setFilter(value)
     }, 300)
 })
-
-const toggleMovie = useDebounce(async (movie: IMovie) => {
-    subtitles.value = await services.subtitle.collect(movie.path)
-    instanceStore.setPoster({ content: movie, type: 'movie' })
-}, 1000)
 
 onMounted(async () => {
     await movieStore.fetch()

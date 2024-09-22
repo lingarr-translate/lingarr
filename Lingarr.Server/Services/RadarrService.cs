@@ -16,9 +16,8 @@ public class RadarrService : IRadarrService
     /// <inheritdoc />
     public async Task<List<RadarrMovie>?> GetMovies()
     {
-        var apiUrl = "/api/v3/movie/";
         return await _integrationService.GetApiResponse<List<RadarrMovie>>(
-            apiUrl,
+            "/api/v3/movie/",
             new IntegrationSettingKeys
             {
                 Url = "radarr_url",
