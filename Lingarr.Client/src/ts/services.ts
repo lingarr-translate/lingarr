@@ -33,7 +33,6 @@ export interface ISettingService {
 
 export interface ISubtitleService {
     collect<T>(path: string): Promise<T>
-    translate<T>(subtitle: ISubtitle, target: string): Promise<T>
 }
 
 export interface IVersionService {
@@ -41,7 +40,7 @@ export interface IVersionService {
 }
 
 export interface ITranslateService {
-    translateSubtitle<T>(subtitle: ISubtitle, language: ILanguage): Promise<T>
+    translateSubtitle<T>(subtitle: ISubtitle, source: string, target: ILanguage): Promise<T>
 }
 
 export interface IScheduleService {

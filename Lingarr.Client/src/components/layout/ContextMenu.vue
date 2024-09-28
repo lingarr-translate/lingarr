@@ -13,14 +13,16 @@
             class="absolute right-0 top-8 z-10 w-56 rounded-md border border-accent bg-primary bg-clip-border shadow-lg">
             <div class="px-3 py-1" role="menu" aria-orientation="vertical">
                 <span class="text-xs" role="menuitem">Translate to ...</span>
-                <a
+                <div
                     v-for="language in languages"
                     :key="language.code"
-                    class="mb-1 flex items-center justify-between text-sm"
+                    class="mb-1 flex text-sm hover:brightness-150"
                     role="menuitem"
                     @click="selectOption(language)">
-                    <span class="cursor-pointer py-2">{{ language.name }}</span>
-                </a>
+                    <span class="flex h-full w-full cursor-pointer items-center py-2">
+                        {{ language.name }}
+                    </span>
+                </div>
             </div>
         </div>
     </div>
@@ -55,8 +57,8 @@ function toggle() {
     isOpen.value = !isOpen.value
 }
 
-function selectOption(option: ILanguage) {
-    translateStore.translateSubtitle(subtitle, option)
+function selectOption(target: ILanguage) {
+    translateStore.translateSubtitle(subtitle, subtitle.language, target)
     toggle()
     tooltip.value?.showTooltip()
 }
