@@ -2,10 +2,11 @@ import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
 import { ILanguage, ISubtitle, ITranslateService } from '@/ts'
 
 const service = (http: AxiosStatic, resource = '/api/translate'): ITranslateService => ({
-    translateSubtitle<T>(subtitle: ISubtitle, target: ILanguage): Promise<T> {
+    translateSubtitle<T>(subtitle: ISubtitle, source: string, target: ILanguage): Promise<T> {
         return new Promise((resolve, reject) => {
             http.post(resource, {
                 subtitlePath: subtitle.path,
+                sourceLanguage: source,
                 targetLanguage: target.code
             })
 

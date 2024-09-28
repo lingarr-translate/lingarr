@@ -28,12 +28,12 @@ export const useInstanceStore = defineStore({
             this.isOpen = isOpen
         },
         setPoster({ content, type }: { content: IMovie | IShow; type: string }): void {
-            if (!content || !Array.isArray(content.media)) {
+            if (!content || !Array.isArray(content.images)) {
                 this.poster = ''
                 return
             }
-            const posterMedia = content.media.find((media) => media.type === 'poster')
-            this.poster = posterMedia ? `${type}${posterMedia.path}` : ''
+            const posterImage = content.images.find((image) => image.type === 'poster')
+            this.poster = posterImage ? `${type}${posterImage.path}` : ''
         },
         async applyVersionOnLoad(): Promise<void> {
             let version = localStorage.getItem<IVersion>('version')

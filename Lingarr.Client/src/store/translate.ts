@@ -9,11 +9,12 @@ const signalR = useSignalR()
 export const useTranslateStore = defineStore({
     id: 'translate',
     actions: {
-        async translateSubtitle(subtitle: ISubtitle, language: ILanguage) {
+        async translateSubtitle(subtitle: ISubtitle, source: string, target: ILanguage) {
             const scheduleStore = useScheduleStore()
             const { jobId } = await services.translate.translateSubtitle<{ jobId: string }>(
                 subtitle,
-                language
+                source,
+                target
             )
             scheduleStore.setRunningJob(jobId, subtitle)
             await signalR.joinGroup({ group: jobId })
