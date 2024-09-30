@@ -15,7 +15,7 @@
         </div>
         <button
             class="mt-6 rounded-md border border-accent px-4 py-2 text-primary-content transition-colors hover:text-primary-content/50"
-            @click="router.push('settings')">
+            @click="router.push({ name: 'integration-settings' })">
             Go to Settings
         </button>
     </div>

@@ -16,10 +16,10 @@
                 <div
                     v-for="language in languages"
                     :key="language.code"
-                    class="mb-1 flex text-sm hover:brightness-150"
+                    class="mb-1 flex text-sm"
                     role="menuitem"
                     @click="selectOption(language)">
-                    <span class="flex h-full w-full cursor-pointer items-center py-2">
+                    <span class="h-full w-full cursor-pointer py-2 hover:brightness-150">
                         {{ language.name }}
                     </span>
                 </div>

@@ -21,7 +21,7 @@
                     <li
                         v-for="(item, index) in menuItems"
                         :key="index"
-                        class="flex w-full cursor-pointer items-center justify-start"
+                        class="flex w-full cursor-pointer items-center justify-start hover:brightness-150"
                         @click="navigate(item.route)">
                         <component :is="item.icon" class="mr-2 h-4 w-4" />
                         {{ item.label }}
@@ -75,7 +75,7 @@ const menuItems = [
     { label: 'Dashboard', icon: HomeIcon, route: 'dashboard' },
     { label: 'Movies', icon: MovieIcon, route: 'movies' },
     { label: 'TV Shows', icon: ShowIcon, route: 'shows' },
-    { label: 'Settings', icon: SettingIcon, route: 'settings' }
+    { label: 'Settings', icon: SettingIcon, route: 'general-settings' }
 ]
 
 function navigate(route: string) {

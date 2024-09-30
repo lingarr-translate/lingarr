@@ -35,7 +35,7 @@
                         class="grid cursor-pointer grid-cols-12 border-b border-accent"
                         @click="toggleShow(item)">
                         <div class="col-span-1 px-2 py-2 md:px-4">
-                            <ToggleButton :is-expanded="expandedShow !== item.id" />
+                            <CaretButton :is-expanded="expandedShow !== item.id" />
                         </div>
                         <div class="col-span-11 px-4 py-2">
                             {{ item.title }}
@@ -57,12 +57,13 @@
                                 :class="{ 'cursor-pointer': season.episodes.length }"
                                 @click="toggleSeason(season)">
                                 <div class="col-span-1 px-2 py-2 md:px-4">
-                                    <ToggleButton
+                                    <CaretButton
                                         v-if="season.episodes.length"
                                         :is-expanded="expandedSeason?.id !== season.id" />
                                 </div>
                                 <div class="col-span-5 select-none px-4 py-2 md:col-span-3">
-                                    Season {{ season.seasonNumber }}
+                                    <span v-if="season.seasonNumber == 0">Specials</span>
+                                    <span v-else>Season {{ season.seasonNumber }}</span>
                                 </div>
                                 <div class="col-span-6 select-none px-4 py-2 md:col-span-8">
                                     {{ season.episodes.length }} episodes
@@ -134,7 +135,7 @@ import services from '@/services'
 import PaginationComponent from '@/components/common/PaginationComponent.vue'
 import PageLayout from '@/components/layout/PageLayout.vue'
 import SearchComponent from '@/components/common/SearchComponent.vue'
-import ToggleButton from '@/components/common/ToggleButton.vue'
+import CaretButton from '@/components/common/CaretButton.vue'
 import SortControls from '@/components/common/SortControls.vue'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
 import ContextMenu from '@/components/layout/ContextMenu.vue'
