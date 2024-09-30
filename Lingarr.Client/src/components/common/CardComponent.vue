@@ -1,5 +1,5 @@
 ﻿<template>
-    <div class="rounded-md bg-gradient-to-br from-secondary to-tertiary p-6 shadow-md">
+    <div class="relative rounded-md bg-gradient-to-br from-secondary to-tertiary p-6 shadow-md">
         <h2 v-if="title" class="mb-2 text-2xl font-bold text-primary-content">{{ title }}</h2>
         <p class="mb-6 text-secondary-content/80"><slot name="description"></slot></p>
 

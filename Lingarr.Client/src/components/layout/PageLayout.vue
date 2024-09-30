@@ -57,7 +57,7 @@
                 </div>
             </header>
             <!-- Main Content -->
-            <main class="flex flex-grow">
+            <main class="flex-1">
                 <slot></slot>
             </main>
         </div>

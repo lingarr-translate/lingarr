@@ -1,12 +1,13 @@
 ﻿<template>
     <div class="relative">
-        <label v-if="label" for="apiInput" class="mb-1 block text-sm">
+        <label v-if="label" :for="label" class="mb-1 block text-sm">
             {{ label }}
         </label>
         <div class="relative">
             <input
-                id="apiInput"
+                :id="label"
                 :value="internalValue"
+                :type="inputType"
                 :class="[
                     'w-full rounded-md border bg-transparent px-4 py-2 outline-none transition-colors duration-200',
                     isValid ? 'border-green-500' : 'border-accent',
@@ -39,15 +40,17 @@ const {
     label,
     placeholder,
     validationType,
-    minLength = 0,
-    maxLength = 99,
+    minLength = undefined,
+    maxLength = undefined,
+    inputType = 'string',
     errorMessage = ''
 } = defineProps<{
     label?: string
     placeholder?: string
     validationType: string
-    minLength?: number
-    maxLength?: number
+    inputType?: string
+    minLength?: number | undefined
+    maxLength?: number | undefined
     errorMessage?: string
 }>()
 
@@ -73,16 +76,20 @@ const handleInput = (event: Event) => {
 
 const validateInput = (value: string) => {
     switch (validationType) {
+        case 'number':
+            isValid.value = !isNaN(Number(value))
+            error.value = isValid.value ? (errorMessage ?? 'Please enter a valid number') : ''
+            break
         case 'string':
             isValid.value = value.length >= (minLength ?? 0) && value.length <= (maxLength ?? 99)
             error.value = isValid.value
                 ? ''
-                : errorMessage ?? `Length must be between ${minLength} and ${maxLength}`
+                : (errorMessage ?? `Length must be between ${minLength} and ${maxLength}`)
             break
         case 'url':
             const urlPattern = /^(http:\/\/|https:\/\/)[\w\-]+(\.[\w\-]+)*(:\d+)?(\/.*)?$/
             isValid.value = urlPattern.test(value)
-            error.value = isValid.value ? '' : errorMessage ?? 'Invalid URL'
+            error.value = isValid.value ? '' : (errorMessage ?? 'Invalid URL')
             break
         default:
             isValid.value = true
