@@ -1,4 +1,5 @@
-﻿using Lingarr.Core.Data;
+﻿using Hangfire;
+using Lingarr.Core.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Jobs;
@@ -15,6 +16,7 @@ public class CleanupJob
         _logger = logger;
     }
 
+    [AutomaticRetry(Attempts = 0)]
     public async Task Execute()
     {
         var oneWeekAgo = DateTime.UtcNow.AddDays(-7);
