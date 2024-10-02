@@ -2,6 +2,7 @@
 
 public class TranslateAbleSubtitle
 {
-    public string SubtitlePath { get; set; } = "";
-    public string TargetLanguage { get; set; } = "";
+    public required string SubtitlePath { get; set; }
+    public required string SourceLanguage { get; set; }
+    public required string TargetLanguage { get; set; }
 }

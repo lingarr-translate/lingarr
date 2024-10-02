@@ -84,7 +84,12 @@ public class SettingChangeListener : ISettingChangeHandler
                         TimeSpan.FromMinutes(1));
                     break;
                 case "Automation":
-                    // update/start automation
+                    var translationSchedule = await _settingService.GetSetting("translation_schedule");
+                    RecurringJob.AddOrUpdate<AutomatedTranslationJob>(
+                        "AutomatedTranslationJob",
+                        "default",
+                        job => job.Execute(),
+                        translationSchedule);
                     break;
             }
         }
