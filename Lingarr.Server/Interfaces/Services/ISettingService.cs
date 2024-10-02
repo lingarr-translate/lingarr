@@ -33,11 +33,7 @@ public interface ISettingService
     /// <param name="settings">A dictionary where the keys are setting keys and the values are the new values to assign.</param>
     /// <returns>A task that represents the asynchronous operation. The task result is <c>true</c> if all settings were successfully updated, <c>false</c> otherwise.</returns>
     Task<bool> SetSettings(Dictionary<string, string> settings);
-
-    /// <summary>
-    /// Handles actions required after modifying specific settings.
-    /// </summary>
-    /// <param name="modifiedKeys">A dictionary of the keys and values of the modified settings.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleModifiedSettingsAsync(Dictionary<string, string> modifiedKeys);
+    
+    
+    Task<List<T>> GetSettingAsJson<T>(string key) where T : class;
 }
