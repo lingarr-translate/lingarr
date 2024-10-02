@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Lingarr.Core.Entities;
 
-public class Media
+public class Image
 {
     [Key] 
     public int Id { get; set; }

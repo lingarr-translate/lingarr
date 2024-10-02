@@ -9,5 +9,5 @@ public class RadarrMovie
     public required string added { get; set; } // added
     public required bool hasFile { get; set; } // hasFile
     public RadarrMovieFile movieFile { get; set; } = new(); // hasFile
-    public List<MediaImage> images { get; set; } = new(); // images
+    public List<IntegrationImage> images { get; set; } = new(); // images
 }

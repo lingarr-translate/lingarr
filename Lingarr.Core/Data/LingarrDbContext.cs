@@ -9,7 +9,7 @@ public class LingarrDbContext : DbContext
     public DbSet<Show> Shows { get; set; }
     public DbSet<Season> Seasons { get; set; }
     public DbSet<Episode> Episodes { get; set; }
-    public DbSet<Media> Media { get; set; }
+    public DbSet<Image> Images { get; set; }
     public DbSet<Setting> Settings { get; set; }
     public DbSet<TranslationJob> TranslationJobs { get; set; }
 

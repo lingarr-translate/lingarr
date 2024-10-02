@@ -11,7 +11,7 @@ public class MovieResponse
     public required string FileName { get; set; }
     public required string Path { get; set; }
     public required DateTime? DateAdded { get; set; }
-    public List<Media> Media { get; set; } = new();
+    public List<Image> Images { get; set; } = new();
 
     public List<Subtitles> Subtitles { get; set; } = new();
 }
