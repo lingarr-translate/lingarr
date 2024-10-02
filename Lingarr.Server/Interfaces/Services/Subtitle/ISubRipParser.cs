@@ -11,7 +11,7 @@ public interface ISubRipParser
     /// <summary>
     /// Parses a stream of .srt subtitles and returns a list of subtitle items.
     /// </summary>
-    /// <param name="subtitleStream">The stream containing .srt subtitles.</param>
+    /// <param name="stream">The stream containing .srt subtitles.</param>
     /// <param name="encoding">The encoding of the stream.</param>
     /// <returns>A list of <see cref="SubtitleItem"/> objects.</returns>
     /// <exception cref="ArgumentException">
