@@ -4,6 +4,7 @@ using Lingarr.Core.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Lingarr.Migrations.MySQL.Migrations
 {
     [DbContext(typeof(LingarrDbContext))]
-    partial class LingarrDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241001201954_UpdateDataSchema")]
+    partial class UpdateDataSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
