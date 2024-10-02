@@ -45,7 +45,7 @@ public class SubRipParser : ISubRipParser
 
         foreach (var subtitlePart in subtitleParts)
         {
-            var subtitleLines = subtitlePart.Split(Environment.NewLine, StringSplitOptions.None)
+            var subtitleLines = subtitlePart.Split(Environment.NewLine)
                 .Select(s => s.Trim())
                 .Where(l => !string.IsNullOrEmpty(l))
                 .ToList();

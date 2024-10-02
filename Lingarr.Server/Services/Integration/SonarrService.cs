@@ -1,8 +1,9 @@
 ﻿using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Interfaces.Services.Integration;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Integrations;
 
-namespace Lingarr.Server.Services;
+namespace Lingarr.Server.Services.Integration;
 
 public class SonarrService : ISonarrService
 {
@@ -38,10 +39,10 @@ public class SonarrService : ISonarrService
     }
     
     /// <inheritdoc />
-    public async Task<SonarrEpisodePath?> GetEpisodePath(int episodeNumber)
+    public async Task<SonarrEpisodePath?> GetEpisodePath(int episodeId)
     {
         return await _integrationService.GetApiResponse<SonarrEpisodePath>(
-            $"/api/v3/episode/{episodeNumber}",
+            $"/api/v3/episode/{episodeId}",
             new IntegrationSettingKeys
             {
                 Url = "sonarr_url",

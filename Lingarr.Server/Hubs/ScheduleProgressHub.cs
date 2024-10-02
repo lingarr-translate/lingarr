@@ -9,12 +9,10 @@ namespace Lingarr.Server.Hubs;
 
 public class ScheduleProgressHub : Hub
 {
-    private readonly ILogger<ScheduleProgressHub> _logger;
     private readonly LingarrDbContext _dbContext;
 
-    public ScheduleProgressHub(ILogger<ScheduleProgressHub> logger, LingarrDbContext dbContext)
+    public ScheduleProgressHub(LingarrDbContext dbContext)
     {
-        _logger = logger;
         _dbContext = dbContext;
     }
     

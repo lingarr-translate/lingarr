@@ -56,5 +56,5 @@ public static class LingarrVersion
     }
 
     private static bool IsNewVersionAvailable(string latestVersion, string currentVersion)
-        => Version.Parse(latestVersion.TrimStart('v')) > System.Version.Parse(currentVersion);
+        => Version.Parse(latestVersion.TrimStart('v')) > Version.Parse(currentVersion);
 }
