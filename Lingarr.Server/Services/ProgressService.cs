@@ -17,6 +17,7 @@ public class ProgressService : IProgressService
         _dbContext = dbContext;
     }
 
+    /// <inheritdoc />
     public async Task Emit(string jobId, int progress, bool completed)
     {
         await _hubContext.Clients.Group(jobId).SendAsync("ScheduleProgress", new

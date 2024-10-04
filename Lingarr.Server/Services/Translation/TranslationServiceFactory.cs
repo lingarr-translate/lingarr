@@ -12,6 +12,7 @@ public class TranslationServiceFactory : ITranslationServiceFactory
         _serviceProvider = serviceProvider;
     }
     
+    /// <inheritdoc />
     public ITranslationService CreateTranslationService(string serviceType)
     {
         return serviceType.ToLower() switch

@@ -19,6 +19,7 @@ public class LibreTranslateService : TranslationServiceBase
         _httpClient = httpClient;
     }
 
+    /// <inheritdoc />
     public override async Task<string> TranslateAsync(string text, string sourceLanguage, string targetLanguage)
     {
         var libreTranslateApi = await _settings.GetSetting("libretranslate_url") ?? "http://libretranslate:5000";

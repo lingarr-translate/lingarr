@@ -8,7 +8,7 @@ using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Integration;
 using Lingarr.Server.Interfaces.Services.Subtitle;
 using Lingarr.Server.Interfaces.Services.Translation;
-using Lingarr.Server.Listeners;
+using Lingarr.Server.Listener;
 using Lingarr.Server.Providers;
 using Lingarr.Server.Services;
 using Lingarr.Server.Services.Integration;
@@ -54,26 +54,17 @@ public static class ServiceCollectionExtensions
 
     private static void ConfigureServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddScoped<SettingService>(); 
         builder.Services.AddScoped<ISettingService, SettingService>();
-        builder.Services.AddScoped<SettingChangeListener>();
-        builder.Services.AddScoped<ISettingService>(serviceProvider =>
-        {
-            var settingsService = serviceProvider.GetRequiredService<SettingService>();
-            var someService = serviceProvider.GetRequiredService<SettingChangeListener>();
-    
-            settingsService.RegisterHandler(someService);
-    
-            return settingsService;
-        });
+        builder.Services.AddSingleton<SettingChangedListener>();
 
+        builder.Services.AddHostedService<ScheduleInitializationService>();
+        builder.Services.AddSingleton<IScheduleService, ScheduleService>();
+        
         builder.Services.AddScoped<IImageService, ImageService>();
         builder.Services.AddScoped<IIntegrationService, IntegrationService>();
         builder.Services.AddScoped<IMediaService, MediaService>();
         builder.Services.AddScoped<IProgressService, ProgressService>();
         builder.Services.AddScoped<IRadarrService, RadarrService>();
-        builder.Services.AddHostedService<ScheduleInitializationService>();
-        builder.Services.AddSingleton<IScheduleService, ScheduleService>();
         builder.Services.AddScoped<ISonarrService, SonarrService>();
         builder.Services.AddScoped<ISubtitleService, SubtitleService>();
         builder.Services.AddScoped<MediaSubtitleProcessor>();
@@ -81,7 +72,11 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<ISubRipParser, SubRipParser>();
         builder.Services.AddScoped<ISubRipWriter, SubRipWriter>();
 
+        // Register translate services
         builder.Services.AddScoped<ITranslationServiceFactory, TranslationServiceFactory>();
+        
+        // Added startup service to validate new settings
+        builder.Services.AddHostedService<StartupService>();
     }
 
     private static void ConfigureHangfire(this WebApplicationBuilder builder)

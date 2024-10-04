@@ -14,6 +14,7 @@ public class DeepLTranslationService : TranslationServiceBase
     {
     }
 
+    /// <inheritdoc />
     public override async Task<string> TranslateAsync(string text, string sourceLanguage, string targetLanguage)
     {
         var authKey = await _settings.GetSetting("deepl_api_key");

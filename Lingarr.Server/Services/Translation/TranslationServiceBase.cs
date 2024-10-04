@@ -14,5 +14,6 @@ public abstract class TranslationServiceBase : ITranslationService
         _logger = logger;
     }
 
+    /// <inheritdoc />
     public abstract Task<string> TranslateAsync(string text, string sourceLanguage, string targetLanguage);
 }
