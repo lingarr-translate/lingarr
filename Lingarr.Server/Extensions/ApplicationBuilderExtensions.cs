@@ -8,10 +8,9 @@ namespace Lingarr.Server.Extensions;
 
 public static class ApplicationBuilderExtensions
 {
-    public static void ConfigurePipeline(this WebApplication app)
+    public static void Configure(this WebApplication app)
     {
         app.MapHub<ScheduleProgressHub>("/hub/ScheduleProgress");
-
         app.ApplyMigrations();
 
         if (app.Environment.IsDevelopment())
@@ -50,9 +49,9 @@ public static class ApplicationBuilderExtensions
 
     private static void ConfigureSpa(this WebApplication app)
     {
-        app.MapWhen(httpContext =>
-                httpContext.Request.Path.Value != null &&
-                !httpContext.Request.Path.Value.StartsWith("/api") &&
+        app.MapWhen(httpContext => 
+                httpContext.Request.Path.Value != null && 
+                !httpContext.Request.Path.Value.StartsWith("/api") && 
                 !httpContext.Request.Path.Value.StartsWith("/hub"),
             configBuilder =>
             {

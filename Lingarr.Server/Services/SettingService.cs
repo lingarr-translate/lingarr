@@ -1,36 +1,36 @@
 ﻿using System.Text.Json;
-using Hangfire;
 using Lingarr.Core.Data;
-using Lingarr.Server.Events;
-using Lingarr.Server.Interfaces;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Listener;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Services;
 
-public class SettingService: ISettingService
+public delegate void SettingChangedHandler(SettingService ss, string setting);
+
+public class SettingService : ISettingService
 {
-    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly LingarrDbContext _dbContext;
     private readonly ILogger<ISettingService> _logger;
-    private readonly List<ISettingChangeHandler> _handlers = new List<ISettingChangeHandler>();
-    public event EventHandler<SettingChangeEventArgs> SettingChanged;
+    public event SettingChangedHandler SettingChanged;
 
     public SettingService(
-        IBackgroundJobClient backgroundJobClient,
-        LingarrDbContext dbContext, 
-        ILogger<ISettingService> logger)
+        LingarrDbContext dbContext,
+        ILogger<ISettingService> logger,
+        SettingChangedListener settingChangedListener)
     {
-        _backgroundJobClient = backgroundJobClient;
         _dbContext = dbContext;
         _logger = logger;
+        
+        SettingChanged += settingChangedListener.OnSettingChanged;
     }
 
-    public void RegisterHandler(ISettingChangeHandler handler)
+    public void OnSettingChange(string setting)
     {
-        _handlers.Add(handler);
+        _logger.LogInformation($"Invoking SettingChanged for {setting}");
+        SettingChanged?.Invoke(this, setting); 
     }
-    
+
     /// <inheritdoc />
     public async Task<string?> GetSetting(string key)
     {
@@ -51,8 +51,6 @@ public class SettingService: ISettingService
     public async Task<List<T>> GetSettingAsJson<T>(string key) where T : class
     {
         var settingValue = await GetSetting(key);
-        // _logger.LogInformation("Retrieved the following settingValue `{settingValue}`", settingValue);
-    
         if (string.IsNullOrEmpty(settingValue))
         {
             return new List<T>(); 
@@ -82,7 +80,7 @@ public class SettingService: ISettingService
 
         setting.Value = value;
         await _dbContext.SaveChangesAsync();
-        NotifySettingChange(key, value);
+        OnSettingChange(setting.Key);
         return true;
     }
     
@@ -109,17 +107,8 @@ public class SettingService: ISettingService
         await _dbContext.SaveChangesAsync();
         foreach (var setting in settings)
         {
-            NotifySettingChange(setting.Key, setting.Value);
+            OnSettingChange(setting.Key);
         }
         return true;
-    }
-
-    private void NotifySettingChange(string key, string value)
-    {
-        foreach (var handler in _handlers)
-        {
-            handler.HandleSettingChange(key, value);
-        }
-        SettingChanged.Invoke(this, new SettingChangeEventArgs(key, value));
     }
 }

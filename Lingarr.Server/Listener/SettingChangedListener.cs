@@ -1,47 +1,40 @@
 ﻿using Hangfire;
 using Lingarr.Core.Data;
-using Lingarr.Server.Interfaces;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Jobs;
+using Lingarr.Server.Services;
 using Microsoft.EntityFrameworkCore;
 
-namespace Lingarr.Server.Listeners;
+namespace Lingarr.Server.Listener;
 
-public class SettingChangeListener : ISettingChangeHandler
+public class SettingChangedListener
 {
-    private readonly IBackgroundJobClient _backgroundJobClient;
-    private readonly LingarrDbContext _dbContext;
-    private readonly ILogger<ISettingService> _logger;
-    private readonly ISettingService _settingService;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<SettingChangedListener> _logger;
 
-    public SettingChangeListener(
-        IBackgroundJobClient backgroundJobClient,
-        LingarrDbContext dbContext, 
-        ISettingService settingService,
-        ILogger<ISettingService> logger)
+    public SettingChangedListener(IServiceProvider serviceProvider, ILogger<SettingChangedListener> logger)
     {
-        _backgroundJobClient = backgroundJobClient;
-        _settingService = settingService;
-        _dbContext = dbContext;
+        _serviceProvider = serviceProvider;
         _logger = logger;
     }
-    public async void HandleSettingChange(string key, string value)
+    
+    public async void OnSettingChanged(SettingService ss, string setting)
     {
         string[] requiredRadarrKeys = { "radarr_api_key", "radarr_url" };
         string[] requiredSonarrKeys = { "sonarr_api_key", "sonarr_url" };
         string[] requiredAutomationKeys = { "automation_enabled" };
         
-        if (requiredRadarrKeys.Any(requiredKey => requiredKey == key))
+        if (requiredRadarrKeys.Any(requiredKey => requiredKey == setting))
         {
             await CheckAndRunJob("Radarr", requiredRadarrKeys);
         }
-
-        if (requiredSonarrKeys.Any(requiredKey => requiredKey == key))
+        
+        if (requiredSonarrKeys.Any(requiredKey => requiredKey == setting))
         {
             await CheckAndRunJob("Sonarr", requiredSonarrKeys);
         }
-
-        if (requiredAutomationKeys.Any(requiredKey => requiredKey == key))
+        
+        if (requiredAutomationKeys.Any(requiredKey => requiredKey == setting))
         {
             await CheckAndRunJob("Automation", requiredAutomationKeys);
         }
@@ -56,35 +49,39 @@ public class SettingChangeListener : ISettingChangeHandler
     /// <returns>A task that represents the asynchronous operation.</returns>
     private async Task CheckAndRunJob(string jobName, string[] requiredKeys)
     {
-        var settings = await _dbContext.Settings
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
+        var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
+        
+        var settings = await dbContext.Settings
             .Where(s => requiredKeys.Contains(s.Key))
             .ToDictionaryAsync(s => s.Key, s => s.Value);
         
         bool allRequiredKeysHaveValues = requiredKeys.All(key => 
             settings.TryGetValue(key, out var value) && !string.IsNullOrEmpty(value));
-
+    
         if (allRequiredKeysHaveValues)
         {
             switch (jobName)
             {
                 case "Radarr":
-                    await _settingService.SetSetting("radarr_settings_completed", "true");
+                    await settingService.SetSetting("radarr_settings_completed", "true");
                     
                     _logger.LogInformation("Radarr settings completed, indexing media...");
-                    _backgroundJobClient.Schedule<GetMovieJob>("movies",
+                    BackgroundJob.Schedule<GetMovieJob>("movies",
                         job => job.Execute(JobCancellationToken.Null),
                         TimeSpan.FromMinutes(1));
                     break;
                 case "Sonarr":
-                    await _settingService.SetSetting("sonarr_settings_completed", "true");
+                    await settingService.SetSetting("sonarr_settings_completed", "true");
                     
                     _logger.LogInformation("Sonarr settings completed, indexing media...");
-                    _backgroundJobClient.Schedule<GetShowJob>("shows",
+                    BackgroundJob.Schedule<GetShowJob>("shows",
                         job => job.Execute(JobCancellationToken.Null),
                         TimeSpan.FromMinutes(1));
                     break;
                 case "Automation":
-                    var translationSchedule = await _settingService.GetSetting("translation_schedule");
+                    var translationSchedule = await settingService.GetSetting("translation_schedule");
                     RecurringJob.AddOrUpdate<AutomatedTranslationJob>(
                         "AutomatedTranslationJob",
                         "default",
