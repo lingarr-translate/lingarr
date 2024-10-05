@@ -19,6 +19,7 @@ LibreTranslate doesn't natively support Docker Compose and needs to be built loc
 
 Change `languages` and set `filter` to true to only include preferred languages. If `filter` is set to false, all languages will be installed.
 
+Note that this step is optional when using a alternative translation service.
 ```dockerfile
 FROM libretranslate/libretranslate:latest AS models_cache
 
@@ -74,7 +75,7 @@ services:
     networks:
       - lingarr
 
-  libretranslate:
+  libretranslate: # Optional if you're using a different service
     image: libretranslate:latest
     container_name: libretranslate
     restart: unless-stopped
@@ -115,6 +116,7 @@ docker run -d \
 ```
 
 #### Setting up LibreTranslate
+
 Create necessary directories and set permissions:
 ```bash
 mkdir -p /apps/libretranslate/{local,db}
