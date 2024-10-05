@@ -37,7 +37,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import PageLayout from '@/components/layout/PageLayout.vue'
-import LanguageIcon from '@/components/icons/LanguageIcon.vue'
+// import LanguageIcon from '@/components/icons/LanguageIcon.vue'
 import IntegrationIcon from '@/components/icons/IntegrationIcon.vue'
 import SettingIcon from '@/components/icons/SettingIcon.vue'
 
@@ -45,8 +45,8 @@ const router = useRouter()
 
 const menuItems = [
     { label: 'General', icon: SettingIcon, route: 'general-settings' },
-    { label: 'Integrations', icon: IntegrationIcon, route: 'integration-settings' },
-    { label: 'Translations', icon: LanguageIcon, route: 'translation-settings' }
+    { label: 'Integrations', icon: IntegrationIcon, route: 'integration-settings' }
+    // { label: 'Translations', icon: LanguageIcon, route: 'translation-settings' }
 ]
 
 function navigate(route: string) {

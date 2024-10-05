@@ -59,10 +59,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ComputedRef } from 'vue'
-import { IFilter, IMovie, IPagedResult } from '@/ts'
+import { computed, onMounted, ComputedRef, ref } from 'vue'
+import { IFilter, IMovie, IPagedResult, SETTINGS } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
-import { useSettingStore } from '@/store/setting'
 import { useMovieStore } from '@/store/movie'
 import PaginationComponent from '@/components/common/PaginationComponent.vue'
 import PageLayout from '@/components/layout/PageLayout.vue'
@@ -72,13 +71,16 @@ import SearchComponent from '@/components/common/SearchComponent.vue'
 import ContextMenu from '@/components/layout/ContextMenu.vue'
 import ReloadComponent from '@/components/common/ReloadComponent.vue'
 import NoMediaNotification from '@/components/common/NoMediaNotification.vue'
+import services from '@/services'
 
-const settingStore = useSettingStore()
 const movieStore = useMovieStore()
+const settingsCompleted = ref<boolean>(false)
 
-const settingsCompleted: ComputedRef<string> = computed(() =>
-    JSON.parse(settingStore.getSetting('radarr_settings_completed') as string)
-)
+async function getRadarrConfigurationState() {
+    settingsCompleted.value = await services.setting.getSetting<boolean>(
+        SETTINGS.RADARR_SETTINGS_COMPLETED
+    )
+}
 const movies: ComputedRef<IPagedResult<IMovie>> = computed(() => movieStore.get)
 const filter: ComputedRef<IFilter> = computed({
     get: () => movieStore.getFilter,
@@ -88,6 +90,7 @@ const filter: ComputedRef<IFilter> = computed({
 })
 
 onMounted(async () => {
+    await getRadarrConfigurationState()
     await movieStore.fetch()
 })
 </script>

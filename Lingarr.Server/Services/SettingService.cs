@@ -27,7 +27,6 @@ public class SettingService : ISettingService
 
     public void OnSettingChange(string setting)
     {
-        _logger.LogInformation($"Invoking SettingChanged for {setting}");
         SettingChanged?.Invoke(this, setting); 
     }
 

@@ -91,16 +91,17 @@ public class MediaSubtitleProcessor
             }
             else
             {
-                _logger.LogWarning("No source subtitle file found for language: {SourceLanguage}", sourceLanguage);
+                _logger.LogWarning("No source subtitle file found for language: |Green|{SourceLanguage}|/Green|", sourceLanguage);
                 await UpdateHash();
             }
         }
         else
         {
-            _logger.LogWarning("No valid source language or target languages found. " +
-                               "Existing languages: {ExistingLanguages}, " +
-                               "Source languages: {SourceLanguages}, " +
-                               "Target languages: {TargetLanguages}", 
+            _logger.LogWarning("No valid source language or target languages found for media |Green|{FileName}|/Green|. " +
+                               "Existing languages: |Red|{ExistingLanguages}|/Red|, " +
+                               "Source languages: |Red|{SourceLanguages}|/Red|, " +
+                               "Target languages: |Red|{TargetLanguages}|/Red|", 
+                string.Join(", ", _media?.FileName),
                 string.Join(", ", existingLanguages),
                 string.Join(", ", sourceLanguages),
                 string.Join(", ", targetLanguages));

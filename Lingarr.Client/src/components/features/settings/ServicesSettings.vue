@@ -1,7 +1,7 @@
 ﻿<template>
     <CardComponent title="Services">
         <template #description>
-            Configure the service you would like to use to perform translation
+            Configure the translation service you want to use for subtitle localization.
         </template>
         <template #content>
             <SaveNotification ref="saveNotification" />

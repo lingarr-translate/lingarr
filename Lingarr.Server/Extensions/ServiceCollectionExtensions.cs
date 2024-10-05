@@ -2,6 +2,7 @@
 using Hangfire.Storage.SQLite;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
+using Lingarr.Core.Logging;
 using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Providers;
 using Lingarr.Server.Interfaces.Services;
@@ -14,6 +15,7 @@ using Lingarr.Server.Services;
 using Lingarr.Server.Services.Integration;
 using Lingarr.Server.Services.Subtitle;
 using Lingarr.Server.Services.Translation;
+using Microsoft.Extensions.Options;
 
 namespace Lingarr.Server.Extensions;
 
@@ -32,11 +34,18 @@ public static class ServiceCollectionExtensions
         builder.Services.AddMemoryCache();
         builder.Services.AddHttpClient();
 
+        builder.ConfigureLogging();
         builder.ConfigureDatabase();
         builder.ConfigureProviders();
         builder.ConfigureServices();
         builder.ConfigureHangfire();
         builder.ConfigureSignalR();
+    }
+
+    private static void ConfigureLogging(this WebApplicationBuilder builder)
+    {
+        builder.Logging.ClearProviders();
+        builder.Logging.AddProvider(new CustomLogFormatter(Options.Create(new CustomLogFormatterOptions())));
     }
 
     private static void ConfigureDatabase(this WebApplicationBuilder builder)
