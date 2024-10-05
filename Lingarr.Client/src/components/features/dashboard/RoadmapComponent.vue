@@ -41,6 +41,7 @@ import HistoryIcon from '@/components/icons/HistoryIcon.vue'
 import LanguageIcon from '@/components/icons/LanguageIcon.vue'
 import BuildingIcon from '@/components/icons/BuildingIcon.vue'
 import CardComponent from '@/components/common/CardComponent.vue'
+import IntegrationIcon from '@/components/icons/IntegrationIcon.vue'
 
 const roadmapItems = shallowRef([
     {
@@ -61,6 +62,13 @@ const roadmapItems = shallowRef([
         icon: AutomationIcon,
         title: 'Automated Translation',
         description: 'Automated translation for subtitles',
+        date: '2024',
+        status: 'In Progress'
+    },
+    {
+        icon: IntegrationIcon,
+        title: 'AI Translation',
+        description: 'Adding support for additional translation services',
         date: '2024',
         status: 'In Progress'
     },
