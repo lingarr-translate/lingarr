@@ -11,7 +11,6 @@ public class AutomatedTranslationJob
     private readonly ILogger<AutomatedTranslationJob> _logger;
     private readonly MediaSubtitleProcessor _mediaSubtitleProcessor;
     private readonly ISettingService _settingService;
-    private bool _alternateCycle = true;
     private int _maxTranslationsPerRun = 10;
 
     public AutomatedTranslationJob(LingarrDbContext dbContext,
@@ -40,18 +39,20 @@ public class AutomatedTranslationJob
             return;
         }
 
-        if (settings["translation_cycle"] == "true")
+        var translationCycle = settings["translation_cycle"] == "true" ? "movies" : "shows";
+        _logger.LogInformation($"Starting translation cycle for |Green|{translationCycle}|/Green|");
+        switch (translationCycle)
         {
-            await ProcessMovies();
-            await _settingService.SetSetting("translation_cycle", "false");
-        }
-        else
-        {
-            await ProcessShows();
-            await _settingService.SetSetting("translation_cycle", "true");
-        }
+            case "movies":
+                await _settingService.SetSetting("translation_cycle", "false");
+                await ProcessMovies();
+                break;
+            case "shows":
 
-        _alternateCycle = !_alternateCycle;
+                await _settingService.SetSetting("translation_cycle", "true");
+                await ProcessShows();
+                break;
+        }
     }
 
     private async Task ProcessMovies()

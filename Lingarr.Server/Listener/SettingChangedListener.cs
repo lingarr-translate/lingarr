@@ -22,7 +22,7 @@ public class SettingChangedListener
     {
         string[] requiredRadarrKeys = { "radarr_api_key", "radarr_url" };
         string[] requiredSonarrKeys = { "sonarr_api_key", "sonarr_url" };
-        string[] requiredAutomationKeys = { "automation_enabled" };
+        string[] requiredAutomationKeys = { "automation_enabled", "translation_schedule" , "max_translations_per_run" };
         
         if (requiredRadarrKeys.Any(requiredKey => requiredKey == setting))
         {
@@ -59,34 +59,44 @@ public class SettingChangedListener
         
         bool allRequiredKeysHaveValues = requiredKeys.All(key => 
             settings.TryGetValue(key, out var value) && !string.IsNullOrEmpty(value));
-    
+        
         if (allRequiredKeysHaveValues)
         {
             switch (jobName)
             {
                 case "Radarr":
-                    await settingService.SetSetting("radarr_settings_completed", "true");
+                    _logger.LogInformation($"Settings changed for |Green|{jobName}|/Green|. All settings are complete, |Orange|indexing media...|/Orange|");
                     
-                    _logger.LogInformation("Radarr settings completed, indexing media...");
+                    await settingService.SetSetting("radarr_settings_completed", "true");
                     BackgroundJob.Schedule<GetMovieJob>("movies",
                         job => job.Execute(JobCancellationToken.Null),
                         TimeSpan.FromMinutes(1));
                     break;
                 case "Sonarr":
-                    await settingService.SetSetting("sonarr_settings_completed", "true");
+                    _logger.LogInformation($"Settings changed for |Green|{jobName}|/Green|. All settings are complete, |Orange|indexing media...|/Orange|");
                     
-                    _logger.LogInformation("Sonarr settings completed, indexing media...");
+                    await settingService.SetSetting("sonarr_settings_completed", "true");
                     BackgroundJob.Schedule<GetShowJob>("shows",
                         job => job.Execute(JobCancellationToken.Null),
                         TimeSpan.FromMinutes(1));
                     break;
                 case "Automation":
-                    var translationSchedule = await settingService.GetSetting("translation_schedule");
-                    RecurringJob.AddOrUpdate<AutomatedTranslationJob>(
-                        "AutomatedTranslationJob",
-                        "default",
-                        job => job.Execute(),
-                        translationSchedule);
+                    _logger.LogInformation(
+                        $"Settings changed for |Green|{jobName}|/Green|. Automation has been |Orange|modified|/Orange|.");
+                    if (settings["automation_enabled"] == "true")
+                    {
+                        var translationSchedule = await settingService.GetSetting("translation_schedule");
+                        RecurringJob.AddOrUpdate<AutomatedTranslationJob>(
+                            "AutomatedTranslationJob",
+                            "default",
+                            job => job.Execute(),
+                            translationSchedule);
+                    }
+                    else
+                    {
+                        RecurringJob.RemoveIfExists("AutomatedTranslationJob");
+                    }
+
                     break;
             }
         }

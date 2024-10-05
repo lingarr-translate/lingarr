@@ -126,11 +126,10 @@
 
 <script setup lang="ts">
 import { ref, Ref, computed, onMounted, ComputedRef } from 'vue'
-import { IFilter, IPagedResult, ISeason, IShow, ISubtitle } from '@/ts'
+import { IFilter, IPagedResult, ISeason, IShow, ISubtitle, SETTINGS } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useInstanceStore } from '@/store/instance'
 import { useShowStore } from '@/store/show'
-import { useSettingStore } from '@/store/setting'
 import services from '@/services'
 import PaginationComponent from '@/components/common/PaginationComponent.vue'
 import PageLayout from '@/components/layout/PageLayout.vue'
@@ -143,16 +142,18 @@ import ReloadComponent from '@/components/common/ReloadComponent.vue'
 import NoMediaNotification from '@/components/common/NoMediaNotification.vue'
 
 const instanceStore = useInstanceStore()
-const settingStore = useSettingStore()
 const showStore = useShowStore()
 
 const expandedShow: Ref<boolean | number | null> = ref(null)
 const expandedSeason: Ref<ISeason | null> = ref(null)
 const subtitles: Ref<ISubtitle[]> = ref([])
+const settingsCompleted = ref<boolean>(false)
 
-const settingsCompleted: ComputedRef<string> = computed(() =>
-    JSON.parse(settingStore.getSetting('sonarr_settings_completed') as string)
-)
+async function getSonarrConfigurationState() {
+    settingsCompleted.value = await services.setting.getSetting<boolean>(
+        SETTINGS.SONARR_SETTINGS_COMPLETED
+    )
+}
 const shows: ComputedRef<IPagedResult<IShow>> = computed(() => showStore.get)
 const filter: ComputedRef<IFilter> = computed({
     get: () => showStore.getFilter,
@@ -194,6 +195,7 @@ const getSubtitle = (fileName: string | null) => {
 }
 
 onMounted(async () => {
+    await getSonarrConfigurationState()
     await showStore.fetch()
 })
 </script>
