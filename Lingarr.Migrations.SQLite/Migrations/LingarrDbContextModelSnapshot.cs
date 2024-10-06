@@ -295,11 +295,13 @@ namespace Lingarr.Migrations.SQLite.Migrations
                     b.HasOne("Lingarr.Core.Entities.Movie", "Movie")
                         .WithMany("Images")
                         .HasForeignKey("MovieId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_images_movies_movie_id");
 
                     b.HasOne("Lingarr.Core.Entities.Show", "Show")
                         .WithMany("Images")
                         .HasForeignKey("ShowId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .HasConstraintName("fk_images_shows_show_id");
 
                     b.Navigation("Movie");
