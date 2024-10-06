@@ -26,14 +26,12 @@ namespace Lingarr.Migrations.SQLite.Migrations
                 table: "movies",
                 type: "TEXT",
                 nullable: true);
-            migrationBuilder.Sql("ALTER TABLE movies MODIFY COLUMN media_hash longtext AFTER `path`;");
             
             migrationBuilder.AddColumn<string>(
                 name: "media_hash",
                 table: "episodes",
                 type: "TEXT",
                 nullable: true);
-            migrationBuilder.Sql("ALTER TABLE episodes MODIFY COLUMN media_hash longtext AFTER `path`;");
 
             migrationBuilder.CreateTable(
                 name: "images",
