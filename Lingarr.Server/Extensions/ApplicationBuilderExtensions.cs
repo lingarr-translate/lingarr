@@ -1,4 +1,5 @@
 ﻿using Hangfire;
+using Lingarr.Core;
 using Lingarr.Core.Data;
 using Lingarr.Server.Filters;
 using Lingarr.Server.Hubs;
@@ -20,7 +21,7 @@ public static class ApplicationBuilderExtensions
                 Authorization = [new LingarrAuthorizationFilter()]
             });
             app.UseSwagger();
-            app.UseSwaggerUI();
+            app.UseSwaggerUI(c => c.SwaggerEndpoint($"/swagger/{LingarrVersion.Number}/swagger.json", $"Lingarr HTTP API {LingarrVersion.Number}"));
         }
 
         app.UseAuthorization();
