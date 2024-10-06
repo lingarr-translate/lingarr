@@ -37,9 +37,9 @@ public class ScheduleInitializationService : IHostedService
     {
         try
         {
-            _logger.LogInformation("Initializing ScheduleService...");
+            _logger.LogInformation("Initializing Schedule Service...");
             await _scheduleService.Initialize();
-            _logger.LogInformation("ScheduleService initialized successfully.");
+            _logger.LogInformation("Schedule Service initialized successfully.");
         }
         catch (Exception ex)
         {

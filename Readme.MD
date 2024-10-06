@@ -1,6 +1,15 @@
-﻿# Lingarr
+﻿# Lingarr: Subtitle Translation Made Easy
 
-Lingarr is an application that utilizes LibreTranslate to translate subtitle files to a user-specified target language, providing a solution for subtitle localization.
+Lingarr is an application that leverages translation technologies to automatically translate subtitle files to your desired target language. 
+With support for both LibreTranslate and DeepL, Lingarr provides a flexible solution for subtitle localization.
+
+### 🌟 Multiple Translation Service Support
+Lingarr now offers two services for automated translation:
+
+- **LibreTranslate:** An open-source, self-hosted solution for those who prioritize privacy and customization.
+- **DeepL:** A leading AI-powered **freemium** translation service known for its high accuracy and natural-sounding translations.
+
+Choose the engine that best fits your needs, or use both for comparison and optimal results!
 
 ## Usage
 
@@ -10,6 +19,7 @@ LibreTranslate doesn't natively support Docker Compose and needs to be built loc
 
 Change `languages` and set `filter` to true to only include preferred languages. If `filter` is set to false, all languages will be installed.
 
+Note that this step is optional when using a alternative translation service.
 ```dockerfile
 FROM libretranslate/libretranslate:latest AS models_cache
 
@@ -49,7 +59,6 @@ services:
     environment:
       - PUID=0
       - PGID=0
-      - LIBRETRANSLATE_API=http://LibreTranslate:5000
       - MAX_CONCURRENT_JOBS=1 # Optional
       - DB_CONNECTION=mysql # Optional, defaults to `sqlite`
       - DB_HOST=Lingarr.Mysql # Optional, required when using MySQL
@@ -66,7 +75,7 @@ services:
     networks:
       - lingarr
 
-  libretranslate:
+  libretranslate: # Optional if you're using a different service
     image: libretranslate:latest
     container_name: libretranslate
     restart: unless-stopped
@@ -91,7 +100,6 @@ docker run -d \
   --restart unless-stopped \
   -e PUID=0 \
   -e PGID=0 \
-  -e LIBRETRANSLATE_API=http://LibreTranslate:5000 \
   -e MAX_CONCURRENT_JOBS=1 \      # Optional
   -e DB_CONNECTION=mysql \        # Optional: defaults to 'sqlite' if not specified
   -e DB_HOST=Lingarr.Mysql \      # Optional: required when using MySQL
@@ -108,6 +116,7 @@ docker run -d \
 ```
 
 #### Setting up LibreTranslate
+
 Create necessary directories and set permissions:
 ```bash
 mkdir -p /apps/libretranslate/{local,db}
@@ -142,9 +151,11 @@ docker run -d \
 | -v /app/movies              | Location of Movie library on disk                                           |
 | -v /app/tv                  | Location of TV Shows library on disk                                        |
 
-Feel free to contribute to the development of Lingarr or report any issues on the [Lingarr](https://github.com/lingarr-translate/lingarr) GitHub repository.
+#### 🤝 Contributing:
+We welcome contributions to Lingarr! Whether it's bug reports, 
+feature requests, or code contributions, please feel free to help out. Visit the [Lingarr](https://github.com/lingarr-translate/lingarr) GitHub repository to get started.
 
-#### Credits:
-https://lucide.dev/icons  
-https://github.com/AlexPoint/SubtitlesParser  
-https://libretranslate.com/languages  
+#### 🙏 Credits:
+Icons: [Lucide](https://lucide.dev/icons)  
+Subtitle Parsing: [AlexPoint](https://github.com/AlexPoint/SubtitlesParser)  
+Translation Services: [libretranslate](https://libretranslate.com)

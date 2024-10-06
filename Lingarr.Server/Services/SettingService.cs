@@ -1,27 +1,35 @@
-﻿using Hangfire;
+﻿using System.Text.Json;
 using Lingarr.Core.Data;
 using Lingarr.Server.Interfaces.Services;
-using Lingarr.Server.Jobs;
+using Lingarr.Server.Listener;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Services;
 
-public class SettingService: ISettingService
+public delegate void SettingChangedHandler(SettingService ss, string setting);
+
+public class SettingService : ISettingService
 {
-    private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly LingarrDbContext _dbContext;
     private readonly ILogger<ISettingService> _logger;
+    public event SettingChangedHandler SettingChanged;
 
     public SettingService(
-        IBackgroundJobClient backgroundJobClient,
-        LingarrDbContext dbContext, 
-        ILogger<ISettingService> logger)
+        LingarrDbContext dbContext,
+        ILogger<ISettingService> logger,
+        SettingChangedListener settingChangedListener)
     {
-        _backgroundJobClient = backgroundJobClient;
         _dbContext = dbContext;
         _logger = logger;
+        
+        SettingChanged += settingChangedListener.OnSettingChanged;
     }
-    
+
+    public void OnSettingChange(string setting)
+    {
+        SettingChanged?.Invoke(this, setting); 
+    }
+
     /// <inheritdoc />
     public async Task<string?> GetSetting(string key)
     {
@@ -38,6 +46,27 @@ public class SettingService: ISettingService
         
         return settings.ToDictionary(s => s.Key, s => s.Value);
     }
+
+    public async Task<List<T>> GetSettingAsJson<T>(string key) where T : class
+    {
+        var settingValue = await GetSetting(key);
+        if (string.IsNullOrEmpty(settingValue))
+        {
+            return new List<T>(); 
+        }
+
+        try
+        {
+            var result = JsonSerializer.Deserialize<List<T>>(settingValue);
+
+            return result ?? new List<T>();
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to deserialize setting '{Key}'. Value: {Value}", key, settingValue);
+            throw new JsonException($"Failed to deserialize setting '{key}'", ex);
+        }
+    }
     
     /// <inheritdoc />
     public async Task<bool> SetSetting(string key, string value)
@@ -50,6 +79,7 @@ public class SettingService: ISettingService
 
         setting.Value = value;
         await _dbContext.SaveChangesAsync();
+        OnSettingChange(setting.Key);
         return true;
     }
     
@@ -74,64 +104,10 @@ public class SettingService: ISettingService
         }
 
         await _dbContext.SaveChangesAsync();
-        await HandleModifiedSettingsAsync(settings);
+        foreach (var setting in settings)
+        {
+            OnSettingChange(setting.Key);
+        }
         return true;
-    }
-
-    /// <inheritdoc />
-    public async Task HandleModifiedSettingsAsync(Dictionary<string, string> modifiedKeys)
-    {
-        string[] requiredRadarrKeys = { "radarr_api_key", "radarr_url" };
-        string[] requiredSonarrKeys = { "sonarr_api_key", "sonarr_url" };
-        
-        if (requiredRadarrKeys.Any(key => modifiedKeys.ContainsKey(key)))
-        {
-            await CheckAndRunJob("Radarr", requiredRadarrKeys);
-        }
-
-        if (requiredSonarrKeys.Any(key => modifiedKeys.ContainsKey(key)))
-        {
-           await CheckAndRunJob("Sonarr", requiredSonarrKeys);
-        }
-    }
-    
-    /// <summary>
-    /// This method retrieves the required settings from the database. If all required settings have non-empty values,
-    /// it enqueues the appropriate background job based on the <paramref name="jobName"/>:
-    /// /// </summary>
-    /// <param name="jobName">The name of the job to run, either "Radarr" or "Sonarr".</param>
-    /// <param name="requiredKeys">An array of setting keys that must have values in the database.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    private async Task CheckAndRunJob(string jobName, string[] requiredKeys)
-    {
-        var settings = await _dbContext.Settings
-            .Where(s => requiredKeys.Contains(s.Key))
-            .ToDictionaryAsync(s => s.Key, s => s.Value);
-        
-        bool allRequiredKeysHaveValues = requiredKeys.All(key => 
-            settings.TryGetValue(key, out var value) && !string.IsNullOrEmpty(value));
-
-        if (allRequiredKeysHaveValues)
-        {
-            switch (jobName)
-            {
-                case "Radarr":
-                    await SetSetting("radarr_settings_completed", "true");
-                    
-                    _logger.LogInformation("Radarr settings completed, indexing media...");
-                    _backgroundJobClient.Schedule<GetMovieJob>("movies",
-                        job => job.Execute(JobCancellationToken.Null),
-                        TimeSpan.FromMinutes(1));
-                    break;
-                case "Sonarr":
-                    await SetSetting("sonarr_settings_completed", "true");
-                    
-                    _logger.LogInformation("Sonarr settings completed, indexing media...");
-                    _backgroundJobClient.Schedule<GetShowJob>("shows",
-                        job => job.Execute(JobCancellationToken.Null),
-                        TimeSpan.FromMinutes(1));
-                    break;
-            }
-        }
     }
 }

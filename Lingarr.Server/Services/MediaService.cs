@@ -27,7 +27,7 @@ public class MediaService : IMediaService
         int pageSize)
     {
         var query = _dbContext.Movies
-            .Include(m => m.Media)
+            .Include(m => m.Images)
             .AsSplitQuery()
             .AsQueryable();
 
@@ -62,7 +62,7 @@ public class MediaService : IMediaService
                 FileName = movie.FileName,
                 Path = movie.Path,
                 DateAdded = movie.DateAdded,
-                Media = movie.Media,
+                Images = movie.Images,
                 Subtitles = subtitles
             };
             enrichedMovies.Add(enrichedMovie);
@@ -86,7 +86,7 @@ public class MediaService : IMediaService
         int pageSize)
     {
         var query = _dbContext.Shows
-            .Include(s => s.Media)
+            .Include(s => s.Images)
             .Include(s => s.Seasons)
             .ThenInclude(season => season.Episodes)
             .AsSplitQuery()

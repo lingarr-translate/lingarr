@@ -6,6 +6,6 @@
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round">
-        <path d="m9 18 6-6-6-6" />
+        <path d="m6 9 6 6 6-6" />
     </svg>
 </template>

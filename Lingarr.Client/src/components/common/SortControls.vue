@@ -11,31 +11,15 @@
         </option>
     </select>
     <button class="flex items-center space-x-2" @click="orderBy">
-        <span>
-            <svg
-                v-if="modelValue.isAscending"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                class="h-6 w-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
-            </svg>
-            <svg
-                v-else
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="2"
-                stroke="currentColor"
-                class="h-6 w-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-        </span>
+        <CaretUpIcon v-if="modelValue.isAscending" class="h-6 w-6" />
+        <CaretDownIcon v-else class="h-6 w-6" />
     </button>
 </template>
 
 <script lang="ts" setup>
 import { IOptions, IFilter } from '@/ts'
+import CaretUpIcon from '@/components/icons/CaretUpIcon.vue'
+import CaretDownIcon from '@/components/icons/CaretDownIcon.vue'
 
 const emit = defineEmits(['update:modelValue'])
 const { modelValue, options } = defineProps<{

@@ -3,7 +3,7 @@ using Lingarr.Server.Models;
 using Lingarr.Server.Interfaces.Services;
 using System.Text.Json;
 
-namespace Lingarr.Server.Services;
+namespace Lingarr.Server.Services.Integration;
 
 public class IntegrationService : IIntegrationService
 {

@@ -1,10 +1,18 @@
-﻿namespace Lingarr.Server.Interfaces.Services;
+﻿using Lingarr.Server.Services;
+using Newtonsoft.Json;
+
+namespace Lingarr.Server.Interfaces.Services;
 
 /// <summary>
 /// Defines a service for managing application settings.
 /// </summary>
 public interface ISettingService
 {
+    /// <summary>
+    /// Occurs when a setting is changed.
+    /// </summary>
+    event SettingChangedHandler SettingChanged;
+    
     /// <summary>
     /// Asynchronously retrieves the value of a setting by its key.
     /// </summary>
@@ -33,11 +41,17 @@ public interface ISettingService
     /// <param name="settings">A dictionary where the keys are setting keys and the values are the new values to assign.</param>
     /// <returns>A task that represents the asynchronous operation. The task result is <c>true</c> if all settings were successfully updated, <c>false</c> otherwise.</returns>
     Task<bool> SetSettings(Dictionary<string, string> settings);
-
+    
     /// <summary>
-    /// Handles actions required after modifying specific settings.
+    /// Retrieves a setting value as a JSON-deserialized list of objects.
     /// </summary>
-    /// <param name="modifiedKeys">A dictionary of the keys and values of the modified settings.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
-    Task HandleModifiedSettingsAsync(Dictionary<string, string> modifiedKeys);
+    /// <typeparam name="T">The type of objects in the list. Must be a reference type.</typeparam>
+    /// <param name="key">The key of the setting to retrieve.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a list of objects of type T deserialized from the JSON setting value.</returns>
+    /// <remarks>
+    /// This method assumes that the setting value is stored as a JSON array string that can be deserialized into a list of T objects.
+    /// </remarks>
+    /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized to List{T}.</exception>
+    /// <exception cref="KeyNotFoundException">Thrown when the specified key does not exist in the settings.</exception>
+    Task<List<T>> GetSettingAsJson<T>(string key) where T : class;
 }

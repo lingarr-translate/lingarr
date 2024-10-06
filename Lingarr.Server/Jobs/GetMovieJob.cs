@@ -1,7 +1,7 @@
 ﻿using Hangfire;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
-using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Interfaces.Services.Integration;
 using Lingarr.Server.Models.Integrations;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,7 +24,7 @@ public class GetMovieJob
         _logger = logger;
     }
 
-    [DisableConcurrentExecution(timeoutInSeconds: 10 * 60)]
+    [DisableConcurrentExecution(timeoutInSeconds: 5 * 60)]
     [AutomaticRetry(Attempts = 0)]
     public async Task Execute(IJobCancellationToken cancellationToken)
     {
@@ -67,7 +67,7 @@ public class GetMovieJob
         }
 
         var movieEntity = await _dbContext.Movies
-            .Include(m => m.Media)
+            .Include(m => m.Images)
             .FirstOrDefaultAsync(m => m.RadarrId == movie.id);
 
         string moviePath = GetPath(movie);
@@ -95,9 +95,9 @@ public class GetMovieJob
         ProcessImages(movieEntity, movie.images);
     }
 
-    private void ProcessImages(Movie movieEntity, List<MediaImage> images)
+    private void ProcessImages(Movie movieEntity, List<IntegrationImage> images)
     {
-        var existingImageTypes = movieEntity.Media.Select(m => m.Type).ToHashSet();
+        var existingImageTypes = movieEntity.Images.Select(m => m.Type).ToHashSet();
 
         foreach (var image in images)
         {
@@ -110,39 +110,39 @@ public class GetMovieJob
 
             if (existingImageTypes.Contains(image.coverType))
             {
-                var existingImage = movieEntity.Media.First(m => m.Type == image.coverType);
+                var existingImage = movieEntity.Images.First(m => m.Type == image.coverType);
                 existingImage.Path = imageUrl;
                 existingImageTypes.Remove(image.coverType);
             }
             else
             {
-                var newImage = new Media
+                var newImage = new Image
                 {
                     Type = image.coverType,
                     Path = imageUrl
                 };
-                _dbContext.Media.Add(newImage);
-                movieEntity.Media.Add(newImage);
+                _dbContext.Images.Add(newImage);
+                movieEntity.Images.Add(newImage);
             }
         }
 
         // Remove images that no longer exist
-        var imagesToRemove = movieEntity.Media.Where(m => existingImageTypes.Contains(m.Type)).ToList();
+        var imagesToRemove = movieEntity.Images.Where(m => existingImageTypes.Contains(m.Type)).ToList();
         foreach (var imageToRemove in imagesToRemove)
         {
-            movieEntity.Media.Remove(imageToRemove);
-            _dbContext.Media.Remove(imageToRemove);
+            movieEntity.Images.Remove(imageToRemove);
+            _dbContext.Images.Remove(imageToRemove);
         }
     }
 
     private string GetPath(RadarrMovie movie)
     {
-        if (movie.movieFile?.path != null &&
+        if (movie.movieFile.path != null &&
             movie.movieFile.path.StartsWith(movie.rootFolderPath, StringComparison.OrdinalIgnoreCase))
         {
             return LingarRootFolder + movie.movieFile.path.Substring(movie.rootFolderPath.Length);
         }
 
-        return movie.movieFile?.path ?? string.Empty;
+        return movie.movieFile.path ?? string.Empty;
     }
 }

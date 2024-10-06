@@ -1,6 +1,6 @@
 ﻿using Lingarr.Server.Models.Integrations;
 
-namespace Lingarr.Server.Interfaces.Services;
+namespace Lingarr.Server.Interfaces.Services.Integration;
 
 /// <summary>
 /// Defines a service for interacting with the Sonarr API.

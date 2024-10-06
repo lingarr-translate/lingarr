@@ -11,7 +11,7 @@ export interface IShow extends IBaseEntity {
     title: string
     path: string
     dateAdded?: Date | null
-    media: IMedia[]
+    images: IImage[]
     seasons: ISeason[]
 }
 
@@ -21,11 +21,11 @@ export interface IMovie extends IBaseEntity {
     fileName: string
     path: string
     dateAdded?: Date | null
-    media: IMedia[]
+    images: IImage[]
     subtitles?: ISubtitle[]
 }
 
-export interface IMedia {
+export interface IImage {
     id: number
     type: string
     path: string

@@ -19,7 +19,24 @@ const routes: RouteRecordRaw[] = [
     {
         path: '/settings',
         component: () => import('@/pages/SettingPage.vue'),
-        name: 'settings'
+        name: 'settings',
+        children: [
+            {
+                name: 'general-settings',
+                path: 'general',
+                component: () => import('@/pages/settings/GeneralPage.vue')
+            },
+            {
+                name: 'integration-settings',
+                path: 'integration',
+                component: () => import('@/pages/settings/IntegrationPage.vue')
+            },
+            {
+                name: 'translation-settings',
+                path: 'translation',
+                component: () => import('@/pages/settings/TranslationPage.vue')
+            }
+        ]
     }
 ] as RouteRecordRaw[]
 

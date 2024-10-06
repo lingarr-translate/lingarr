@@ -6,7 +6,7 @@ namespace Lingarr.Core;
 
 public static class LingarrVersion
 {
-    public const string Number = "0.8.5";
+    public const string Number = "0.9.0";
 
     private static readonly HttpClient HttpClient = new()
     {
@@ -56,5 +56,5 @@ public static class LingarrVersion
     }
 
     private static bool IsNewVersionAvailable(string latestVersion, string currentVersion)
-        => Version.Parse(latestVersion.TrimStart('v')) > System.Version.Parse(currentVersion);
+        => Version.Parse(latestVersion.TrimStart('v')) > Version.Parse(currentVersion);
 }

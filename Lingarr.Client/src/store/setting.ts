@@ -1,5 +1,5 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { IUseSettingStore, ISettings } from '@/ts'
+import { IUseSettingStore, ISettings, SETTINGS, ILanguage } from '@/ts'
 import services from '@/services'
 
 export const useSettingStore = defineStore({
@@ -18,33 +18,26 @@ export const useSettingStore = defineStore({
         getSetting: (state: IUseSettingStore) => (key: keyof ISettings) => state.settings[key]
     },
     actions: {
-        updateSetting(key: keyof ISettings, value: string) {
-            let setting = value
+        updateSetting(key: keyof ISettings, value: string | ILanguage[]) {
             if (['radarr_url', 'sonarr_url'].includes(key)) {
-                setting = setting.replace(/\/+$/, '')
+                value = (value as string).replace(/\/+$/, '')
             }
-            this.settings[key] = setting
-            this.saveSettings()
+
+            if (key === 'source_languages' || key === 'target_languages') {
+                this.settings[key] = value as ILanguage[]
+                this.saveSetting(key, JSON.stringify(value))
+            } else {
+                this.settings[key] = value as string
+                this.saveSetting(key, value as string)
+            }
         },
-        saveSettings() {
-            services.setting.setSettings({
-                ...this.settings,
-                source_languages: JSON.stringify(this.settings.source_languages),
-                target_languages: JSON.stringify(this.settings.target_languages)
-            })
+
+        saveSetting(key: keyof ISettings, value: string) {
+            services.setting.setSetting(key, value)
         },
+
         async applySettingsOnLoad(): Promise<void> {
-            const settings = await services.setting.getSettings<ISettings>([
-                'theme',
-                'radarr_url',
-                'radarr_api_key',
-                'sonarr_url',
-                'sonarr_api_key',
-                'source_languages',
-                'target_languages',
-                'sonarr_settings_completed',
-                'radarr_settings_completed'
-            ])
+            const settings = await services.setting.getSettings<ISettings>(Object.values(SETTINGS))
 
             this.settings = {
                 ...settings,

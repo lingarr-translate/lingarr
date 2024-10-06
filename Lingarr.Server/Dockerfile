@@ -6,7 +6,6 @@ FROM node:20.10.0-slim AS client
 COPY ./Lingarr.Client/ /Client
 WORKDIR /Client
 # Install dependencies
-RUN echo "Current BUILD_CONFIGURATION: $BUILD_CONFIGURATION"
 RUN if [ "$BUILD_CONFIGURATION" = "Release" ] ; then npm ci --only=production ; else npm install ; fi
 RUN npm run build
 

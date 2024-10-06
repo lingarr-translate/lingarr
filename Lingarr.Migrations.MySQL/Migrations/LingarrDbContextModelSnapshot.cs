@@ -43,6 +43,10 @@ namespace Lingarr.Migrations.MySQL.Migrations
                         .HasColumnType("longtext")
                         .HasColumnName("file_name");
 
+                    b.Property<string>("MediaHash")
+                        .HasColumnType("longtext")
+                        .HasColumnName("media_hash");
+
                     b.Property<string>("Path")
                         .HasColumnType("longtext")
                         .HasColumnName("path");
@@ -73,7 +77,7 @@ namespace Lingarr.Migrations.MySQL.Migrations
                     b.ToTable("episodes", (string)null);
                 });
 
-            modelBuilder.Entity("Lingarr.Core.Entities.Media", b =>
+            modelBuilder.Entity("Lingarr.Core.Entities.Image", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -101,15 +105,15 @@ namespace Lingarr.Migrations.MySQL.Migrations
                         .HasColumnName("type");
 
                     b.HasKey("Id")
-                        .HasName("pk_media");
+                        .HasName("pk_images");
 
                     b.HasIndex("MovieId")
-                        .HasDatabaseName("ix_media_movie_id");
+                        .HasDatabaseName("ix_images_movie_id");
 
                     b.HasIndex("ShowId")
-                        .HasDatabaseName("ix_media_show_id");
+                        .HasDatabaseName("ix_images_show_id");
 
-                    b.ToTable("media", (string)null);
+                    b.ToTable("images", (string)null);
                 });
 
             modelBuilder.Entity("Lingarr.Core.Entities.Movie", b =>
@@ -133,6 +137,10 @@ namespace Lingarr.Migrations.MySQL.Migrations
                         .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("file_name");
+
+                    b.Property<string>("MediaHash")
+                        .HasColumnType("longtext")
+                        .HasColumnName("media_hash");
 
                     b.Property<string>("Path")
                         .IsRequired()
@@ -172,7 +180,6 @@ namespace Lingarr.Migrations.MySQL.Migrations
                         .HasColumnName("created_at");
 
                     b.Property<string>("Path")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("path");
 
@@ -300,17 +307,19 @@ namespace Lingarr.Migrations.MySQL.Migrations
                     b.Navigation("Season");
                 });
 
-            modelBuilder.Entity("Lingarr.Core.Entities.Media", b =>
+            modelBuilder.Entity("Lingarr.Core.Entities.Image", b =>
                 {
                     b.HasOne("Lingarr.Core.Entities.Movie", "Movie")
-                        .WithMany("Media")
+                        .WithMany("Images")
                         .HasForeignKey("MovieId")
-                        .HasConstraintName("fk_media_movies_movie_id");
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_images_movies_movie_id");
 
                     b.HasOne("Lingarr.Core.Entities.Show", "Show")
-                        .WithMany("Media")
+                        .WithMany("Images")
                         .HasForeignKey("ShowId")
-                        .HasConstraintName("fk_media_shows_show_id");
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_images_shows_show_id");
 
                     b.Navigation("Movie");
 
@@ -331,7 +340,7 @@ namespace Lingarr.Migrations.MySQL.Migrations
 
             modelBuilder.Entity("Lingarr.Core.Entities.Movie", b =>
                 {
-                    b.Navigation("Media");
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("Lingarr.Core.Entities.Season", b =>
@@ -341,7 +350,7 @@ namespace Lingarr.Migrations.MySQL.Migrations
 
             modelBuilder.Entity("Lingarr.Core.Entities.Show", b =>
                 {
-                    b.Navigation("Media");
+                    b.Navigation("Images");
 
                     b.Navigation("Seasons");
                 });

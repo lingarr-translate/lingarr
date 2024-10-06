@@ -1,8 +1,9 @@
 ﻿using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Interfaces.Services.Integration;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Integrations;
 
-namespace Lingarr.Server.Services;
+namespace Lingarr.Server.Services.Integration;
 
 public class RadarrService : IRadarrService
 {

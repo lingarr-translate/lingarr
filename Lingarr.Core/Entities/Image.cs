@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Lingarr.Core.Entities;
 
-public class Media
+public class Image
 {
     [Key] 
     public int Id { get; set; }
@@ -11,10 +11,8 @@ public class Media
     public required string Path { get; set; }
 
     public int? ShowId { get; set; }
-    [ForeignKey(nameof(ShowId))]
     public Show? Show { get; set; }
     
     public int? MovieId { get; set; }
-    [ForeignKey(nameof(MovieId))]
     public Movie? Movie { get; set; }
 }
