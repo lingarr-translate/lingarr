@@ -1,5 +1,6 @@
 ﻿using Hangfire;
 using Hangfire.Storage.SQLite;
+using Lingarr.Core;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Logging;
@@ -16,6 +17,7 @@ using Lingarr.Server.Services.Integration;
 using Lingarr.Server.Services.Subtitle;
 using Lingarr.Server.Services.Translation;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 
 namespace Lingarr.Server.Extensions;
 
@@ -29,17 +31,35 @@ public static class ServiceCollectionExtensions
                 System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         });
 
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddEndpointsApiExplorer();;
         builder.Services.AddMemoryCache();
         builder.Services.AddHttpClient();
 
+        builder.ConfigureSwagger();
         builder.ConfigureLogging();
         builder.ConfigureDatabase();
         builder.ConfigureProviders();
         builder.ConfigureServices();
         builder.ConfigureHangfire();
         builder.ConfigureSignalR();
+    }
+
+    private static void ConfigureSwagger(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc(LingarrVersion.Number, new OpenApiInfo
+            {
+                Title = "Lingarr HTTP API",
+                Version = LingarrVersion.Number,
+                Description = "Lingarr HTTP API definition",
+                License = new OpenApiLicense
+                {
+                    Name = "GNU Affero General Public License v3.0",
+                    Url = new Uri("https://github.com/lingarr-translate/lingarr/blob/main/LICENSE")
+                }
+            });
+        });
     }
 
     private static void ConfigureLogging(this WebApplicationBuilder builder)
