@@ -92,6 +92,30 @@ namespace Lingarr.Migrations.MySQL.Migrations
                     { "translation_schedule", "0 4 * * *" },
                     { "translation_cycle", "false" }
                 });
+            
+            migrationBuilder.DropForeignKey(
+                name: "fk_images_movies_movie_id",
+                table: "images");
+
+            migrationBuilder.DropForeignKey(
+                name: "fk_images_shows_show_id",
+                table: "images");
+
+            migrationBuilder.AddForeignKey(
+                name: "fk_images_movies_movie_id",
+                table: "images",
+                column: "movie_id",
+                principalTable: "movies",
+                principalColumn: "id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "fk_images_shows_show_id",
+                table: "images",
+                column: "show_id",
+                principalTable: "shows",
+                principalColumn: "id",
+                onDelete: ReferentialAction.Cascade);
         }
 
         /// <inheritdoc />
@@ -178,6 +202,28 @@ namespace Lingarr.Migrations.MySQL.Migrations
                     "translation_schedule",
                     "translation_cycle"
                 });
+            
+            migrationBuilder.DropForeignKey(
+                name: "fk_images_movies_movie_id",
+                table: "images");
+
+            migrationBuilder.DropForeignKey(
+                name: "fk_images_shows_show_id",
+                table: "images");
+
+            migrationBuilder.AddForeignKey(
+                name: "fk_images_movies_movie_id",
+                table: "images",
+                column: "movie_id",
+                principalTable: "movies",
+                principalColumn: "id");
+
+            migrationBuilder.AddForeignKey(
+                name: "fk_images_shows_show_id",
+                table: "images",
+                column: "show_id",
+                principalTable: "shows",
+                principalColumn: "id");
         }
     }
 }

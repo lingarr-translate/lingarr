@@ -16,6 +16,33 @@ public class LingarrDbContext : DbContext
    public LingarrDbContext(DbContextOptions options) : base(options)
    {
    }
+   
+   protected override void OnModelCreating(ModelBuilder modelBuilder)
+   {
+       modelBuilder.Entity<Movie>()
+           .HasMany(m => m.Images)
+           .WithOne(i => i.Movie)
+           .HasForeignKey(i => i.MovieId)
+           .OnDelete(DeleteBehavior.Cascade);
+       
+       modelBuilder.Entity<Show>()
+           .HasMany(s => s.Images)
+           .WithOne(i => i.Show)
+           .HasForeignKey(i => i.MovieId)
+           .OnDelete(DeleteBehavior.Cascade);
+
+       modelBuilder.Entity<Image>()
+           .HasOne(i => i.Movie)
+           .WithMany(m => m.Images)
+           .HasForeignKey(i => i.MovieId)
+           .OnDelete(DeleteBehavior.Cascade);
+
+       modelBuilder.Entity<Image>()
+           .HasOne(i => i.Show)
+           .WithMany(s => s.Images)
+           .HasForeignKey(i => i.ShowId)
+           .OnDelete(DeleteBehavior.Cascade);
+   }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
