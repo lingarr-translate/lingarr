@@ -4,11 +4,9 @@ import { ISubtitleService } from '@/ts'
 const service = (http: AxiosStatic, resource = '/api/subtitle'): ISubtitleService => ({
     collect<T>(path: string): Promise<T> {
         return new Promise((resolve, reject) => {
-            http.get(
-                `${resource}/collect`.addParams({
-                    path: path
-                })
-            )
+            http.post(`${resource}/all`, {
+                path: path
+            })
                 .then((response: AxiosResponse<T>) => {
                     resolve(response.data)
                 })

@@ -53,7 +53,7 @@ public class MediaService : IMediaService
         var enrichedMovies = new List<MovieResponse>();
         foreach (var movie in movies)
         {
-            var subtitles = await _subtitleService.Collect(movie.Path);
+            var subtitles = await _subtitleService.GetAllSubtitles(movie.Path);
             var enrichedMovie = new MovieResponse
             {
                 Id = movie.Id,

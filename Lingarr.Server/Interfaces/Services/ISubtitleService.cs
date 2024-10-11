@@ -16,5 +16,27 @@ public interface ISubtitleService
     /// file name (excluding language code), and detected language code extracted from the file name. If the language code cannot be determined, 
     /// it is set to "unknown".
     /// </returns>
-    Task<List<Subtitles>> Collect(string path);
+    Task<List<Subtitles>> GetAllSubtitles(string path);
+
+    /// <summary>
+    /// Reads and parses a subtitle file.
+    /// </summary>
+    /// <param name="filePath">The path to the subtitle file to be read.</param>
+    /// <returns>A list of SubtitleItem objects representing the parsed subtitles.</returns>
+    Task<List<SubtitleItem>> ReadSubtitles(string filePath);
+    
+    /// <summary>
+    /// Writes a list of subtitle items to a file.
+    /// </summary>
+    /// <param name="filePath">The path where the subtitle file will be written.</param>
+    /// <param name="subtitles">The list of SubtitleItem objects to be written to the file.</param>
+    Task WriteSubtitles(string filePath, List<SubtitleItem> subtitles);
+    
+    /// <summary>
+    /// Creates a new file path for a subtitle file with a specified target language.
+    /// </summary>
+    /// <param name="originalPath">The original path of the subtitle file.</param>
+    /// <param name="targetLanguage">The target language code to be added to the file name.</param>
+    /// <returns>A new file path with the target language code inserted before the .srt extension.</returns>
+    string CreateFilePath(string originalPath, string targetLanguage);
 }

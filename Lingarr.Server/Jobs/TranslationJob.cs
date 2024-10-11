@@ -13,17 +13,20 @@ public class TranslationJob
     private readonly ISettingService _settings;
     private readonly IProgressService _progressService;
     private readonly ITranslationServiceFactory _translationServiceFactory;
+    private readonly ISubtitleService _subtitleService;
 
     public TranslationJob(
-        ILogger<TranslationJob> logger, 
+        ILogger<TranslationJob> logger,
         ISettingService settings,
         IProgressService progressService,
-        ITranslationServiceFactory translationServiceFactory)
+        ITranslationServiceFactory translationServiceFactory,
+        ISubtitleService subtitleService)
     {
         _logger = logger;
         _settings = settings;
         _progressService = progressService;
         _translationServiceFactory = translationServiceFactory;
+        _subtitleService = subtitleService;
     }
 
     [AutomaticRetry(Attempts = 0)]
@@ -32,15 +35,31 @@ public class TranslationJob
         TranslateAbleSubtitle translateAbleSubtitle,
         CancellationToken cancellationToken)
     {
+        _logger.LogInformation("TranslateJob started for subtitle: |Green|{filePath}|/Green|",
+            translateAbleSubtitle.SubtitlePath);
+
         string jobId = context.BackgroundJob.Id;
         var serviceType = await _settings.GetSetting("service_type") ?? "libretranslate";
 
         var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
-        var subtitleTranslator = new SubtitleTranslator(translationService, _progressService, _logger);
+        var subtitleTranslator = new SubtitleTranslationService(translationService, _logger, _progressService);
 
-        await subtitleTranslator.TranslateSubtitlesAsync(
-            translateAbleSubtitle, 
-            jobId, 
-            cancellationToken);
+        var subtitles = await _subtitleService.ReadSubtitles(translateAbleSubtitle.SubtitlePath);
+        var translatedSubtitles =
+            await subtitleTranslator.TranslateSubtitles(subtitles, translateAbleSubtitle, jobId, cancellationToken);
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            _logger.LogInformation("Translation cancelled for subtitle: {subtitlePath}",
+                translateAbleSubtitle.SubtitlePath);
+            return;
+        }
+
+        var outputPath =
+            _subtitleService.CreateFilePath(translateAbleSubtitle.SubtitlePath, translateAbleSubtitle.TargetLanguage);
+        await _subtitleService.WriteSubtitles(outputPath, translatedSubtitles);
+
+        _logger.LogInformation("TranslateJob completed and created subtitle: |Green|{filePath}|/Green|", outputPath);
+        await _progressService.Emit(jobId, 100, true);
     }
 }
