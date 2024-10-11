@@ -11,7 +11,7 @@ public static class ApplicationBuilderExtensions
 {
     public static void Configure(this WebApplication app)
     {
-        app.MapHub<ScheduleProgressHub>("/hub/ScheduleProgress");
+        app.MapHubs();
         app.ApplyMigrations();
 
         if (app.Environment.IsDevelopment())
@@ -27,8 +27,13 @@ public static class ApplicationBuilderExtensions
         app.UseAuthorization();
         app.MapControllers();
         app.UseStaticFiles();
-
         app.ConfigureSpa();
+    }
+
+    private static void MapHubs(this WebApplication app)
+    {
+        app.MapHub<ScheduleProgressHub>("/signalr/ScheduleProgress");
+        app.MapHub<SettingUpdatedHub>("/signalr/SettingUpdated");
     }
 
     private static void ApplyMigrations(this WebApplication app)
@@ -53,7 +58,7 @@ public static class ApplicationBuilderExtensions
         app.MapWhen(httpContext => 
                 httpContext.Request.Path.Value != null && 
                 !httpContext.Request.Path.Value.StartsWith("/api") && 
-                !httpContext.Request.Path.Value.StartsWith("/hub"),
+                !httpContext.Request.Path.Value.StartsWith("/signalr"),
             configBuilder =>
             {
                 configBuilder.UseSpa(spa =>

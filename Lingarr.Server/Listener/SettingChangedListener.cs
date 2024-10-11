@@ -1,8 +1,10 @@
 ﻿using Hangfire;
 using Lingarr.Core.Data;
+using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Jobs;
 using Lingarr.Server.Services;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Listener;
@@ -10,11 +12,13 @@ namespace Lingarr.Server.Listener;
 public class SettingChangedListener
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly IHubContext<SettingUpdatedHub> _hubContext;
     private readonly ILogger<SettingChangedListener> _logger;
 
-    public SettingChangedListener(IServiceProvider serviceProvider, ILogger<SettingChangedListener> logger)
+    public SettingChangedListener(IServiceProvider serviceProvider, IHubContext<SettingUpdatedHub> hubContext,ILogger<SettingChangedListener> logger)
     {
         _serviceProvider = serviceProvider;
+        _hubContext = hubContext;
         _logger = logger;
     }
     
@@ -67,6 +71,12 @@ public class SettingChangedListener
                 case "Radarr":
                     _logger.LogInformation($"Settings changed for |Green|{jobName}|/Green|. All settings are complete, |Orange|indexing media...|/Orange|");
                     
+                    await _hubContext.Clients.Group("SettingUpdated").SendAsync("Update", new
+                    {
+                        Key = "radarr_settings_completed",
+                        Value = "true"
+                    });
+                    
                     await settingService.SetSetting("radarr_settings_completed", "true");
                     BackgroundJob.Schedule<GetMovieJob>("movies",
                         job => job.Execute(JobCancellationToken.Null),
@@ -74,6 +84,12 @@ public class SettingChangedListener
                     break;
                 case "Sonarr":
                     _logger.LogInformation($"Settings changed for |Green|{jobName}|/Green|. All settings are complete, |Orange|indexing media...|/Orange|");
+                    
+                    await _hubContext.Clients.Group("SettingUpdated").SendAsync("Update", new
+                    {
+                        Key = "sonarr_settings_completed",
+                        Value = "true"
+                    });
                     
                     await settingService.SetSetting("sonarr_settings_completed", "true");
                     BackgroundJob.Schedule<GetShowJob>("shows",

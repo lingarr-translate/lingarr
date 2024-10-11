@@ -24,7 +24,7 @@
 import { ref, onMounted } from 'vue'
 import { IRunningJob } from '@/ts'
 import { useScheduleStore } from '@/store/schedule'
-import { useSignalR } from '@/plugins/signalR'
+import { useSignalR } from '@/composables/useSignalR'
 import TrashIcon from '@/components/icons/TrashIcon.vue'
 
 const scheduleStore = useScheduleStore()
@@ -37,22 +37,24 @@ const progress = ref(0)
 const signalR = useSignalR()
 
 onMounted(async () => {
-    signalR.on(
+    const scheduleProgress = await signalR.createHub(
         'ScheduleProgress',
-        (data: { jobId: string; progress: number; completed: boolean }) => {
-            if (data.jobId === job.jobId) {
-                if (!data.completed) {
-                    progress.value = data.progress
-                } else {
-                    signalR.leaveGroup({ group: job.jobId })
-                }
+        '/signalr/ScheduleProgress'
+    )
+
+    scheduleProgress.on('ScheduleProgress', (data: any) => {
+        if (data.jobId === job.jobId) {
+            if (!data.completed) {
+                progress.value = data.progress
+            } else {
+                scheduleProgress.leaveGroup({ group: job.jobId })
             }
         }
-    )
+    })
 })
 
 function remove() {
-    signalR.leaveGroup({ group: job.jobId })
+    //scheduleProgress.leaveGroup({ group: job.jobId })
     scheduleStore.removeRunningJob(job.jobId)
 }
 </script>

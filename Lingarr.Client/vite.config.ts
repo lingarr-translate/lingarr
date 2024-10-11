@@ -21,8 +21,9 @@ export default defineConfig(({ command, mode }) => {
                     target: 'http://Lingarr.Server:8080',
                     changeOrigin: true
                 },
-                '/hub': {
+                '/signalr': {
                     target: 'http://Lingarr.Server:8080',
+                    ws: true,
                     changeOrigin: true
                 }
             },

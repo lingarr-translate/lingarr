@@ -1,6 +1,6 @@
 ﻿<template>
     <PageLayout>
-        <div v-if="settingsCompleted" class="w-full">
+        <div v-if="settingsCompleted === 'true'" class="w-full">
             <!-- Search and Filters -->
             <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
                 <SearchComponent v-model="filter" />
@@ -38,7 +38,8 @@
                             <ContextMenu
                                 v-for="(subtitle, index) in item.subtitles"
                                 :key="`${index}-${subtitle.fileName}`"
-                                :subtitle="subtitle">
+                                :subtitle="subtitle"
+                                @update:toggle="toggleMovie(item)">
                                 <BadgeComponent value="{{ subtitle.language }}">
                                     {{ subtitle.language.toUpperCase() }}
                                 </BadgeComponent>
@@ -59,10 +60,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ComputedRef, ref } from 'vue'
+import { computed, onMounted, ComputedRef } from 'vue'
 import { IFilter, IMovie, IPagedResult, SETTINGS } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useMovieStore } from '@/store/movie'
+import { useSettingStore } from '@/store/setting'
+import { useInstanceStore } from '@/store/instance'
 import PaginationComponent from '@/components/common/PaginationComponent.vue'
 import PageLayout from '@/components/layout/PageLayout.vue'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
@@ -71,16 +74,14 @@ import SearchComponent from '@/components/common/SearchComponent.vue'
 import ContextMenu from '@/components/layout/ContextMenu.vue'
 import ReloadComponent from '@/components/common/ReloadComponent.vue'
 import NoMediaNotification from '@/components/common/NoMediaNotification.vue'
-import services from '@/services'
 
 const movieStore = useMovieStore()
-const settingsCompleted = ref<boolean>(false)
+const settingStore = useSettingStore()
+const instanceStore = useInstanceStore()
 
-async function getRadarrConfigurationState() {
-    settingsCompleted.value = await services.setting.getSetting<boolean>(
-        SETTINGS.RADARR_SETTINGS_COMPLETED
-    )
-}
+const settingsCompleted: ComputedRef<string> = computed(
+    () => settingStore.getSetting(SETTINGS.RADARR_SETTINGS_COMPLETED) as string
+)
 const movies: ComputedRef<IPagedResult<IMovie>> = computed(() => movieStore.get)
 const filter: ComputedRef<IFilter> = computed({
     get: () => movieStore.getFilter,
@@ -89,8 +90,11 @@ const filter: ComputedRef<IFilter> = computed({
     }, 300)
 })
 
+const toggleMovie = useDebounce(async (movie: IMovie) => {
+    instanceStore.setPoster({ content: movie, type: 'movie' })
+}, 1000)
+
 onMounted(async () => {
-    await getRadarrConfigurationState()
     await movieStore.fetch()
 })
 </script>

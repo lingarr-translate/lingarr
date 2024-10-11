@@ -1,6 +1,6 @@
 ﻿<template>
     <PageLayout>
-        <div v-if="settingsCompleted" class="w-full">
+        <div v-if="settingsCompleted === 'true'" class="w-full">
             <!-- Search and Filters -->
             <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
                 <SearchComponent v-model="filter" />
@@ -129,6 +129,7 @@ import { ref, Ref, computed, onMounted, ComputedRef } from 'vue'
 import { IFilter, IPagedResult, ISeason, IShow, ISubtitle, SETTINGS } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useInstanceStore } from '@/store/instance'
+import { useSettingStore } from '@/store/setting'
 import { useShowStore } from '@/store/show'
 import services from '@/services'
 import PaginationComponent from '@/components/common/PaginationComponent.vue'
@@ -143,17 +144,15 @@ import NoMediaNotification from '@/components/common/NoMediaNotification.vue'
 
 const instanceStore = useInstanceStore()
 const showStore = useShowStore()
+const settingStore = useSettingStore()
 
 const expandedShow: Ref<boolean | number | null> = ref(null)
 const expandedSeason: Ref<ISeason | null> = ref(null)
 const subtitles: Ref<ISubtitle[]> = ref([])
-const settingsCompleted = ref<boolean>(false)
 
-async function getSonarrConfigurationState() {
-    settingsCompleted.value = await services.setting.getSetting<boolean>(
-        SETTINGS.SONARR_SETTINGS_COMPLETED
-    )
-}
+const settingsCompleted: ComputedRef<string> = computed(
+    () => settingStore.getSetting(SETTINGS.SONARR_SETTINGS_COMPLETED) as string
+)
 const shows: ComputedRef<IPagedResult<IShow>> = computed(() => showStore.get)
 const filter: ComputedRef<IFilter> = computed({
     get: () => showStore.getFilter,
@@ -195,7 +194,6 @@ const getSubtitle = (fileName: string | null) => {
 }
 
 onMounted(async () => {
-    await getSonarrConfigurationState()
     await showStore.fetch()
 })
 </script>

@@ -1,8 +1,8 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { ILanguage, ISubtitle } from '@/ts'
 import { useScheduleStore } from '@/store/schedule'
+import { useSignalR } from '@/composables/useSignalR'
 import services from '@/services'
-import { useSignalR } from '@/plugins/signalR'
 
 const signalR = useSignalR()
 
@@ -17,7 +17,11 @@ export const useTranslateStore = defineStore({
                 target
             )
             scheduleStore.setRunningJob(jobId, subtitle)
-            await signalR.joinGroup({ group: jobId })
+            const scheduleProgress = await signalR.connect(
+                'ScheduleProgress',
+                '/signalr/ScheduleProgress'
+            )
+            await scheduleProgress.joinGroup({ group: jobId })
         }
     }
 })

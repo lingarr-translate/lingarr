@@ -18,20 +18,21 @@ export const useSettingStore = defineStore({
         getSetting: (state: IUseSettingStore) => (key: keyof ISettings) => state.settings[key]
     },
     actions: {
-        updateSetting(key: keyof ISettings, value: string | ILanguage[]) {
-            if (['radarr_url', 'sonarr_url'].includes(key)) {
-                value = (value as string).replace(/\/+$/, '')
+        async updateSetting(key: keyof ISettings, value: string | boolean | ILanguage[]) {
+            if (typeof value === 'string' && (key === 'radarr_url' || key === 'sonarr_url')) {
+                value = value.replace(/\/+$/, '')
             }
 
-            if (key === 'source_languages' || key === 'target_languages') {
-                this.settings[key] = value as ILanguage[]
+            this.storeSetting(key, value)
+            if (key === SETTINGS.SOURCE_LANGUAGES || key === SETTINGS.TARGET_LANGUAGES) {
                 this.saveSetting(key, JSON.stringify(value))
             } else {
-                this.settings[key] = value as string
                 this.saveSetting(key, value as string)
             }
         },
-
+        storeSetting(key: keyof ISettings, value: string | boolean | ILanguage[]) {
+            this.settings[key] = value as never
+        },
         saveSetting(key: keyof ISettings, value: string) {
             services.setting.setSetting(key, value)
         },

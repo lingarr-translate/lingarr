@@ -19,9 +19,21 @@ export const SETTINGS = {
     TRANSLATION_SCHEDULE: 'translation_schedule'
 } as const
 
-type SettingKeys = (typeof SETTINGS)[keyof typeof SETTINGS]
-type LanguageSettings = 'source_languages' | 'target_languages'
-
-export type ISettings = {
-    [K in SettingKeys]: K extends LanguageSettings ? string | ILanguage[] : string
+export interface ISettings {
+    radarr_api_key: string
+    radarr_url: string
+    sonarr_api_key: string
+    sonarr_url: string
+    service_type: string
+    libretranslate_url: string
+    deepl_api_key: string
+    show_schedule: string
+    movie_schedule: string
+    max_translations_per_run: string
+    translation_schedule: string
+    source_languages: string | ILanguage[]
+    target_languages: string | ILanguage[]
+    automation_enabled: boolean
+    sonarr_settings_completed: string
+    radarr_settings_completed: string
 }

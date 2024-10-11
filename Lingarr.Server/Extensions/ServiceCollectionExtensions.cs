@@ -138,9 +138,6 @@ public static class ServiceCollectionExtensions
 
     private static void ConfigureSignalR(this WebApplicationBuilder builder)
     {
-        builder.Services.AddSignalR().AddHubOptions<ScheduleProgressHub>(options =>
-        {
-            options.EnableDetailedErrors = true;
-        });
+        builder.Services.AddSignalR();
     }
 }
