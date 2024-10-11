@@ -3,27 +3,31 @@ using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Server.Interfaces.Services.Integration;
 using Lingarr.Server.Models.Integrations;
+using Lingarr.Server.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Jobs;
 
 public class GetShowJob
 {
-    private const string LingarRootFolder = "/tv/";
+    private const string LingarRootFolder = "/app/media/tv/";
     private const int BatchSize = 100;
 
     private readonly LingarrDbContext _dbContext;
     private readonly ISonarrService _sonarrService;
     private readonly ILogger<GetShowJob> _logger;
+    private readonly PathConversionService _pathConversionService;
 
     public GetShowJob(
         LingarrDbContext dbContext,
         ISonarrService sonarrService,
-        ILogger<GetShowJob> logger)
+        ILogger<GetShowJob> logger, 
+        PathConversionService pathConversionService)
     {
         _dbContext = dbContext;
         _sonarrService = sonarrService;
         _logger = logger;
+        _pathConversionService = pathConversionService;
     }
 
     [DisableConcurrentExecution(timeoutInSeconds: 5 * 60)]
@@ -90,13 +94,14 @@ public class GetShowJob
             .Include(s => s.Seasons)
             .FirstOrDefaultAsync(s => s.SonarrId == show.id);
 
+        string showPath = show.path ?? string.Empty;
         if (showEntity == null)
         {
             showEntity = new Show
             {
                 SonarrId = show.id,
                 Title = show.title,
-                Path = GetPath(show.path, show.rootFolderPath),
+                Path = showPath,
                 DateAdded = !string.IsNullOrEmpty(show.added) ? DateTime.Parse(show.added) : DateTime.UtcNow
             };
             _dbContext.Shows.Add(showEntity);
@@ -104,7 +109,7 @@ public class GetShowJob
         else
         {
             showEntity.Title = show.title;
-            showEntity.Path = GetPath(show.path, show.rootFolderPath);
+            showEntity.Path = showPath;
             showEntity.DateAdded = !string.IsNullOrEmpty(show.added) ? DateTime.Parse(show.added) : DateTime.UtcNow;
         }
 
@@ -145,7 +150,9 @@ public class GetShowJob
         foreach (var episode in episodes.Where(e => e.hasFile))
         {
             var episodePathResult = await _sonarrService.GetEpisodePath(episode.id);
-            var episodePath = GetPath(episodePathResult?.episodeFile.path, show.rootFolderPath);
+            var episodePath = _pathConversionService.ConvertToAppPath(
+                episodePathResult?.episodeFile.path ?? string.Empty,
+                LingarRootFolder);
             
             var episodeEntity = seasonEntity.Episodes.FirstOrDefault(se => se.SonarrId == episode.id);
             if (episodeEntity == null)
@@ -209,17 +216,6 @@ public class GetShowJob
         }
     }
 
-    private string GetPath(string? path, string rootFolderPath)
-    {
-        if (path != null &&
-            path.StartsWith(rootFolderPath, StringComparison.OrdinalIgnoreCase))
-        {
-            return LingarRootFolder + path.Substring(rootFolderPath.Length);
-        }
-
-        return path ?? string.Empty;
-    }
-
     private async Task<string> GetSeasonPath(SonarrShow show, SonarrSeason season)
     {
         if (show.seasonFolder)
@@ -230,16 +226,20 @@ public class GetShowJob
             {
                 var episodePathResult = await _sonarrService.GetEpisodePath(episode.id);
                 var seasonPath = Path.GetDirectoryName(episodePathResult?.episodeFile.path);
-                if (seasonPath != null || seasonPath != string.Empty)
+                if (seasonPath != null)
                 {
-                    seasonPath = $"/{seasonPath}";
+                    if (!seasonPath.StartsWith("/"))
+                    {
+                        seasonPath = $"/{seasonPath}";
+                    }
                 }
                 else
                 {
                     seasonPath = $"/Season {season.seasonNumber}";
                 }
 
-                return seasonPath;
+                
+                return _pathConversionService.ConvertToAppPath(seasonPath, LingarRootFolder);
             }
         }
 

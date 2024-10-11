@@ -1,27 +1,32 @@
-﻿using Hangfire;
+﻿using System.Text.RegularExpressions;
+using Hangfire;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Server.Interfaces.Services.Integration;
 using Lingarr.Server.Models.Integrations;
+using Lingarr.Server.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Jobs;
 
 public class GetMovieJob
 {
-    private const string LingarRootFolder = "/movies/";
+    private const string LingarRootFolder = "/app/media/movies/";
     
     private readonly LingarrDbContext _dbContext;
     private readonly IRadarrService _radarrService;
     private readonly ILogger<GetMovieJob> _logger;
+    private readonly PathConversionService _pathConversionService;
 
     public GetMovieJob(LingarrDbContext dbContext, 
         IRadarrService radarrService, 
-        ILogger<GetMovieJob> logger)
+        ILogger<GetMovieJob> logger, 
+        PathConversionService pathConversionService)
     {
         _dbContext = dbContext;
         _radarrService = radarrService;
         _logger = logger;
+        _pathConversionService = pathConversionService;
     }
 
     [DisableConcurrentExecution(timeoutInSeconds: 5 * 60)]
@@ -70,7 +75,7 @@ public class GetMovieJob
             .Include(m => m.Images)
             .FirstOrDefaultAsync(m => m.RadarrId == movie.id);
 
-        string moviePath = GetPath(movie);
+        string moviePath = _pathConversionService.ConvertToAppPath(movie.movieFile.path ?? string.Empty, LingarRootFolder);
         if (movieEntity == null)
         {
             movieEntity = new Movie
@@ -133,16 +138,5 @@ public class GetMovieJob
             movieEntity.Images.Remove(imageToRemove);
             _dbContext.Images.Remove(imageToRemove);
         }
-    }
-
-    private string GetPath(RadarrMovie movie)
-    {
-        if (movie.movieFile.path != null &&
-            movie.movieFile.path.StartsWith(movie.rootFolderPath, StringComparison.OrdinalIgnoreCase))
-        {
-            return LingarRootFolder + movie.movieFile.path.Substring(movie.rootFolderPath.Length);
-        }
-
-        return movie.movieFile.path ?? string.Empty;
     }
 }
