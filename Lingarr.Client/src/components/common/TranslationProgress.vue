@@ -37,20 +37,20 @@ const progress = ref(0)
 const signalR = useSignalR()
 
 onMounted(async () => {
-    const scheduleProgress = await signalR.createHub(
-        'ScheduleProgress',
-        '/signalr/ScheduleProgress'
-    )
+    const scheduleProgress = await signalR.connect('ScheduleProgress', '/signalr/ScheduleProgress')
 
-    scheduleProgress.on('ScheduleProgress', (data: any) => {
-        if (data.jobId === job.jobId) {
-            if (!data.completed) {
-                progress.value = data.progress
-            } else {
-                scheduleProgress.leaveGroup({ group: job.jobId })
+    scheduleProgress.on(
+        'ScheduleProgress',
+        (schedule: { jobId: string; progress: number; completed: boolean }) => {
+            if (schedule.jobId === job.jobId) {
+                if (!schedule.completed) {
+                    progress.value = schedule.progress
+                } else {
+                    scheduleProgress.leaveGroup({ group: job.jobId })
+                }
             }
         }
-    })
+    )
 })
 
 function remove() {

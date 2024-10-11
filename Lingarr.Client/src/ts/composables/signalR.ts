@@ -17,6 +17,7 @@ interface HubConnection {
 
 export type EventCallbacks = {
     GroupCompleted: (group: string) => void
+    ScheduleProgress: (schedule: { jobId: string; progress: number; completed: boolean }) => void
     Update: (setting: { key: keyof ISettings; value: string }) => void
 }
 
