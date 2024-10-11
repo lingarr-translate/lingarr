@@ -33,7 +33,7 @@ public class MediaService : IMediaService
 
         if (!string.IsNullOrEmpty(searchQuery))
         {
-            query = query.Where(m => m.Title.Contains(searchQuery));
+            query = query.Where(m => m.Title.ToLower().Contains(searchQuery.ToLower()));
         }
 
         query = orderBy switch
@@ -94,7 +94,7 @@ public class MediaService : IMediaService
 
         if (!string.IsNullOrEmpty(searchQuery))
         {
-            query = query.Where(s => s.Title.Contains(searchQuery));
+            query = query.Where(s => s.Title.ToLower().Contains(searchQuery.ToLower()));
         }
 
         query = orderBy switch
