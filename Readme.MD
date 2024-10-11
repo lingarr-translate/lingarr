@@ -14,36 +14,8 @@ Choose the engine that best fits your needs, or use both for comparison and opti
 ## Usage
 
 ### Docker Compose
-
-LibreTranslate doesn't natively support Docker Compose and needs to be built locally. Follow [these](https://docs.portainer.io/user/docker/images/build) docs on how to build an image in Portainer using the below Dockerfile. There are also options to make use of CUDA; more info [here](https://github.com/LibreTranslate/LibreTranslate).
-
-Change `languages` and set `filter` to true to only include preferred languages. If `filter` is set to false, all languages will be installed.
-
-Note that this step is optional when using a alternative translation service.
-```dockerfile
-FROM libretranslate/libretranslate:latest AS models_cache
-
-ARG filter=true
-# replace with preferred languages
-ARG languages="nl,en,tr"
-
-USER libretranslate
-
-WORKDIR /app
-
-RUN if [ "$filter" = "true" ]; then \
-        ./venv/bin/python ../app/scripts/install_models.py --load_only_lang_codes "$languages"; \
-    else \
-        ./venv/bin/python ../app/scripts/install_models.py; \
-    fi
-
-RUN ./venv/bin/pip install . && ./venv/bin/pip cache purge
-
-FROM models_cache AS final
-ENTRYPOINT [ "./venv/bin/libretranslate", "--host", "0.0.0.0" ]
-```
-
-Then, to run Lingarr using Docker Compose, add the following configuration to your `docker-compose.yml` file:
+To run Lingarr using Docker Compose, add the following configuration to your `docker-compose.yml` file, 
+if you have a different mapping than a single directory please consult the [wiki](https://github.com/lingarr-translate/lingarr/wiki)
 
 ```yaml
 networks:
@@ -75,18 +47,21 @@ services:
     networks:
       - lingarr
 
-  libretranslate: # Optional if you're using a different service
-    image: libretranslate:latest
-    container_name: libretranslate
+  LibreTranslate:
+    container_name: LibreTranslate
+    image: libretranslate/libretranslate:latest
     restart: unless-stopped
-    ports:
-      - "5000:5000"
     environment:
+      - LT_LOAD_ONLY=en,tr,nl  # Important, replace with your preferred languages
       - LT_DISABLE_WEB_UI=true # Optional, enable if you would like to make use of the LibreTranslate web interface 
+    ports:
+      - 5000:5000
+    volumes:
+      - ../media/libretranslate:/home/libretranslate/.local/share/argos-translate
     networks:
       - lingarr
     healthcheck:
-      test: ['CMD-SHELL', './venv/bin/python scripts/healthcheck.py']
+      test: ["CMD-SHELL", "./venv/bin/python scripts/healthcheck.py"]
 ```
 
 ### Docker CLI
@@ -127,29 +102,35 @@ Run LibreTranslate Docker container:
 docker run -d \
   --name LibreTranslate \
   -p 5000:5000 \
-  -v /apps/libretranslate/db:/app/db \
-  -v /apps/libretranslate/local:/home/libretranslate/.local \
+  -v /path/to/libretranslate/db:/app/db \
+  -v /path/to/libretranslate/local:/home/libretranslate/.local \
   libretranslate/libretranslate \
   --disable-web-ui \
-  --load-only=pt,en,es     # replace with preferred languages
+  --load-only=pt,en,es     # Important, replace with your preferred languages
 ```
 
-#### Parameters
-| Parameter                   | Function                                                                    |
-|-----------------------------|-----------------------------------------------------------------------------|
-| -p 9876:8080                | Maps port 9876 on the host to port 8080 for the Lingarr web interface       |
-| -e PUID=0                   | Sets the user ID for the container process                                  |
-| -e PGID=0                   | Sets the group ID for the container process                                 |
-| -e MAX_CONCURRENT_JOBS=1    | Sets the amount of jobs that can run concurrently, defaults to 1            |
-| -e DB_CONNECTION=mysql      | Specifies the database connection type. Options are `mysql` or `sqlite`     |
-| -e DB_HOST=Lingarr.Mysql    | The hostname for the MySQL database (required when using `mysql`)           |
-| -e DB_PORT=3306             | The port for the MySQL database (required when using `mysql`)               |
-| -e DB_DATABASE=LingarrMysql | The name of the database (required when using `mysql`)                      |
-| -e DB_USERNAME=LingarrMysql | The username for the database (required when using `mysql`)                 |
-| -e DB_USERNAME=LingarrMysql | The password for the database (required when using `mysql`)                 |
-| -v /app/config              | Lingarr configuration directory. The SQLite database is stored here if used |
-| -v /app/movies              | Location of Movie library on disk                                           |
-| -v /app/tv                  | Location of TV Shows library on disk                                        |
+#### Lingarr parameters
+| Parameter                   | Function                                                                                      |
+|-----------------------------|-----------------------------------------------------------------------------------------------|
+| -p 9876:8080                | Maps port 9876 on the host to port 8080 for the Lingarr web interface                         |
+| -e PUID=0                   | Sets the user ID for the container process                                                    |
+| -e PGID=0                   | Sets the group ID for the container process                                                   |
+| -e MAX_CONCURRENT_JOBS=1    | Sets the amount of jobs that can run concurrently, defaults to 1                              |
+| -e DB_CONNECTION=mysql      | Specifies the database connection type. Options are `mysql` or `sqlite`                       |
+| -e DB_HOST=Lingarr.Mysql    | The hostname for the MySQL database (required when using `mysql`)                             |
+| -e DB_PORT=3306             | The port for the MySQL database (required when using `mysql`)                                 |
+| -e DB_DATABASE=LingarrMysql | The name of the database (required when using `mysql`)                                        |
+| -e DB_USERNAME=LingarrMysql | The username for the database (required when using `mysql`)                                   |
+| -e DB_USERNAME=LingarrMysql | The password for the database (required when using `mysql`)                                   |
+| -v /app/config              | Lingarr configuration directory. The SQLite database is stored here if used                   |
+| -v /app/movies              | Location of Movie library on disk                                                             |
+| -v /app/tv                  | Location of TV Shows library on disk                                                          |
+
+#### LibreTranslate parameters
+| Parameter                   | Function                                                                                      |
+|-----------------------------|-----------------------------------------------------------------------------------------------|
+| LT_LOAD_ONLY                | Allows you to add source languages by their [iso code](https://libretranslate.com/languages)  |
+| LT_DISABLE_WEB_UI           | Enables or disables a Google translate like web ui                                            |
 
 #### 🤝 Contributing:
 We welcome contributions to Lingarr! Whether it's bug reports, 
@@ -157,5 +138,7 @@ feature requests, or code contributions, please feel free to help out. Visit the
 
 #### 🙏 Credits:
 Icons: [Lucide](https://lucide.dev/icons)  
-Subtitle Parsing: [AlexPoint](https://github.com/AlexPoint/SubtitlesParser)  
-Translation Services: [libretranslate](https://libretranslate.com)
+Subtitle Parsing: [AlexPoint](https://github.com/AlexPoint/SubtitlesParser)    
+Translation Services: [libretranslate](https://libretranslate.com)  
+For helping to squash a big bug:  
+[HomerBeer](https://github.com/HomerBeer)  
