@@ -1,4 +1,5 @@
-﻿using Hangfire;
+﻿using GTranslate.Translators;
+using Hangfire;
 using Hangfire.Storage.SQLite;
 using Lingarr.Core;
 using Lingarr.Core.Configuration;
@@ -106,6 +107,16 @@ public static class ServiceCollectionExtensions
         
         // Added startup service to validate new settings
         builder.Services.AddHostedService<StartupService>();
+        
+        // Add translation services
+        builder.Services.AddTransient<GoogleTranslator>();
+        builder.Services.AddTransient<BingTranslator>();
+        builder.Services.AddTransient<MicrosoftTranslator>();
+        builder.Services.AddTransient<YandexTranslator>();
+        builder.Services.AddTransient<OpenAiTranslationService>();
+        
+        builder.Services.AddTransient<PathConversionService>();
+
     }
 
     private static void ConfigureHangfire(this WebApplicationBuilder builder)
