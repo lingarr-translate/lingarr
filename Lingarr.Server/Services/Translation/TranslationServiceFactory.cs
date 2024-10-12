@@ -7,15 +7,19 @@ namespace Lingarr.Server.Services.Translation;
 public class TranslationServiceFactory : ITranslationServiceFactory
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly ILogger<TranslationServiceFactory> _logger;
 
-    public TranslationServiceFactory(IServiceProvider serviceProvider)
+    public TranslationServiceFactory(IServiceProvider serviceProvider,
+        ILogger<TranslationServiceFactory> logger)
     {
         _serviceProvider = serviceProvider;
+        _logger = logger;
     }
 
     /// <inheritdoc />
     public ITranslationService CreateTranslationService(string serviceType)
     {
+        _logger.LogInformation($"Creating translation service with |Green|{serviceType}|/Green|");
         return serviceType.ToLower() switch
         {
             "libretranslate" => new LibreTranslateService(
@@ -55,6 +59,12 @@ public class TranslationServiceFactory : ITranslationServiceFactory
             "openai" => new OpenAiTranslationService(
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<ILogger<OpenAiTranslationService>>()
+            ),
+
+            "anthropic" => new AnthropicTranslationService(
+                _serviceProvider.GetRequiredService<ISettingService>(),
+                _serviceProvider.GetRequiredService<HttpClient>(),
+                _serviceProvider.GetRequiredService<ILogger<AnthropicTranslationService>>()
             ),
 
             _ => throw new ArgumentException("Unsupported translation service type", nameof(serviceType))

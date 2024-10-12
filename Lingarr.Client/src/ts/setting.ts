@@ -16,7 +16,12 @@ export const SETTINGS = {
     MOVIE_SCHEDULE: 'movie_schedule',
     MAX_TRANSLATIONS_PER_RUN: 'max_translations_per_run',
     AUTOMATION_ENABLED: 'automation_enabled',
-    TRANSLATION_SCHEDULE: 'translation_schedule'
+    TRANSLATION_SCHEDULE: 'translation_schedule',
+    OPENAI_MODEL: 'openai_model',
+    OPENAI_API_KEY: 'openai_api_key',
+    ANTHROPIC_MODEL: 'anthropic_model',
+    ANTHROPIC_API_KEY: 'anthropic_api_key',
+    ANTHROPIC_VERSION: 'anthropic_version'
 } as const
 
 export interface ISettings {
@@ -36,4 +41,9 @@ export interface ISettings {
     automation_enabled: boolean
     sonarr_settings_completed: string
     radarr_settings_completed: string
+    openai_model: string
+    openai_api_key: string
+    anthropic_model: string
+    anthropic_api_key: string
+    anthropic_version: string
 }

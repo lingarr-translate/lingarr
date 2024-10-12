@@ -20,12 +20,16 @@ public class OpenAiTranslationService : TranslationServiceBase
         {
             throw new InvalidOperationException("ChatGPT API key or model is not configured.");
         }
-        var prompt = $"Translate the following text from {sourceLanguage} to {targetLanguage}. Only provide the translation, without any additional comments or explanations:\n\n{text}";
-
+        
         try
         {
+            var messages = new List<ChatMessage>
+            {
+                new SystemChatMessage($"You will be provided with a sentence in {sourceLanguage} and your task is to translate it into {targetLanguage}"),
+                new UserChatMessage(text)
+            };
             ChatClient client = new ChatClient(model: openAi["openai_model"], apiKey: openAi["openai_api_key"]);
-            ChatCompletion completion = client.CompleteChat(prompt);
+            ChatCompletion completion = client.CompleteChat(messages);
 
             return completion.Content[0].Text;
         }

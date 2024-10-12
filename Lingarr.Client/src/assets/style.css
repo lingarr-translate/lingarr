@@ -5,3 +5,12 @@
 *::-webkit-scrollbar {
     @apply w-2 h-2;
 }
+
+*::-webkit-scrollbar-track {
+    @apply bg-transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    @apply rounded-md bg-accent;
+    @apply w-2 h-2;
+}

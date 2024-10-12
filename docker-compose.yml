@@ -23,6 +23,9 @@ services:
       - DB_DATABASE=LingarrMysql
       - DB_USERNAME=LingarrMysql
       - DB_PASSWORD=Secret1234
+    volumes:
+      - ../media/:/app/media/movies
+      - ../media/:/app/media/tv
     ports:
       - "9877:8080"
     networks:
@@ -48,14 +51,16 @@ services:
       - lingarr
 
   LibreTranslate:
-    image: ${DOCKER_REGISTRY-}libretranslate
-    build:
-      context: .
-      dockerfile: Dockerfile.libretranslate
     container_name: LibreTranslate
+    image: libretranslate/libretranslate:latest
     restart: unless-stopped
+    environment:
+      - LT_LOAD_ONLY=en,tr,nl
+      - LT_DISABLE_WEB_UI=false # Optional, enable if you would like to make use of the LibreTranslate web interface 
     ports:
-      - "5000:5000"
+      - 5000:5000
+    volumes:
+      - ../media/libretranslate:/home/libretranslate/.local/share/argos-translate
     networks:
       - lingarr
     healthcheck:
@@ -93,5 +98,35 @@ services:
       UPLOAD_LIMIT: 500M
     ports:
       - "9878:80"
+    networks:
+      - lingarr
+        
+  radarr:
+    image: ghcr.io/hotio/radarr:nightly
+    container_name: radarr
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Amsterdam
+    volumes:
+      - ../media/:/media
+    restart: unless-stopped
+    ports:
+      - 7878:7878
+    networks:
+      - lingarr
+        
+  sonarr:
+    image: ghcr.io/hotio/sonarr:nightly
+    container_name: sonarr
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Europe/Amsterdam
+    volumes:
+      - ../media/:/tv
+    restart: unless-stopped
+    ports:
+      - 8989:8989
     networks:
       - lingarr
