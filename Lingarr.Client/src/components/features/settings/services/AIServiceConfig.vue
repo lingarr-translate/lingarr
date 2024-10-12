@@ -91,7 +91,7 @@ const modelOptions = computed(() => {
             { label: 'GPT-3.5 Turbo 0125', value: 'gpt-3.5-turbo-0125' }
         ]
     } else {
-        return [{ label: 'claude-3-5-sonnet-20240620', value: 'Claude 3.5 Sonnet' }]
+        return [{ label: 'Claude 3.5 Sonnet', value: 'claude-3-5-sonnet-20240620' }]
     }
 })
 </script>
