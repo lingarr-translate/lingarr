@@ -132,6 +132,10 @@ docker run -d \
 | LT_LOAD_ONLY                | Allows you to add source languages by their [iso code](https://libretranslate.com/languages)  |
 | LT_DISABLE_WEB_UI           | Enables or disables a Google translate like web ui                                            |
 
+#### API Integration
+Lingarr provides a RESTful API that allows you to integrate subtitle translation capabilities into your applications. You can find the complete API documentation, including a Swagger definition of all available endpoints at the 
+[Lingarr API Documentation](https://lingarr.com/docs/api/)
+
 #### 🤝 Contributing:
 We welcome contributions to Lingarr! Whether it's bug reports, 
 feature requests, or code contributions, please feel free to help out. Visit the [Lingarr](https://github.com/lingarr-translate/lingarr) GitHub repository to get started.
