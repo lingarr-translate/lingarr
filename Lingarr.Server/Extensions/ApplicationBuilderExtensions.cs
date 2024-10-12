@@ -21,7 +21,12 @@ public static class ApplicationBuilderExtensions
                 Authorization = [new LingarrAuthorizationFilter()]
             });
             app.UseSwagger();
-            app.UseSwaggerUI(c => c.SwaggerEndpoint($"/swagger/{LingarrVersion.Number}/swagger.json", $"Lingarr HTTP API {LingarrVersion.Number}"));
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint($"/swagger/{LingarrVersion.Number}/swagger.json",
+                    $"Lingarr HTTP API {LingarrVersion.Number}");
+                options.EnableTryItOutByDefault();
+            });
         }
 
         app.UseAuthorization();
