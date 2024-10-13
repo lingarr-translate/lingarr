@@ -1,5 +1,6 @@
 ﻿using Hangfire;
 using Lingarr.Core.Data;
+using Lingarr.Core.Interfaces;
 using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Jobs;
@@ -24,23 +25,34 @@ public class SettingChangedListener
     
     public async void OnSettingChanged(SettingService ss, string setting)
     {
-        string[] requiredRadarrKeys = { "radarr_api_key", "radarr_url" };
-        string[] requiredSonarrKeys = { "sonarr_api_key", "sonarr_url" };
-        string[] requiredAutomationKeys = { "automation_enabled", "translation_schedule" , "max_translations_per_run" };
-        
-        if (requiredRadarrKeys.Any(requiredKey => requiredKey == setting))
+        var settingGroups = new Dictionary<string, (string actionType, string actionName, string[] keys)>
         {
-            await CheckAndRunJob("Radarr", requiredRadarrKeys);
-        }
-        
-        if (requiredSonarrKeys.Any(requiredKey => requiredKey == setting))
+            { "radarr", ("Job", "Radarr", ["radarr_api_key", "radarr_url"]) },
+            { "sonarr", ("Job", "Sonarr", ["sonarr_api_key", "sonarr_url"]) },
+            { "automation", ("Job", "Automation", [
+                    "automation_enabled", 
+                    "translation_schedule", 
+                    "max_translations_per_run"
+                ])
+            },
+            { "source_languages", ("Action", "ClearHash", ["source_languages"]) }
+        };
+
+        foreach (var group in settingGroups)
         {
-            await CheckAndRunJob("Sonarr", requiredSonarrKeys);
-        }
-        
-        if (requiredAutomationKeys.Any(requiredKey => requiredKey == setting))
-        {
-            await CheckAndRunJob("Automation", requiredAutomationKeys);
+            if (group.Value.keys.Contains(setting))
+            {
+                switch (group.Value.actionType)
+                {
+                    case "Job":
+                        await RunJob(group.Value.actionName, group.Value.keys);
+                        break;
+                    case "Action":
+                        await RunAction(group.Value.actionName, group.Value.keys);
+                        break;
+                }
+                break;
+            }
         }
     }
     
@@ -48,10 +60,10 @@ public class SettingChangedListener
     /// This method retrieves the required settings from the database. If all required settings have non-empty values,
     /// it enqueues the appropriate background job based on the <paramref name="jobName"/>:
     /// /// </summary>
-    /// <param name="jobName">The name of the job to run, either "Radarr" or "Sonarr".</param>
+    /// <param name="jobName">The name of the job to run.</param>
     /// <param name="requiredKeys">An array of setting keys that must have values in the database.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    private async Task CheckAndRunJob(string jobName, string[] requiredKeys)
+    private async Task RunJob(string jobName, string[] requiredKeys)
     {
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
@@ -113,6 +125,37 @@ public class SettingChangedListener
                         RecurringJob.RemoveIfExists("AutomatedTranslationJob");
                     }
 
+                    break;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// This method retrieves the required settings from the database. If all required settings have non-empty values,
+    /// it performs an action based on the <paramref name="actionName"/>:
+    /// /// </summary>
+    /// <param name="actionName">The name of the action to run.</param>
+    /// <param name="requiredKeys">An array of setting keys that must have values in the database.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    private async Task RunAction(string actionName, string[] requiredKeys)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
+        
+        var settings = await dbContext.Settings
+            .Where(s => requiredKeys.Contains(s.Key))
+            .ToDictionaryAsync(s => s.Key, s => s.Value);
+        
+        bool allRequiredKeysHaveValues = requiredKeys.All(key => 
+            settings.TryGetValue(key, out var value) && !string.IsNullOrEmpty(value));
+        
+        if (allRequiredKeysHaveValues)
+        {
+            switch (actionName)
+            {
+                case "ClearHash":
+                    dbContext.Database.ExecuteSqlRaw("UPDATE Movies SET MediaHash = ''");
+                    dbContext.Database.ExecuteSqlRaw("UPDATE TVShows SET MediaHash = ''");
                     break;
             }
         }
