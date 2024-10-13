@@ -21,7 +21,10 @@ export const SETTINGS = {
     OPENAI_API_KEY: 'openai_api_key',
     ANTHROPIC_MODEL: 'anthropic_model',
     ANTHROPIC_API_KEY: 'anthropic_api_key',
-    ANTHROPIC_VERSION: 'anthropic_version'
+    ANTHROPIC_VERSION: 'anthropic_version',
+    LOCAL_AI_ENDPOINT: 'local_ai_endpoint',
+    LOCAL_AI_MODEL: 'local_ai_model',
+    LOCAL_AI_API_KEY: 'local_ai_api_key'
 } as const
 
 export interface ISettings {
@@ -46,4 +49,7 @@ export interface ISettings {
     anthropic_model: string
     anthropic_api_key: string
     anthropic_version: string
+    local_ai_endpoint: string
+    local_ai_model: string
+    local_ai_api_key: string
 }

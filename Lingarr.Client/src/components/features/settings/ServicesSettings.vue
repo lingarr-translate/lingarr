@@ -25,9 +25,11 @@ import CardComponent from '@/components/common/CardComponent.vue'
 import SelectComponent from '@/components/common/SelectComponent.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 import LibreTranslateConfig from '@/components/features/settings/services/LibreTranslateConfig.vue'
-import AIServiceConfig from '@/components/features/settings/services/AIServiceConfig.vue'
 import DeepLConfig from '@/components/features/settings/services/DeepLConfig.vue'
 import FreeServiceConfig from '@/components/features/settings/services/FreeServiceConfig.vue'
+import AnthropicConfig from '@/components/features/settings/services/AnthropicConfig.vue'
+import OpenAiConfig from '@/components/features/settings/services/OpenAiConfig.vue'
+import LocalAiConfig from '@/components/features/settings/services/LocalAiConfig.vue'
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
@@ -48,7 +50,8 @@ const serviceOptions = [
     { value: 'microsoft', label: 'Microsoft' },
     { value: 'yandex', label: 'Yandex' },
     { value: 'openai', label: 'OpenAI' },
-    { value: 'anthropic', label: 'Anthropic' }
+    { value: 'anthropic', label: 'Anthropic' },
+    { value: 'localai', label: 'Local AI' }
 ]
 
 const serviceConfigComponent = computed(() => {
@@ -56,8 +59,11 @@ const serviceConfigComponent = computed(() => {
         case 'libretranslate':
             return LibreTranslateConfig
         case 'openai':
+            return OpenAiConfig
         case 'anthropic':
-            return AIServiceConfig
+            return AnthropicConfig
+        case 'localai':
+            return LocalAiConfig
         case 'deepl':
             return DeepLConfig
         case 'google':

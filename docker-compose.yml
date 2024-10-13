@@ -124,3 +124,15 @@ services:
       - 8989:8989
     networks:
       - lingarr
+        
+  localai:
+    container_name: localai
+    image: localai/localai:latest-aio-cpu
+    ports:
+      - 8080:8080
+    environment:
+      - 'PRELOAD_MODELS=[{"url": "github:go-skynet/model-gallery/mistral.yaml", "name": "mistral"}]'
+    stdin_open: true
+    tty: true
+    networks:
+      - lingarr
