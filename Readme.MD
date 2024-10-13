@@ -28,21 +28,11 @@ services:
     image: lingarr/lingarr:latest
     container_name: lingarr
     restart: unless-stopped
-    environment:
-      - PUID=0
-      - PGID=0
-      - MAX_CONCURRENT_JOBS=1 # Optional
-      - DB_CONNECTION=mysql # Optional, defaults to `sqlite`
-      - DB_HOST=Lingarr.Mysql # Optional, required when using MySQL
-      - DB_PORT=3306 # Optional, required when using MySQL
-      - DB_DATABASE=LingarrMysql # Optional, required when using MySQL
-      - DB_USERNAME=LingarrMysql # Optional, required when using MySQL
-      - DB_PASSWORD=Secret1234 # Optional, required when using MySQL
     ports:
       - "9876:8080"
     volumes:
-      - /path/to/movies:/app/media/movies
-      - /path/to/tv:/app/media/tv
+      - /path/to/media/movies:/app/media/movies
+      - /path/to/media/tv:/app/media/tv
       - /path/to/config:/app/config
     networks:
       - lingarr
@@ -52,12 +42,11 @@ services:
     image: libretranslate/libretranslate:latest
     restart: unless-stopped
     environment:
-      - LT_LOAD_ONLY=en,tr,nl  # Important, replace with your preferred languages
-      - LT_DISABLE_WEB_UI=true # Optional, enable if you would like to make use of the LibreTranslate web interface 
+      - LT_LOAD_ONLY=en,nl  # Important, replace with your preferred languages
     ports:
       - 5000:5000
     volumes:
-      - ../media/libretranslate:/home/libretranslate/.local/share/argos-translate
+      - /path/to/config:/home/libretranslate/.local/share/argos-translate
     networks:
       - lingarr
     healthcheck:
@@ -73,15 +62,6 @@ Follow the following steps to set up Lingarr and LibreTranslate via docker CLI
 docker run -d \
   --name lingarr \
   --restart unless-stopped \
-  -e PUID=0 \
-  -e PGID=0 \
-  -e MAX_CONCURRENT_JOBS=1 \      # Optional
-  -e DB_CONNECTION=mysql \        # Optional: defaults to 'sqlite' if not specified
-  -e DB_HOST=Lingarr.Mysql \      # Optional: required when using MySQL
-  -e DB_PORT=3306 \               # Optional: required when using MySQL
-  -e DB_DATABASE=LingarrMysql \   # Optional: required when using MySQL
-  -e DB_USERNAME=LingarrMysql \   # Optional: required when using MySQL
-  -e DB_PASSWORD=Secret1234 \     # Optional: required when using MySQL
   -p 9876:8080 \
   -v /path/to/movies:/app/media/movies \
   -v /path/to/tv:/app/media/tv \
@@ -106,15 +86,15 @@ docker run -d \
   -v /path/to/libretranslate/local:/home/libretranslate/.local \
   libretranslate/libretranslate \
   --disable-web-ui \
-  --load-only=pt,en,es     # Important, replace with your preferred languages
+  --load-only=en,nl     # Important, replace with your preferred languages
 ```
 
 #### Lingarr parameters
 | Parameter                   | Function                                                                                      |
 |-----------------------------|-----------------------------------------------------------------------------------------------|
 | -p 9876:8080                | Maps port 9876 on the host to port 8080 for the Lingarr web interface                         |
-| -e PUID=0                   | Sets the user ID for the container process                                                    |
-| -e PGID=0                   | Sets the group ID for the container process                                                   |
+| -e PUID=1000                | Sets the user ID for the container process                                                    |
+| -e PGID=1000                | Sets the group ID for the container process                                                   |
 | -e MAX_CONCURRENT_JOBS=1    | Sets the amount of jobs that can run concurrently, defaults to 1                              |
 | -e DB_CONNECTION=mysql      | Specifies the database connection type. Options are `mysql` or `sqlite`                       |
 | -e DB_HOST=Lingarr.Mysql    | The hostname for the MySQL database (required when using `mysql`)                             |

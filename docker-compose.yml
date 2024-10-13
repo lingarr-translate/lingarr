@@ -14,8 +14,6 @@ services:
       args:
         BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Debug}
     environment:
-      - PUID=0
-      - PGID=0
       - ASPNETCORE_ENVIRONMENT=Development
       - DB_CONNECTION=mysql
       - DB_HOST=Lingarr.Mysql
@@ -105,8 +103,6 @@ services:
     image: ghcr.io/hotio/radarr:nightly
     container_name: radarr
     environment:
-      - PUID=0
-      - PGID=0
       - TZ=Europe/Amsterdam
     volumes:
       - ../media/:/media
@@ -120,8 +116,6 @@ services:
     image: ghcr.io/hotio/sonarr:nightly
     container_name: sonarr
     environment:
-      - PUID=0
-      - PGID=0
       - TZ=Europe/Amsterdam
     volumes:
       - ../media/:/tv

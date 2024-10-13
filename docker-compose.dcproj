@@ -16,7 +16,6 @@
     <None Include=".dockerignore" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Dockerfile.libretranslate" />
     <Content Include="Lingarr.Server\Dockerfile" >
       <Link>Dockerfile</Link>
     </Content>
