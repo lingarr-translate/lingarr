@@ -27,11 +27,6 @@ public class TranslationServiceFactory : ITranslationServiceFactory
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<ILogger<LibreTranslateService>>()),
 
-            "deepl" => new DeepLTranslationService(
-                _serviceProvider.GetRequiredService<ISettingService>(),
-                _serviceProvider.GetRequiredService<ILogger<LibreTranslateService>>()
-            ),
-
             "google" => new GoogleTranslationService(
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<GoogleTranslator>(),
@@ -56,6 +51,11 @@ public class TranslationServiceFactory : ITranslationServiceFactory
                 _serviceProvider.GetRequiredService<ILogger<YandexTranslationService>>()
             ),
 
+            "deepl" => new DeepLTranslationService(
+                _serviceProvider.GetRequiredService<ISettingService>(),
+                _serviceProvider.GetRequiredService<ILogger<LibreTranslateService>>()
+            ),
+
             "openai" => new OpenAiTranslationService(
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<ILogger<OpenAiTranslationService>>()
@@ -65,6 +65,12 @@ public class TranslationServiceFactory : ITranslationServiceFactory
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<HttpClient>(),
                 _serviceProvider.GetRequiredService<ILogger<AnthropicTranslationService>>()
+            ),
+
+            "localai" => new LocalAiTranslationService(
+                _serviceProvider.GetRequiredService<ISettingService>(),
+                _serviceProvider.GetRequiredService<HttpClient>(),
+                _serviceProvider.GetRequiredService<ILogger<LocalAiTranslationService>>()
             ),
 
             _ => throw new ArgumentException("Unsupported translation service type", nameof(serviceType))

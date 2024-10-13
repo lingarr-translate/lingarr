@@ -12,6 +12,17 @@ const service = (http: AxiosStatic, resource = '/api/schedule'): IScheduleServic
                     reject(error.response)
                 })
         })
+    },
+    reindex<T>(): Promise<T> {
+        return new Promise((resolve, reject) => {
+            http.post(`${resource}/job/reindex`)
+                .then((response: AxiosResponse<T>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
     }
 })
 

@@ -8,7 +8,11 @@
                         <li
                             v-for="(item, index) in menuItems"
                             :key="index"
-                            class="w-full hover:brightness-150">
+                            class="w-full hover:brightness-150"
+                            :class="[
+                                'w-full hover:brightness-150',
+                                { 'brightness-150': route.name === item.route }
+                            ]">
                             <a
                                 :title="item.label"
                                 :aria-label="item.label"
@@ -35,13 +39,14 @@
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import PageLayout from '@/components/layout/PageLayout.vue'
 // import LanguageIcon from '@/components/icons/LanguageIcon.vue'
 import IntegrationIcon from '@/components/icons/IntegrationIcon.vue'
 import SettingIcon from '@/components/icons/SettingIcon.vue'
 
 const router = useRouter()
+const route = useRoute()
 
 const menuItems = [
     { label: 'General', icon: SettingIcon, route: 'general-settings' },

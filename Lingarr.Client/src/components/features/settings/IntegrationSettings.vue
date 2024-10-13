@@ -33,6 +33,19 @@
                     label="API key"
                     error-message="API Key must be {minLength} characters" />
             </div>
+            <div class="flex items-center gap-2 pt-4">
+                <ButtonComponent
+                    :class="isReindexing ? 'text-primary-content/50' : 'text-primary-content'"
+                    @click="reindex()">
+                    Sync libraries
+                </ButtonComponent>
+                <div v-if="isReindexing" class="inline-flex overflow-hidden text-green-500">
+                    updating
+                    <span class="animate-ellipsis">.</span>
+                    <span class="animate-ellipsis animation-delay-300">.</span>
+                    <span class="animate-ellipsis animation-delay-600">.</span>
+                </div>
+            </div>
         </template>
     </CardComponent>
 </template>
@@ -44,9 +57,13 @@ import SaveNotification from '@/components/common/SaveNotification.vue'
 import { SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
+import ButtonComponent from '@/components/common/ButtonComponent.vue'
+import { useScheduleStore } from '@/store/schedule'
 
+const isReindexing = ref(false)
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
+const scheduleStore = useScheduleStore()
 
 const radarrApiKey: WritableComputedRef<string> = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.RADARR_API_KEY) as string,
@@ -76,4 +93,13 @@ const sonarrUrl: WritableComputedRef<string> = computed({
         saveNotification.value?.show()
     }
 })
+
+async function reindex() {
+    if (isReindexing.value) return
+    isReindexing.value = true
+    await scheduleStore.reindex()
+    setTimeout(() => {
+        isReindexing.value = false
+    }, 5000)
+}
 </script>

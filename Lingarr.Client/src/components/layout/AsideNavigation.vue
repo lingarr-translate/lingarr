@@ -21,7 +21,13 @@
                     <li
                         v-for="(item, index) in menuItems"
                         :key="index"
-                        class="flex w-full cursor-pointer items-center justify-start hover:brightness-150"
+                        class="flex w-full cursor-pointer items-center justify-start"
+                        :class="[
+                            'hover:brightness-150',
+                            {
+                                'brightness-150': isActive(item)
+                            }
+                        ]"
                         @click="navigate(item.route)">
                         <component :is="item.icon" class="mr-2 h-4 w-4" />
                         {{ item.label }}
@@ -54,7 +60,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useInstanceStore } from '@/store/instance'
 import HomeIcon from '@/components/icons/HomeIcon.vue'
 import MovieIcon from '@/components/icons/MovieIcon.vue'
@@ -62,21 +68,37 @@ import ShowIcon from '@/components/icons/ShowIcon.vue'
 import SettingIcon from '@/components/icons/SettingIcon.vue'
 import TimesIcon from '@/components/icons/TimesIcon.vue'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
+import { MenuItem } from '@/ts'
 
 const instanceStore = useInstanceStore()
 const router = useRouter()
+const route = useRoute()
 
 const isOpen = computed({
     get: () => instanceStore.getIsOpen,
     set: (value) => instanceStore.setIsOpen(value)
 })
 
-const menuItems = [
-    { label: 'Dashboard', icon: HomeIcon, route: 'dashboard' },
-    { label: 'Movies', icon: MovieIcon, route: 'movies' },
-    { label: 'TV Shows', icon: ShowIcon, route: 'shows' },
-    { label: 'Settings', icon: SettingIcon, route: 'general-settings' }
+const menuItems: MenuItem[] = [
+    { label: 'Dashboard', icon: HomeIcon, route: 'dashboard', children: [] },
+    { label: 'Movies', icon: MovieIcon, route: 'movies', children: [] },
+    { label: 'TV Shows', icon: ShowIcon, route: 'shows', children: [] },
+    {
+        label: 'Settings',
+        icon: SettingIcon,
+        route: 'general-settings',
+        children: ['general-settings', 'integration-settings', 'translation-settings']
+    }
 ]
+
+function isActive(item: MenuItem) {
+    if (item.route == route.name) return true
+
+    if (item.children?.length) {
+        return item.children.includes(route.name as string)
+    }
+    return false
+}
 
 function navigate(route: string) {
     isOpen.value = false

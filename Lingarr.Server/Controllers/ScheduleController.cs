@@ -16,6 +16,17 @@ public class ScheduleController : ControllerBase
     }
 
     /// <summary>
+    /// Enqueues a background job to automate translation.
+    /// </summary>
+    /// <returns>Returns an HTTP 200 OK response indicating that the job has been successfully enqueued.</returns>
+    [HttpGet("job/automation")]
+    public IActionResult StartAutomationJob()
+    {
+        _backgroundJobClient.Enqueue<AutomatedTranslationJob>(job => job.Execute());
+        return Ok();
+    }
+
+    /// <summary>
     /// Enqueues a background job to retrieve movie data.
     /// </summary>
     /// <returns>Returns an HTTP 200 OK response indicating that the job has been successfully enqueued.</returns>
@@ -56,5 +67,17 @@ public class ScheduleController : ControllerBase
         }
 
         return NotFound($"Job {jobId} not found or could not be removed.");
+    }
+    
+    /// <summary>
+    /// Enqueues a background job to reindex shows and movies
+    /// </summary>
+    /// <returns>Returns an HTTP 200 OK response indicating that both jobs has been successfully enqueued.</returns>
+    [HttpPost("job/reindex")]
+    public IActionResult Reindex()
+    {
+        _backgroundJobClient.Enqueue<GetMovieJob>(job => job.Execute(JobCancellationToken.Null));
+        _backgroundJobClient.Enqueue<GetShowJob>(job => job.Execute(JobCancellationToken.Null));
+        return Ok();
     }
 }

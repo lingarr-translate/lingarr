@@ -63,7 +63,7 @@ const roadmapItems = shallowRef([
         title: 'Automated Translation',
         description: 'Automated translation for subtitles',
         date: '2024',
-        status: 'In Progress'
+        status: 'Completed'
     },
     {
         icon: IntegrationIcon,
