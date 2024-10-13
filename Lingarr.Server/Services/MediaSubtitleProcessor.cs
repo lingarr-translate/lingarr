@@ -49,7 +49,7 @@ public class MediaSubtitleProcessor
     private async Task<List<string>> EnumerateSubtitleFilesAsync(string path, string filename)
     {
         var filenameWithoutExtension = Path.GetFileNameWithoutExtension(filename);
-        return await Task.Run(() => Directory.EnumerateFiles($"media{path}", $"{filenameWithoutExtension}*.srt", SearchOption.TopDirectoryOnly)
+        return await Task.Run(() => Directory.EnumerateFiles(path, $"{filenameWithoutExtension}*.srt", SearchOption.TopDirectoryOnly)
                 .ToList());
     }
 
