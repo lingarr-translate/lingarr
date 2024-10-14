@@ -1,13 +1,20 @@
 ﻿# Lingarr: Subtitle Translation Made Easy
 
 Lingarr is an application that leverages translation technologies to automatically translate subtitle files to your desired target language. 
-With support for both LibreTranslate and DeepL, Lingarr provides a flexible solution for subtitle localization.
+With support for both LibreTranslate and DeepL, Lingarr provides a flexible solution for subtitle translation.
 
 ### 🌟 Multiple Translation Service Support
 Lingarr now offers two services for automated translation:
 
 - **LibreTranslate:** An open-source, self-hosted solution for those who prioritize privacy and customization.
 - **DeepL:** A leading AI-powered **freemium** translation service known for its high accuracy and natural-sounding translations.
+- **Anthropic:** An AI research company that developed the Claude language model, offering advanced natural language processing capabilities.
+- **OpenAI:** A prominent AI research laboratory that created ChatGPT and GPT models, providing cutting-edge language understanding and generation services.
+- **Local AI:** AI models and tools that can be run on local devices without relying on cloud services.
+- **Google:** A widely-used, free online translation service supporting numerous languages.
+- **Bing:** Microsoft's translation service integrated into Bing search engine, offering text and speech translation.
+- **Yandex:** A machine translation service developed by Russian tech company Yandex, known for its accuracy in Slavic languages.
+- **Azure:** Microsoft's cloud-based translation API service, part of Azure Cognitive Services, offering text and speech translation.
 
 Choose the engine that best fits your needs, or use both for comparison and optimal results!
 
