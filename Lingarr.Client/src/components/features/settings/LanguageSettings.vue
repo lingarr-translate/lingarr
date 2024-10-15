@@ -21,7 +21,7 @@
                     :options="selectedTargetLanguages" />
             </div>
             <small>
-                In in future releases the translation process can be automated using these settings.
+                In future releases the translation process can be automated using these settings.
             </small>
         </template>
     </CardComponent>
