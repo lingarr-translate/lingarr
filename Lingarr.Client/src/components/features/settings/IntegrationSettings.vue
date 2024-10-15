@@ -15,6 +15,7 @@
                     :min-length="32"
                     :max-length="32"
                     validation-type="string"
+                    type="password"
                     label="API key"
                     error-message="API Key must be {minLength} characters" />
             </div>
@@ -30,6 +31,7 @@
                     :min-length="32"
                     :max-length="32"
                     validation-type="string"
+                    type="password"
                     label="API key"
                     error-message="API Key must be {minLength} characters" />
             </div>

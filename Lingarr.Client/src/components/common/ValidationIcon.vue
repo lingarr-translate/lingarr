@@ -1,5 +1,5 @@
 ﻿<template>
-    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+    <div class="absolute inset-y-0 right-0 flex items-center">
         <span v-if="isValid" class="text-green-500">
             <CheckMarkIcon class="h-5 w-5" />
         </span>

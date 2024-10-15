@@ -2,6 +2,7 @@
     <InputComponent
         v-model="deepLApiKey"
         validation-type="string"
+        type="password"
         :min-length="0"
         label="API key"
         error-message="API Key must be greater than {minLength} characters" />

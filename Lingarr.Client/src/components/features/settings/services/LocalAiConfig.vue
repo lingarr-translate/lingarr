@@ -17,7 +17,7 @@
 
         <InputComponent v-model="aiModel" validation-type="string" label="Model" />
 
-        <InputComponent v-model="apiKey" validation-type="string" label="API key" />
+        <InputComponent v-model="apiKey" validation-type="string" label="API key" type="password" />
         <p class="text-xs">API key is optional and can be left empty.</p>
     </div>
 </template>

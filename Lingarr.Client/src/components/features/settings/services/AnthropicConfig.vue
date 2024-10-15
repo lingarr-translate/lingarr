@@ -19,6 +19,7 @@
         <InputComponent
             v-model="apiKey"
             validation-type="string"
+            type="password"
             label="API key"
             :min-length="1"
             error-message="API Key must not be empty" />
