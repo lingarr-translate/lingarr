@@ -21,8 +21,11 @@ Choose the engine that best fits your needs, or use both for comparison and opti
 ## Usage
 
 ### Docker Compose
-To run Lingarr using Docker Compose, add the following configuration to your `docker-compose.yml` file, 
-if you have a different mapping than a single directory please consult the [wiki](https://github.com/lingarr-translate/lingarr/wiki)
+To run Lingarr using Docker Compose, add the following configuration to your `docker-compose.yml` file,
+
+**Note:** _As of this version, Lingarr uses a dynamic mapper, which may encounter issues with deeper media directories.   
+If your mapping involves more than a single directory, please consult the [wiki](https://github.com/lingarr-translate/lingarr/wiki), create an [issue](https://github.com/lingarr-translate/lingarr/issues), or contact me on [Discord](https://discord.gg/MR8epCKt)_
+  
 
 ```yaml
 networks:
