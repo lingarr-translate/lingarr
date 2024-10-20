@@ -6,15 +6,15 @@ With support for both LibreTranslate and DeepL, Lingarr provides a flexible solu
 ### 🌟 Multiple Translation Service Support
 Lingarr now offers two services for automated translation:
 
-- **LibreTranslate:** An open-source, self-hosted solution for those who prioritize privacy and customization.
-- **DeepL:** A leading AI-powered **freemium** translation service known for its high accuracy and natural-sounding translations.
-- **Anthropic:** An AI research company that developed the Claude language model, offering advanced natural language processing capabilities.
-- **OpenAI:** A prominent AI research laboratory that created ChatGPT and GPT models, providing cutting-edge language understanding and generation services.
-- **Local AI:** AI models and tools that can be run on local devices without relying on cloud services.
-- **Google:** A widely-used, free online translation service supporting numerous languages.
-- **Bing:** Microsoft's translation service integrated into Bing search engine, offering text and speech translation.
-- **Yandex:** A machine translation service developed by Russian tech company Yandex, known for its accuracy in Slavic languages.
-- **Azure:** Microsoft's cloud-based translation API service, part of Azure Cognitive Services, offering text and speech translation.
+- **[LibreTranslate](https://libretranslate.com)** 
+- **[DeepL](https://www.deepl.com/)**
+- **[Anthropic](https://www.anthropic.com/)**
+- **[OpenAI](https://openai.com/)**
+- **[Local AI](https://localai.io/)** 
+- **[Google](https://translate.google.com/)** 
+- **[Bing](https://www.bing.com/translator)**
+- **[Yandex](https://translate.yandex.com/)**
+- **[Azure](https://www.microsoft.com/en-us/translator/business/translator-api/)**
 
 Choose the engine that best fits your needs, or use both for comparison and optimal results!
 
