@@ -1,13 +1,23 @@
-﻿namespace Lingarr.Server.Models.Integrations;
+﻿using System.Text.Json.Serialization;
+
+namespace Lingarr.Server.Models.Integrations;
 
 public class SonarrShow
 {
-    public required int id { get; set; } // series | id
-    public required string title { get; set; } // series | title
-    public required string path { get; set; } // series | path
-    public required string added { get; set; } // series | added
-    public required bool seasonFolder { get; set; } // series | seasonFolder
-    public required string rootFolderPath { get; set; } // series | rootFolderPath
-    public List<SonarrSeason> seasons { get; set; }
-    public List<IntegrationImage> images { get; set; } = new(); // images
+    [JsonPropertyName("id")]
+    public required int Id { get; set; }
+    [JsonPropertyName("title")]
+    public required string Title { get; set; }
+    [JsonPropertyName("path")]
+    public required string Path { get; set; }
+    [JsonPropertyName("added")]
+    public required string Added { get; set; }
+    [JsonPropertyName("seasonFolder")]
+    public required bool SeasonFolder { get; set; }
+    [JsonPropertyName("rootFolderPath")]
+    public required string RootFolderPath { get; set; } 
+    [JsonPropertyName("seasons")]
+    public List<SonarrSeason> Seasons { get; set; } = new();
+    [JsonPropertyName("images")]
+    public List<IntegrationImage> Images { get; set; } = new();
 }

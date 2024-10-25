@@ -1,6 +1,9 @@
-﻿namespace Lingarr.Server.Models.Integrations;
+﻿using System.Text.Json.Serialization;
+
+namespace Lingarr.Server.Models.Integrations;
 
 public class SonarrEpisodeFile
 {
-    public string? path { get; set; } = string.Empty; // episode | episodefile -> path
+    [JsonPropertyName("path")]
+    public string? Path { get; set; } = string.Empty;
 }

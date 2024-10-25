@@ -1,7 +1,11 @@
-﻿namespace Lingarr.Server.Models.Integrations;
+﻿using System.Text.Json.Serialization;
+
+namespace Lingarr.Server.Models.Integrations;
 
 public class IntegrationImage
 {
-    public required string coverType { get; set; }
-    public required string url { get; set; }
+    [JsonPropertyName("coverType")]
+    public required string CoverType { get; set; }
+    [JsonPropertyName("url")]
+    public required string Url { get; set; }
 }

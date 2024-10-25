@@ -14,3 +14,15 @@
     @apply rounded-md bg-accent;
     @apply w-2 h-2;
 }
+
+.shell-scroll::-webkit-scrollbar {
+    width: 0.5rem;
+}
+
+.shell-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.shell-scroll::-webkit-scrollbar-thumb {
+    background: #242d3c;
+}

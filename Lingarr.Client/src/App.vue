@@ -5,37 +5,37 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
 import { useSignalR } from '@/composables/useSignalR'
-import { useScheduleStore } from '@/store/schedule'
-import { IRunningJob, ISettings } from '@/ts'
+import { ISettings } from '@/ts'
 import { useSettingStore } from '@/store/setting'
+import { useTranslationRequestStore } from '@/store/translationRequest'
 
-const scheduleStore = useScheduleStore()
+const translationRequestStore = useTranslationRequestStore()
 const settingStore = useSettingStore()
 const signalR = useSignalR()
 
 onMounted(async () => {
-    const scheduleProgress = await signalR.connect('ScheduleProgress', '/signalr/ScheduleProgress')
-    scheduleProgress.on('GroupCompleted', (data: string) => {
-        scheduleProgress.leaveGroup({ group: data })
-        scheduleStore.disconnectJob(data)
+    const settingUpdated = await signalR.connect('SettingUpdates', '/signalr/SettingUpdates')
+    await settingUpdated.joinGroup({ group: 'SettingUpdates' })
+    settingUpdated.on('SettingUpdate', (setting: { key: keyof ISettings; value: string }) => {
+        settingStore.storeSetting(setting.key, setting.value)
     })
 
-    await Promise.all(
-        scheduleStore.getRunningJobs.map((job: IRunningJob) =>
-            scheduleProgress.joinGroup({ group: job.jobId })
-        )
+    const translationRequest = await signalR.connect(
+        'TranslationRequests',
+        '/signalr/TranslationRequests'
     )
-
-    const settingUpdated = await signalR.connect('SettingUpdated', '/signalr/SettingUpdated')
-    await settingUpdated.joinGroup({ group: 'SettingUpdated' })
-
-    settingUpdated.on('Update', (setting: { key: keyof ISettings; value: string }) => {
-        settingStore.storeSetting(setting.key, setting.value)
+    await translationRequest.joinGroup({ group: 'TranslationRequests' })
+    translationRequest.on('RequestActive', (request: { count: number }) => {
+        translationRequestStore.setActiveCount(request.count)
     })
 })
 
 onUnmounted(async () => {
-    const scheduleProgress = await signalR.connect('ScheduleProgress', '/signalr/ScheduleProgress')
-    scheduleProgress.off('GroupCompleted', () => {})
+    const translationRequest = await signalR.connect(
+        'TranslationRequests',
+        '/signalr/TranslationRequest'
+    )
+    translationRequest.off('SettingUpdate', () => {})
+    translationRequest.off('RequestActive', () => {})
 })
 </script>

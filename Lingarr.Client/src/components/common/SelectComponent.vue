@@ -10,13 +10,13 @@
             <span v-if="!selected" class="text-gray-400">Select items...</span>
             <div v-else class="flex max-h-12 flex-wrap gap-2 overflow-auto">
                 <span
-                    class="flex cursor-pointer items-center rounded-md bg-accent px-3 py-1 text-sm font-medium text-secondary-content">
-                    <span class="mr-2">{{ selectedOption(selected) }}</span>
+                    class="flex cursor-pointer items-center rounded-md bg-accent px-3 py-1 text-sm font-medium">
+                    <span class="mr-2 text-accent-content">{{ selectedOption(selected) }}</span>
                 </span>
             </div>
-            <CaretDownIcon
+            <CaretRightIcon
                 :class="{ 'rotate-90': isOpen }"
-                class="h-5 w-5 transition-transform duration-200" />
+                class="arrow-right h-5 w-5 transition-transform duration-200" />
         </div>
         <ul
             v-show="isOpen"
@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { Ref, ref, nextTick } from 'vue'
-import CaretDownIcon from '@/components/icons/CaretDownIcon.vue'
+import CaretRightIcon from '@/components/icons/CaretRightIcon.vue'
 import useClickOutside from '@/composables/useClickOutside'
 
 export interface ISelectOption {

@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
+import { useTranslationRequestStore } from '@/store/translationRequest'
 import { useInstanceStore } from '@/store/instance'
 import { useSettingStore } from '@/store/setting'
 import { useScheduleStore } from '@/store/schedule'
@@ -24,6 +25,7 @@ new Promise((resolve) => resolve(true))
         await useInstanceStore().applyVersionOnLoad()
         await useInstanceStore().applyThemeOnLoad()
         useScheduleStore().loadRunningJobs()
+        await useTranslationRequestStore().getActiveCount()
     })
     .finally(() => {
         app.mount('#app')

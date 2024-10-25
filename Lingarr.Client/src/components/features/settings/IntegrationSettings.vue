@@ -1,6 +1,13 @@
 ﻿<template>
     <CardComponent title="Integrations">
-        <template #description>Configure the settings for Radarr and Sonarr integrations.</template>
+        <template #description>
+            Configure the settings for Radarr and Sonarr integrations. Note that with more than two
+            volumes, or deeper mapping than one folder level, you will need to configure the folder
+            <a class="cursor-pointer underline" @click="router.push({ name: 'mapping-settings' })">
+                mapping
+            </a>
+            prior.
+        </template>
         <template #content>
             <SaveNotification ref="saveNotification" />
             <div class="flex flex-col space-y-2 pb-4">
@@ -54,14 +61,17 @@
 
 <script setup lang="ts">
 import { WritableComputedRef, computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useSettingStore } from '@/store/setting'
+import { useScheduleStore } from '@/store/schedule'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 import { SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
-import { useScheduleStore } from '@/store/schedule'
+import { delay } from '@/utils/delay'
 
+const router = useRouter()
 const isReindexing = ref(false)
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
@@ -100,8 +110,7 @@ async function reindex() {
     if (isReindexing.value) return
     isReindexing.value = true
     await scheduleStore.reindex()
-    setTimeout(() => {
-        isReindexing.value = false
-    }, 5000)
+    await delay(5000)
+    isReindexing.value = false
 }
 </script>

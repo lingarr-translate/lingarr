@@ -1,41 +1,48 @@
 ﻿using Lingarr.Core.Data;
+using Lingarr.Core.Entities;
+using Lingarr.Core.Enum;
 using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Services;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Extensions;
 
 namespace Lingarr.Server.Services;
 
 public class ProgressService : IProgressService
 {
-    private readonly IHubContext<ScheduleProgressHub> _hubContext;
+    private readonly IHubContext<TranslationRequestsProgressHub> _hubContext;
     private readonly LingarrDbContext _dbContext;
+    private readonly ITranslationRequestService _translationRequestService;
 
-    public ProgressService(IHubContext<ScheduleProgressHub> hubContext, LingarrDbContext dbContext)
+    public ProgressService(
+        IHubContext<TranslationRequestsProgressHub> hubContext, 
+        LingarrDbContext dbContext,
+        ITranslationRequestService translationRequestService)
     {
         _hubContext = hubContext;
         _dbContext = dbContext;
+        _translationRequestService = translationRequestService;
     }
 
     /// <inheritdoc />
-    public async Task Emit(string jobId, int progress, bool completed)
+    public async Task Emit(TranslationRequest translationRequest, int progress, bool completed)
     {
-        await _hubContext.Clients.Group(jobId).SendAsync("ScheduleProgress", new
+        if (completed)
         {
-            JobId = jobId,
+            translationRequest.CompletedAt = DateTime.UtcNow;
+            translationRequest.Status = TranslationStatus.Completed;
+            await _dbContext.SaveChangesAsync();
+            await _translationRequestService.UpdateActiveCount();
+        }
+        
+        await _hubContext.Clients.Group("TranslationRequests").SendAsync("RequestProgress", new
+        {
+            Id = translationRequest.Id,
+            JobId = translationRequest.JobId,
+            CompletedAt = translationRequest.CompletedAt,
+            Status = translationRequest.Status.GetDisplayName(),
             Progress = progress,
             Completed = completed
         });
-
-        if (completed)
-        {
-            var translationJob = await _dbContext.TranslationJobs
-                .FirstOrDefaultAsync(translationJob => translationJob.JobId == jobId);
-            if (translationJob != null)
-            {
-                translationJob.Completed = true;
-                await _dbContext.SaveChangesAsync();
-            }
-        }
     }
 }

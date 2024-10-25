@@ -1,27 +1,26 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { ILanguage, ISubtitle } from '@/ts'
-import { useScheduleStore } from '@/store/schedule'
-import { useSignalR } from '@/composables/useSignalR'
+import { ILanguage, ISubtitle, MediaType } from '@/ts'
 import services from '@/services'
-
-const signalR = useSignalR()
+import { useTranslationRequestStore } from '@/store/translationRequest'
 
 export const useTranslateStore = defineStore({
     id: 'translate',
     actions: {
-        async translateSubtitle(subtitle: ISubtitle, source: string, target: ILanguage) {
-            const scheduleStore = useScheduleStore()
-            const { jobId } = await services.translate.translateSubtitle<{ jobId: string }>(
+        async translateSubtitle(
+            mediaId: number,
+            subtitle: ISubtitle,
+            source: string,
+            target: ILanguage,
+            mediaType: MediaType
+        ) {
+            await services.translate.translateSubtitle<{ jobId: string }>(
+                mediaId,
                 subtitle,
                 source,
-                target
+                target,
+                mediaType
             )
-            scheduleStore.setRunningJob(jobId, subtitle)
-            const scheduleProgress = await signalR.connect(
-                'ScheduleProgress',
-                '/signalr/ScheduleProgress'
-            )
-            await scheduleProgress.joinGroup({ group: jobId })
+            await useTranslationRequestStore().getActiveCount()
         }
     }
 })

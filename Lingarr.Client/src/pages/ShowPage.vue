@@ -101,8 +101,10 @@
                                                 episode.fileName
                                             )"
                                             :key="`${episode.id}-${jndex}`"
+                                            :media-type="MEDIA_TYPE.EPISODE"
+                                            :media="episode"
                                             :subtitle="subtitle">
-                                            <BadgeComponent value="{{ subtitle.language }}">
+                                            <BadgeComponent>
                                                 {{ subtitle.language.toUpperCase() }}
                                             </BadgeComponent>
                                         </ContextMenu>
@@ -126,7 +128,7 @@
 
 <script setup lang="ts">
 import { ref, Ref, computed, onMounted, ComputedRef } from 'vue'
-import { IFilter, IPagedResult, ISeason, IShow, ISubtitle, SETTINGS } from '@/ts'
+import { IFilter, IPagedResult, ISeason, IShow, ISubtitle, MEDIA_TYPE, SETTINGS } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useInstanceStore } from '@/store/instance'
 import { useSettingStore } from '@/store/setting'

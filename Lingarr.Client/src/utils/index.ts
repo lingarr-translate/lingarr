@@ -1,1 +1,2 @@
 import './string'
+import './delay'

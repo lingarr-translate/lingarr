@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Lingarr.Server.Models.FileSystem;
-using Lingarr.Server.Jobs;
-using Hangfire;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Services;
@@ -13,18 +11,18 @@ namespace Lingarr.Server.Controllers;
 public class TranslateController : ControllerBase
 {
     private readonly ITranslationServiceFactory _translationServiceFactory;
-    private readonly IBackgroundJobClient _backgroundJobClient;
+    private readonly ITranslationRequestService _translationRequestService;
     private readonly ISettingService _settings;
     private readonly ILogger<TranslateController> _logger;
 
     public TranslateController(
         ITranslationServiceFactory translationServiceFactory,
-        IBackgroundJobClient backgroundJobClient, 
+        ITranslationRequestService translationRequestService,
         ISettingService settings,
-            ILogger<TranslateController> logger)
+        ILogger<TranslateController> logger)
     {
         _translationServiceFactory = translationServiceFactory;
-        _backgroundJobClient = backgroundJobClient;
+        _translationRequestService = translationRequestService;
         _settings = settings;
         _logger = logger;
     }
@@ -36,11 +34,9 @@ public class TranslateController : ControllerBase
     /// This includes the subtitle path, subtitle source language and subtitle target language.</param>
     /// <returns>Returns an HTTP 200 OK response if the job was successfully enqueued.</returns>
     [HttpPost("subtitle")]
-    public IActionResult Translate([FromBody] TranslateAbleSubtitle translateAbleSubtitle)
+    public async Task<IActionResult> Translate([FromBody] TranslateAbleSubtitle translateAbleSubtitle)
     {
-        string jobId = _backgroundJobClient.Enqueue<TranslationJob>(job => 
-            job.Execute(null, translateAbleSubtitle, CancellationToken.None)
-        );
+        var jobId = await _translationRequestService.CreateRequest(translateAbleSubtitle);
         return Ok(new { JobId = jobId });
     }
     

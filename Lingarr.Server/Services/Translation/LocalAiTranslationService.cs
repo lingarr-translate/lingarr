@@ -4,6 +4,7 @@ using System.Text.Json;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models.Api;
+using Lingarr.Server.Models.Integrations;
 
 namespace Lingarr.Server.Services.Translation;
 
