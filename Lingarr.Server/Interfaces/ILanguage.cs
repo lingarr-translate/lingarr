@@ -1,5 +1,4 @@
-﻿
-namespace Lingarr.Server.Interfaces;
+﻿namespace Lingarr.Server.Interfaces;
 
 public interface ILanguage
 {

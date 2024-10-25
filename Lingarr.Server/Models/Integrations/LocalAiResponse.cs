@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Lingarr.Server.Models.Api;
+namespace Lingarr.Server.Models.Integrations;
 
 public class LocalAiResponse
 {

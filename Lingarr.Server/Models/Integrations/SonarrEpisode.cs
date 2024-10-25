@@ -1,10 +1,17 @@
-﻿namespace Lingarr.Server.Models.Integrations;
+﻿using System.Text.Json.Serialization;
+
+namespace Lingarr.Server.Models.Integrations;
 
 public class SonarrEpisode
 {
-    public required int id { get; set; } // episode | id
-    public required int episodeNumber { get; set; } // episode | episodeNumber
-    public required string title { get; set; } // episode |title
-    public required int seasonNumber { get; set; } // episode |seasonNumber
-    public required bool hasFile { get; set; } // episode | hasFile
+    [JsonPropertyName("id")]
+    public required int Id { get; set; }
+    [JsonPropertyName("episodeNumber")]
+    public required int EpisodeNumber { get; set; }
+    [JsonPropertyName("title")]
+    public required string Title { get; set; }
+    [JsonPropertyName("seasonNumber")]
+    public required int SeasonNumber { get; set; }
+    [JsonPropertyName("hasFile")]
+    public required bool HasFile { get; set; } 
 }

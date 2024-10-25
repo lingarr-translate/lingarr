@@ -1,21 +1,10 @@
-﻿using Lingarr.Core.Data;
-using Lingarr.Core.Entities;
-using Lingarr.Server.Models;
+﻿using Lingarr.Server.Models;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
-using Hangfire;
 
 namespace Lingarr.Server.Hubs;
 
-public class SettingUpdatedHub : Hub
+public class SettingUpdatesHub : Hub
 {
-    private readonly LingarrDbContext _dbContext;
-
-    public SettingUpdatedHub(LingarrDbContext dbContext)
-    {
-        _dbContext = dbContext;
-    }
-    
     public async Task JoinGroup(GroupRequest request)
     {
         var group = request.Group;

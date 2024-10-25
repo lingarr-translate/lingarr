@@ -30,15 +30,17 @@
 
 <script setup lang="ts">
 import { ref, Ref, computed, ComputedRef } from 'vue'
-import { ILanguage, ISubtitle } from '@/ts'
+import { IEpisode, ILanguage, IMovie, ISubtitle, MediaType } from '@/ts'
 import { useSettingStore } from '@/store/setting'
 import { useTranslateStore } from '@/store/translate'
 import useClickOutside from '@/composables/useClickOutside'
 import TooltipComponent from '@/components/common/TooltipComponent.vue'
 
 const emit = defineEmits(['update:toggle'])
-const { subtitle } = defineProps<{
+const { media, subtitle, mediaType } = defineProps<{
+    media: IMovie | IEpisode
     subtitle: ISubtitle
+    mediaType: MediaType
 }>()
 const settingsStore = useSettingStore()
 const translateStore = useTranslateStore()
@@ -58,7 +60,7 @@ function toggle() {
 }
 
 function selectOption(target: ILanguage) {
-    translateStore.translateSubtitle(subtitle, subtitle.language, target)
+    translateStore.translateSubtitle(media.id, subtitle, subtitle.language, target, mediaType)
     toggle()
     tooltip.value?.showTooltip()
 }

@@ -1,6 +1,9 @@
-﻿namespace Lingarr.Server.Models.Integrations;
+﻿using System.Text.Json.Serialization;
+
+namespace Lingarr.Server.Models.Integrations;
 
 public class RadarrMovieFile
 {
-    public string? path { get; set; } = string.Empty; // movieFile -> path
+    [JsonPropertyName("path")]
+    public string? Path { get; set; } = string.Empty;
 }

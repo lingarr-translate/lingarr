@@ -1,7 +1,7 @@
 <template>
     <PageLayout>
         <div class="grid h-full grid-cols-[auto,1fr]">
-            <aside class="w-16 shrink-0 bg-secondary md:w-40">
+            <aside class="w-[3.175rem] shrink-0 bg-secondary md:w-40">
                 <!-- Navigation -->
                 <nav class="pt-4 md:pl-4 md:pt-8">
                     <ul class="flex flex-col space-y-4">
@@ -28,11 +28,8 @@
                 </nav>
             </aside>
 
-            <main class="flex p-4">
-                <div
-                    class="grid grid-flow-row auto-rows-max grid-cols-1 gap-4 xl:grid-cols-2 2xl:grid-cols-3">
-                    <router-view></router-view>
-                </div>
+            <main class="flex">
+                <router-view></router-view>
             </main>
         </div>
     </PageLayout>
@@ -41,17 +38,17 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import PageLayout from '@/components/layout/PageLayout.vue'
-// import LanguageIcon from '@/components/icons/LanguageIcon.vue'
 import IntegrationIcon from '@/components/icons/IntegrationIcon.vue'
 import SettingIcon from '@/components/icons/SettingIcon.vue'
+import FoldersIcon from '@/components/icons/FoldersIcon.vue'
 
 const router = useRouter()
 const route = useRoute()
 
 const menuItems = [
     { label: 'General', icon: SettingIcon, route: 'general-settings' },
-    { label: 'Integrations', icon: IntegrationIcon, route: 'integration-settings' }
-    // { label: 'Translations', icon: LanguageIcon, route: 'translation-settings' }
+    { label: 'Integrations', icon: IntegrationIcon, route: 'integration-settings' },
+    { label: 'Mapping', icon: FoldersIcon, route: 'mapping-settings' }
 ]
 
 function navigate(route: string) {

@@ -1,6 +1,7 @@
 ﻿using System.Security.Cryptography;
 using Hangfire;
 using Lingarr.Core.Data;
+using Lingarr.Core.Enum;
 using Lingarr.Core.Interfaces;
 using Lingarr.Server.Interfaces;
 using Lingarr.Server.Interfaces.Services;
@@ -12,41 +13,43 @@ namespace Lingarr.Server.Services;
 
 public class MediaSubtitleProcessor
 {
-    private readonly IBackgroundJobClient _backgroundJobClient;
-    private readonly LingarrDbContext _dbContext;
+    private readonly ITranslationRequestService _translationRequestService;
     private readonly ILogger<MediaSubtitleProcessor> _logger;
     private readonly ISettingService _settingService;
+    private readonly LingarrDbContext _dbContext;
     private string _hash = string.Empty;
-    private IMedia? _media;
+    private IMedia _media;
+    private MediaType _mediaType;
     
     public MediaSubtitleProcessor(
-        IBackgroundJobClient backgroundJobClient,
-        LingarrDbContext dbContext, 
-        ILogger<MediaSubtitleProcessor> logger,
-        ISettingService settingService)
+        ITranslationRequestService translationRequestService,
+        ILogger<MediaSubtitleProcessor> logger, 
+        ISettingService settingService,
+        LingarrDbContext dbContext)
     {
-        _backgroundJobClient = backgroundJobClient;
+        _translationRequestService = translationRequestService;
         _settingService = settingService;
         _dbContext = dbContext;
         _logger = logger;
     }
 
-    public async Task<bool> ProcessMediaAsync(IMedia media)
+    public async Task<bool> ProcessMedia(IMedia media, MediaType mediaType)
     {
-        var files = await EnumerateSubtitleFilesAsync(media.Path, media.FileName);
+        var files = await EnumerateSubtitleFiles(media.Path, media.FileName);
         _media = media;
+        _mediaType = mediaType;
         _hash = CreateHash(files);
 
         if (string.IsNullOrEmpty(media.MediaHash) || media.MediaHash != _hash)
         {
             _logger.LogInformation("Initiating subtitle processing.");
-            return await ProcessSubtitlesAsync(files);
+            return await ProcessSubtitles(files);
         }
 
         return false;
     }
 
-    private async Task<List<string>> EnumerateSubtitleFilesAsync(string path, string filename)
+    private async Task<List<string>> EnumerateSubtitleFiles(string path, string filename)
     {
         var filenameWithoutExtension = Path.GetFileNameWithoutExtension(filename);
         return await Task.Run(() => Directory.EnumerateFiles(path, $"{filenameWithoutExtension}*.srt", SearchOption.TopDirectoryOnly)
@@ -61,7 +64,7 @@ public class MediaSubtitleProcessor
         return Convert.ToBase64String(hashBytes);
     }
 
-    private async Task<bool> ProcessSubtitlesAsync(List<string> subtitleFiles)
+    private async Task<bool> ProcessSubtitles(List<string> subtitleFiles)
     {
         var existingLanguages = ExtractLanguageCodes(subtitleFiles);
         var sourceLanguages = await GetLanguagesSetting<SourceLanguage>("source_languages");
@@ -83,9 +86,19 @@ public class MediaSubtitleProcessor
 
             if (sourceSubtitleFile != null)
             {
-                foreach (var targetLang in targetLanguages.Except(existingLanguages))
+                foreach (var targetLanguage in targetLanguages.Except(existingLanguages))
                 {
-                    return InitiateTranslationAsync(sourceSubtitleFile, targetLang, sourceLanguage);
+                    var translationId = await _translationRequestService.CreateRequest(new TranslateAbleSubtitle
+                    {
+                        MediaId = _media.Id,
+                        MediaType = _mediaType,
+                        SubtitlePath = sourceSubtitleFile,
+                        TargetLanguage = targetLanguage,
+                        SourceLanguage = sourceLanguage,
+                    });
+                    _logger.LogInformation("Initiating translation for {subtitleFile} under {translationId}", 
+                        sourceSubtitleFile, 
+                        translationId);
                 }
                 await UpdateHash();
             }
@@ -134,28 +147,11 @@ public class MediaSubtitleProcessor
     {
         return !string.IsNullOrEmpty(code) && code.Length == 2;
     }
-
-    private bool InitiateTranslationAsync(string subtitleFile, string targetLanguage, string sourceLanguage)
-    {
-        _logger.LogInformation("Initiating translation for {subtitleFile}", subtitleFile);
-        Task.Run(() => _backgroundJobClient.Enqueue<TranslationJob>(job =>
-            job.Execute(null, new TranslateAbleSubtitle
-            {
-                SubtitlePath = subtitleFile,
-                TargetLanguage = targetLanguage,
-                SourceLanguage = sourceLanguage
-            }, CancellationToken.None)
-        ));
-        return true;
-    }
     
     private async Task UpdateHash()
     {
-        if (_media != null)
-        {
-            _media.MediaHash = _hash;
-            _dbContext.Update(_media);
-            await _dbContext.SaveChangesAsync();
-        }
+        _media.MediaHash = _hash;
+        _dbContext.Update(_media);
+        await _dbContext.SaveChangesAsync();
     }
 }

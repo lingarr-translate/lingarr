@@ -4,7 +4,7 @@ Lingarr is an application that leverages translation technologies to automatical
 With support for both LibreTranslate and DeepL, Lingarr provides a flexible solution for subtitle translation.
 
 ### 🌟 Multiple Translation Service Support
-Lingarr now offers two services for automated translation:
+Lingarr now offers multiple services for automated translation:
 
 - **[LibreTranslate](https://libretranslate.com)** 
 - **[DeepL](https://www.deepl.com/)**
@@ -16,7 +16,7 @@ Lingarr now offers two services for automated translation:
 - **[Yandex](https://translate.yandex.com/)**
 - **[Azure](https://www.microsoft.com/en-us/translator/business/translator-api/)**
 
-Choose the engine that best fits your needs, or use both for comparison and optimal results!
+Choose the engine that best fits your needs.
 
 ## Usage
 

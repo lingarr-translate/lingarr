@@ -1,13 +1,21 @@
 import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
-import { ILanguage, ISubtitle, ITranslateService } from '@/ts'
+import { ILanguage, ISubtitle, ITranslateService, MediaType } from '@/ts'
 
 const service = (http: AxiosStatic, resource = '/api/translate'): ITranslateService => ({
-    translateSubtitle<T>(subtitle: ISubtitle, source: string, target: ILanguage): Promise<T> {
+    translateSubtitle<T>(
+        mediaId: number,
+        subtitle: ISubtitle,
+        source: string,
+        target: ILanguage,
+        mediaType: MediaType
+    ): Promise<T> {
         return new Promise((resolve, reject) => {
             http.post(`${resource}/subtitle`, {
+                mediaId: mediaId,
                 subtitlePath: subtitle.path,
                 sourceLanguage: source,
-                targetLanguage: target.code
+                targetLanguage: target.code,
+                mediaType: mediaType
             })
 
                 .then((response: AxiosResponse<T>) => {

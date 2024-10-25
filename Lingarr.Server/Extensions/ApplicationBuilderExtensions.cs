@@ -37,8 +37,8 @@ public static class ApplicationBuilderExtensions
 
     private static void MapHubs(this WebApplication app)
     {
-        app.MapHub<ScheduleProgressHub>("/signalr/ScheduleProgress");
-        app.MapHub<SettingUpdatedHub>("/signalr/SettingUpdated");
+        app.MapHub<TranslationRequestsProgressHub>("/signalr/TranslationRequests");
+        app.MapHub<SettingUpdatesHub>("/signalr/SettingUpdates");
     }
 
     private static void ApplyMigrations(this WebApplication app)

@@ -1,6 +1,5 @@
 ﻿using Hangfire;
 using Lingarr.Core.Data;
-using Lingarr.Core.Interfaces;
 using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Jobs;
@@ -13,10 +12,12 @@ namespace Lingarr.Server.Listener;
 public class SettingChangedListener
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly IHubContext<SettingUpdatedHub> _hubContext;
+    private readonly IHubContext<SettingUpdatesHub> _hubContext;
     private readonly ILogger<SettingChangedListener> _logger;
 
-    public SettingChangedListener(IServiceProvider serviceProvider, IHubContext<SettingUpdatedHub> hubContext,ILogger<SettingChangedListener> logger)
+    public SettingChangedListener(IServiceProvider serviceProvider, 
+        IHubContext<SettingUpdatesHub> hubContext,
+        ILogger<SettingChangedListener> logger)
     {
         _serviceProvider = serviceProvider;
         _hubContext = hubContext;
@@ -83,7 +84,7 @@ public class SettingChangedListener
                 case "Radarr":
                     _logger.LogInformation($"Settings changed for |Green|{jobName}|/Green|. All settings are complete, |Orange|indexing media...|/Orange|");
                     
-                    await _hubContext.Clients.Group("SettingUpdated").SendAsync("Update", new
+                    await _hubContext.Clients.Group("SettingUpdates").SendAsync("SettingUpdate", new
                     {
                         Key = "radarr_settings_completed",
                         Value = "true"
@@ -97,7 +98,7 @@ public class SettingChangedListener
                 case "Sonarr":
                     _logger.LogInformation($"Settings changed for |Green|{jobName}|/Green|. All settings are complete, |Orange|indexing media...|/Orange|");
                     
-                    await _hubContext.Clients.Group("SettingUpdated").SendAsync("Update", new
+                    await _hubContext.Clients.Group("SettingUpdates").SendAsync("SettingUpdate", new
                     {
                         Key = "sonarr_settings_completed",
                         Value = "true"

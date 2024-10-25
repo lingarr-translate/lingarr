@@ -2,6 +2,7 @@
 using Hangfire;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
+using Lingarr.Core.Enum;
 using Lingarr.Server.Interfaces.Services.Integration;
 using Lingarr.Server.Models.Integrations;
 using Lingarr.Server.Services;
@@ -11,8 +12,6 @@ namespace Lingarr.Server.Jobs;
 
 public class GetMovieJob
 {
-    private const string LingarRootFolder = "/app/media/movies/";
-    
     private readonly LingarrDbContext _dbContext;
     private readonly IRadarrService _radarrService;
     private readonly ILogger<GetMovieJob> _logger;
@@ -47,7 +46,7 @@ public class GetMovieJob
             }
 
             // Remove movies that no longer exist in Radarr
-            var radarrIds = movies.Select(radarrMovie => radarrMovie.id).ToList();
+            var radarrIds = movies.Select(radarrMovie => radarrMovie.Id).ToList();
             var moviesToRemove = await _dbContext.Movies
                 .Where(movie => !radarrIds.Contains(movie.RadarrId))
                 .ToListAsync();
@@ -65,39 +64,42 @@ public class GetMovieJob
 
     private async Task CreateOrUpdateMovie(RadarrMovie movie)
     {
-        if (!movie.hasFile)
+        if (!movie.HasFile)
         {
-            _logger.LogInformation($"Movie '{movie.title}' (ID: {movie.id}) has no file, skipping.");
+            _logger.LogDebug($"Movie '{movie.Title}' (ID: {movie.Id}) has no file, skipping.");
             return;
         }
 
         var movieEntity = await _dbContext.Movies
             .Include(m => m.Images)
-            .FirstOrDefaultAsync(m => m.RadarrId == movie.id);
+            .FirstOrDefaultAsync(m => m.RadarrId == movie.Id);
 
-        string moviePath = _pathConversionService.ConvertToAppPath(movie.movieFile.path ?? string.Empty, LingarRootFolder);
+        string moviePath = _pathConversionService.ConvertAndMapPath(
+            movie.MovieFile.Path ?? string.Empty,
+            MediaType.Movie
+        );
         if (movieEntity == null)
         {
             movieEntity = new Movie
             {
-                RadarrId = movie.id,
-                Title = movie.title,
-                DateAdded = DateTime.Parse(movie.added),
+                RadarrId = movie.Id,
+                Title = movie.Title,
+                DateAdded = DateTime.Parse(movie.Added),
                 FileName = Path.GetFileNameWithoutExtension(moviePath),
                 Path = Path.GetDirectoryName(moviePath) ?? string.Empty
             };
             _dbContext.Movies.Add(movieEntity);
-            _logger.LogInformation($"Created new movie '{movie.title}' (ID: {movie.id}).");
+            _logger.LogDebug($"Created new movie '{movie.Title}' (ID: {movie.Id}).");
         }
         else
         {
-            movieEntity.Title = movie.title;
-            movieEntity.DateAdded = DateTime.Parse(movie.added);
+            movieEntity.Title = movie.Title;
+            movieEntity.DateAdded = DateTime.Parse(movie.Added);
             movieEntity.FileName = Path.GetFileNameWithoutExtension(moviePath);
             movieEntity.Path = Path.GetDirectoryName(moviePath) ?? string.Empty;
         }
         
-        ProcessImages(movieEntity, movie.images);
+        ProcessImages(movieEntity, movie.Images);
     }
 
     private void ProcessImages(Movie movieEntity, List<IntegrationImage> images)
@@ -106,24 +108,24 @@ public class GetMovieJob
 
         foreach (var image in images)
         {
-            if (string.IsNullOrEmpty(image.coverType) || string.IsNullOrEmpty(image.url))
+            if (string.IsNullOrEmpty(image.CoverType) || string.IsNullOrEmpty(image.Url))
             {
                 continue;
             }
 
-            var imageUrl = image.url.Split('?')[0];
+            var imageUrl = image.Url.Split('?')[0];
 
-            if (existingImageTypes.Contains(image.coverType))
+            if (existingImageTypes.Contains(image.CoverType))
             {
-                var existingImage = movieEntity.Images.First(m => m.Type == image.coverType);
+                var existingImage = movieEntity.Images.First(m => m.Type == image.CoverType);
                 existingImage.Path = imageUrl;
-                existingImageTypes.Remove(image.coverType);
+                existingImageTypes.Remove(image.CoverType);
             }
             else
             {
                 var newImage = new Image
                 {
-                    Type = image.coverType,
+                    Type = image.CoverType,
                     Path = imageUrl
                 };
                 _dbContext.Images.Add(newImage);

@@ -21,7 +21,6 @@ public class StartupService : IHostedService
 
         await CheckAndUpdateIntegrationSettings(dbContext, "radarr", ["radarr_api_key", "radarr_url"]);
         await CheckAndUpdateIntegrationSettings(dbContext, "sonarr", ["sonarr_api_key", "sonarr_url"]);
-        await TruncateTranslationJobs(dbContext);
     }
 
     private async Task CheckAndUpdateIntegrationSettings(LingarrDbContext dbContext, string serviceName, string[] requiredKeys)
@@ -46,12 +45,6 @@ public class StartupService : IHostedService
             }
         }
     }
-
-    private async Task TruncateTranslationJobs(LingarrDbContext dbContext)
-    {
-        dbContext.TranslationJobs.RemoveRange(dbContext.TranslationJobs);
-        await dbContext.SaveChangesAsync();
-    }
-
+    
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }

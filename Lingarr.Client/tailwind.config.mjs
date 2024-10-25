@@ -57,7 +57,7 @@ export default {
                 tertiary: '#f5efdc',
                 'tertiary-content': '#586e75',
                 accent: '#268bd2',
-                'accent-content': '#657b83'
+                'accent-content': '#f5efdc'
             },
             'solarized-dark': {
                 primary: '#002b36',

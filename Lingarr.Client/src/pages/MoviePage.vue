@@ -39,8 +39,10 @@
                                 v-for="(subtitle, index) in item.subtitles"
                                 :key="`${index}-${subtitle.fileName}`"
                                 :subtitle="subtitle"
+                                :media="item"
+                                :media-type="MEDIA_TYPE.MOVIE"
                                 @update:toggle="toggleMovie(item)">
-                                <BadgeComponent value="{{ subtitle.language }}">
+                                <BadgeComponent>
                                     {{ subtitle.language.toUpperCase() }}
                                 </BadgeComponent>
                             </ContextMenu>
@@ -61,7 +63,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ComputedRef } from 'vue'
-import { IFilter, IMovie, IPagedResult, SETTINGS } from '@/ts'
+import { IFilter, IMovie, IPagedResult, MEDIA_TYPE, SETTINGS } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useMovieStore } from '@/store/movie'
 import { useSettingStore } from '@/store/setting'

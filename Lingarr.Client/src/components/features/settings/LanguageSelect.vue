@@ -11,13 +11,13 @@
                     :key="`${item.code}-${index}`"
                     class="flex cursor-pointer items-center rounded-md bg-accent px-3 py-1 text-sm font-medium text-secondary-content"
                     @click.stop="removeItem(item)">
-                    <span class="mr-2">{{ item.name }}</span>
+                    <span class="mr-2 text-accent-content">{{ item.name }}</span>
                     <TimesIcon class="mt-0.5 h-4 w-4" />
                 </span>
             </div>
-            <CaretDownIcon
+            <CaretRightIcon
                 :class="{ 'rotate-90': isOpen }"
-                class="h-5 w-5 transition-transform duration-200" />
+                class="arrow-right h-5 w-5 transition-transform duration-200" />
         </div>
         <ul
             v-show="isOpen"
@@ -53,7 +53,7 @@
 <script setup lang="ts">
 import { Ref, ref, computed, watch, nextTick } from 'vue'
 import { ILanguage } from '@/ts'
-import CaretDownIcon from '@/components/icons/CaretDownIcon.vue'
+import CaretRightIcon from '@/components/icons/CaretRightIcon.vue'
 import TimesIcon from '@/components/icons/TimesIcon.vue'
 import useClickOutside from '@/composables/useClickOutside'
 

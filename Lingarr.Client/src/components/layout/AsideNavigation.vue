@@ -30,7 +30,15 @@
                         ]"
                         @click="navigate(item.route)">
                         <component :is="item.icon" class="mr-2 h-4 w-4" />
-                        {{ item.label }}
+                        <div class="relative">
+                            {{ item.label }}
+
+                            <span
+                                v-if="item.route == 'translations' && activeRequests > 0"
+                                class="absolute -right-4 -top-1 inline-flex items-center justify-center rounded-full bg-accent px-1 py-0.5 text-xs font-bold leading-none text-secondary-content">
+                                {{ activeRequests }}
+                            </span>
+                        </div>
                     </li>
                 </ul>
             </nav>
@@ -50,7 +58,7 @@
                         Update {{ instanceStore.getVersion.latestVersion }} is available
                     </BadgeComponent>
                     <BadgeComponent v-else>
-                        Version: {{ instanceStore.getVersion.currentVersion }}
+                        Version: {{ instanceStore.getVersion.currentVersion }} beta
                     </BadgeComponent>
                 </div>
             </div>
@@ -59,20 +67,27 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ComputedRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useInstanceStore } from '@/store/instance'
+import { useTranslationRequestStore } from '@/store/translationRequest'
+import { MenuItem } from '@/ts'
 import HomeIcon from '@/components/icons/HomeIcon.vue'
 import MovieIcon from '@/components/icons/MovieIcon.vue'
 import ShowIcon from '@/components/icons/ShowIcon.vue'
 import SettingIcon from '@/components/icons/SettingIcon.vue'
 import TimesIcon from '@/components/icons/TimesIcon.vue'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
-import { MenuItem } from '@/ts'
+import LanguageIcon from '@/components/icons/LanguageIcon.vue'
 
+const translationRequestStore = useTranslationRequestStore()
 const instanceStore = useInstanceStore()
 const router = useRouter()
 const route = useRoute()
+
+const activeRequests: ComputedRef<number> = computed(
+    () => translationRequestStore.getActiveTranslationRequests
+)
 
 const isOpen = computed({
     get: () => instanceStore.getIsOpen,
@@ -83,11 +98,12 @@ const menuItems: MenuItem[] = [
     { label: 'Dashboard', icon: HomeIcon, route: 'dashboard', children: [] },
     { label: 'Movies', icon: MovieIcon, route: 'movies', children: [] },
     { label: 'TV Shows', icon: ShowIcon, route: 'shows', children: [] },
+    { label: 'Translations', icon: LanguageIcon, route: 'translations', children: [] },
     {
         label: 'Settings',
         icon: SettingIcon,
         route: 'general-settings',
-        children: ['general-settings', 'integration-settings', 'translation-settings']
+        children: ['general-settings', 'integration-settings', 'mapping-settings']
     }
 ]
 

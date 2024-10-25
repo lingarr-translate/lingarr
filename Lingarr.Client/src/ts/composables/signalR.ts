@@ -1,4 +1,4 @@
-import { ISettings } from '@/ts'
+import { IRequestProgress, ISettings } from '@/ts'
 
 export interface SignalRStore {
     state: SignalRState
@@ -17,8 +17,10 @@ interface HubConnection {
 
 export type EventCallbacks = {
     GroupCompleted: (group: string) => void
-    ScheduleProgress: (schedule: { jobId: string; progress: number; completed: boolean }) => void
-    Update: (setting: { key: keyof ISettings; value: string }) => void
+    SettingUpdate: (setting: { key: keyof ISettings; value: string }) => void
+    RequestProgress: (requestProgress: IRequestProgress) => void
+    RequestActive: (request: { count: number }) => void
+    // Completed: (translationRequest: ITranslationRequest) => void
 }
 
 export interface Hub {

@@ -1,8 +1,8 @@
 ﻿<template>
     <CardComponent title="Source and target translation">
         <template #description>
-            Select a source and then a target language, target translation is used as a translate
-            option.
+            Select a source and target language. Both the source and target are used to optimize the
+            translation process.
         </template>
         <template #content>
             <SaveNotification ref="saveNotification" />
@@ -20,9 +20,6 @@
                     class="w-full"
                     :options="selectedTargetLanguages" />
             </div>
-            <small>
-                In in future releases the translation process can be automated using these settings.
-            </small>
         </template>
     </CardComponent>
 </template>

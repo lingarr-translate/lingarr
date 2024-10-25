@@ -1,5 +1,6 @@
 ﻿using Hangfire;
 using Lingarr.Core.Data;
+using Lingarr.Core.Enum;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Services;
 
@@ -75,7 +76,7 @@ public class AutomatedTranslationJob
                 break;
             }
 
-            var isProcessed = await _mediaSubtitleProcessor.ProcessMediaAsync(movie);
+            var isProcessed = await _mediaSubtitleProcessor.ProcessMedia(movie, MediaType.Movie);
             if (isProcessed)
             {
                 translationsInitiated++;
@@ -106,7 +107,7 @@ public class AutomatedTranslationJob
                 break;
             }
 
-            var isProcessed = await _mediaSubtitleProcessor.ProcessMediaAsync(episode);
+            var isProcessed = await _mediaSubtitleProcessor.ProcessMedia(episode, MediaType.Episode);
             if (isProcessed)
             {
                 translationsInitiated++;

@@ -1,6 +1,9 @@
-﻿namespace Lingarr.Server.Models.Integrations;
+﻿using System.Text.Json.Serialization;
+
+namespace Lingarr.Server.Models.Integrations;
 
 public class SonarrSeason
 {
-    public required int seasonNumber { get; set; } // series | seasons -> seasonNumber
+    [JsonPropertyName("seasonNumber")]
+    public required int SeasonNumber { get; set; }
 }
