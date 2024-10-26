@@ -54,11 +54,9 @@ const emit = defineEmits<{
     (e: 'update:modelValue', value: string): void
     (e: 'validation-status', isValid: boolean): void
 }>()
-
 const { isValid, isInvalid, error, validate } = useValidation(props)
 
 const showPassword = ref(false)
-
 const inputClasses = computed(() => [
     'w-full rounded-md border bg-transparent px-4 py-2 outline-none transition-colors duration-200',
     { 'border-green-500': isValid.value },
@@ -67,19 +65,14 @@ const inputClasses = computed(() => [
     { 'pr-10': props.type === 'password' }
 ])
 
-const debouncedValidate = useDebounce((value: string) => {
+const handleInput = useDebounce((event: Event) => {
+    const value = (event.target as HTMLInputElement).value
     validate(value)
     if (isValid.value) {
         emit('update:modelValue', value)
     }
     emit('validation-status', isValid.value)
 }, 1000)
-
-const handleInput = (event: Event) => {
-    const value = (event.target as HTMLInputElement).value
-    emit('update:modelValue', value)
-    debouncedValidate(value)
-}
 
 const togglePassword = () => {
     showPassword.value = !showPassword.value
