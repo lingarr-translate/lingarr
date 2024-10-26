@@ -20,7 +20,6 @@ export type EventCallbacks = {
     SettingUpdate: (setting: { key: keyof ISettings; value: string }) => void
     RequestProgress: (requestProgress: IRequestProgress) => void
     RequestActive: (request: { count: number }) => void
-    // Completed: (translationRequest: ITranslationRequest) => void
 }
 
 export interface Hub {

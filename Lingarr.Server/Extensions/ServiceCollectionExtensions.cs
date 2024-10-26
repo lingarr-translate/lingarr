@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using GTranslate.Translators;
 using Hangfire;
 using Hangfire.Storage.SQLite;
@@ -7,7 +6,6 @@ using Lingarr.Core;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Logging;
-using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Providers;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Integration;

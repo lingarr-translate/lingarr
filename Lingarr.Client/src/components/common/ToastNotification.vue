@@ -46,32 +46,26 @@
     </transition>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import CheckMarkIcon from '@/components/icons/CheckMarkIcon.vue'
 import TimesCircleIcon from '@/components/icons/TimesCircleIcon.vue'
 import ExclamationIcon from '@/components/icons/ExclamationIcon.vue'
 import TimesIcon from '@/components/icons/TimesIcon.vue'
 
-const { title, message, type, duration } = defineProps({
-    title: {
-        type: String,
-        required: true
-    },
-    message: {
-        type: String,
-        required: true
-    },
-    type: {
-        type: String,
-        default: 'info',
-        validator: (value) => ['success', 'error', 'info'].includes(value)
-    },
-    duration: {
-        type: Number,
-        default: 5000
-    }
-})
+type Status = 'success' | 'error' | 'info'
+
+const {
+    title,
+    message,
+    type,
+    duration = 5000
+} = defineProps<{
+    title: string
+    message: string
+    type: Status
+    duration?: number
+}>()
 
 const emit = defineEmits(['close'])
 
