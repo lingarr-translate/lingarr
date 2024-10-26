@@ -28,14 +28,13 @@ export interface IMovie extends IBaseEntity {
 export interface ITranslationRequest {
     id: number
     jobId: string
-    mediaType: MediaType
     title: string
     sourceLanguage: string
     targetLanguage: string
-    translatedSubtitle?: string
     subtitleToTranslate?: string
+    translatedSubtitle?: string
+    mediaType: MediaType
     status: TranslationStatus
-    progress?: number | null
     completedAt?: Date | null
 }
 
