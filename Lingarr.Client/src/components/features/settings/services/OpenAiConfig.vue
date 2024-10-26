@@ -15,7 +15,7 @@
         <SelectComponent
             v-model:selected="aiModel"
             :options="[
-                { label: 'gpt-4o', value: 'GPT-4o' },
+                { label: 'GPT-4o', value: 'gpt-4o' },
                 { label: 'GPT-4o mini', value: 'gpt-4o-mini' },
                 { label: 'GPT-4 Turbo 0125', value: 'gpt-3.5-turbo-0125' },
                 { label: 'GPT-3.5 Turbo 0125', value: 'gpt-3.5-turbo-0125' }

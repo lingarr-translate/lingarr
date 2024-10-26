@@ -75,7 +75,7 @@ const changelog = ref([
         changes: [
             'Changed volume mapping and removed `/app/media` which is a `BREAKING CHANGE`  make sure you map the new volumes and synchronise your libraries via the settings.',
             'Added a new notification system which displays automated and manually instantiated translations.',
-            'Added manual mapping system.'
+            'Improved automated volume mapping and added support for manual in-application mapping.'
         ]
     }
 ])
