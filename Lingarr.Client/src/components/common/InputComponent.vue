@@ -73,10 +73,11 @@ const debouncedValidate = useDebounce((value: string) => {
         emit('update:modelValue', value)
     }
     emit('validation-status', isValid.value)
-}, 500)
+}, 1000)
 
 const handleInput = (event: Event) => {
     const value = (event.target as HTMLInputElement).value
+    emit('update:modelValue', value)
     debouncedValidate(value)
 }
 

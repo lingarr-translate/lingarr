@@ -71,8 +71,9 @@ const emit = defineEmits(['close'])
 
 const isVisible = ref(true)
 const progress = ref(100)
-let timer
-let progressTimer
+
+let timer: ReturnType<typeof setTimeout> | undefined
+let progressTimer: number | undefined
 
 function close() {
     isVisible.value = false
@@ -94,7 +95,11 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-    clearTimeout(timer)
-    cancelAnimationFrame(progressTimer)
+    if (timer) {
+        clearTimeout(timer)
+    }
+    if (progressTimer) {
+        cancelAnimationFrame(progressTimer)
+    }
 })
 </script>
