@@ -2,7 +2,6 @@
     <PageLayout>
         <div class="grid h-full grid-cols-[auto,1fr]">
             <aside class="w-[3.175rem] shrink-0 bg-secondary md:w-40">
-                <!-- Navigation -->
                 <nav class="pt-4 md:pl-4 md:pt-8">
                     <ul class="flex flex-col space-y-4">
                         <li

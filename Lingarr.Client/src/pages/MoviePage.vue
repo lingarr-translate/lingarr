@@ -1,7 +1,6 @@
 ﻿<template>
     <PageLayout>
         <div v-if="settingsCompleted === 'true'" class="w-full">
-            <!-- Search and Filters -->
             <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
                 <SearchComponent v-model="filter" />
                 <div class="flex w-full justify-between space-x-2 md:w-fit">
@@ -20,7 +19,6 @@
                 </div>
             </div>
 
-            <!-- Media List View -->
             <div class="w-full px-4">
                 <div class="grid grid-cols-12 border-b border-accent font-bold">
                     <div class="col-span-6 px-4 py-2">Title</div>

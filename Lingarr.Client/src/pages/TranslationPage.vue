@@ -24,7 +24,6 @@
                 </div>
             </div>
 
-            <!-- Media List View -->
             <div class="w-full px-4">
                 <div class="hidden border-b border-accent font-bold md:grid md:grid-cols-12">
                     <div class="col-span-3 px-4 py-2">Title</div>
@@ -51,14 +50,15 @@
                         <span :id="`deletable-${item.id}`" class="font-bold md:hidden">
                             Title:&nbsp;
                         </span>
-                        <span v-if="item.mediaType === MEDIA_TYPE.EPISODE">
-                            {{ item.media.showTitle }}:&nbsp;
-                        </span>
                         <span
-                            :class="{
-                                'text-primary-content/50': item.mediaType === MEDIA_TYPE.EPISODE
-                            }">
-                            {{ item.media.title }}
+                            v-if="item.mediaType === MEDIA_TYPE.EPISODE"
+                            v-show-title
+                            class="cursor-help"
+                            :title="item.title">
+                            {{ item.title }}
+                        </span>
+                        <span v-else>
+                            {{ item.title }}
                         </span>
                     </div>
                     <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">

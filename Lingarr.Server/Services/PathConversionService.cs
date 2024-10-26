@@ -1,60 +1,51 @@
-﻿namespace Lingarr.Server.Services;
+﻿using Lingarr.Core.Data;
+using Lingarr.Core.Enum;
+
+namespace Lingarr.Server.Services;
 
 public class PathConversionService
 {
-    public PathConversionService()
+    private readonly LingarrDbContext _context;
+
+    public PathConversionService(LingarrDbContext context)
     {
+        _context = context;
+    }
+    
+    /// <summary>
+    /// Converts and maps a source path based on the specified media type, applying configured path mappings
+    /// and normalizing directory separators.
+    /// </summary>
+    /// <param name="sourcePath">The original path to be converted.</param>
+    /// <param name="mediaType">The type of media associated with the path.</param>
+    public string ConvertAndMapPath(string sourcePath, MediaType mediaType)
+    {
+        if (string.IsNullOrEmpty(sourcePath))
+        {
+            return sourcePath;
+        }
+
+        var mappedPath = PathReplace(sourcePath, mediaType);
+        return mappedPath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
     }
 
     /// <summary>
-    /// Normalizes the given path by ensuring consistent use of directory separators
-    /// depending on the operating system.
+    /// Applies configured path mappings from the database to the source path for the specified media type.
     /// </summary>
-    /// <param name="path">The input file or directory path.</param>
-    /// <returns>The normalized path with consistent directory separators.</returns>
-    public string NormalizePath(string path)
+    /// <param name="sourcePath">The original path to apply mappings to.</param>
+    /// <param name="mediaType">The type of media to filter relevant path mappings.</param>
+    /// <returns>The path with all applicable mappings applied.</returns>
+    private string PathReplace(string sourcePath, MediaType mediaType)
     {
-        if (string.IsNullOrEmpty(path))
-            return path;
-
-        // Normalize directory separators based on the current operating system
-        return path.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
-    }
-
-    /// <summary>
-    /// Converts an external path to a path relative to the application's root folder.
-    /// Removes the first directory from the external path and prefixes it with the application's root folder.
-    /// </summary>
-    /// <param name="externalPath">The external path to be converted.</param>
-    /// <param name="rootFolder">The external path to be converted.</param>
-    /// <returns>The path relative to the application's root folder.</returns>
-    public string ConvertToAppPath(string externalPath, string rootFolder)
-    {
-        if (string.IsNullOrEmpty(externalPath))
-            return externalPath;
-
-        // Normalize the external path
-        externalPath = NormalizePath(externalPath);
-
-        // Handle the case where the external path is a root path (e.g., C:\ or /)
-        if (Path.IsPathRooted(externalPath) && externalPath.Equals(Path.GetPathRoot(externalPath), StringComparison.OrdinalIgnoreCase))
+        var mappings = _context.PathMappings.Where(m => m.MediaType == mediaType).ToList();
+        foreach (var mapping in mappings)
         {
-            // For root paths, add the root folder
-            return Path.Combine(rootFolder, externalPath.TrimStart(Path.DirectorySeparatorChar));
+            if (sourcePath.Contains(mapping.SourcePath))
+            {
+                sourcePath = sourcePath.Replace(mapping.SourcePath, mapping.DestinationPath);
+            }
         }
 
-        // Split the path into parts (directories and files)
-        var parts = externalPath.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar },
-            StringSplitOptions.RemoveEmptyEntries);
-
-        // If there are enough parts, remove the first directory and combine with the root folder
-        if (parts.Length > 1)
-        {
-            string internalPath = Path.Combine(parts.Skip(1).ToArray());
-            return Path.Combine(rootFolder, internalPath);
-        }
-
-        // If there's only one part or no first directory can be removed, but added root folder
-        return Path.Combine(rootFolder, externalPath);
+        return sourcePath;
     }
 }

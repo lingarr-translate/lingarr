@@ -20,13 +20,13 @@ public class CleanupJob
     public async Task Execute()
     {
         var oneWeekAgo = DateTime.UtcNow.AddDays(-7);
-        var oldJobs = await _dbContext.TranslationJobs
+        var oldJobs = await _dbContext.TranslationRequests
             .Where(pg => pg.CreatedAt < oneWeekAgo)
             .ToListAsync();
 
         foreach (var job in oldJobs)
         {
-            _dbContext.TranslationJobs.Remove(job);
+            _dbContext.TranslationRequests.Remove(job);
         }
 
         await _dbContext.SaveChangesAsync();

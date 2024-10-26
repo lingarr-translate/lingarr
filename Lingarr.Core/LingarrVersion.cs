@@ -32,7 +32,6 @@ public static class LingarrVersion
         var cacheKey = "GithubLatestRelease";
         if (Cache.TryGetValue(cacheKey, out string? cachedVersion) && cachedVersion != null)
         {
-            Console.WriteLine($"Returning latest cached version: {cachedVersion}");
             return cachedVersion;
         }
 
@@ -50,7 +49,7 @@ public static class LingarrVersion
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to get latest version: {ex.Message}");
+            Console.WriteLine($"Failed to get latest version, returning default application version.");
             return Number;
         }
     }

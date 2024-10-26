@@ -1,4 +1,6 @@
-﻿using GTranslate.Translators;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
+using GTranslate.Translators;
 using Hangfire;
 using Hangfire.Storage.SQLite;
 using Lingarr.Core;
@@ -28,8 +30,9 @@ public static class ServiceCollectionExtensions
     {
         builder.Services.AddControllers().AddJsonOptions(options =>
         {
-            options.JsonSerializerOptions.ReferenceHandler =
-                System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+
         });
 
         builder.Services.AddEndpointsApiExplorer();;
@@ -97,7 +100,10 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<IRadarrService, RadarrService>();
         builder.Services.AddScoped<ISonarrService, SonarrService>();
         builder.Services.AddScoped<ISubtitleService, SubtitleService>();
-        builder.Services.AddScoped<MediaSubtitleProcessor>();
+        builder.Services.AddScoped<ITranslationRequestService, TranslationRequestService>();
+        builder.Services.AddScoped<IMediaSubtitleProcessor, MediaSubtitleProcessor>();
+        builder.Services.AddScoped<IDirectoryService, DirectoryService>();
+        builder.Services.AddScoped<IMappingService, MappingService>();
 
         builder.Services.AddScoped<ISubRipParser, SubRipParser>();
         builder.Services.AddScoped<ISubRipWriter, SubRipWriter>();

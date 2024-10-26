@@ -35,6 +35,7 @@ public class SubtitleService : ISubtitleService
         return srtFiles.ToList();
     }
 
+    /// <inheritdoc />
     public async Task<List<SubtitleItem>> ReadSubtitles(string filePath)
     {
         var parser = new SubRipParser();
@@ -42,6 +43,7 @@ public class SubtitleService : ISubtitleService
         return parser.ParseStream(fileStream, Encoding.UTF8);
     }
 
+    /// <inheritdoc />
     public async Task WriteSubtitles(string filePath, List<SubtitleItem> subtitles)
     {
         var writer = new SubRipWriter();
@@ -49,6 +51,7 @@ public class SubtitleService : ISubtitleService
         await writer.WriteStreamAsync(fileStream, subtitles);
     }
 
+    /// <inheritdoc />
     public string CreateFilePath(string originalPath, string targetLanguage)
     {
         const string pattern = @"(\.([a-zA-Z]{2,3}))?\.srt$";

@@ -166,6 +166,43 @@ namespace Lingarr.Migrations.MySQL.Migrations
                     b.ToTable("movies", (string)null);
                 });
 
+            modelBuilder.Entity("Lingarr.Core.Entities.PathMapping", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasColumnName("id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DestinationPath")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("destination_path");
+
+                    b.Property<int>("MediaType")
+                        .HasColumnType("int")
+                        .HasColumnName("media_type");
+
+                    b.Property<string>("SourcePath")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("source_path");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_path_mappings");
+
+                    b.ToTable("path_mappings", (string)null);
+                });
+
             modelBuilder.Entity("Lingarr.Core.Entities.Season", b =>
                 {
                     b.Property<int>("Id")
@@ -263,7 +300,7 @@ namespace Lingarr.Migrations.MySQL.Migrations
                     b.ToTable("shows", (string)null);
                 });
 
-            modelBuilder.Entity("Lingarr.Core.Entities.TranslationJob", b =>
+            modelBuilder.Entity("Lingarr.Core.Entities.TranslationRequest", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -272,27 +309,58 @@ namespace Lingarr.Migrations.MySQL.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<bool>("Completed")
-                        .HasColumnType("tinyint(1)")
-                        .HasColumnName("completed");
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("completed_at");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime(6)")
                         .HasColumnName("created_at");
 
                     b.Property<string>("JobId")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("job_id");
+
+                    b.Property<int>("MediaType")
+                        .HasColumnType("int")
+                        .HasColumnName("media_type");
+
+                    b.Property<string>("SourceLanguage")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("source_language");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int")
+                        .HasColumnName("status");
+
+                    b.Property<string>("SubtitleToTranslate")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("subtitle_to_translate");
+
+                    b.Property<string>("TargetLanguage")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("target_language");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("longtext")
+                        .HasColumnName("title");
+
+                    b.Property<string>("TranslatedSubtitle")
+                        .HasColumnType("longtext")
+                        .HasColumnName("translated_subtitle");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)")
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id")
-                        .HasName("pk_translation_jobs");
+                        .HasName("pk_translation_requests");
 
-                    b.ToTable("translation_jobs", (string)null);
+                    b.ToTable("translation_requests", (string)null);
                 });
 
             modelBuilder.Entity("Lingarr.Core.Entities.Episode", b =>

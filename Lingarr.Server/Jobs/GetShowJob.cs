@@ -1,6 +1,7 @@
 ﻿using Hangfire;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
+using Lingarr.Core.Enum;
 using Lingarr.Server.Interfaces.Services.Integration;
 using Lingarr.Server.Models.Integrations;
 using Lingarr.Server.Services;
@@ -10,7 +11,6 @@ namespace Lingarr.Server.Jobs;
 
 public class GetShowJob
 {
-    private const string LingarRootFolder = "/app/media/tv/";
     private const int BatchSize = 100;
 
     private readonly LingarrDbContext _dbContext;
@@ -49,7 +49,7 @@ public class GetShowJob
                 var showEntity = await CreateOrUpdateShow(show);
                 ProcessImages(show, showEntity);
 
-                foreach (var season in show.seasons)
+                foreach (var season in show.Seasons)
                 {
                     var seasonPath = await GetSeasonPath(show, season);
                     var seasonEntity = await CreateOrUpdateSeason(showEntity, season, seasonPath);
@@ -67,6 +67,19 @@ public class GetShowJob
             if (processedCount % BatchSize != 0)
             {
                 await SaveChanges(processedCount, shows.Count);
+            }
+
+            // Delete shows that exist in Lingarr but not in Sonarr
+            var sonarrIds = shows.Select(s => s.Id).ToHashSet();
+            var showsToDelete = await _dbContext.Shows
+                .Where(s => !sonarrIds.Contains(s.SonarrId))
+                .ToListAsync();
+
+            if (showsToDelete.Any())
+            {
+                _logger.LogInformation("Removing {Count} shows that no longer exist in Sonarr", showsToDelete.Count);
+                _dbContext.Shows.RemoveRange(showsToDelete);
+                await _dbContext.SaveChangesAsync();
             }
 
             await transaction.CommitAsync();
@@ -92,25 +105,25 @@ public class GetShowJob
         var showEntity = await _dbContext.Shows
             .Include(s => s.Images)
             .Include(s => s.Seasons)
-            .FirstOrDefaultAsync(s => s.SonarrId == show.id);
+            .FirstOrDefaultAsync(s => s.SonarrId == show.Id);
 
-        string showPath = show.path ?? string.Empty;
+        string showPath = show.Path;
         if (showEntity == null)
         {
             showEntity = new Show
             {
-                SonarrId = show.id,
-                Title = show.title,
+                SonarrId = show.Id,
+                Title = show.Title,
                 Path = showPath,
-                DateAdded = !string.IsNullOrEmpty(show.added) ? DateTime.Parse(show.added) : DateTime.UtcNow
+                DateAdded = !string.IsNullOrEmpty(show.Added) ? DateTime.Parse(show.Added) : DateTime.UtcNow
             };
             _dbContext.Shows.Add(showEntity);
         }
         else
         {
-            showEntity.Title = show.title;
+            showEntity.Title = show.Title;
             showEntity.Path = showPath;
-            showEntity.DateAdded = !string.IsNullOrEmpty(show.added) ? DateTime.Parse(show.added) : DateTime.UtcNow;
+            showEntity.DateAdded = !string.IsNullOrEmpty(show.Added) ? DateTime.Parse(show.Added) : DateTime.UtcNow;
         }
 
         return showEntity;
@@ -120,13 +133,13 @@ public class GetShowJob
     {
         var seasonEntity = await _dbContext.Seasons
             .Include(s => s.Episodes)
-            .FirstOrDefaultAsync(s => s.ShowId == showEntity.Id && s.SeasonNumber == season.seasonNumber);
+            .FirstOrDefaultAsync(s => s.ShowId == showEntity.Id && s.SeasonNumber == season.SeasonNumber);
 
         if (seasonEntity == null)
         {
             seasonEntity = new Season
             {
-                SeasonNumber = season.seasonNumber,
+                SeasonNumber = season.SeasonNumber,
                 Path = seasonPath ?? string.Empty,
                 Show = showEntity
             };
@@ -134,7 +147,7 @@ public class GetShowJob
         }
         else
         {
-            seasonEntity.SeasonNumber = season.seasonNumber;
+            seasonEntity.SeasonNumber = season.SeasonNumber;
             seasonEntity.Path = seasonPath ?? string.Empty;
             seasonEntity.Show = showEntity;
         }
@@ -144,25 +157,25 @@ public class GetShowJob
 
     private async Task CreateOrUpdateEpisodes(SonarrShow show, Season seasonEntity)
     {
-        var episodes = await _sonarrService.GetEpisodes(show.id, seasonEntity.SeasonNumber);
+        var episodes = await _sonarrService.GetEpisodes(show.Id, seasonEntity.SeasonNumber);
         if (episodes == null) return;
 
-        foreach (var episode in episodes.Where(e => e.hasFile))
+        foreach (var episode in episodes.Where(e => e.HasFile))
         {
-            var episodePathResult = await _sonarrService.GetEpisodePath(episode.id);
-            var episodePath = _pathConversionService.ConvertToAppPath(
-                episodePathResult?.episodeFile.path ?? string.Empty,
-                LingarRootFolder);
+            var episodePathResult = await _sonarrService.GetEpisodePath(episode.Id);
+            var episodePath = _pathConversionService.ConvertAndMapPath(
+                episodePathResult?.EpisodeFile.Path ?? string.Empty,
+                MediaType.Show
+                );
             
-            var episodeEntity = seasonEntity.Episodes.FirstOrDefault(se => se.SonarrId == episode.id);
+            var episodeEntity = seasonEntity.Episodes.FirstOrDefault(se => se.SonarrId == episode.Id);
             if (episodeEntity == null)
             {
-                
                 episodeEntity = new Episode
                 {
-                    SonarrId = episode.id,
-                    EpisodeNumber = episode.episodeNumber,
-                    Title = episode.title,
+                    SonarrId = episode.Id,
+                    EpisodeNumber = episode.EpisodeNumber,
+                    Title = episode.Title,
                     FileName = Path.GetFileNameWithoutExtension(episodePath),
                     Path = Path.GetDirectoryName(episodePath),
                     Season = seasonEntity
@@ -171,9 +184,9 @@ public class GetShowJob
             }
             else
             {
-                episodeEntity.SonarrId = episode.id;
-                episodeEntity.EpisodeNumber = episode.episodeNumber;
-                episodeEntity.Title = episode.title;
+                episodeEntity.SonarrId = episode.Id;
+                episodeEntity.EpisodeNumber = episode.EpisodeNumber;
+                episodeEntity.Title = episode.Title;
                 episodeEntity.FileName = Path.GetFileNameWithoutExtension(episodePath);
                 episodeEntity.Path = Path.GetDirectoryName(episodePath);
                 episodeEntity.Season = seasonEntity;
@@ -182,7 +195,7 @@ public class GetShowJob
 
         // Remove episodes that no longer exist in Sonarr
         var episodesToRemove = seasonEntity.Episodes
-            .Where(seasonEpisode => episodes.All(episode => episode.id != seasonEpisode.SonarrId))
+            .Where(seasonEpisode => episodes.All(episode => episode.Id != seasonEpisode.SonarrId))
             .ToList();
 
         foreach (var episodeToRemove in episodesToRemove)
@@ -193,14 +206,14 @@ public class GetShowJob
 
     private void ProcessImages(SonarrShow show, Show showEntity)
     {
-        foreach (var image in show.images)
+        foreach (var image in show.Images)
         {
-            if (string.IsNullOrEmpty(image.coverType) || string.IsNullOrEmpty(image.url))
+            if (string.IsNullOrEmpty(image.CoverType) || string.IsNullOrEmpty(image.Url))
             {
                 continue;
             }
 
-            var path = image.url.Split('?')[0];
+            var path = image.Url.Split('?')[0];
             if (showEntity.Images.Any(m => m.Path == path))
             {
                 continue;
@@ -208,7 +221,7 @@ public class GetShowJob
 
             var imageEntity = new Image
             {
-                Type = image.coverType,
+                Type = image.CoverType,
                 Path = path
             };
 
@@ -218,14 +231,14 @@ public class GetShowJob
 
     private async Task<string> GetSeasonPath(SonarrShow show, SonarrSeason season)
     {
-        if (show.seasonFolder)
+        if (show.SeasonFolder)
         {
-            var episodes = await _sonarrService.GetEpisodes(show.id, season.seasonNumber);
-            var episode = episodes?.Where(episode => episode.hasFile).FirstOrDefault();
+            var episodes = await _sonarrService.GetEpisodes(show.Id, season.SeasonNumber);
+            var episode = episodes?.Where(episode => episode.HasFile).FirstOrDefault();
             if (episode != null)
             {
-                var episodePathResult = await _sonarrService.GetEpisodePath(episode.id);
-                var seasonPath = Path.GetDirectoryName(episodePathResult?.episodeFile.path);
+                var episodePathResult = await _sonarrService.GetEpisodePath(episode.Id);
+                var seasonPath = Path.GetDirectoryName(episodePathResult?.EpisodeFile.Path);
                 if (seasonPath != null)
                 {
                     if (!seasonPath.StartsWith("/"))
@@ -235,11 +248,14 @@ public class GetShowJob
                 }
                 else
                 {
-                    seasonPath = $"/Season {season.seasonNumber}";
+                    seasonPath = $"/Season {season.SeasonNumber}";
                 }
 
-                
-                return _pathConversionService.ConvertToAppPath(seasonPath, LingarRootFolder);
+
+                return _pathConversionService.ConvertAndMapPath(
+                    seasonPath,
+                    MediaType.Show
+                );
             }
         }
 

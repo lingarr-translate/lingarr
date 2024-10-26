@@ -52,7 +52,5 @@
   
   <Target Name="Config" AfterTargets="AfterPublish">
     <MakeDir Directories="$(PublishDir)config" />
-    <MakeDir Directories="$(PublishDir)media/tv" />
-    <MakeDir Directories="$(PublishDir)media/movies" />
   </Target>
 </Project>

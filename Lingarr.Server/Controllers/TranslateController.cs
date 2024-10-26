@@ -2,6 +2,7 @@
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Models.Api;
 using Lingarr.Server.Services;
 
 namespace Lingarr.Server.Controllers;
@@ -34,10 +35,13 @@ public class TranslateController : ControllerBase
     /// This includes the subtitle path, subtitle source language and subtitle target language.</param>
     /// <returns>Returns an HTTP 200 OK response if the job was successfully enqueued.</returns>
     [HttpPost("subtitle")]
-    public async Task<IActionResult> Translate([FromBody] TranslateAbleSubtitle translateAbleSubtitle)
+    public async Task<ActionResult<TranslationJobDto>> Translate([FromBody] TranslateAbleSubtitle translateAbleSubtitle)
     {
         var jobId = await _translationRequestService.CreateRequest(translateAbleSubtitle);
-        return Ok(new { JobId = jobId });
+        return Ok(new TranslationJobDto
+        {
+            JobId = jobId,
+        });
     }
     
     /// <summary>

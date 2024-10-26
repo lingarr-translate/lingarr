@@ -2,7 +2,6 @@
 using Lingarr.Core.Data;
 using Lingarr.Core.Enum;
 using Lingarr.Server.Interfaces.Services;
-using Lingarr.Server.Services;
 
 namespace Lingarr.Server.Jobs;
 
@@ -10,13 +9,13 @@ public class AutomatedTranslationJob
 {
     private readonly LingarrDbContext _dbContext;
     private readonly ILogger<AutomatedTranslationJob> _logger;
-    private readonly MediaSubtitleProcessor _mediaSubtitleProcessor;
+    private readonly IMediaSubtitleProcessor _mediaSubtitleProcessor;
     private readonly ISettingService _settingService;
     private int _maxTranslationsPerRun = 10;
 
     public AutomatedTranslationJob(LingarrDbContext dbContext,
         ILogger<AutomatedTranslationJob> logger,
-        MediaSubtitleProcessor mediaSubtitleProcessor,
+        IMediaSubtitleProcessor mediaSubtitleProcessor,
         ISettingService settingService)
     {
         _dbContext = dbContext;

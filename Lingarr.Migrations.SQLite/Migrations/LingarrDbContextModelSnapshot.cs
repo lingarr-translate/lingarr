@@ -155,6 +155,41 @@ namespace Lingarr.Migrations.SQLite.Migrations
                     b.ToTable("movies", (string)null);
                 });
 
+            modelBuilder.Entity("Lingarr.Core.Entities.PathMapping", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DestinationPath")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("destination_path");
+
+                    b.Property<int>("MediaType")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("media_type");
+
+                    b.Property<string>("SourcePath")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("source_path");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_path_mappings");
+
+                    b.ToTable("path_mappings", (string)null);
+                });
+
             modelBuilder.Entity("Lingarr.Core.Entities.Season", b =>
                 {
                     b.Property<int>("Id")
@@ -248,34 +283,65 @@ namespace Lingarr.Migrations.SQLite.Migrations
                     b.ToTable("shows", (string)null);
                 });
 
-            modelBuilder.Entity("Lingarr.Core.Entities.TranslationJob", b =>
+            modelBuilder.Entity("Lingarr.Core.Entities.TranslationRequest", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasColumnName("id");
 
-                    b.Property<bool>("Completed")
-                        .HasColumnType("INTEGER")
-                        .HasColumnName("completed");
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("completed_at");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT")
                         .HasColumnName("created_at");
 
                     b.Property<string>("JobId")
-                        .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("job_id");
+
+                    b.Property<int>("MediaType")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("media_type");
+
+                    b.Property<string>("SourceLanguage")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("source_language");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("status");
+
+                    b.Property<string>("SubtitleToTranslate")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("subtitle_to_translate");
+
+                    b.Property<string>("TargetLanguage")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("target_language");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("title");
+
+                    b.Property<string>("TranslatedSubtitle")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("translated_subtitle");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT")
                         .HasColumnName("updated_at");
 
                     b.HasKey("Id")
-                        .HasName("pk_translation_jobs");
+                        .HasName("pk_translation_requests");
 
-                    b.ToTable("translation_jobs", (string)null);
+                    b.ToTable("translation_requests", (string)null);
                 });
 
             modelBuilder.Entity("Lingarr.Core.Entities.Episode", b =>
