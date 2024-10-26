@@ -25,18 +25,11 @@ export interface IMovie extends IBaseEntity {
     subtitles?: ISubtitle[]
 }
 
-export interface IMedia {
+export interface ITranslationRequest {
     id: number
-    title: string
-    episodeNumber?: string
-    seasonNumber?: string
-    showTitle?: string
-}
-
-export interface ITranslationRequest extends IBaseEntity {
     jobId: string
     mediaType: MediaType
-    media: IMedia
+    title: string
     sourceLanguage: string
     targetLanguage: string
     translatedSubtitle?: string

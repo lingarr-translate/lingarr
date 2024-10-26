@@ -75,3 +75,12 @@ export interface IScheduleService {
     remove<T>(jobId: string): Promise<T>
     reindex<T>(): Promise<T>
 }
+
+export interface IMappingService {
+    getMappings(): Promise<IPathMapping[]>
+    setMappings(mappings: IPathMapping[]): Promise<void>
+}
+
+export interface IDirectoryService {
+    get(path: string): Promise<DirectoryItem[]>
+}

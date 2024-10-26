@@ -13,7 +13,13 @@ public class StartupService : IHostedService
         _serviceProvider = serviceProvider;
         _logger = logger;
     }
-
+    
+    /// <summary>
+    /// Initializes the application by validating and updating integration settings for integration services.
+    /// This method is part of the application startup process and ensures all required service
+    /// configurations are properly set.
+    /// </summary>
+    /// <param name="cancellationToken">Allows for cancellation of the startup process.</param>
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
@@ -23,6 +29,12 @@ public class StartupService : IHostedService
         await CheckAndUpdateIntegrationSettings(dbContext, "sonarr", ["sonarr_api_key", "sonarr_url"]);
     }
 
+    /// <summary>
+    /// Validates and updates completion status for integration settings of a specific service.
+    /// </summary>
+    /// <param name="dbContext">The database context for accessing settings.</param>
+    /// <param name="serviceName">Name of the service being validated (e.g., "radarr", "sonarr").</param>
+    /// <param name="requiredKeys">Array of setting keys that must be present and non-empty for the service.</param>
     private async Task CheckAndUpdateIntegrationSettings(LingarrDbContext dbContext, string serviceName, string[] requiredKeys)
     {
         string completedKey = $"{serviceName}_settings_completed";

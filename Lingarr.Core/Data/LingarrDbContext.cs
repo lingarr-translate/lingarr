@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Lingarr.Core.Configuration;
+using Microsoft.EntityFrameworkCore;
 using Lingarr.Core.Entities;
 
 namespace Lingarr.Core.Data;
@@ -11,38 +12,23 @@ public class LingarrDbContext : DbContext
     public DbSet<Episode> Episodes { get; set; }
     public DbSet<Image> Images { get; set; }
     public DbSet<Setting> Settings { get; set; }
-    public DbSet<TranslationJob> TranslationJobs { get; set; }
+    public DbSet<TranslationRequest> TranslationRequests { get; set; }
+    public DbSet<PathMapping> PathMappings { get; set; }
 
-   public LingarrDbContext(DbContextOptions options) : base(options)
-   {
-   }
-   
-   protected override void OnModelCreating(ModelBuilder modelBuilder)
-   {
-       modelBuilder.Entity<Movie>()
-           .HasMany(m => m.Images)
-           .WithOne(i => i.Movie)
-           .HasForeignKey(i => i.MovieId)
-           .OnDelete(DeleteBehavior.Cascade);
-       
-       modelBuilder.Entity<Show>()
-           .HasMany(s => s.Images)
-           .WithOne(i => i.Show)
-           .HasForeignKey(i => i.MovieId)
-           .OnDelete(DeleteBehavior.Cascade);
+    public LingarrDbContext(DbContextOptions options) : base(options)
+    {
+    }
 
-       modelBuilder.Entity<Image>()
-           .HasOne(i => i.Movie)
-           .WithMany(m => m.Images)
-           .HasForeignKey(i => i.MovieId)
-           .OnDelete(DeleteBehavior.Cascade);
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
 
-       modelBuilder.Entity<Image>()
-           .HasOne(i => i.Show)
-           .WithMany(s => s.Images)
-           .HasForeignKey(i => i.ShowId)
-           .OnDelete(DeleteBehavior.Cascade);
-   }
+        modelBuilder.ApplyConfiguration(new MovieConfiguration());
+        modelBuilder.ApplyConfiguration(new ShowConfiguration());
+        modelBuilder.ApplyConfiguration(new SeasonConfiguration());
+        modelBuilder.ApplyConfiguration(new EpisodeConfiguration());
+        modelBuilder.ApplyConfiguration(new ImageConfiguration());
+    }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {

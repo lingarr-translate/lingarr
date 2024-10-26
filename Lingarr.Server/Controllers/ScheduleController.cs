@@ -57,7 +57,7 @@ public class ScheduleController : ControllerBase
     /// Returns an HTTP 404 Not Found response if the job doesn't exist or couldn't be removed.
     /// </returns>
     [HttpDelete("job/remove/{jobId}")]
-    public IActionResult RemoveJob(string jobId)
+    public ActionResult<string> RemoveJob(string jobId)
     {
         bool result = _backgroundJobClient.Delete(jobId);
     

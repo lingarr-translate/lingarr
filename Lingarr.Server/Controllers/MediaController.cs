@@ -1,4 +1,7 @@
-﻿using Lingarr.Server.Interfaces.Services;
+﻿using Lingarr.Core.Entities;
+using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Models;
+using Lingarr.Server.Models.Api;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lingarr.Server.Controllers;
@@ -24,7 +27,7 @@ public class MediaController : ControllerBase
     /// <param name="pageNumber">The page number to retrieve (default is 1).</param>
     /// <returns>Returns an HTTP 200 OK response with a paginated list of movies.</returns>
     [HttpGet("movies")]
-    public async Task<IActionResult> GetMovies(
+    public async Task<ActionResult<PagedResult<MovieResponse>>> GetMovies(
         string? searchQuery,
         string? orderBy,
         bool ascending = true,
@@ -51,7 +54,7 @@ public class MediaController : ControllerBase
     /// <param name="pageNumber">The page number to retrieve (default is 1).</param>
     /// <returns>Returns an HTTP 200 OK response with a paginated list of shows.</returns>
     [HttpGet("shows")]
-    public async Task<IActionResult> GetShows(
+    public async Task<ActionResult<PagedResult<Show>>> GetShows(
         string? searchQuery,
         string? orderBy,
         bool ascending = true,

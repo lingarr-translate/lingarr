@@ -27,7 +27,7 @@ public class SubtitleController : ControllerBase
     /// and should not start with a forward slash.</param>
     /// <returns>Returns an HTTP 200 OK response with a list of <see cref="Subtitles"/> objects found at the specified path.</returns>
     [HttpPost("all")]
-    public async Task<IActionResult> GetAllSubtitles([FromBody] SubtitlePath subtitlePath)
+    public async Task<ActionResult<List<Subtitles>>> GetAllSubtitles([FromBody] SubtitlePath subtitlePath)
     {
         var value = await _subtitleService.GetAllSubtitles(subtitlePath.Path);
         return Ok(value);

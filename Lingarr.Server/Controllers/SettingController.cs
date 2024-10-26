@@ -22,7 +22,7 @@ public class SettingController : ControllerBase
     /// <returns>Returns an HTTP 200 OK response with the setting value if found; otherwise,
     /// an HTTP 404 Not Found response.</returns>
     [HttpGet("{key}")]
-    public async Task<IActionResult> GetSetting(string key)
+    public async Task<ActionResult<string?>> GetSetting(string key)
     {
         var value = await _settingService.GetSetting(key);
         if (value != null)
@@ -39,7 +39,7 @@ public class SettingController : ControllerBase
     /// <param name="keys">A list of keys for the settings to retrieve.</param>
     /// <returns>Returns an HTTP 200 OK response with a dictionary of setting keys and values.</returns>
     [HttpPost("multiple/get")]
-    public async Task<IActionResult> GetSettings([FromBody] IEnumerable<string> keys)
+    public async Task<ActionResult<Dictionary<string, string>>> GetSettings([FromBody] IEnumerable<string> keys)
     {
         var settings = await _settingService.GetSettings(keys);
         return Ok(settings);
@@ -52,7 +52,7 @@ public class SettingController : ControllerBase
     /// <returns>Returns an HTTP 200 OK response if the setting was successfully updated or created; otherwise,
     /// an HTTP 404 Not Found response.</returns>
     [HttpPost]
-    public async Task<IActionResult> SetSetting([FromBody] Setting setting)
+    public async Task<ActionResult<bool>> SetSetting([FromBody] Setting setting)
     {
         var value = await _settingService.SetSetting(setting.Key, setting.Value);
         if (value)
@@ -70,7 +70,7 @@ public class SettingController : ControllerBase
     /// <returns>Returns an HTTP 200 OK response if all settings were successfully updated or created; otherwise,
     /// an HTTP 400 Bad Request response.</returns>
     [HttpPost("multiple/set")]
-    public async Task<IActionResult> SetSettings([FromBody] Dictionary<string, string> settings)
+    public async Task<ActionResult<bool>> SetSettings([FromBody] Dictionary<string, string> settings)
     {
         var success = await _settingService.SetSettings(settings);
         if (success)

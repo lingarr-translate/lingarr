@@ -37,9 +37,9 @@ const routes: RouteRecordRaw[] = [
                 component: () => import('@/pages/settings/IntegrationPage.vue')
             },
             {
-                name: 'translation-settings',
-                path: 'translation',
-                component: () => import('@/pages/settings/TranslationPage.vue')
+                name: 'mapping-settings',
+                path: 'mapping',
+                component: () => import('@/pages/settings/MappingPage.vue')
             }
         ]
     }
