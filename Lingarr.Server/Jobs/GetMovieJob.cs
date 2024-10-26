@@ -97,8 +97,11 @@ public class GetMovieJob
             movieEntity.FileName = Path.GetFileNameWithoutExtension(moviePath);
             movieEntity.Path = Path.GetDirectoryName(moviePath) ?? string.Empty;
         }
-        
-        ProcessImages(movieEntity, movie.Images);
+
+        if (movie.Images?.Any() == true)
+        {
+            ProcessImages(movieEntity, movie.Images);
+        }
     }
 
     private void ProcessImages(Movie movieEntity, List<IntegrationImage> images)
