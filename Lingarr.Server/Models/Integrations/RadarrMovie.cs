@@ -19,5 +19,5 @@ public class RadarrMovie
     [JsonPropertyName("movieFile")]
     public RadarrMovieFile MovieFile { get; set; } = new();
     [JsonPropertyName("images")]
-    public List<IntegrationImage> Images { get; set; } = new();
+    public List<IntegrationImage>? Images { get; set; } = new();
 }

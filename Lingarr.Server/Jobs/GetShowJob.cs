@@ -206,6 +206,11 @@ public class GetShowJob
 
     private void ProcessImages(SonarrShow show, Show showEntity)
     {
+        if (show.Images == null || !show.Images.Any())
+        {
+            return;
+        }
+
         foreach (var image in show.Images)
         {
             if (string.IsNullOrEmpty(image.CoverType) || string.IsNullOrEmpty(image.Url))

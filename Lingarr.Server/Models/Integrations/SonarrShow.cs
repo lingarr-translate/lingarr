@@ -19,5 +19,5 @@ public class SonarrShow
     [JsonPropertyName("seasons")]
     public List<SonarrSeason> Seasons { get; set; } = new();
     [JsonPropertyName("images")]
-    public List<IntegrationImage> Images { get; set; } = new();
+    public List<IntegrationImage>? Images { get; set; } = new();
 }
