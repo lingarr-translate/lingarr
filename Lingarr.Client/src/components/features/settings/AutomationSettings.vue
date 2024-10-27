@@ -40,7 +40,8 @@
                     input-type="number"
                     validation-type="number"
                     :min-length="0"
-                    label="Limit the amount of translations per schedule" />
+                    label="Limit the amount of translations per schedule"
+                    @update:validation="(val) => (maxTranslationsPerRunIsValid = val)" />
             </div>
         </template>
     </CardComponent>
@@ -58,41 +59,42 @@ import ToggleButton from '@/components/common/ToggleButton.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
+const maxTranslationsPerRunIsValid = ref(false)
 const settingsStore = useSettingStore()
 const router = useRouter()
 
 const automationEnabled: WritableComputedRef<string> = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.AUTOMATION_ENABLED) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.AUTOMATION_ENABLED, newValue)
+        settingsStore.updateSetting(SETTINGS.AUTOMATION_ENABLED, newValue, true)
         saveNotification.value?.show()
     }
 })
 const movieSchedule: WritableComputedRef<string> = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.MOVIE_SCHEDULE) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.MOVIE_SCHEDULE, newValue)
+        settingsStore.updateSetting(SETTINGS.MOVIE_SCHEDULE, newValue, true)
         saveNotification.value?.show()
     }
 })
 const showSchedule: WritableComputedRef<string> = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.SHOW_SCHEDULE) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.SHOW_SCHEDULE, newValue)
+        settingsStore.updateSetting(SETTINGS.SHOW_SCHEDULE, newValue, true)
         saveNotification.value?.show()
     }
 })
 const translationSchedule: WritableComputedRef<string> = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.TRANSLATION_SCHEDULE) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.TRANSLATION_SCHEDULE, newValue)
+        settingsStore.updateSetting(SETTINGS.TRANSLATION_SCHEDULE, newValue, true)
         saveNotification.value?.show()
     }
 })
 const maxTranslationsPerRun: WritableComputedRef<string> = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.MAX_TRANSLATIONS_PER_RUN) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.MAX_TRANSLATIONS_PER_RUN, newValue)
+        settingsStore.updateSetting(SETTINGS.MAX_TRANSLATIONS_PER_RUN, newValue, true)
         saveNotification.value?.show()
     }
 })

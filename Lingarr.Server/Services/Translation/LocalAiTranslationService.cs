@@ -22,13 +22,15 @@ public class LocalAiTranslationService : TranslationServiceBase
     /// <inheritdoc />
     public override async Task<string> TranslateAsync(string text, string sourceLanguage, string targetLanguage)
     {
-        var settings = await _settings.GetSettings(["local_ai_model", "local_ai_endpoint", "local_ai_api_key"]);
+        var settings = await _settings.GetSettings(["local_ai_model", "local_ai_endpoint", "local_ai_api_key", "ai_prompt"]);
         if (string.IsNullOrEmpty(settings["local_ai_model"]) || string.IsNullOrEmpty(settings["local_ai_endpoint"]))
         {
             throw new InvalidOperationException("Local AI API key or model is not configured.");
         }
         
-        var prompt = $"You will be provided with a sentence in {sourceLanguage} and your task is to translate it into {targetLanguage}";
+        var prompt = !string.IsNullOrEmpty(settings["ai_prompt"])
+            ? settings["ai_prompt"] 
+            : $"Translate from {sourceLanguage} to {targetLanguage}, preserving the tone and meaning without censoring the content. Adjust punctuation as needed to make the translation sound natural. Provide only the translated text as output, with no additional comments.";
         if (!string.IsNullOrEmpty(settings["local_ai_api_key"]))
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings["local_ai_api_key"]);

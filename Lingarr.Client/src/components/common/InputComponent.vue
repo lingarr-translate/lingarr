@@ -52,7 +52,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     (e: 'update:modelValue', value: string): void
-    (e: 'validation-status', isValid: boolean): void
+    (e: 'update:validation', isValid: boolean): void
 }>()
 const { isValid, isInvalid, error, validate } = useValidation(props)
 
@@ -68,10 +68,8 @@ const inputClasses = computed(() => [
 const handleInput = useDebounce((event: Event) => {
     const value = (event.target as HTMLInputElement).value
     validate(value)
-    if (isValid.value) {
-        emit('update:modelValue', value)
-    }
-    emit('validation-status', isValid.value)
+    emit('update:validation', isValid.value)
+    emit('update:modelValue', value)
 }, 1000)
 
 const togglePassword = () => {

@@ -27,26 +27,31 @@
             type="password"
             label="API key"
             :min-length="1"
-            error-message="API Key must not be empty" />
+            error-message="API Key must not be empty"
+            @update:validation="(val) => (apiKeyIsValid = val)" />
+
+        <AiPromptConfig @save="emit('save')" />
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import { SETTINGS } from '@/ts'
 import SelectComponent from '@/components/common/SelectComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
+import AiPromptConfig from '@/components/features/settings/services/AiPromptConfig.vue'
 
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])
+const apiKeyIsValid = ref(false)
 
 const automationEnabled = computed(() => settingsStore.getSetting(SETTINGS.AUTOMATION_ENABLED))
 
 const aiModel = computed({
     get: () => settingsStore.getSetting(SETTINGS.OPENAI_MODEL) as string,
     set: (newValue: string) => {
-        settingsStore.updateSetting(SETTINGS.OPENAI_MODEL, newValue)
+        settingsStore.updateSetting(SETTINGS.OPENAI_MODEL, newValue, true)
         emit('save')
     }
 })
@@ -54,8 +59,10 @@ const aiModel = computed({
 const apiKey = computed({
     get: () => settingsStore.getSetting(SETTINGS.OPENAI_API_KEY) as string,
     set: (newValue: string) => {
-        settingsStore.updateSetting(SETTINGS.OPENAI_API_KEY, newValue)
-        emit('save')
+        settingsStore.updateSetting(SETTINGS.OPENAI_API_KEY, newValue, apiKeyIsValid.value)
+        if (apiKeyIsValid.value) {
+            emit('save')
+        }
     }
 })
 </script>

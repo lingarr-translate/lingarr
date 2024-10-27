@@ -24,7 +24,8 @@ export const SETTINGS = {
     ANTHROPIC_VERSION: 'anthropic_version',
     LOCAL_AI_ENDPOINT: 'local_ai_endpoint',
     LOCAL_AI_MODEL: 'local_ai_model',
-    LOCAL_AI_API_KEY: 'local_ai_api_key'
+    LOCAL_AI_API_KEY: 'local_ai_api_key',
+    AI_PROMPT: 'ai_prompt'
 } as const
 
 export interface ISettings {
@@ -52,4 +53,5 @@ export interface ISettings {
     local_ai_endpoint: string
     local_ai_model: string
     local_ai_api_key: string
+    ai_prompt: string
 }

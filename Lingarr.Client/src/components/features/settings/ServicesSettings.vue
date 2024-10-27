@@ -37,7 +37,7 @@ const settingsStore = useSettingStore()
 const serviceType = computed({
     get: () => settingsStore.getSetting(SETTINGS.SERVICE_TYPE) as string,
     set: (newValue: string) => {
-        settingsStore.updateSetting(SETTINGS.SERVICE_TYPE, newValue)
+        settingsStore.updateSetting(SETTINGS.SERVICE_TYPE, newValue, true)
         saveNotification.value?.show()
     }
 })

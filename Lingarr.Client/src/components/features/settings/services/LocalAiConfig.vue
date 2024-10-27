@@ -13,45 +13,73 @@
             API specification.
         </p>
 
-        <InputComponent v-model="address" validation-type="url" label="Address" />
+        <InputComponent
+            v-model="address"
+            validation-type="url"
+            label="Address"
+            @update:validation="(val) => (isValid.address = val)" />
 
-        <InputComponent v-model="aiModel" validation-type="string" label="Model" />
+        <InputComponent
+            v-model="aiModel"
+            validation-type="string"
+            label="Model"
+            @update:validation="(val) => (isValid.model = val)" />
 
-        <InputComponent v-model="apiKey" validation-type="string" label="API key" type="password" />
+        <InputComponent
+            v-model="apiKey"
+            validation-type="string"
+            label="API key"
+            type="password"
+            @update:validation="(val) => (isValid.apiKey = val)" />
         <p class="text-xs">API key is optional and can be left empty.</p>
+
+        <AiPromptConfig @save="emit('save')" />
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import { SETTINGS } from '@/ts'
 import InputComponent from '@/components/common/InputComponent.vue'
+import AiPromptConfig from '@/components/features/settings/services/AiPromptConfig.vue'
 
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])
+const isValid = reactive({
+    address: false,
+    model: false,
+    apiKey: false
+})
 
 const aiModel = computed({
     get: () => settingsStore.getSetting(SETTINGS.LOCAL_AI_MODEL) as string,
     set: (newValue: string) => {
-        settingsStore.updateSetting(SETTINGS.LOCAL_AI_MODEL, newValue)
-        emit('save')
+        settingsStore.updateSetting(SETTINGS.LOCAL_AI_MODEL, newValue, isValid.model)
+        if (isValid.model) {
+            emit('save')
+        }
     }
 })
 
 const apiKey = computed({
     get: () => settingsStore.getSetting(SETTINGS.LOCAL_AI_API_KEY) as string,
     set: (newValue: string) => {
-        settingsStore.updateSetting(SETTINGS.LOCAL_AI_API_KEY, newValue)
-        emit('save')
+        settingsStore.updateSetting(SETTINGS.LOCAL_AI_API_KEY, newValue, isValid.apiKey)
+        if (isValid.apiKey) {
+            emit('save')
+        }
     }
 })
 
 const address = computed({
     get: () => settingsStore.getSetting(SETTINGS.LOCAL_AI_ENDPOINT) as string,
     set: (newValue: string) => {
-        settingsStore.updateSetting(SETTINGS.LOCAL_AI_ENDPOINT, newValue)
-        emit('save')
+        settingsStore.updateSetting(SETTINGS.LOCAL_AI_ENDPOINT, newValue, isValid.address)
+        console.log(isValid.address)
+        if (isValid.address) {
+            emit('save')
+        }
     }
 })
 </script>
