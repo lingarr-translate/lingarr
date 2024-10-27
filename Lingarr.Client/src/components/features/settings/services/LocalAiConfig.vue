@@ -76,7 +76,6 @@ const address = computed({
     get: () => settingsStore.getSetting(SETTINGS.LOCAL_AI_ENDPOINT) as string,
     set: (newValue: string) => {
         settingsStore.updateSetting(SETTINGS.LOCAL_AI_ENDPOINT, newValue, isValid.address)
-        console.log(isValid.address)
         if (isValid.address) {
             emit('save')
         }
