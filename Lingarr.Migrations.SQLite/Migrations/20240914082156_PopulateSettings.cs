@@ -33,46 +33,18 @@ namespace Lingarr.Migrations.SQLite.Migrations
             migrationBuilder.DeleteData(
                 table: "settings",
                 keyColumn: "key",
-                keyValues: new object[] { "radarr_api_key" });
-
-            migrationBuilder.DeleteData(
-                table: "Settings",
-                keyColumn: "key",
-                keyValues: new object[] { "radarr_url" });
-            migrationBuilder.DeleteData(
-                table: "settings",
-                keyColumn: "key",
-                keyValues: new object[] { "sonarr_api_key" });
-
-            migrationBuilder.DeleteData(
-                table: "Settings",
-                keyColumn: "key",
-                keyValues: new object[] { "sonarr_url" });
-
-            migrationBuilder.DeleteData(
-                table: "Settings",
-                keyColumn: "key",
-                keyValues: new object[] { "source_languages" });
-
-            migrationBuilder.DeleteData(
-                table: "Settings",
-                keyColumn: "key",
-                keyValues: new object[] { "target_languages" });
-
-            migrationBuilder.DeleteData(
-                table: "Settings",
-                keyColumn: "key",
-                keyValues: new object[] { "theme" });
-            
-            migrationBuilder.DeleteData(
-                table: "Settings",
-                keyColumn: "key",
-                keyValues: new object[] { "movie_schedule" });
-            
-            migrationBuilder.DeleteData(
-                table: "Settings",
-                keyColumn: "key",
-                keyValues: new object[] { "show_schedule" });
+                keyValues: new object[]
+                {
+                    "radarr_api_key",
+                    "radarr_url",
+                    "sonarr_api_key",
+                    "sonarr_url",
+                    "source_languages",
+                    "target_languages",
+                    "theme",
+                    "movie_schedule",
+                    "show_schedule"
+                });
         }
     }
 }

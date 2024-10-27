@@ -19,13 +19,15 @@ public class AnthropicTranslationService : TranslationServiceBase
     /// <inheritdoc />
     public override async Task<string> TranslateAsync(string text, string sourceLanguage, string targetLanguage)
     {
-        var settings = await _settings.GetSettings(["anthropic_model", "anthropic_api_key", "anthropic_version"]);
+        var settings = await _settings.GetSettings(["anthropic_model", "anthropic_api_key", "anthropic_version", "ai_prompt"]);
         if (string.IsNullOrEmpty(settings["anthropic_model"]) || string.IsNullOrEmpty(settings["anthropic_api_key"]) || string.IsNullOrEmpty(settings["anthropic_version"]))
         {
             throw new InvalidOperationException("Anthropic API key or model is not configured.");
         }
         
-        var prompt = $"You will be provided with a sentence in {sourceLanguage} and your task is to translate it into {targetLanguage}";
+        var prompt = !string.IsNullOrEmpty(settings["ai_prompt"])
+            ? settings["ai_prompt"] 
+            : $"Translate from {sourceLanguage} to {targetLanguage}, preserving the tone and meaning without censoring the content. Adjust punctuation as needed to make the translation sound natural. Provide only the translated text as output, with no additional comments.";
         _httpClient.DefaultRequestHeaders.Add("x-api-key", settings["anthropic_api_key"]);
         _httpClient.DefaultRequestHeaders.Add("anthropic-version", settings["anthropic_version"]);
         var content = new StringContent(JsonSerializer.Serialize(new

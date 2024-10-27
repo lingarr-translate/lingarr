@@ -36,6 +36,14 @@ namespace Lingarr.Migrations.SQLite.Migrations
                 {
                     table.PrimaryKey("pk_translation_requests", x => x.id);
                 });
+            
+            migrationBuilder.InsertData(
+                table: "settings",
+                columns: new[] { "key", "value" },
+                values: new object[,]
+                {
+                    { "ai_prompt", "Translate from {sourceLanguage} to {targetLanguage}, preserving the tone and meaning without censoring the content. Adjust punctuation as needed to make the translation sound natural. Provide only the translated text as output, with no additional comments." },
+                });
         }
 
         /// <inheritdoc />
@@ -58,6 +66,14 @@ namespace Lingarr.Migrations.SQLite.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("pk_translation_jobs", x => x.id);
+                });
+            
+            migrationBuilder.DeleteData(
+                table: "settings",
+                keyColumn: "key",
+                keyValues: new object[]
+                {
+                    "ai_prompt"
                 });
         }
     }

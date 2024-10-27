@@ -33,26 +33,18 @@ namespace Lingarr.Migrations.MySQL.Migrations
             migrationBuilder.DeleteData(
                 table: "settings",
                 keyColumn: "key",
-                keyValues: new object[] { "radarr_api_key" });
-
-            migrationBuilder.DeleteData(
-                table: "Settings",
-                keyColumn: "key",
-                keyValues: new object[] { "radarr_url" });
-            migrationBuilder.DeleteData(
-                table: "settings",
-                keyColumn: "key",
-                keyValues: new object[] { "sonarr_api_key" });
-
-            migrationBuilder.DeleteData(
-                table: "Settings",
-                keyColumn: "key",
-                keyValues: new object[] { "sonarr_url" });
-
-            migrationBuilder.DeleteData(
-                table: "Settings",
-                keyColumn: "key",
-                keyValues: new object[] { "theme" });
+                keyValues: new object[]
+                {
+                    "radarr_api_key",
+                    "radarr_url",
+                    "sonarr_api_key",
+                    "sonarr_url",
+                    "source_languages",
+                    "target_languages",
+                    "theme",
+                    "movie_schedule",
+                    "show_schedule"
+                });
         }
     }
 }

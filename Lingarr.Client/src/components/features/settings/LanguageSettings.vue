@@ -41,14 +41,14 @@ const settingsStore = useSettingStore()
 const sourceLanguages: WritableComputedRef<ILanguage[]> = computed({
     get: (): ILanguage[] => settingsStore.getSetting(SETTINGS.SOURCE_LANGUAGES) as ILanguage[],
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.SOURCE_LANGUAGES, newValue)
+        settingsStore.updateSetting(SETTINGS.SOURCE_LANGUAGES, newValue, true)
         saveNotification.value?.show()
     }
 })
 const targetLanguages: WritableComputedRef<ILanguage[]> = computed({
     get: (): ILanguage[] => settingsStore.getSetting(SETTINGS.TARGET_LANGUAGES) as ILanguage[],
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.TARGET_LANGUAGES, newValue)
+        settingsStore.updateSetting(SETTINGS.TARGET_LANGUAGES, newValue, true)
         saveNotification.value?.show()
     }
 })

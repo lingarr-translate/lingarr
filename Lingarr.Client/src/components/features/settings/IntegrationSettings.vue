@@ -16,7 +16,8 @@
                     v-model="radarrUrl"
                     validation-type="url"
                     label="Address"
-                    error-message="Please enter a valid URL (e.g., http://localhost:3000 or https://api.example.com)" />
+                    error-message="Please enter a valid URL (e.g., http://localhost:3000 or https://api.example.com)"
+                    @update:validation="(val) => (isValid.radarrUrl = val)" />
                 <InputComponent
                     v-model="radarrApiKey"
                     :min-length="32"
@@ -24,7 +25,8 @@
                     validation-type="string"
                     type="password"
                     label="API key"
-                    error-message="API Key must be {minLength} characters" />
+                    error-message="API Key must be {minLength} characters"
+                    @update:validation="(val) => (isValid.radarrApiKey = val)" />
             </div>
             <div class="flex flex-col space-y-2">
                 <span class="font-semibold">Sonarr Settings:</span>
@@ -32,7 +34,8 @@
                     v-model="sonarrUrl"
                     validation-type="url"
                     label="Address"
-                    error-message="Please enter a valid Address (e.g., http://localhost:3000 or https://api.example.com)" />
+                    error-message="Please enter a valid Address (e.g., http://localhost:3000 or https://api.example.com)"
+                    @update:validation="(val) => (isValid.sonarrUrl = val)" />
                 <InputComponent
                     v-model="sonarrApiKey"
                     :min-length="32"
@@ -40,7 +43,8 @@
                     validation-type="string"
                     type="password"
                     label="API key"
-                    error-message="API Key must be {minLength} characters" />
+                    error-message="API Key must be {minLength} characters"
+                    @update:validation="(val) => (isValid.sonarrApiKey = val)" />
             </div>
             <div class="flex items-center gap-2 pt-4">
                 <ButtonComponent
@@ -60,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { WritableComputedRef, computed, ref } from 'vue'
+import { WritableComputedRef, computed, ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingStore } from '@/store/setting'
 import { useScheduleStore } from '@/store/schedule'
@@ -71,6 +75,12 @@ import InputComponent from '@/components/common/InputComponent.vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import { delay } from '@/utils/delay'
 
+const isValid = reactive({
+    radarrUrl: false,
+    radarrApiKey: false,
+    sonarrUrl: false,
+    sonarrApiKey: false
+})
 const router = useRouter()
 const isReindexing = ref(false)
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
@@ -80,29 +90,37 @@ const scheduleStore = useScheduleStore()
 const radarrApiKey: WritableComputedRef<string> = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.RADARR_API_KEY) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.RADARR_API_KEY, newValue)
-        saveNotification.value?.show()
+        settingsStore.updateSetting(SETTINGS.RADARR_API_KEY, newValue, isValid.radarrApiKey)
+        if (isValid.radarrApiKey) {
+            saveNotification.value?.show()
+        }
     }
 })
 const sonarrApiKey: WritableComputedRef<string> = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.SONARR_API_KEY) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.SONARR_API_KEY, newValue)
-        saveNotification.value?.show()
+        settingsStore.updateSetting(SETTINGS.SONARR_API_KEY, newValue, isValid.sonarrApiKey)
+        if (isValid.sonarrApiKey) {
+            saveNotification.value?.show()
+        }
     }
 })
 const radarrUrl: WritableComputedRef<string> = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.RADARR_URL) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.RADARR_URL, newValue)
-        saveNotification.value?.show()
+        settingsStore.updateSetting(SETTINGS.RADARR_URL, newValue, isValid.radarrUrl)
+        if (isValid.radarrUrl) {
+            saveNotification.value?.show()
+        }
     }
 })
 const sonarrUrl: WritableComputedRef<string> = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.SONARR_URL) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.SONARR_URL, newValue)
-        saveNotification.value?.show()
+        settingsStore.updateSetting(SETTINGS.SONARR_URL, newValue, isValid.sonarrUrl)
+        if (isValid.sonarrUrl) {
+            saveNotification.value?.show()
+        }
     }
 })
 

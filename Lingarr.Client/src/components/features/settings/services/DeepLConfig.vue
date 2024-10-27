@@ -5,7 +5,8 @@
         type="password"
         :min-length="0"
         label="API key"
-        error-message="API Key must be greater than {minLength} characters" />
+        error-message="API Key must be greater than {minLength} characters"
+        @update:validation="(val) => (isValid = val)" />
     <div class="pt-2 text-xs">
         Please note that DeepL has
         <a
@@ -20,19 +21,22 @@
 </template>
 
 <script lang="ts" setup>
-import { WritableComputedRef, computed } from 'vue'
+import { WritableComputedRef, computed, ref } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import { SETTINGS } from '@/ts'
 import InputComponent from '@/components/common/InputComponent.vue'
 
+const isValid = ref(false)
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])
 
 const deepLApiKey: WritableComputedRef<string> = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.DEEPL_API_KEY) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.DEEPL_API_KEY, newValue)
-        emit('save')
+        settingsStore.updateSetting(SETTINGS.DEEPL_API_KEY, newValue, isValid.value)
+        if (isValid.value) {
+            emit('save')
+        }
     }
 })
 </script>
