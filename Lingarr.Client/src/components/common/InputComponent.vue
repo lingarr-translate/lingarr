@@ -1,11 +1,12 @@
 ﻿<template>
-    <div class="relative">
+    <form class="relative">
         <label v-if="label" :for="id" class="mb-1 block text-sm">
             {{ label }}
         </label>
         <div class="relative">
             <input
                 :id="id"
+                autocomplete="off"
                 :value="modelValue"
                 :type="type == 'password' ? (showPassword ? 'text' : 'password') : type"
                 :class="inputClasses"
@@ -27,7 +28,7 @@
         <p v-if="isInvalid" class="mt-1 text-sm text-red-600">
             {{ error }}
         </p>
-    </div>
+    </form>
 </template>
 
 <script setup lang="ts">

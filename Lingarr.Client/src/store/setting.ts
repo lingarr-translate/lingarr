@@ -27,12 +27,13 @@ export const useSettingStore = defineStore({
                 value = value.replace(/\/+$/, '')
             }
 
+            this.storeSetting(key, value)
             if (isValid) {
-                const isLanguageSetting =
-                    key === SETTINGS.SOURCE_LANGUAGES || key === SETTINGS.TARGET_LANGUAGES
-                const serializedValue = isLanguageSetting ? JSON.stringify(value) : String(value)
-
-                this.saveSetting(key, serializedValue)
+                if (key === SETTINGS.SOURCE_LANGUAGES || key === SETTINGS.TARGET_LANGUAGES) {
+                    this.saveSetting(key, JSON.stringify(value))
+                } else {
+                    this.saveSetting(key, value as string)
+                }
             }
         },
         storeSetting(key: keyof ISettings, value: string | boolean | ILanguage[]) {
