@@ -69,7 +69,7 @@ import CardComponent from '@/components/common/CardComponent.vue'
 
 const changelog = ref([
     {
-        date: '2024-10-25',
+        date: '2024-10-30',
         version: '0.9.4',
         title: 'Enhanced Notifications and Translation History',
         changes: [
