@@ -5,7 +5,7 @@
             the necessary
             <a
                 class="cursor-pointer underline"
-                @click="router.push({ name: 'integration-settings' })">
+                @click="router.push({ name: 'services-settings' })">
                 services
             </a>
             .

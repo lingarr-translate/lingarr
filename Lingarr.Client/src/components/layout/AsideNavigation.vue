@@ -102,8 +102,13 @@ const menuItems: MenuItem[] = [
     {
         label: 'Settings',
         icon: SettingIcon,
-        route: 'general-settings',
-        children: ['general-settings', 'integration-settings', 'mapping-settings']
+        route: 'integration-settings',
+        children: [
+            'integration-settings',
+            'services-settings',
+            'automation-settings',
+            'mapping-settings'
+        ]
     }
 ]
 
