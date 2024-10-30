@@ -29,7 +29,6 @@ export const useTranslateStore = defineStore({
             await useTranslationRequestStore().getActiveCount()
         },
         async setLanguages(): Promise<void> {
-            console.log('setting languages')
             this.languages = await services.translate.getLanguages<ILanguage[]>()
         }
     }

@@ -40,13 +40,15 @@ import PageLayout from '@/components/layout/PageLayout.vue'
 import IntegrationIcon from '@/components/icons/IntegrationIcon.vue'
 import SettingIcon from '@/components/icons/SettingIcon.vue'
 import FoldersIcon from '@/components/icons/FoldersIcon.vue'
+import AutomationIcon from '@/components/icons/AutomationIcon.vue'
 
 const router = useRouter()
 const route = useRoute()
 
 const menuItems = [
-    { label: 'General', icon: SettingIcon, route: 'general-settings' },
     { label: 'Integrations', icon: IntegrationIcon, route: 'integration-settings' },
+    { label: 'Services', icon: SettingIcon, route: 'services-settings' },
+    { label: 'Automation', icon: AutomationIcon, route: 'automation-settings' },
     { label: 'Mapping', icon: FoldersIcon, route: 'mapping-settings' }
 ]
 

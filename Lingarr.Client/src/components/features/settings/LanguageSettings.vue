@@ -1,25 +1,36 @@
 ﻿<template>
-    <div>
-        Select a source and target language. Both the source and target are used to request a
-        translation.
-    </div>
-    <div>
-        <span>Select source languages:</span>
-        <LanguageSelect v-model:selected="sourceLanguages" class="w-full" :options="languages" />
-    </div>
-    <div>
-        <span>Select target languages:</span>
-        <LanguageSelect
-            v-model:selected="targetLanguages"
-            class="w-full"
-            :options="selectedTargetLanguages" />
-    </div>
+    <CardComponent title="Source and target translation">
+        <template #description>
+            Select a source and target language. Both the source and target are used to request
+            translations.
+        </template>
+        <template #content>
+            <SaveNotification ref="saveNotification" />
+            <div>
+                <span>Select source languages:</span>
+                <LanguageSelect
+                    v-model:selected="sourceLanguages"
+                    class="w-full"
+                    :options="languages" />
+            </div>
+            <div>
+                <span>Select target languages:</span>
+                <LanguageSelect
+                    v-model:selected="targetLanguages"
+                    class="w-full"
+                    :options="selectedTargetLanguages" />
+            </div>
+        </template>
+    </CardComponent>
 </template>
+
 <script setup lang="ts">
-import { ref, WritableComputedRef, ComputedRef, computed } from 'vue'
+import { ref, WritableComputedRef, ComputedRef, computed, onMounted } from 'vue'
 import { ILanguage, SETTINGS } from '@/ts'
 import { useSettingStore } from '@/store/setting'
 import { useTranslateStore } from '@/store/translate'
+
+import CardComponent from '@/components/common/CardComponent.vue'
 import LanguageSelect from '@/components/features/settings/LanguageSelect.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 
@@ -65,5 +76,9 @@ const selectedTargetLanguages: ComputedRef<ILanguage[]> = computed(() => {
             return { ...languageInfo }
         }
     }) as ILanguage[]
+})
+
+onMounted(() => {
+    translateStore.setLanguages()
 })
 </script>

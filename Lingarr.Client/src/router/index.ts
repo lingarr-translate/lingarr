@@ -27,14 +27,19 @@ const routes: RouteRecordRaw[] = [
         name: 'settings',
         children: [
             {
-                name: 'general-settings',
-                path: 'general',
-                component: () => import('@/pages/settings/GeneralPage.vue')
+                name: 'services-settings',
+                path: 'services',
+                component: () => import('@/pages/settings/ServicesPage.vue')
             },
             {
                 name: 'integration-settings',
                 path: 'integration',
                 component: () => import('@/pages/settings/IntegrationPage.vue')
+            },
+            {
+                name: 'automation-settings',
+                path: 'automation',
+                component: () => import('@/pages/settings/AutomationPage.vue')
             },
             {
                 name: 'mapping-settings',
