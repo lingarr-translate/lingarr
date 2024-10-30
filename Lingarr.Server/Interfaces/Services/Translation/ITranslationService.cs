@@ -1,4 +1,6 @@
 ﻿using Lingarr.Server.Exceptions;
+using Lingarr.Server.Models;
+using Newtonsoft.Json;
 
 namespace Lingarr.Server.Interfaces.Services.Translation;
 
@@ -14,4 +16,12 @@ public interface ITranslationService
     /// <exception cref="ArgumentException">Thrown when the input parameters are invalid or empty.</exception>
     /// <exception cref="TranslationException">Thrown when an error occurs during the translation process.</exception>
     Task<string> TranslateAsync(string text, string sourceLanguage, string targetLanguage);
+    
+    /// <summary>
+    /// Retrieves a list of available source languages and their supported target languages.
+    /// </summary>
+    /// <returns>A list of source languages, each containing its code, name, and list of supported target language codes</returns>
+    /// <exception cref="InvalidOperationException">Thrown when service is not properly configured or initialization fails</exception>
+    /// <exception cref="JsonException">Thrown when language configuration files cannot be parsed (for file-based services)</exception>
+    Task<List<SourceLanguage>> GetLanguages();
 }

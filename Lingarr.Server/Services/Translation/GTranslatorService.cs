@@ -1,20 +1,22 @@
 ﻿using GTranslate.Translators;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Services.Translation.Base;
 
 namespace Lingarr.Server.Services.Translation;
 
-public class BingTranslationService : TranslationServiceBase
+public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
 {
-    private readonly BingTranslator _translator;
+    private readonly T _translator;
 
-    public BingTranslationService(
+    public GTranslatorService(
+        T translator,
+        string languageFilePath,
         ISettingService settings,
-        BingTranslator translator,
-        ILogger<BingTranslationService> logger) : base(settings, logger)
+        ILogger logger) : base(settings, logger, languageFilePath)
     {
         _translator = translator;
     }
-
+    
     /// <inheritdoc />
     public override async Task<string> TranslateAsync(string text, string sourceLanguage, string targetLanguage)
     {

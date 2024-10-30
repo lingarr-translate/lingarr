@@ -75,7 +75,12 @@ const changelog = ref([
         changes: [
             'Changed volume mapping and removed `/app/media` which is a `BREAKING CHANGE`  make sure you map the new volumes and synchronise your libraries via the settings.',
             'Added a new notification system which displays automated and manually instantiated translations.',
-            'Improved automated volume mapping and added support for manual in-application mapping.'
+            'Improved automated volume mapping and added support for manual in-application mapping.',
+            'Improved services, made them thread-safe, and ensured one-time initialization of service dependencies.',
+            'Added language definition per service, languages now need to be reconfigured when selecting a new service to match the definition.',
+            'Sonarr and Radarr images are now optional.',
+            'Set input fields to password on API key fields.',
+            'Numerous other bug fixes and improvements.'
         ]
     }
 ])

@@ -13,6 +13,7 @@
                     v-if="serviceConfigComponent"
                     @save="saveNotification?.show()" />
             </div>
+            <LanguageSettings v-if="serviceType" />
         </template>
     </CardComponent>
 </template>
@@ -30,6 +31,7 @@ import FreeServiceConfig from '@/components/features/settings/services/FreeServi
 import AnthropicConfig from '@/components/features/settings/services/AnthropicConfig.vue'
 import OpenAiConfig from '@/components/features/settings/services/OpenAiConfig.vue'
 import LocalAiConfig from '@/components/features/settings/services/LocalAiConfig.vue'
+import LanguageSettings from '@/components/features/settings/LanguageSettings.vue'
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()

@@ -1,42 +1,33 @@
 ﻿<template>
-    <CardComponent title="Source and target translation">
-        <template #description>
-            Select a source and target language. Both the source and target are used to optimize the
-            translation process.
-        </template>
-        <template #content>
-            <SaveNotification ref="saveNotification" />
-            <div>
-                <span>Select source languages:</span>
-                <LanguageSelect
-                    v-model:selected="sourceLanguages"
-                    class="w-full"
-                    :options="libreLanguages" />
-            </div>
-            <div>
-                <span>Select target languages:</span>
-                <LanguageSelect
-                    v-model:selected="targetLanguages"
-                    class="w-full"
-                    :options="selectedTargetLanguages" />
-            </div>
-        </template>
-    </CardComponent>
+    <div>
+        Select a source and target language. Both the source and target are used to request a
+        translation.
+    </div>
+    <div>
+        <span>Select source languages:</span>
+        <LanguageSelect v-model:selected="sourceLanguages" class="w-full" :options="languages" />
+    </div>
+    <div>
+        <span>Select target languages:</span>
+        <LanguageSelect
+            v-model:selected="targetLanguages"
+            class="w-full"
+            :options="selectedTargetLanguages" />
+    </div>
 </template>
 <script setup lang="ts">
 import { ref, WritableComputedRef, ComputedRef, computed } from 'vue'
 import { ILanguage, SETTINGS } from '@/ts'
 import { useSettingStore } from '@/store/setting'
-
-import isoLanguages from '@/statics/iso_languages.json'
-import libreLanguages from '@/statics/libre_translate_languages.json'
-
-import CardComponent from '@/components/common/CardComponent.vue'
+import { useTranslateStore } from '@/store/translate'
 import LanguageSelect from '@/components/features/settings/LanguageSelect.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
+const translateStore = useTranslateStore()
+
+const languages = computed(() => translateStore.getLanguages)
 
 const sourceLanguages: WritableComputedRef<ILanguage[]> = computed({
     get: (): ILanguage[] => settingsStore.getSetting(SETTINGS.SOURCE_LANGUAGES) as ILanguage[],
@@ -45,6 +36,7 @@ const sourceLanguages: WritableComputedRef<ILanguage[]> = computed({
         saveNotification.value?.show()
     }
 })
+
 const targetLanguages: WritableComputedRef<ILanguage[]> = computed({
     get: (): ILanguage[] => settingsStore.getSetting(SETTINGS.TARGET_LANGUAGES) as ILanguage[],
     set: (newValue: string): void => {
@@ -59,7 +51,7 @@ const selectedTargetLanguages: ComputedRef<ILanguage[]> = computed(() => {
     }
 
     const allTargets = sourceLanguages.value.flatMap((sourceLanguage) => {
-        const sourceTargetSet = libreLanguages.find((lang) => lang.code === sourceLanguage.code)
+        const sourceTargetSet = languages.value.find((lang) => lang.code === sourceLanguage.code)
         if (!sourceTargetSet) {
             return []
         }
@@ -68,7 +60,7 @@ const selectedTargetLanguages: ComputedRef<ILanguage[]> = computed(() => {
 
     const uniqueTargets = [...new Set(allTargets)]
     return uniqueTargets.map((targetCode) => {
-        const languageInfo = isoLanguages.find((lang) => lang.code === targetCode)
+        const languageInfo = languages.value.find((lang) => lang.code === targetCode)
         if (languageInfo) {
             return { ...languageInfo }
         }

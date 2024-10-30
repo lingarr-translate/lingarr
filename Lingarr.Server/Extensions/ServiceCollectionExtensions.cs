@@ -107,7 +107,7 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<ISubRipWriter, SubRipWriter>();
 
         // Register translate services
-        builder.Services.AddScoped<ITranslationServiceFactory, TranslationServiceFactory>();
+        builder.Services.AddScoped<ITranslationServiceFactory, TranslationFactory>();
         
         // Added startup service to validate new settings
         builder.Services.AddHostedService<StartupService>();
@@ -117,7 +117,7 @@ public static class ServiceCollectionExtensions
         builder.Services.AddTransient<BingTranslator>();
         builder.Services.AddTransient<MicrosoftTranslator>();
         builder.Services.AddTransient<YandexTranslator>();
-        builder.Services.AddTransient<OpenAiTranslationService>();
+        builder.Services.AddTransient<OpenAiService>();
         
         builder.Services.AddTransient<PathConversionService>();
 

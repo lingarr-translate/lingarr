@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
 using Lingarr.Server.Services;
+using Language = GTranslate.Language;
 
 namespace Lingarr.Server.Controllers;
 
@@ -59,5 +62,20 @@ public class TranslateController : ControllerBase
         var subtitleTranslator = new SubtitleTranslationService(translationService, _logger);
 
         return await subtitleTranslator.TranslateSubtitleLine(translateAbleSubtitleLine);
+    }
+    
+    /// <summary>
+    /// Retrieves a list of available source languages and their supported target languages.
+    /// </summary>
+    /// <returns>A list of source languages, each containing its code, name, and list of supported target language codes</returns>
+    /// <exception cref="InvalidOperationException">Thrown when service is not properly configured or initialization fails</exception>
+    /// <exception cref="JsonException">Thrown when language configuration files cannot be parsed (for file-based services)</exception>
+    [HttpGet("languages")]
+    public async Task<List<SourceLanguage>> GetLanguages()
+    {
+        var serviceType = await _settings.GetSetting("service_type") ?? "libretranslate";
+        var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
+        
+        return await translationService.GetLanguages();
     }
 }
