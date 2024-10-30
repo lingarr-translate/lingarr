@@ -3,6 +3,8 @@
 Lingarr is an application that leverages translation technologies to automatically translate subtitle files to your desired target language. 
 With support for both LibreTranslate and DeepL, Lingarr provides a flexible solution for subtitle translation.
 
+https://github.com/user-attachments/assets/be753d77-ca53-4867-adea-363145613d2b
+
 ### 🌟 Multiple Translation Service Support
 Lingarr now offers multiple services for automated translation:
 
@@ -28,11 +30,6 @@ If your mapping involves more than a single directory, please consult the [wiki]
 
 #### Setting up Lingarr
 ```yaml
-networks:
-  lingarr:
-    external: true
-
-version: '3'
 services:
   lingarr:
     image: lingarr/lingarr:latest
@@ -46,6 +43,10 @@ services:
       - /path/to/config:/app/config
     networks:
       - lingarr
+
+networks:
+  lingarr:
+    external: true
 ```
 
 #### Setting up LibreTranslate
@@ -141,4 +142,4 @@ Subtitle Parsing: [AlexPoint](https://github.com/AlexPoint/SubtitlesParser)
 Translation Services: [libretranslate](https://libretranslate.com)  
 GTranslate: [GTranslate](https://github.com/d4n3436/GTranslate)  
 For helping to squash a big bug:  
-[HomerBeer](https://github.com/HomerBeer)  
+[HomerSimpson](https://github.com/HomerSimpson)  
