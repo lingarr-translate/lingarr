@@ -24,25 +24,25 @@ const service = (http: AxiosStatic, resource = '/api/setting'): ISettingService 
                 })
         })
     },
-    setSetting<T>(key: string, value: string): void {
-        new Promise((resolve, reject) => {
+    setSetting(key: string, value: string): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
             http.post(resource, {
                 Key: key,
                 Value: value
             })
-                .then((response: AxiosResponse<T>) => {
-                    resolve(response.data)
+                .then(() => {
+                    resolve()
                 })
                 .catch((error: AxiosError) => {
                     reject(error.response)
                 })
         })
     },
-    setSettings<T>(settings: ISettings): void {
-        new Promise((resolve, reject) => {
+    setSettings(settings: ISettings): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
             http.post(`${resource}/multiple/set`, settings)
-                .then((response: AxiosResponse<T>) => {
-                    resolve(response.data)
+                .then(() => {
+                    resolve()
                 })
                 .catch((error: AxiosError) => {
                     reject(error.response)

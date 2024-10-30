@@ -25,6 +25,17 @@ const service = (http: AxiosStatic, resource = '/api/translate'): ITranslateServ
                     reject(error.response)
                 })
         })
+    },
+    getLanguages<T>(): Promise<T> {
+        return new Promise((resolve, reject) => {
+            http.get(`${resource}/languages`)
+                .then((response: AxiosResponse<T>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
     }
 })
 

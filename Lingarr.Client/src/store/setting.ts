@@ -1,6 +1,7 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { IUseSettingStore, ISettings, SETTINGS, ILanguage } from '@/ts'
 import services from '@/services'
+import { useTranslateStore } from '@/store/translate'
 
 export const useSettingStore = defineStore({
     id: 'setting',
@@ -30,17 +31,25 @@ export const useSettingStore = defineStore({
             this.storeSetting(key, value)
             if (isValid) {
                 if (key === SETTINGS.SOURCE_LANGUAGES || key === SETTINGS.TARGET_LANGUAGES) {
-                    this.saveSetting(key, JSON.stringify(value))
+                    await this.saveSetting(key, JSON.stringify(value))
                 } else {
-                    this.saveSetting(key, value as string)
+                    await this.saveSetting(key, value as string)
+                }
+                if (key === SETTINGS.SERVICE_TYPE) {
+                    const emptyLanguages = JSON.stringify([])
+                    this.storeSetting(SETTINGS.SOURCE_LANGUAGES, [])
+                    this.storeSetting(SETTINGS.TARGET_LANGUAGES, [])
+                    await this.saveSetting(SETTINGS.SOURCE_LANGUAGES, emptyLanguages)
+                    await this.saveSetting(SETTINGS.TARGET_LANGUAGES, emptyLanguages)
+                    await useTranslateStore().setLanguages()
                 }
             }
         },
         storeSetting(key: keyof ISettings, value: string | boolean | ILanguage[]) {
             this.settings[key] = value as never
         },
-        saveSetting(key: keyof ISettings, value: string) {
-            services.setting.setSetting(key, value)
+        async saveSetting(key: keyof ISettings, value: string) {
+            await services.setting.setSetting(key, value)
         },
 
         async applySettingsOnLoad(): Promise<void> {

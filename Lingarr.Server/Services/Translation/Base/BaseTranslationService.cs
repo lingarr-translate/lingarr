@@ -1,14 +1,15 @@
 ﻿using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Models;
 
-namespace Lingarr.Server.Services.Translation;
+namespace Lingarr.Server.Services.Translation.Base;
 
-public abstract class TranslationServiceBase : ITranslationService
+public abstract class BaseTranslationService : ITranslationService
 {
     protected readonly ISettingService _settings;
     protected readonly ILogger _logger;
 
-    protected TranslationServiceBase(ISettingService settings, ILogger logger)
+    protected BaseTranslationService(ISettingService settings, ILogger logger)
     {
         _settings = settings;
         _logger = logger;
@@ -16,4 +17,7 @@ public abstract class TranslationServiceBase : ITranslationService
 
     /// <inheritdoc />
     public abstract Task<string> TranslateAsync(string text, string sourceLanguage, string targetLanguage);
+
+    /// <inheritdoc />
+    public abstract Task<List<SourceLanguage>> GetLanguages();
 }

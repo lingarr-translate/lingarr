@@ -37,9 +37,9 @@ export interface IMediaService {
 
 export interface ISettingService {
     getSetting<T>(key: string): Promise<T>
-    setSetting(key: string, value: string): void
     getSettings<T>(keys: string[]): Promise<T>
-    setSettings(keys: ISettings): void
+    setSetting(key: string, value: string): Promise<void>
+    setSettings(keys: ISettings): Promise<void>
 }
 
 export interface ISubtitleService {
@@ -58,6 +58,7 @@ export interface ITranslateService {
         target: ILanguage,
         mediaType: MediaType
     ): Promise<T>
+    getLanguages<T>(): Promise<T>
 }
 
 export interface ITranslationRequestService {

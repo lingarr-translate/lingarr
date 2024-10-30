@@ -3,6 +3,7 @@ using Lingarr.Core.Data;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Listener;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Lingarr.Server.Services;
 
@@ -13,16 +14,31 @@ public class SettingService : ISettingService
     private readonly LingarrDbContext _dbContext;
     private readonly ILogger<ISettingService> _logger;
     public event SettingChangedHandler SettingChanged;
+    
+    private readonly IMemoryCache _cache;
+    private readonly MemoryCacheEntryOptions _cacheOptions;
 
     public SettingService(
         LingarrDbContext dbContext,
         ILogger<ISettingService> logger,
+        IMemoryCache memoryCache,
         SettingChangedListener settingChangedListener)
     {
         _dbContext = dbContext;
         _logger = logger;
+        _cache = memoryCache;
+        
+        _cacheOptions = new MemoryCacheEntryOptions()
+            .SetAbsoluteExpiration(TimeSpan.FromHours(1))
+            .SetSlidingExpiration(TimeSpan.FromMinutes(30));
         
         SettingChanged += settingChangedListener.OnSettingChanged;
+        SettingChanged += InvalidateCacheForSetting;
+    }
+
+    private void InvalidateCacheForSetting(SettingService ss, string setting)
+    {
+        _cache.Remove(setting);
     }
 
     public void OnSettingChange(string setting)
@@ -33,18 +49,57 @@ public class SettingService : ISettingService
     /// <inheritdoc />
     public async Task<string?> GetSetting(string key)
     {
+        if (_cache.TryGetValue(key, out string? cachedValue))
+        {
+            return cachedValue;
+        }
+
         var setting = await _dbContext.Settings.FirstOrDefaultAsync(s => s.Key == key);
-        return setting?.Value;
+        var value = setting?.Value;
+        
+        if (value != null)
+        {
+            _cache.Set(key, value, _cacheOptions);
+        }
+        
+        return value;
     }
     
     /// <inheritdoc />
     public async Task<Dictionary<string, string>> GetSettings(IEnumerable<string> keys)
     {
-        var settings = await _dbContext.Settings
-            .Where(s => keys.Contains(s.Key))
-            .ToListAsync();
+        var result = new Dictionary<string, string>();
+        var keysToFetch = new List<string>();
+
+        foreach (var key in keys)
+        {
+            if (_cache.TryGetValue(key, out string? cachedValue))
+            {
+                if (cachedValue != null)
+                {
+                    result[key] = cachedValue;
+                }
+            }
+            else
+            {
+                keysToFetch.Add(key);
+            }
+        }
+
+        if (keysToFetch.Any())
+        {
+            var dbSettings = await _dbContext.Settings
+                .Where(s => keysToFetch.Contains(s.Key))
+                .ToListAsync();
+            
+            foreach (var setting in dbSettings)
+            {
+                result[setting.Key] = setting.Value;
+                _cache.Set(setting.Key, setting.Value, _cacheOptions);
+            }
+        }
         
-        return settings.ToDictionary(s => s.Key, s => s.Value);
+        return result;
     }
 
     public async Task<List<T>> GetSettingAsJson<T>(string key) where T : class
