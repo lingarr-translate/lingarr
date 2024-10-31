@@ -38,8 +38,8 @@ services:
     ports:
       - "9876:8080"
     volumes:
-      - /path/to/media/movies:/app/media/movies
-      - /path/to/media/tv:/app/media/tv
+      - /path/to/media/movies:/movies #match with radarr
+      - /path/to/media/tv:/tv #match with sonarr
       - /path/to/config:/app/config
     networks:
       - lingarr
