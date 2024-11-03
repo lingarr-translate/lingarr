@@ -9,30 +9,27 @@ namespace Lingarr.Server.Services;
 public class SubtitleService : ISubtitleService
 {
     /// <inheritdoc />
-    public async Task<List<Subtitles>> GetAllSubtitles(string path)
+    public Task<List<Subtitles>> GetAllSubtitles(string path)
     {
-        var files = await Task.Run(() => Directory.GetFiles(path, "*.srt", SearchOption.AllDirectories));
-        Regex languageRegex = new Regex(@"\.(?<lang>[a-z]{2,3})\.srt$", RegexOptions.IgnoreCase);
+        var files = Directory.GetFiles(path, "*.srt", SearchOption.AllDirectories);
+        var regex = new Regex(@"\.(?<format>[a-z]{2,3})(\.(?<language>[a-z]{2,3}))?\.srt$", RegexOptions.IgnoreCase);
 
-        var subtitleTasks = files.Select(file =>
+        var subtitles = files.Select(file =>
         {
-            var fileName = Path.GetFileName(file);
-            var languageMatch = languageRegex.Match(fileName);
-
-            string language = languageMatch.Success ? languageMatch.Groups["lang"].Value : "unknown";
-
-            return Task.FromResult(new Subtitles
+            var match = regex.Match(Path.GetFileName(file));
+            return new Subtitles
             {
                 Path = file,
-                FileName = languageMatch.Success
-                    ? fileName.Substring(0, languageMatch.Index)
-                    : Path.GetFileNameWithoutExtension(fileName),
-                Language = language
-            });
-        });
+                FileName = match.Success
+                    ? Path.GetFileName(file)[..match.Index]
+                    : Path.GetFileNameWithoutExtension(file),
+                Language = !match.Success ? "unknown" :
+                    match.Groups["language"].Success ? $"{match.Groups["format"]}-{match.Groups["language"]}" :
+                    match.Groups["format"].Value
+            };
+        }).ToList();
 
-        var srtFiles = await Task.WhenAll(subtitleTasks);
-        return srtFiles.ToList();
+        return Task.FromResult(subtitles);
     }
 
     /// <inheritdoc />
