@@ -15,23 +15,24 @@ WORKDIR /app
 EXPOSE 8080
 
 # Step 3: Build the server
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Debug
+ARG TARGETARCH
 RUN echo "Current BUILD_CONFIGURATION: $BUILD_CONFIGURATION"
 WORKDIR /src
 COPY ["Lingarr.Server/Lingarr.Server.csproj", "Lingarr.Server/"]
-RUN dotnet restore "./Lingarr.Server/./Lingarr.Server.csproj"
+RUN dotnet restore "./Lingarr.Server/./Lingarr.Server.csproj" --arch $TARGETARCH
 COPY . .
 WORKDIR "/src/Lingarr.Server"
 COPY --from=client /Client/dist/ ./wwwroot
-RUN dotnet build "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
-RUN dotnet build "Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
+RUN dotnet build "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build --arch $TARGETARCH
 
 # Step 4: Publish the application
-FROM build AS publish
+FROM --platform=$BUILDPLATFORM build AS publish
 ARG BUILD_CONFIGURATION=Debug
+ARG TARGETARCH
 RUN echo "Current BUILD_CONFIGURATION: $BUILD_CONFIGURATION"
-RUN dotnet publish "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --arch $TARGETARCH
 
 # Step 5: Final image
 FROM base AS final
