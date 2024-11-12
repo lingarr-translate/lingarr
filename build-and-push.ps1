@@ -6,32 +6,70 @@ param (
 # Set variables
 $IMAGE_NAME = "lingarr/lingarr"
 
-# Build the Docker image
-Write-Host "Building Docker image with BUILD_CONFIGURATION=$BuildConfiguration and tag=$Tag" -ForegroundColor Cyan
-docker build --build-arg BUILD_CONFIGURATION=$BuildConfiguration . -t ${IMAGE_NAME}:$Tag -f Lingarr.Server/Dockerfile
+# Create a new builder instance if it doesn't exist
+Write-Host "Setting up docker buildx builder" -ForegroundColor Cyan
+$builderExists = docker buildx ls | Select-String "multiplatform-builder"
+if (!$builderExists) {
+    docker buildx create --name multiplatform-builder --use
+    docker buildx inspect --bootstrap
+} else {
+    docker buildx use multiplatform-builder
+}
 
-# Check if build was successful
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Docker build failed. Please check the Dockerfile and error message above." -ForegroundColor Red
+# Function to build for a specific platform
+function Build-Platform {
+    param (
+        [string]$Platform,
+        [string]$Tag,
+        [string]$ArchSuffix
+    )
+
+    $fullTag = "${IMAGE_NAME}:${Tag}"
+    if ($ArchSuffix -eq "arm64")
+    {
+        $fullTag = "${fullTag}-${ArchSuffix}"
+    }
+    Write-Host "Building for $Platform with tag $fullTag" -ForegroundColor Cyan
+
+    docker buildx build --platform $Platform `
+        --build-arg BUILD_CONFIGURATION=$BuildConfiguration `
+        --load `
+        --tag $fullTag `
+        -f Lingarr.Server/Dockerfile .
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "Successfully built $fullTag" -ForegroundColor Green
+        docker push $fullTag
+        Write-Host "Successfully pushed $fullTag" -ForegroundColor Green
+    } else {
+        Write-Host "Failed to build $fullTag" -ForegroundColor Red
+        exit 1
+    }
+}
+
+try {
+    Write-Host "Building Docker images with BUILD_CONFIGURATION=$BuildConfiguration" -ForegroundColor Cyan
+
+    if ($Tag -eq "dev") {
+        # Build dev tags for each architecture
+        Build-Platform -Platform "linux/arm64" -Tag "dev" -ArchSuffix "arm64"
+        Build-Platform -Platform "linux/amd64" -Tag "dev" -ArchSuffix "amd64"
+    } elseif ($Tag -ne "latest") {
+        # Build specific version tags for each architecture
+        Build-Platform -Platform "linux/arm64" -Tag $Tag -ArchSuffix "arm64"
+        Build-Platform -Platform "linux/amd64" -Tag $Tag -ArchSuffix "amd64"
+
+        # Also build latest tags for each architecture
+        Build-Platform -Platform "linux/arm64" -Tag "latest" -ArchSuffix "arm64"
+        Build-Platform -Platform "linux/amd64" -Tag "latest" -ArchSuffix "amd64"
+    } else {
+        # Build only latest tags for each architecture
+        Build-Platform -Platform "linux/arm64" -Tag "latest" -ArchSuffix "arm64"
+        Build-Platform -Platform "linux/amd64" -Tag "latest" -ArchSuffix "amd64"
+    }
+
+    Write-Host "Build and push completed successfully" -ForegroundColor Green
+} catch {
+    Write-Host "An error occurred during the build process: $_" -ForegroundColor Red
     exit 1
 }
-
-
-# Push the images to Docker Hub
-if ($Tag -eq "dev") {
-    # Push only the dev tag
-    docker push ${IMAGE_NAME}:$Tag
-    Write-Host "Pushing dev tag to Docker Hub" -ForegroundColor Cyan
-} elseif ($Tag -ne "latest") {
-    # Push the specified tag and latest
-    docker push ${IMAGE_NAME}:$Tag
-    docker tag ${IMAGE_NAME}:$Tag ${IMAGE_NAME}:latest
-    docker push ${IMAGE_NAME}:latest
-    Write-Host "Pushing $Tag and latest tags to Docker Hub" -ForegroundColor Cyan
-} else {
-    # Push only the latest tag
-    docker push ${IMAGE_NAME}:latest
-    Write-Host "Pushing latest tag to Docker Hub" -ForegroundColor Cyan
-}
-
-Write-Host "Build and push completed successfully" -ForegroundColor Green
