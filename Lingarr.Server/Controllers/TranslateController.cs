@@ -6,7 +6,6 @@ using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
 using Lingarr.Server.Services;
-using Language = GTranslate.Language;
 
 namespace Lingarr.Server.Controllers;
 
@@ -52,16 +51,19 @@ public class TranslateController : ControllerBase
     /// </summary>
     /// <param name="translateAbleSubtitleLine">The subtitle to be translated. 
     /// This includes the subtitle line, subtitle source language and subtitle target language.</param>
+    /// <param name="cancellationToken">Token to cancel the translation operation</param>
     /// <returns>Returns translated string if the translation was successful.</returns>
     [HttpPost("line")]
-    public async Task<string> TranslateLine([FromBody] TranslateAbleSubtitleLine translateAbleSubtitleLine)
+    public async Task<string> TranslateLine(
+        [FromBody] TranslateAbleSubtitleLine translateAbleSubtitleLine,
+        CancellationToken cancellationToken)
     {
         var serviceType = await _settings.GetSetting("service_type") ?? "libretranslate";
         
         var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
         var subtitleTranslator = new SubtitleTranslationService(translationService, _logger);
 
-        return await subtitleTranslator.TranslateSubtitleLine(translateAbleSubtitleLine);
+        return await subtitleTranslator.TranslateSubtitleLine(translateAbleSubtitleLine, cancellationToken);
     }
     
     /// <summary>

@@ -51,7 +51,11 @@ public class LibreService : BaseLanguageService
     }
 
     /// <inheritdoc />
-    public override async Task<string> TranslateAsync(string text, string sourceLanguage, string targetLanguage)
+    public override async Task<string> TranslateAsync(
+        string text,
+        string sourceLanguage,
+        string targetLanguage, 
+        CancellationToken cancellationToken)
     {
         await InitializeAsync();
 
