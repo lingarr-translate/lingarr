@@ -62,7 +62,11 @@ public class OpenAiService : BaseLanguageService
     }
 
     /// <inheritdoc />
-    public override async Task<string> TranslateAsync(string text, string sourceLanguage, string targetLanguage)
+    public override async Task<string> TranslateAsync(
+        string text,
+        string sourceLanguage,
+        string targetLanguage, 
+        CancellationToken cancellationToken)
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
 

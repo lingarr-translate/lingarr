@@ -58,7 +58,8 @@ public class SubtitleTranslationService
                     SubtitleLine = subtitle.Lines[index],
                     SourceLanguage = translationRequest.SourceLanguage,
                     TargetLanguage = translationRequest.TargetLanguage
-                });
+                },
+                cancellationToken);
             }
 
             iteration++;
@@ -83,14 +84,17 @@ public class SubtitleTranslationService
     /// Contains the subtitle line to translate along with source and target language specifications.
     /// </param>
     /// <returns>The translated subtitle line.</returns>
-    public async Task<string> TranslateSubtitleLine(TranslateAbleSubtitleLine translateAbleSubtitle)
+    public async Task<string> TranslateSubtitleLine(
+        TranslateAbleSubtitleLine translateAbleSubtitle, 
+        CancellationToken cancellationToken)
     {
         try
         {
             return await _translationService.TranslateAsync(
                 translateAbleSubtitle.SubtitleLine,
                 translateAbleSubtitle.SourceLanguage,
-                translateAbleSubtitle.TargetLanguage);
+                translateAbleSubtitle.TargetLanguage,
+                cancellationToken);
         }
         catch (TranslationException ex)
         {

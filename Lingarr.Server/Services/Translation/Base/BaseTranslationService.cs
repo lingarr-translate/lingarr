@@ -16,7 +16,11 @@ public abstract class BaseTranslationService : ITranslationService
     }
 
     /// <inheritdoc />
-    public abstract Task<string> TranslateAsync(string text, string sourceLanguage, string targetLanguage);
+    public abstract Task<string> TranslateAsync(
+        string text, 
+        string sourceLanguage, 
+        string targetLanguage,
+        CancellationToken cancellationToken);
 
     /// <inheritdoc />
     public abstract Task<List<SourceLanguage>> GetLanguages();

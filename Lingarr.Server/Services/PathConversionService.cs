@@ -25,8 +25,30 @@ public class PathConversionService
             return sourcePath;
         }
 
-        var mappedPath = PathReplace(sourcePath, mediaType);
-        return mappedPath.Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
+        var normalizedPath = NormalizePath(sourcePath);
+        return PathReplace(normalizedPath, mediaType);
+    }
+
+    /// <summary>
+    /// Normalizes a file system path by converting Windows-style backslashes to forward slashes
+    /// and removing Windows drive letters (e.g., "C:" or "D:").
+    /// </summary>
+    /// <param name="path">The path to normalize. Can be either Windows or Linux style path.</param>
+    public string NormalizePath(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            return path;
+        }
+
+        path = path.Replace('\\', '/').TrimStart();
+        
+        if (path.Length >= 2 && path[1] == ':')
+        {
+            path = path.Substring(2);
+        }
+
+        return path;
     }
 
     /// <summary>
