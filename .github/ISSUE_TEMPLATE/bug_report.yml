@@ -1,0 +1,28 @@
+name: Bug Report
+description: Create a report to help us improve Lingarr
+title: 'Bug report'
+labels: [":bug: bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to submit a bug report!
+        We appreciate your effort in helping us identify and resolve issues.
+        
+        Please keep in mind that this form is specifically intended for reporting bugs in existing, supported functionality.
+        
+        If your feedback relates to something outside of the current supported features or is a suggestion based on your expectations, it might be more appropriate to submit it as a feature request or contact us on discord
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the Bug
+      description: Provide a clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Screenshots or Additional Context
+      description: Provide any additional context and screenshots here to help us solve this issue.
+    validations:
+      required: false
