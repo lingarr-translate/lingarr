@@ -1,6 +1,6 @@
 name: Bug Report
 description: Create a report to help us improve Lingarr
-title: 'Bug report'
+title: 'Bug report: Provide a descriptive title'
 labels: bug
 body:
   - type: markdown
@@ -8,15 +8,17 @@ body:
       value: |
         Thanks for reporting a bug! Please provide detailed information below.
 
-  - type: input
-    id: title
-    attributes:
-      label: Short summary of the issue
-      placeholder: "Provide a descriptive title"
-
   - type: textarea
     id: description
     attributes:
       label: Describe the problem
       description: "Provide a detailed description of the issue, steps to reproduce, and expected vs actual behavior"
       placeholder: "Describe the issue here..."
+      
+  - type: textarea
+    id: context
+    attributes:
+      label: Screenshots or Additional Context
+      description: Provide any additional context and screenshots, docker compose conffigurations here to help us solve this issue.
+    validations:
+      required: false
