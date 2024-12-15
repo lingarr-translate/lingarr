@@ -243,7 +243,10 @@ public class GetShowJob
             if (episode != null)
             {
                 var episodePathResult = await _sonarrService.GetEpisodePath(episode.Id);
-                var seasonPath = Path.GetDirectoryName(episodePathResult?.EpisodeFile.Path);
+                var normalizePath = _pathConversionService.NormalizePath(episodePathResult?.EpisodeFile.Path ?? string.Empty);
+                var seasonPath = Path.GetDirectoryName(normalizePath);
+                _logger.LogInformation("Processing episode: {episode.Id} with Path: |Green|{episodePathResult}|/Green|", episode.Id, seasonPath);
+
                 if (seasonPath != null)
                 {
                     if (!seasonPath.StartsWith("/"))
@@ -255,7 +258,6 @@ public class GetShowJob
                 {
                     seasonPath = $"/Season {season.SeasonNumber}";
                 }
-
 
                 return _pathConversionService.ConvertAndMapPath(
                     seasonPath,

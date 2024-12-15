@@ -11,11 +11,15 @@ public class MediaService : IMediaService
 {
     private readonly LingarrDbContext _dbContext;
     private readonly ISubtitleService _subtitleService;
+    private readonly ILogger<MediaService> _logger;
 
-    public MediaService(LingarrDbContext dbContext, ISubtitleService subtitleService)
+    public MediaService(LingarrDbContext dbContext, 
+        ISubtitleService subtitleService,
+        ILogger<MediaService> logger)
     {
         _dbContext = dbContext;
         _subtitleService = subtitleService;
+        _logger = logger;
     }
     
     /// <inheritdoc />
@@ -53,6 +57,7 @@ public class MediaService : IMediaService
         var enrichedMovies = new List<MovieResponse>();
         foreach (var movie in movies)
         {
+            _logger.LogInformation("Processing movie: {RadarrId} - {Title} with Path: |Green|{Path}|/Green|", movie.RadarrId, movie.Title, movie.Path);
             var subtitles = await _subtitleService.GetAllSubtitles(movie.Path);
             var enrichedMovie = new MovieResponse
             {

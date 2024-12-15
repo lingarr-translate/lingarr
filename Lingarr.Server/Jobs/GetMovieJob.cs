@@ -88,7 +88,6 @@ public class GetMovieJob
                 Path = Path.GetDirectoryName(moviePath) ?? string.Empty
             };
             _dbContext.Movies.Add(movieEntity);
-            _logger.LogDebug($"Created new movie '{movie.Title}' (ID: {movie.Id}).");
         }
         else
         {
@@ -97,6 +96,7 @@ public class GetMovieJob
             movieEntity.FileName = Path.GetFileNameWithoutExtension(moviePath);
             movieEntity.Path = Path.GetDirectoryName(moviePath) ?? string.Empty;
         }
+        _logger.LogInformation("Processing movie: {movieId} with Path: |Green|{Path}|/Green|", movie.Id, movieEntity.Path);
 
         if (movie.Images?.Any() == true)
         {
