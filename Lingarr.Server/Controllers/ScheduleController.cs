@@ -73,10 +73,20 @@ public class ScheduleController : ControllerBase
     /// Enqueues a background job to reindex shows and movies
     /// </summary>
     /// <returns>Returns an HTTP 200 OK response indicating that both jobs has been successfully enqueued.</returns>
-    [HttpPost("job/reindex")]
-    public IActionResult Reindex()
+    [HttpPost("job/index/movies")]
+    public IActionResult IndexMovies()
     {
         _backgroundJobClient.Enqueue<GetMovieJob>(job => job.Execute(JobCancellationToken.Null));
+        return Ok();
+    }
+    
+    /// <summary>
+    /// Enqueues a background job to reindex shows and movies
+    /// </summary>
+    /// <returns>Returns an HTTP 200 OK response indicating that both jobs has been successfully enqueued.</returns>
+    [HttpPost("job/index/shows")]
+    public IActionResult IndexShows()
+    {
         _backgroundJobClient.Enqueue<GetShowJob>(job => job.Execute(JobCancellationToken.Null));
         return Ok();
     }

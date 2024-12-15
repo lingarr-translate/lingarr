@@ -74,7 +74,8 @@ export interface ITranslationRequestService {
 
 export interface IScheduleService {
     remove<T>(jobId: string): Promise<T>
-    reindex<T>(): Promise<T>
+    indexShows<T>(): Promise<T>
+    indexMovies<T>(): Promise<T>
 }
 
 export interface IMappingService {

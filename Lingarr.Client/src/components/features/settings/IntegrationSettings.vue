@@ -28,6 +28,19 @@
                     error-message="API Key must be {minLength} characters"
                     @update:validation="(val) => (isValid.radarrApiKey = val)" />
             </div>
+            <div class="flex items-center gap-2 pb-4">
+                <ButtonComponent
+                    :class="indexingMovies ? 'text-primary-content/50' : 'text-primary-content'"
+                    @click="indexMovies()">
+                    Sync radarr
+                </ButtonComponent>
+                <div v-if="indexingMovies" class="inline-flex overflow-hidden text-green-500">
+                    updating
+                    <span class="animate-ellipsis">.</span>
+                    <span class="animate-ellipsis animation-delay-300">.</span>
+                    <span class="animate-ellipsis animation-delay-600">.</span>
+                </div>
+            </div>
             <div class="flex flex-col space-y-2">
                 <span class="font-semibold">Sonarr Settings:</span>
                 <InputComponent
@@ -48,11 +61,11 @@
             </div>
             <div class="flex items-center gap-2 pt-4">
                 <ButtonComponent
-                    :class="isReindexing ? 'text-primary-content/50' : 'text-primary-content'"
-                    @click="reindex()">
-                    Sync libraries
+                    :class="indexingShows ? 'text-primary-content/50' : 'text-primary-content'"
+                    @click="indexShows()">
+                    Sync sonarr
                 </ButtonComponent>
-                <div v-if="isReindexing" class="inline-flex overflow-hidden text-green-500">
+                <div v-if="indexingShows" class="inline-flex overflow-hidden text-green-500">
                     updating
                     <span class="animate-ellipsis">.</span>
                     <span class="animate-ellipsis animation-delay-300">.</span>
@@ -82,7 +95,8 @@ const isValid = reactive({
     sonarrApiKey: false
 })
 const router = useRouter()
-const isReindexing = ref(false)
+const indexingShows = ref(false)
+const indexingMovies = ref(false)
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
 const scheduleStore = useScheduleStore()
@@ -124,11 +138,19 @@ const sonarrUrl: WritableComputedRef<string> = computed({
     }
 })
 
-async function reindex() {
-    if (isReindexing.value) return
-    isReindexing.value = true
-    await scheduleStore.reindex()
+async function indexShows() {
+    if (indexingShows.value) return
+    indexingShows.value = true
+    await scheduleStore.indexShows()
     await delay(5000)
-    isReindexing.value = false
+    indexingShows.value = false
+}
+
+async function indexMovies() {
+    if (indexingMovies.value) return
+    indexingMovies.value = true
+    await scheduleStore.indexMovies()
+    await delay(5000)
+    indexingMovies.value = false
 }
 </script>
