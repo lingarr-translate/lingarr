@@ -36,8 +36,11 @@ export const useScheduleStore = defineStore({
             await services.schedule.remove(jobId)
             this.persistRunningJobs()
         },
-        async reindex(): Promise<void> {
-            await services.schedule.reindex()
+        async indexShows(): Promise<void> {
+            await services.schedule.indexShows()
+        },
+        async indexMovies(): Promise<void> {
+            await services.schedule.indexMovies()
         }
     }
 })
