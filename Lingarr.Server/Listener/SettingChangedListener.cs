@@ -24,7 +24,7 @@ public class SettingChangedListener
         _logger = logger;
     }
     
-    public async void OnSettingChanged(SettingService ss, string setting)
+    public async void OnSettingChanged(SettingService settingService, string setting)
     {
         var settingGroups = new Dictionary<string, (string actionType, string actionName, string[] keys)>
         {
@@ -36,11 +36,14 @@ public class SettingChangedListener
                     "max_translations_per_run"
                 ])
             },
-            { "source_languages", ("Action", "ClearHash", ["source_languages"]) }
+            { "clearhash", ("Action", "ClearHash", ["source_languages"]) },
+            { "schedule", ("Action", "Schedule", ["movie_schedule", "show_schedule"]) }
         };
 
+        // Find and execute the appropriate action for the changed setting
         foreach (var group in settingGroups)
         {
+            // Check if the changed setting belongs to this configuration group based on it's *keys*
             if (group.Value.keys.Contains(setting))
             {
                 switch (group.Value.actionType)
@@ -115,6 +118,7 @@ public class SettingChangedListener
                     if (settings["automation_enabled"] == "true")
                     {
                         var translationSchedule = await settingService.GetSetting("translation_schedule");
+                        RecurringJob.RemoveIfExists("translation_schedule");
                         RecurringJob.AddOrUpdate<AutomatedTranslationJob>(
                             "AutomatedTranslationJob",
                             "default",
@@ -142,7 +146,7 @@ public class SettingChangedListener
     {
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
-        
+
         var settings = await dbContext.Settings
             .Where(s => requiredKeys.Contains(s.Key))
             .ToDictionaryAsync(s => s.Key, s => s.Value);
@@ -157,6 +161,19 @@ public class SettingChangedListener
                 case "ClearHash":
                     dbContext.Database.ExecuteSqlRaw("UPDATE movies SET media_hash = ''");
                     dbContext.Database.ExecuteSqlRaw("UPDATE episodes SET media_hash = ''");
+                    break;
+
+                case "Schedule":
+                    RecurringJob.AddOrUpdate<GetMovieJob>(
+                        "GetMovieJob",
+                        "movies",
+                        job => job.Execute(JobCancellationToken.Null),
+                        settings["movie_schedule"]);
+                    RecurringJob.AddOrUpdate<GetShowJob>(
+                        "GetShowJob",
+                        "shows",
+                        job => job.Execute(JobCancellationToken.Null),
+                        settings["show_schedule"]);
                     break;
             }
         }
