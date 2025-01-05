@@ -1,4 +1,5 @@
-﻿using Lingarr.Core.Data;
+﻿using Lingarr.Core.Configuration;
+using Lingarr.Core.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Services;
@@ -25,8 +26,15 @@ public class StartupService : IHostedService
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
 
-        await CheckAndUpdateIntegrationSettings(dbContext, "radarr", ["radarr_api_key", "radarr_url"]);
-        await CheckAndUpdateIntegrationSettings(dbContext, "sonarr", ["sonarr_api_key", "sonarr_url"]);
+        await CheckAndUpdateIntegrationSettings(dbContext, "radarr", [
+            SettingKeys.Integration.RadarrUrl,
+            SettingKeys.Integration.RadarrApiKey
+        ]);
+
+        await CheckAndUpdateIntegrationSettings(dbContext, "sonarr", [
+            SettingKeys.Integration.SonarrUrl,
+            SettingKeys.Integration.SonarrApiKey
+        ]);
     }
 
     /// <summary>
@@ -37,7 +45,9 @@ public class StartupService : IHostedService
     /// <param name="requiredKeys">Array of setting keys that must be present and non-empty for the service.</param>
     private async Task CheckAndUpdateIntegrationSettings(LingarrDbContext dbContext, string serviceName, string[] requiredKeys)
     {
-        string completedKey = $"{serviceName}_settings_completed";
+        string completedKey = serviceName == "radarr"
+            ? SettingKeys.Integration.RadarrSettingsCompleted
+            : SettingKeys.Integration.SonarrSettingsCompleted;
         
         var settings = await dbContext.Settings
             .Where(s => requiredKeys.Contains(s.Key))

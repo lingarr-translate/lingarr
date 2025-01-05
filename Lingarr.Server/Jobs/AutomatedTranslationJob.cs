@@ -1,4 +1,5 @@
 ﻿using Hangfire;
+using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Enum;
 using Lingarr.Server.Interfaces.Services;
@@ -29,27 +30,31 @@ public class AutomatedTranslationJob
     public async Task Execute()
     {
         var settings =
-            await _settingService.GetSettings(["automation_enabled", "translation_cycle", "max_translations_per_run"]);
-        int.TryParse(settings["max_translations_per_run"], out int maxTranslations);
+            await _settingService.GetSettings([
+                SettingKeys.Automation.AutomationEnabled,
+                SettingKeys.Automation.TranslationCycle,
+                SettingKeys.Automation.MaxTranslationsPerRun
+            ]);
+        int.TryParse(settings[SettingKeys.Automation.MaxTranslationsPerRun], out int maxTranslations);
         _maxTranslationsPerRun = maxTranslations;
 
-        if (settings["automation_enabled"] == "false")
+        if (settings[SettingKeys.Automation.AutomationEnabled] == "false")
         {
             _logger.LogInformation("Automation not enabled, skipping translation automation.");
             return;
         }
 
-        var translationCycle = settings["translation_cycle"] == "true" ? "movies" : "shows";
+        var translationCycle = settings[SettingKeys.Automation.TranslationCycle] == "true" ? "movies" : "shows";
         _logger.LogInformation($"Starting translation cycle for |Green|{translationCycle}|/Green|");
         switch (translationCycle)
         {
             case "movies":
-                await _settingService.SetSetting("translation_cycle", "false");
+                await _settingService.SetSetting(SettingKeys.Automation.TranslationCycle, "false");
                 await ProcessMovies();
                 break;
             case "shows":
 
-                await _settingService.SetSetting("translation_cycle", "true");
+                await _settingService.SetSetting(SettingKeys.Automation.TranslationCycle, "true");
                 await ProcessShows();
                 break;
         }

@@ -1,4 +1,5 @@
 ﻿using DeepL;
+using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
@@ -39,7 +40,7 @@ public class DeepLService : BaseTranslationService
             await _initLock.WaitAsync();
             if (_initialized) return;
 
-            var authKey = await _settings.GetSetting("deepl_api_key");
+            var authKey = await _settings.GetSetting(SettingKeys.Translation.DeeplApiKey);
             if (string.IsNullOrWhiteSpace(authKey))
             {
                 throw new InvalidOperationException("Translation using DeepL failed, please validate the API key.");

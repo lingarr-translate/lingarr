@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Lingarr.Core.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Interfaces.Services;
@@ -58,7 +59,7 @@ public class TranslateController : ControllerBase
         [FromBody] TranslateAbleSubtitleLine translateAbleSubtitleLine,
         CancellationToken cancellationToken)
     {
-        var serviceType = await _settings.GetSetting("service_type") ?? "libretranslate";
+        var serviceType = await _settings.GetSetting(SettingKeys.Translation.ServiceType) ?? "libretranslate";
         
         var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
         var subtitleTranslator = new SubtitleTranslationService(translationService, _logger);

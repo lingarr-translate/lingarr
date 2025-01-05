@@ -1,4 +1,5 @@
 ﻿using Hangfire;
+using Lingarr.Core.Configuration;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Jobs;
 
@@ -22,7 +23,11 @@ public class ScheduleService : IScheduleService
         using var scope = _serviceProvider.CreateScope();
         var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
 
-        var settings = await settingService.GetSettings(["movie_schedule", "show_schedule", "automation_enabled"]);
+        var settings = await settingService.GetSettings([
+            SettingKeys.Automation.MovieSchedule,
+            SettingKeys.Automation.ShowSchedule,
+            SettingKeys.Automation.AutomationEnabled
+        ]);
 
         _logger.LogInformation("Configuring media indexers.");
         foreach (var setting in settings)

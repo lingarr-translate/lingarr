@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
@@ -39,7 +40,7 @@ public class LibreService : BaseLanguageService
             await _initLock.WaitAsync();
             if (_initialized) return;
 
-            _apiUrl = await _settings.GetSetting("libretranslate_url") ?? "http://libretranslate:5000";
+            _apiUrl = await _settings.GetSetting(SettingKeys.Translation.LibreTranslateUrl) ?? "http://libretranslate:5000";
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             _initialized = true;
