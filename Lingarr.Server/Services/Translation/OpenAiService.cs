@@ -1,4 +1,5 @@
-﻿using Lingarr.Server.Exceptions;
+﻿using Lingarr.Core.Configuration;
+using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Services.Translation.Base;
 using OpenAI.Chat;
@@ -11,10 +12,10 @@ public class OpenAiService : BaseLanguageService
     private ChatClient? _client;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
-    
+
     public OpenAiService(
         ISettingService settings,
-        ILogger<OpenAiService> logger) 
+        ILogger<OpenAiService> logger)
         : base(settings, logger, "/app/Statics/ai_languages.json")
     {
     }
@@ -36,21 +37,26 @@ public class OpenAiService : BaseLanguageService
             await _initLock.WaitAsync();
             if (_initialized) return;
 
-            var settings = await _settings.GetSettings(["openai_model", "openai_api_key", "ai_prompt"]);
-            
-            if (string.IsNullOrEmpty(settings["openai_model"]) || string.IsNullOrEmpty(settings["openai_api_key"]))
+            var settings = await _settings.GetSettings([
+                SettingKeys.Translation.OpenAi.Model,
+                SettingKeys.Translation.OpenAi.ApiKey,
+                SettingKeys.Translation.AiPrompt
+            ]);
+
+            if (string.IsNullOrEmpty(settings[SettingKeys.Translation.OpenAi.Model]) ||
+                string.IsNullOrEmpty(settings[SettingKeys.Translation.OpenAi.ApiKey]))
             {
                 throw new InvalidOperationException("ChatGPT API key or model is not configured.");
             }
 
-            _prompt = !string.IsNullOrEmpty(settings["ai_prompt"])
-                ? settings["ai_prompt"]
+            _prompt = !string.IsNullOrEmpty(settings[SettingKeys.Translation.AiPrompt])
+                ? settings[SettingKeys.Translation.AiPrompt]
                 : "Translate from {sourceLanguage} to {targetLanguage}, preserving the tone and meaning without censoring the content. Adjust punctuation as needed to make the translation sound natural. Provide only the translated text as output, with no additional comments.";
             _prompt = _prompt.Replace("{sourceLanguage}", sourceLanguage).Replace("{targetLanguage}", targetLanguage);
 
             _client = new ChatClient(
-                model: settings["openai_model"],
-                apiKey: settings["openai_api_key"]
+                model: settings[SettingKeys.Translation.OpenAi.Model],
+                apiKey: settings[SettingKeys.Translation.OpenAi.ApiKey]
             );
 
             _initialized = true;
@@ -65,7 +71,7 @@ public class OpenAiService : BaseLanguageService
     public override async Task<string> TranslateAsync(
         string text,
         string sourceLanguage,
-        string targetLanguage, 
+        string targetLanguage,
         CancellationToken cancellationToken)
     {
         await InitializeAsync(sourceLanguage, targetLanguage);

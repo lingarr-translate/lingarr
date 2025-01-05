@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
@@ -22,7 +23,7 @@ public class LocalAiService : BaseLanguageService
     public LocalAiService(
         ISettingService settings,
         HttpClient httpClient,
-        ILogger<LocalAiService> logger) 
+        ILogger<LocalAiService> logger)
         : base(settings, logger, "/app/Statics/ai_languages.json")
     {
         _httpClient = httpClient;
@@ -45,29 +46,36 @@ public class LocalAiService : BaseLanguageService
             await _initLock.WaitAsync();
             if (_initialized) return;
 
-            var settings = await _settings.GetSettings(["local_ai_model", "local_ai_endpoint", "local_ai_api_key", "ai_prompt"]);
-            
-            if (string.IsNullOrEmpty(settings["local_ai_model"]) || string.IsNullOrEmpty(settings["local_ai_endpoint"]))
+            var settings = await _settings.GetSettings([
+                SettingKeys.Translation.LocalAi.Model,
+                SettingKeys.Translation.LocalAi.Endpoint,
+                SettingKeys.Translation.LocalAi.ApiKey,
+                SettingKeys.Translation.AiPrompt
+            ]);
+
+            if (string.IsNullOrEmpty(settings[SettingKeys.Translation.AiPrompt]) ||
+                string.IsNullOrEmpty(settings[SettingKeys.Translation.LocalAi.Endpoint]))
             {
                 throw new InvalidOperationException("Local AI address or model is not configured.");
             }
 
-            _model = settings["local_ai_model"];
-            _endpoint = settings["local_ai_endpoint"];
+            _model = settings[SettingKeys.Translation.AiPrompt];
+            _endpoint = settings[SettingKeys.Translation.LocalAi.Endpoint];
 
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            
-            if (settings.TryGetValue("local_ai_api_key", out var apiKey) && !string.IsNullOrEmpty(apiKey))
+
+            if (settings.TryGetValue(SettingKeys.Translation.LocalAi.ApiKey, out var apiKey) &&
+                !string.IsNullOrEmpty(apiKey))
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
             }
 
-            _prompt = !string.IsNullOrEmpty(settings["ai_prompt"])
-                ? settings["ai_prompt"]
+            _prompt = !string.IsNullOrEmpty(settings[SettingKeys.Translation.AiPrompt])
+                ? settings[SettingKeys.Translation.AiPrompt]
                 : "Translate from {sourceLanguage} to {targetLanguage}, preserving the tone and meaning without censoring the content. Adjust punctuation as needed to make the translation sound natural. Provide only the translated text as output, with no additional comments.";
             _prompt = _prompt.Replace("{sourceLanguage}", sourceLanguage).Replace("{targetLanguage}", targetLanguage);
-            
+
             _initialized = true;
         }
         finally
@@ -75,12 +83,12 @@ public class LocalAiService : BaseLanguageService
             _initLock.Release();
         }
     }
-    
+
     /// <inheritdoc />
     public override async Task<string> TranslateAsync(
         string text,
         string sourceLanguage,
-        string targetLanguage, 
+        string targetLanguage,
         CancellationToken cancellationToken)
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
@@ -109,7 +117,7 @@ public class LocalAiService : BaseLanguageService
             _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync());
             throw new TranslationException("Translation using Local AI failed.");
         }
-        
+
         var responseBody = await response.Content.ReadAsStringAsync();
         var jsonResponse = JsonSerializer.Deserialize<LocalAiResponse>(responseBody);
         return jsonResponse?.Choices[0].Message.Content ?? throw new InvalidOperationException();
