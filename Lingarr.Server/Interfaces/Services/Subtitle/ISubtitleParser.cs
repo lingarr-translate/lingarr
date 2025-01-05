@@ -6,7 +6,7 @@ namespace Lingarr.Server.Interfaces.Services.Subtitle;
 /// <summary>
 /// Interface specifying the required method for a SubParser.
 /// </summary>
-public interface ISubRipParser
+public interface ISubtitleParser
 {
     /// <summary>
     /// Parses a stream of .srt subtitles and returns a list of subtitle items.

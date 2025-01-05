@@ -103,8 +103,11 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<IDirectoryService, DirectoryService>();
         builder.Services.AddScoped<IMappingService, MappingService>();
 
-        builder.Services.AddScoped<ISubRipParser, SubRipParser>();
-        builder.Services.AddScoped<ISubRipWriter, SubRipWriter>();
+        // Register subtitle services
+        builder.Services.AddScoped<ISubtitleParser, SrtParser>();
+        builder.Services.AddScoped<ISubtitleWriter, SrtWriter>();
+        builder.Services.AddScoped<ISubtitleWriter, SsaWriter>();
+        builder.Services.AddScoped<ISubtitleWriter, SsaWriter>();
 
         // Register translate services
         builder.Services.AddScoped<ITranslationServiceFactory, TranslationFactory>();

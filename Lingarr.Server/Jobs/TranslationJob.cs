@@ -72,8 +72,10 @@ public class TranslationJob
             return;
         }
 
-        var outputPath =
-            _subtitleService.CreateFilePath(request.SubtitleToTranslate, request.TargetLanguage);
+        var outputPath = _subtitleService.CreateFilePath(
+            request.SubtitleToTranslate,
+            request.TargetLanguage);
+        
         await _subtitleService.WriteSubtitles(outputPath, translatedSubtitles);
 
         _logger.LogInformation("TranslateJob completed and created subtitle: |Green|{filePath}|/Green|", outputPath);

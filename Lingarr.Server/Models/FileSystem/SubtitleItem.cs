@@ -34,9 +34,19 @@ public class SubtitleItem
     /// </summary>
     public SubtitleItem()
     {
-        this.Lines = new List<string>();
-        this.PlaintextLines = new List<string>();
+        Lines = new List<string>();
+        PlaintextLines = new List<string>();
     }
+    
+    /// <summary>
+    /// Contains the SSA dialogue information
+    /// </summary>
+    public SsaDialogue? SsaDialogue { get; set; }
+
+    /// <summary>
+    /// Contains the SSA format information
+    /// </summary>
+    public SsaFormat? SsaFormat { get; set; }
 
     public override string ToString()
     {

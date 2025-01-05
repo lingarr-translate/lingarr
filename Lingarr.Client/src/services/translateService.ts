@@ -13,6 +13,7 @@ const service = (http: AxiosStatic, resource = '/api/translate'): ITranslateServ
             http.post(`${resource}/subtitle`, {
                 mediaId: mediaId,
                 subtitlePath: subtitle.path,
+                subtitleFormat: subtitle.format,
                 sourceLanguage: source,
                 targetLanguage: target.code,
                 mediaType: mediaType
