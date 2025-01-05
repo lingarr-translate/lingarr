@@ -11,17 +11,18 @@ namespace Lingarr.Server.Services;
 
 public class MediaSubtitleProcessor : IMediaSubtitleProcessor
 {
+    private static readonly string[] SupportedExtensions = { ".srt", ".ssa", ".ass" };
     private readonly ITranslationRequestService _translationRequestService;
     private readonly ILogger<IMediaSubtitleProcessor> _logger;
     private readonly ISettingService _settingService;
     private readonly LingarrDbContext _dbContext;
     private string _hash = string.Empty;
-    private IMedia _media = null!; 
+    private IMedia _media = null!;
     private MediaType _mediaType;
-    
+
     public MediaSubtitleProcessor(
         ITranslationRequestService translationRequestService,
-        ILogger<IMediaSubtitleProcessor> logger, 
+        ILogger<IMediaSubtitleProcessor> logger,
         ISettingService settingService,
         LingarrDbContext dbContext)
     {
@@ -57,7 +58,10 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     private async Task<List<string>> EnumerateSubtitleFiles(string path, string filename)
     {
         var filenameWithoutExtension = Path.GetFileNameWithoutExtension(filename);
-        return await Task.Run(() => Directory.EnumerateFiles(path, $"{filenameWithoutExtension}*.srt", SearchOption.TopDirectoryOnly)
+        return await Task.Run(() =>
+            SupportedExtensions
+                .SelectMany(ext =>
+                    Directory.EnumerateFiles(path, $"{filenameWithoutExtension}*{ext}", SearchOption.TopDirectoryOnly))
                 .ToList());
     }
 
@@ -73,7 +77,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(hashInput));
         return Convert.ToBase64String(hashBytes);
     }
-    
+
     /// <summary>
     /// Processes subtitle files for translation based on configured languages.
     /// </summary>
@@ -84,23 +88,27 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         var existingLanguages = ExtractLanguageCodes(subtitleFiles);
         var sourceLanguages = await GetLanguagesSetting<SourceLanguage>("source_languages");
         var targetLanguages = await GetLanguagesSetting<TargetLanguage>("target_languages");
-        
+
         if (sourceLanguages.Count == 0 || targetLanguages.Count == 0)
         {
-            _logger.LogWarning("Source or target languages are empty. Source languages: {SourceCount}, Target languages: {TargetCount}",
+            _logger.LogWarning(
+                "Source or target languages are empty. Source languages: {SourceCount}, Target languages: {TargetCount}",
                 sourceLanguages.Count, targetLanguages.Count);
             await UpdateHash();
             return false;
         }
-        
+
         var sourceLanguage = existingLanguages.FirstOrDefault(lang => sourceLanguages.Contains(lang));
         if (sourceLanguage != null && targetLanguages.Any())
         {
-            var sourceSubtitleFile = subtitleFiles.FirstOrDefault(file => 
-                Path.GetFileNameWithoutExtension(file).EndsWith($".{sourceLanguage}", StringComparison.OrdinalIgnoreCase));
+            var sourceSubtitleFile = subtitleFiles.FirstOrDefault(file =>
+                Path.GetFileNameWithoutExtension(file)
+                    .EndsWith($".{sourceLanguage}", StringComparison.OrdinalIgnoreCase));
 
             if (sourceSubtitleFile != null)
             {
+                var subtitleFormat = Path.GetExtension(sourceSubtitleFile).TrimStart('.').ToLower();
+
                 foreach (var targetLanguage in targetLanguages.Except(existingLanguages))
                 {
                     var translationId = await _translationRequestService.CreateRequest(new TranslateAbleSubtitle
@@ -110,34 +118,38 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
                         SubtitlePath = sourceSubtitleFile,
                         TargetLanguage = targetLanguage,
                         SourceLanguage = sourceLanguage,
+                        SubtitleFormat = subtitleFormat
                     });
-                    _logger.LogInformation("Initiating translation for {subtitleFile} under {translationId}", 
-                        sourceSubtitleFile, 
+                    _logger.LogInformation("Initiating translation for {subtitleFile} under {translationId}",
+                        sourceSubtitleFile,
                         translationId);
                 }
+
                 await UpdateHash();
+                return true;
             }
-            else
-            {
-                _logger.LogWarning("No source subtitle file found for language: |Green|{SourceLanguage}|/Green|", sourceLanguage);
-                await UpdateHash();
-            }
-        }
-        else
-        {
-            _logger.LogWarning("No valid source language or target languages found for media |Green|{FileName}|/Green|. " +
-                               "Existing languages: |Red|{ExistingLanguages}|/Red|, " +
-                               "Source languages: |Red|{SourceLanguages}|/Red|, " +
-                               "Target languages: |Red|{TargetLanguages}|/Red|", 
-                string.Join(", ", _media?.FileName),
-                string.Join(", ", existingLanguages),
-                string.Join(", ", sourceLanguages),
-                string.Join(", ", targetLanguages));
+
+            _logger.LogWarning("No source subtitle file found for language: |Green|{SourceLanguage}|/Green|",
+                sourceLanguage);
+            
             await UpdateHash();
+            return false;
         }
+
+        _logger.LogWarning(
+            "No valid source language or target languages found for media |Green|{FileName}|/Green|. " +
+            "Existing languages: |Red|{ExistingLanguages}|/Red|, " +
+            "Source languages: |Red|{SourceLanguages}|/Red|, " +
+            "Target languages: |Red|{TargetLanguages}|/Red|",
+            string.Join(", ", _media?.FileName),
+            string.Join(", ", existingLanguages),
+            string.Join(", ", sourceLanguages),
+            string.Join(", ", targetLanguages));
+        
+        await UpdateHash();
         return false;
     }
-    
+
     /// <summary>
     /// Retrieves language settings from the application configuration.
     /// </summary>
@@ -147,7 +159,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     private async Task<HashSet<string>> GetLanguagesSetting<T>(string settingName) where T : class, ILanguage
     {
         var languages = await _settingService.GetSettingAsJson<T>(settingName);
-        
+
         return languages
             .Where(lang => IsValidLanguageCode(lang.Code))
             .Select(lang => lang.Code)
@@ -178,7 +190,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     {
         return !string.IsNullOrEmpty(code) && code.Length == 2;
     }
-    
+
     /// <summary>
     /// Updates the media hash in the database.
     /// </summary>

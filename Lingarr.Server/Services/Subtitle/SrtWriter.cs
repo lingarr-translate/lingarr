@@ -5,9 +5,9 @@ namespace Lingarr.Server.Services.Subtitle;
 
 /// <summary>
 /// Forked from: https://github.com/AlexPoint/SubtitlesParser
-/// Writer for the .srt sub rip subtitle files
+/// Writer for the .srt subtitle files
 /// </summary>
-public class SubRipWriter : ISubRipWriter
+public class SrtWriter : ISubtitleWriter
 {
     /// <summary>
     /// Converts a subtitle item into the lines for an SRT subtitle entry
@@ -31,28 +31,6 @@ public class SubRipWriter : ISubRipWriter
         lines.AddRange(subtitleItem.Lines);
 
         return lines;
-    }
-    
-    /// <inheritdoc />
-    public void WriteStream(Stream stream, IEnumerable<SubtitleItem> subtitleItems)
-    {
-        using TextWriter writer = new StreamWriter(stream);
-
-        List<SubtitleItem>
-            items = subtitleItems.ToList(); // avoid multiple enumeration since we're using a for instead of foreach
-        for (int index = 0; index < items.Count; index++)
-        {
-            SubtitleItem subtitleItem = items[index];
-            IEnumerable<string>
-                lines = SubtitleItemToSubtitleEntry(subtitleItem,
-                    subtitleItem.Position); // add one because subtitle entry numbers start at 1 instead of 0
-            foreach (string line in lines)
-            {
-                writer.WriteLine(line);
-            }
-
-            writer.WriteLine(); // empty line between subtitle entries
-        }
     }
     
     /// <inheritdoc />

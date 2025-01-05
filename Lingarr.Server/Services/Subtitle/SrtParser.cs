@@ -9,14 +9,14 @@ namespace Lingarr.Server.Services.Subtitle;
 /// Forked from: https://github.com/AlexPoint/SubtitlesParser
 /// Parser for the .srt subrip subtitle files
 /// </summary>
-public class SubRipParser : ISubRipParser
+public class SrtParser : ISubtitleParser
 {
     private readonly string[] _delimiters = { "-->", "- >", "->" };
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="SubRipParser"/> class.
+    /// Initializes a new instance of the <see cref="SrtParser"/> class.
     /// </summary>
-    public SubRipParser()
+    public SrtParser()
     {
     }
     

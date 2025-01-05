@@ -127,9 +127,7 @@ public class SubtitleTranslationService
         }
         catch (TranslationException ex)
         {
-            _logger.LogError(ex, "Translation failed for subtitle line: {SubtitleLine}",
-                translateAbleSubtitle.SubtitleLine);
-            throw;
+            throw new TranslationException("Translation failed for subtitle line", ex);
         }
     }
 }
