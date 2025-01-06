@@ -59,7 +59,7 @@ public class LocalAiService : BaseLanguageService
                 throw new InvalidOperationException("Local AI address or model is not configured.");
             }
 
-            _model = settings[SettingKeys.Translation.AiPrompt];
+            _model = settings[SettingKeys.Translation.LocalAi.Model];
             _endpoint = settings[SettingKeys.Translation.LocalAi.Endpoint];
 
             _httpClient.DefaultRequestHeaders.Accept.Clear();
