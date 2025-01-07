@@ -89,7 +89,7 @@ public class OpenAiService : BaseLanguageService
                 new UserChatMessage(text)
             };
 
-            ChatCompletion completion = _client.CompleteChat(messages);
+            ChatCompletion completion = await _client.CompleteChatAsync(messages, cancellationToken: cancellationToken);
             return completion.Content[0].Text;
         }
         catch (Exception ex)

@@ -116,8 +116,8 @@ public class DeepLService : BaseTranslationService
             var result = await _translator.TranslateTextAsync(
                 text,
                 sourceLanguage,
-                targetLanguage
-            );
+                targetLanguage, 
+                cancellationToken: cancellationToken);
 
             return result.Text;
         }

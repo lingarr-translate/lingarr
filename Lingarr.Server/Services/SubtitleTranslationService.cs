@@ -112,6 +112,7 @@ public class SubtitleTranslationService
     /// <param name="translateAbleSubtitle">
     /// Contains the subtitle line to translate along with source and target language specifications.
     /// </param>
+    /// <param name="cancellationToken">Token to cancel the translation operation</param>
     /// <returns>The translated subtitle line.</returns>
     public async Task<string> TranslateSubtitleLine(
         TranslateAbleSubtitleLine translateAbleSubtitle, 
@@ -127,6 +128,11 @@ public class SubtitleTranslationService
         }
         catch (TranslationException ex)
         {
+            _logger.LogError(ex, 
+                "Translation failed for subtitle line: {SubtitleLine} from {SourceLang} to {TargetLang}",
+                translateAbleSubtitle.SubtitleLine,
+                translateAbleSubtitle.SourceLanguage,
+                translateAbleSubtitle.TargetLanguage);
             throw new TranslationException("Translation failed for subtitle line", ex);
         }
     }

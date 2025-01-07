@@ -4,8 +4,6 @@ using System.Text.Json;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
-using Lingarr.Server.Models;
-using Lingarr.Server.Models.Api;
 using Lingarr.Server.Models.Integrations;
 using Lingarr.Server.Services.Translation.Base;
 
@@ -53,7 +51,7 @@ public class LocalAiService : BaseLanguageService
                 SettingKeys.Translation.AiPrompt
             ]);
 
-            if (string.IsNullOrEmpty(settings[SettingKeys.Translation.AiPrompt]) ||
+            if (string.IsNullOrEmpty(settings[SettingKeys.Translation.LocalAi.Model]) ||
                 string.IsNullOrEmpty(settings[SettingKeys.Translation.LocalAi.Endpoint]))
             {
                 throw new InvalidOperationException("Local AI address or model is not configured.");
@@ -98,6 +96,42 @@ public class LocalAiService : BaseLanguageService
             throw new InvalidOperationException("Local AI service was not properly initialized.");
         }
 
+        var isChatEndpoint = _endpoint.TrimEnd('/').EndsWith("completions", StringComparison.OrdinalIgnoreCase);
+        return isChatEndpoint 
+            ? await TranslateWithChatApi(text, cancellationToken)
+            : await TranslateWithGenerateApi(text, cancellationToken);
+    }
+
+    private async Task<string> TranslateWithGenerateApi(string text, CancellationToken cancellationToken)
+    {
+        var content = new StringContent(JsonSerializer.Serialize(new
+        {
+            model = _model,
+            prompt = _prompt + "\\n\\n" + text,
+            stream = false
+        }), Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.PostAsync(_endpoint, content, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
+            _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync(cancellationToken));
+            throw new TranslationException("Translation using Local AI failed.");
+        }
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        var generateResponse = JsonSerializer.Deserialize<GenerateResponse>(responseBody);
+        
+        if (generateResponse == null || string.IsNullOrEmpty(generateResponse.Response))
+        {
+            throw new TranslationException("Invalid or empty response from generate API.");
+        }
+
+        return generateResponse.Response;
+    }
+
+    private async Task<string> TranslateWithChatApi(string? text, CancellationToken cancellationToken)
+    {
         var messages = new[]
         {
             new { role = "system", content = _prompt },
@@ -110,16 +144,23 @@ public class LocalAiService : BaseLanguageService
             messages
         }), Encoding.UTF8, "application/json");
 
-        var response = await _httpClient.PostAsync(_endpoint, content);
+        var response = await _httpClient.PostAsync(_endpoint, content, cancellationToken);
+        
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync());
-            throw new TranslationException("Translation using Local AI failed.");
+            _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync(cancellationToken));
+            throw new TranslationException("Translation using chat API failed.");
         }
 
-        var responseBody = await response.Content.ReadAsStringAsync();
-        var jsonResponse = JsonSerializer.Deserialize<LocalAiResponse>(responseBody);
-        return jsonResponse?.Choices[0].Message.Content ?? throw new InvalidOperationException();
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        var chatResponse = JsonSerializer.Deserialize<ChatResponse>(responseBody);
+        
+        if (chatResponse?.Choices == null || chatResponse.Choices.Count == 0)
+        {
+            throw new TranslationException("Invalid or empty response from chat API.");
+        }
+
+        return chatResponse.Choices[0].Message.Content;
     }
 }

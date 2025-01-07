@@ -85,7 +85,7 @@ public class AnthropicService : BaseLanguageService
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
 
-        int maxRetries = 5;
+        const int maxRetries = 5;
         var delay = TimeSpan.FromSeconds(1);
         var maxDelay = TimeSpan.FromSeconds(32);
 
@@ -114,7 +114,7 @@ public class AnthropicService : BaseLanguageService
                     }
 
                     _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-                    _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync());
+                    _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync(cancellationToken: linked.Token));
                     throw new TranslationException("Translation using Anthropic failed.");
                 }
 

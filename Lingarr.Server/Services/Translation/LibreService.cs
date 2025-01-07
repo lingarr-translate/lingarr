@@ -75,11 +75,11 @@ public class LibreService : BaseLanguageService
         
         content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         
-        var response = await _httpClient.PostAsync($"{_apiUrl}/translate", content);
+        var response = await _httpClient.PostAsync($"{_apiUrl}/translate", content, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync());
+            _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync(cancellationToken));
             throw new TranslationException("Translation using LibreTranslate failed.");
         }
         
