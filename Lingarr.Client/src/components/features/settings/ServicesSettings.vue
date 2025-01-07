@@ -1,12 +1,14 @@
 ﻿<template>
-    <CardComponent title="Services">
+    <CardComponent :title="translate('settings.services.title')">
         <template #description>
-            Configure the translation service for subtitle localization.
+            {{ translate('settings.services.description') }}
         </template>
         <template #content>
             <SaveNotification ref="saveNotification" />
             <div class="flex flex-col space-y-2">
-                <span class="font-semibold">Select translation service:</span>
+                <span class="font-semibold">
+                    {{ translate('settings.services.serviceSelect') }}
+                </span>
                 <SelectComponent v-model:selected="serviceType" :options="serviceOptions" />
                 <component
                     :is="serviceConfigComponent"

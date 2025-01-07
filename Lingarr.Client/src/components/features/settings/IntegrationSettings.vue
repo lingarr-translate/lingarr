@@ -1,22 +1,19 @@
 ﻿<template>
-    <CardComponent title="Integrations">
+    <CardComponent :title="translate('settings.integrations.title')">
         <template #description>
-            Configure the settings for Radarr and Sonarr integrations. Note that with more than two
-            volumes, or deeper mapping than one folder level, you will need to configure the folder
-            <a class="cursor-pointer underline" @click="router.push({ name: 'mapping-settings' })">
-                mapping
-            </a>
-            prior.
+            {{ translate('settings.integrations.description') }}
         </template>
         <template #content>
             <SaveNotification ref="saveNotification" />
             <div class="flex flex-col space-y-2 pb-4">
-                <span class="font-semibold">Radarr Settings:</span>
+                <span class="font-semibold">
+                    {{ translate('settings.integrations.radarrHeader') }}
+                </span>
                 <InputComponent
                     v-model="radarrUrl"
                     validation-type="url"
-                    label="Address"
-                    error-message="Please enter a valid URL (e.g., http://localhost:3000 or https://api.example.com)"
+                    :label="translate('settings.integrations.radarrAddress')"
+                    :error-message="translate('settings.integrations.radarrAddressError')"
                     @update:validation="(val) => (isValid.radarrUrl = val)" />
                 <InputComponent
                     v-model="radarrApiKey"
@@ -24,30 +21,32 @@
                     :max-length="32"
                     validation-type="string"
                     type="password"
-                    label="API key"
-                    error-message="API Key must be {minLength} characters"
+                    :label="translate('settings.integrations.radarrApiKey')"
+                    :error-message="translate('settings.integrations.radarrApiKeyError')"
                     @update:validation="(val) => (isValid.radarrApiKey = val)" />
             </div>
             <div class="flex items-center gap-2 pb-4">
                 <ButtonComponent
                     :class="indexingMovies ? 'text-primary-content/50' : 'text-primary-content'"
                     @click="indexMovies()">
-                    Sync radarr
+                    {{ translate('settings.integrations.radarrSyncButton') }}
                 </ButtonComponent>
                 <div v-if="indexingMovies" class="inline-flex overflow-hidden text-green-500">
-                    updating
+                    {{ translate('settings.integrations.radarrUpdating') }}
                     <span class="animate-ellipsis">.</span>
                     <span class="animate-ellipsis animation-delay-300">.</span>
                     <span class="animate-ellipsis animation-delay-600">.</span>
                 </div>
             </div>
             <div class="flex flex-col space-y-2">
-                <span class="font-semibold">Sonarr Settings:</span>
+                <span class="font-semibold">
+                    {{ translate('settings.integrations.sonarrHeader') }}
+                </span>
                 <InputComponent
                     v-model="sonarrUrl"
                     validation-type="url"
-                    label="Address"
-                    error-message="Please enter a valid Address (e.g., http://localhost:3000 or https://api.example.com)"
+                    :label="translate('settings.integrations.sonarrAddress')"
+                    :error-message="translate('settings.integrations.sonarrAddressError')"
                     @update:validation="(val) => (isValid.sonarrUrl = val)" />
                 <InputComponent
                     v-model="sonarrApiKey"
@@ -55,18 +54,18 @@
                     :max-length="32"
                     validation-type="string"
                     type="password"
-                    label="API key"
-                    error-message="API Key must be {minLength} characters"
+                    :label="translate('settings.integrations.sonarrApiKey')"
+                    :error-message="translate('settings.integrations.sonarrApiKeyError')"
                     @update:validation="(val) => (isValid.sonarrApiKey = val)" />
             </div>
             <div class="flex items-center gap-2 pt-4">
                 <ButtonComponent
                     :class="indexingShows ? 'text-primary-content/50' : 'text-primary-content'"
                     @click="indexShows()">
-                    Sync sonarr
+                    {{ translate('settings.integrations.sonarrSyncButton') }}
                 </ButtonComponent>
                 <div v-if="indexingShows" class="inline-flex overflow-hidden text-green-500">
-                    updating
+                    {{ translate('settings.integrations.sonarrUpdating') }}
                     <span class="animate-ellipsis">.</span>
                     <span class="animate-ellipsis animation-delay-300">.</span>
                     <span class="animate-ellipsis animation-delay-600">.</span>
@@ -78,7 +77,6 @@
 
 <script setup lang="ts">
 import { WritableComputedRef, computed, ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
 import { useSettingStore } from '@/store/setting'
 import { useScheduleStore } from '@/store/schedule'
 import SaveNotification from '@/components/common/SaveNotification.vue'
@@ -94,7 +92,6 @@ const isValid = reactive({
     sonarrUrl: false,
     sonarrApiKey: false
 })
-const router = useRouter()
 const indexingShows = ref(false)
 const indexingMovies = ref(false)
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)

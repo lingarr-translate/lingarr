@@ -36,20 +36,28 @@
 
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from '@/plugins/i18n'
 import PageLayout from '@/components/layout/PageLayout.vue'
 import IntegrationIcon from '@/components/icons/IntegrationIcon.vue'
 import SettingIcon from '@/components/icons/SettingIcon.vue'
-import FoldersIcon from '@/components/icons/FoldersIcon.vue'
 import AutomationIcon from '@/components/icons/AutomationIcon.vue'
 
 const router = useRouter()
 const route = useRoute()
+const { translate } = useI18n()
 
 const menuItems = [
-    { label: 'Integrations', icon: IntegrationIcon, route: 'integration-settings' },
-    { label: 'Services', icon: SettingIcon, route: 'services-settings' },
-    { label: 'Automation', icon: AutomationIcon, route: 'automation-settings' },
-    { label: 'Mapping', icon: FoldersIcon, route: 'mapping-settings' }
+    {
+        label: translate('navigation.integrations'),
+        icon: IntegrationIcon,
+        route: 'integration-settings'
+    },
+    { label: translate('navigation.services'), icon: SettingIcon, route: 'services-settings' },
+    {
+        label: translate('navigation.automation'),
+        icon: AutomationIcon,
+        route: 'automation-settings'
+    }
 ]
 
 function navigate(route: string) {

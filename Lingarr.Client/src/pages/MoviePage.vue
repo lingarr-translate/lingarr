@@ -8,11 +8,11 @@
                         v-model="filter"
                         :options="[
                             {
-                                label: 'Sort by Title',
+                                label: translate('common.sortByTitle'),
                                 value: 'Title'
                             },
                             {
-                                label: 'Sort by Date Added',
+                                label: translate('common.sortByAdded'),
                                 value: 'DateAdded'
                             }
                         ]" />
@@ -21,8 +21,8 @@
 
             <div class="w-full px-4">
                 <div class="grid grid-cols-12 border-b border-accent font-bold">
-                    <div class="col-span-6 px-4 py-2">Title</div>
-                    <div class="col-span-4 px-4 py-2">Subtitles</div>
+                    <div class="col-span-6 px-4 py-2">{{ translate('movies.title') }}</div>
+                    <div class="col-span-4 px-4 py-2">{{ translate('movies.subtitles') }}</div>
                     <div class="col-span-2 flex justify-end px-4 py-2">
                         <ReloadComponent @toggle:update="movieStore.fetch()" />
                     </div>

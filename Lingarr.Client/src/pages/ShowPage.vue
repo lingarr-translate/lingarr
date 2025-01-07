@@ -8,11 +8,11 @@
                         v-model="filter"
                         :options="[
                             {
-                                label: 'Sort by Title',
+                                label: translate('common.sortByTitle'),
                                 value: 'Title'
                             },
                             {
-                                label: 'Sort by Date Added',
+                                label: translate('common.sortByAdded'),
                                 value: 'DateAdded'
                             }
                         ]" />
@@ -22,8 +22,8 @@
             <div class="w-full px-4">
                 <div class="grid grid-cols-12 border-b border-accent font-bold">
                     <div class="col-span-1 px-4 py-2"></div>
-                    <div class="col-span-5 px-4 py-2">Title</div>
-                    <div class="col-span-4 px-4 py-2">Subtitles</div>
+                    <div class="col-span-5 px-4 py-2">{{ translate('tvShows.title') }}</div>
+                    <div class="col-span-4 px-4 py-2">{{ translate('tvShows.subtitles') }}</div>
                     <div class="col-span-2 flex justify-end px-4 py-2">
                         <ReloadComponent @toggle:update="showStore.fetch()" />
                     </div>
@@ -43,8 +43,12 @@
                         <div
                             class="grid grid-cols-12 border-b-2 border-secondary bg-primary font-bold text-secondary-content">
                             <div class="col-span-1 px-4 py-2"></div>
-                            <div class="col-span-5 px-4 py-2 md:col-span-3">Season</div>
-                            <div class="col-span-6 px-4 py-2 md:col-span-8">Episodes</div>
+                            <div class="col-span-5 px-4 py-2 md:col-span-3">
+                                {{ translate('tvShows.season') }}
+                            </div>
+                            <div class="col-span-6 px-4 py-2 md:col-span-8">
+                                {{ translate('tvShows.episodes') }}
+                            </div>
                         </div>
                         <div
                             v-for="season in item.seasons"
@@ -60,7 +64,9 @@
                                         :is-expanded="expandedSeason?.id !== season.id" />
                                 </div>
                                 <div class="col-span-5 select-none px-4 py-2 md:col-span-3">
-                                    <span v-if="season.seasonNumber == 0">Specials</span>
+                                    <span v-if="season.seasonNumber == 0">
+                                        {{ translate('tvShows.specials') }}
+                                    </span>
                                     <span v-else>Season {{ season.seasonNumber }}</span>
                                 </div>
                                 <div class="col-span-6 select-none px-4 py-2 md:col-span-8">
@@ -72,11 +78,17 @@
                                 class="w-full bg-tertiary text-tertiary-content">
                                 <div class="grid grid-cols-12 border-b-2 border-primary font-bold">
                                     <div class="col-span-1 px-4 py-2 md:col-span-2">
-                                        <span class="hidden md:block">Episode</span>
+                                        <span class="hidden md:block">
+                                            {{ translate('tvShows.episode') }}
+                                        </span>
                                         <span class="block md:hidden">#</span>
                                     </div>
-                                    <div class="col-span-7 px-4 py-2 md:col-span-5">Title</div>
-                                    <div class="col-span-4 px-4 py-2 md:col-span-5">Subtitles</div>
+                                    <div class="col-span-7 px-4 py-2 md:col-span-5">
+                                        {{ translate('tvShows.episodeTitle') }}
+                                    </div>
+                                    <div class="col-span-4 px-4 py-2 md:col-span-5">
+                                        {{ translate('tvShows.episodeSubtitles') }}
+                                    </div>
                                 </div>
                                 <div
                                     v-for="(episode, index) in season.episodes"

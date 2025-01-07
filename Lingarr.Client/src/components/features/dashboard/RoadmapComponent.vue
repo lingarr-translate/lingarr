@@ -61,7 +61,6 @@ import AutomationIcon from '@/components/icons/AutomationIcon.vue'
 import NotificationIcon from '@/components/icons/NotificationIcon.vue'
 import HistoryIcon from '@/components/icons/HistoryIcon.vue'
 import LanguageIcon from '@/components/icons/LanguageIcon.vue'
-import BuildingIcon from '@/components/icons/BuildingIcon.vue'
 import CardComponent from '@/components/common/CardComponent.vue'
 import IntegrationIcon from '@/components/icons/IntegrationIcon.vue'
 import StatisticsIcon from '@/components/icons/StatisticsIcon.vue'
@@ -69,26 +68,10 @@ import HomeIcon from '@/components/icons/HomeIcon.vue'
 
 const roadmapItems = shallowRef([
     {
-        icon: BuildingIcon,
-        title: 'Application Rebuild',
-        status: 'Completed',
-        fade: true
-    },
-    {
-        icon: NotificationIcon,
-        title: 'Notifications',
-        status: 'Completed',
-        fade: true
-    },
-    {
-        icon: AutomationIcon,
-        title: 'Automated Translation',
-        status: 'Completed',
-        fade: true
-    },
-    {
         icon: IntegrationIcon,
         title: 'AI Translation',
+        description: 'Added AI services to support AI translation',
+        date: '2024',
         status: 'Completed',
         fade: true
     },
@@ -97,39 +80,39 @@ const roadmapItems = shallowRef([
         title: 'Enhanced Notifications',
         description: 'Enhance the notification system for requested translations',
         date: '2024',
-        status: 'In Progress',
-        fade: false
+        status: 'Completed',
+        fade: true
     },
     {
         icon: HistoryIcon,
         title: 'Translation History',
         description: 'Add functionality to view and manage translation history',
         date: '2024',
-        status: 'In Progress',
-        fade: false
+        status: 'Completed',
+        fade: true
     },
     {
         icon: AutomationIcon,
         title: 'Schedule controls',
         description: 'Adding support for controlling schedules',
         date: '2024',
-        status: 'Planned',
-        fade: false
+        status: 'Completed',
+        fade: true
     },
     {
         icon: LanguageIcon,
         title: 'App Localization',
         description: 'Configurable localization options for the application',
         date: '2024',
-        status: 'Planned',
-        fade: false
+        status: 'Completed',
+        fade: true
     },
     {
         icon: StatisticsIcon,
         title: 'Dashboard improvements',
         description: 'Statistics and dashboard improvements',
         date: '2024',
-        status: 'Planned',
+        status: 'In Progress',
         fade: false
     },
     {
