@@ -2,56 +2,32 @@
 
 namespace Lingarr.Server.Models.Integrations;
 
-public class LocalAiResponse
+public class GenerateResponse
 {
-    [JsonPropertyName("created")]
-    public long Created { get; set; }
+    [JsonPropertyName("model")] 
+    public string Model { get; set; } = string.Empty;
 
-    [JsonPropertyName("object")]
-    public string Object { get; set; }
+    [JsonPropertyName("response")] 
+    public string Response { get; set; } = string.Empty;
 
-    [JsonPropertyName("id")]
-    public string Id { get; set; }
-
-    [JsonPropertyName("model")]
-    public string Model { get; set; }
-
-    [JsonPropertyName("choices")]
-    public List<Choice> Choices { get; set; }
-
-    [JsonPropertyName("usage")]
-    public Usage Usage { get; set; }
+    [JsonPropertyName("done")] 
+    public bool Done { get; set; }
 }
 
-public class Choice
+public class ChatResponse
 {
-    [JsonPropertyName("index")]
-    public int Index { get; set; }
-
-    [JsonPropertyName("finish_reason")]
-    public string FinishReason { get; set; }
-
-    [JsonPropertyName("message")]
-    public Message Message { get; set; }
+    [JsonPropertyName("choices")] 
+    public List<ChatChoice> Choices { get; set; } = new();
 }
 
-public class Message
+public class ChatChoice
 {
-    [JsonPropertyName("role")]
-    public string Role { get; set; }
-
-    [JsonPropertyName("content")]
-    public string Content { get; set; }
+    [JsonPropertyName("message")] 
+    public ChatMessage Message { get; set; } = new();
 }
 
-public class Usage
+public class ChatMessage
 {
-    [JsonPropertyName("prompt_tokens")]
-    public int PromptTokens { get; set; }
-
-    [JsonPropertyName("completion_tokens")]
-    public int CompletionTokens { get; set; }
-
-    [JsonPropertyName("total_tokens")]
-    public int TotalTokens { get; set; }
+    [JsonPropertyName("content")] 
+    public string Content { get; set; } = string.Empty;
 }
