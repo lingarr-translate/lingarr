@@ -1,0 +1,110 @@
+﻿{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "movies": "Movies",
+    "tvShows": "TV Shows",
+    "translations": "Translations",
+    "settings": "Settings",
+    "integrations": "Integrations",
+    "services": "Services",
+    "automation": "Automation"
+  },
+  "movies": {
+    "title": "Title",
+    "subtitles": "Subtitles"
+  },
+  "tvShows": {
+    "title": "Title",
+    "subtitles": "Subtitles",
+    "season": "Season",
+    "episodes": "Episodes",
+    "specials": "Specials",
+    "episode": "Episode",
+    "episodeTitle": "Title",
+    "episodeSubtitles": "Subtitles"
+  },
+  "translations": {
+    "title": "Title",
+    "source": "Source",
+    "target": "Target",
+    "status": "Status",
+    "progress": "Progress",
+    "completed": "Completed"
+  },
+  "common": {
+    "page": "page",
+    "of": "of",
+    "items": "items",
+    "sortByAdded": "Sort by Added",
+    "sortByCompleted": "Sort by Completed",
+    "sortByTitle": "Sort by Title",
+    "statusInProgress": "In Progress",
+    "statusPending": "Pending",
+    "statusCompleted": "Completed",
+    "statusFailed": "Failed",
+    "statusCancelled": "Cancelled",
+    "updateAvailable": "Update {version} is available",
+    "currentVersion": "Version: {version} beta",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "saved": "saved"
+  },
+  "settings": {
+    "integrations": {
+      "title": "Integrations",
+      "description": "Configure the settings for Radarr and Sonarr integrations.",
+      "radarrHeader": "Radarr Settings:",
+      "radarrAddress": "Address",
+      "radarrAddressError": "Please enter a valid URL (e.g., http://localhost:3000 or https://api.example.com)",
+      "radarrApiKey": "API key",
+      "radarrApiKeyError": "API Key must be {minLength} characters",
+      "radarrSyncButton": "Sync radarr",
+      "radarrUpdating": "updating",
+      "sonarrHeader": "Sonarr Settings:",
+      "sonarrAddress": "Address",
+      "sonarrAddressError": "Please enter a valid URL (e.g., http://localhost:3000 or https://api.example.com)",
+      "sonarrApiKey": "API key",
+      "sonarrApiKeyError": "API Key must be {minLength} characters",
+      "sonarrSyncButton": "Sync sonarr",
+      "sonarrUpdating": "updating"
+    },
+    "services": {
+      "title": "Services",
+      "description": "Configure the translation service for subtitle localization.",
+      "serviceSelect": "Select translation service:"
+    },
+    "language": {
+      "title": "Source and target translation",
+      "description": "Select a source and target language. Both the source and target are used to request translations.",
+      "selectSourceDescription": "Select source languages:",
+      "selectTargetDescription": "Select target languages:",
+      "selectOrSearchLanguagePlaceholder": "Select or search language",
+      "languageSelectPlaceholder": "Select language...",
+      "languageSelectTargetNotification": "Select a source language first."
+    },
+    "automation": {
+      "title": "Automation",
+      "description": "Set up automation. Note that if automation is implemented, you also need to configure the necessary",
+      "descriptionLink": "services",
+      "indexingHeader": "Indexing schedule:",
+      "indexingMoviesLabel": "Set movie indexer:",
+      "indexingTvShowLabel": "Set tv show indexer:",
+      "automatedTranslationHeader": "Automated translation:",
+      "translationScheduleLabel": "Set translation schedule:",
+      "limitsHeader": "Limits:",
+      "scheduleLimitLabel": "Limit the amount of translations per schedule"
+    },
+    "cronOptions": {
+      "everyFifteenMinutes": "Every 15 minutes",
+      "everyThirtyMinutes": "Every 30 minutes",
+      "hourly": "Hourly",
+      "everyTwoHours": "Every 2 hours",
+      "everyFourHours": "Every 4 hours",
+      "everySixHours": "Every 6 hours",
+      "twiceADay": "Twice daily (Every 12 hours)",
+      "dailyAtMidnight": "Daily at midnight",
+      "dailyAtFour": "Daily at 04:00",
+      "weeklyOnSundayAtMidnight": "Weekly on Sunday at midnight"
+    }
+  }
+}

@@ -1,20 +1,19 @@
 ﻿<template>
-    <CardComponent title="Source and target translation">
+    <CardComponent :title="translate('settings.language.title')">
         <template #description>
-            Select a source and target language. Both the source and target are used to request
-            translations.
+            {{ translate('settings.language.description') }}
         </template>
         <template #content>
             <SaveNotification ref="saveNotification" />
             <div>
-                <span>Select source languages:</span>
+                <span>{{ translate('settings.language.selectSourceDescription') }}</span>
                 <LanguageSelect
                     v-model:selected="sourceLanguages"
                     class="w-full"
                     :options="languages" />
             </div>
             <div>
-                <span>Select target languages:</span>
+                <span>{{ translate('settings.language.selectTargetDescription') }}</span>
                 <LanguageSelect
                     v-model:selected="targetLanguages"
                     class="w-full"

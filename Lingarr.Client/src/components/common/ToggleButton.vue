@@ -15,7 +15,7 @@
                 :class="modelValue === 'true' ? 'translate-x-5' : 'translate-x-0'"></span>
         </button>
         <span class="text-sm font-medium text-primary-content">
-            {{ modelValue === 'true' ? 'Enabled' : 'Disabled' }}
+            {{ modelValue === 'true' ? translate('common.enabled') : translate('common.disabled') }}
         </span>
     </div>
 </template>

@@ -1,0 +1,110 @@
+﻿{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "movies": "Films",
+    "tvShows": "Tv-shows",
+    "translations": "Vertalingen",
+    "settings": "Instellingen",
+    "integrations": "Integraties",
+    "services": "Diensten",
+    "automation": "Automatisering"
+  },
+  "movies": {
+    "title": "Titel",
+    "subtitles": "Ondertitels"
+  },
+  "tvShows": {
+    "title": "Titel",
+    "subtitles": "Ondertitels",
+    "season": "Seizoen",
+    "episodes": "Afleveringen",
+    "specials": "Specials",
+    "episode": "Aflevering",
+    "episodeTitle": "Titel",
+    "episodeSubtitles": "Ondertitels"
+  },
+  "translations": {
+    "title": "Titel",
+    "source": "Bron",
+    "target": "Doel",
+    "status": "Status",
+    "progress": "Voortgang",
+    "completed": "Voltooid"
+  },
+  "common": {
+    "page": "pagina",
+    "of": "van",
+    "items": "items",
+    "sortByAdded": "Sorteren op Toegevoegd",
+    "sortByCompleted": "Sorteren op Voltooid",
+    "sortByTitle": "Sorteren op Titel",
+    "statusInProgress": "Bezig",
+    "statusPending": "In afwachting",
+    "statusCompleted": "Voltooid",
+    "statusFailed": "Mislukt",
+    "statusCancelled": "Geannuleerd",
+    "updateAvailable": "Update {version} is beschikbaar",
+    "currentVersion": "Versie: {version} beta",
+    "enabled": "Ingeschakeld",
+    "disabled": "Uitgeschakeld",
+    "saved": "opgeslagen"
+  },
+  "settings": {
+    "integrations": {
+      "title": "Integraties",
+      "description": "Configureer de instellingen voor Radarr en Sonarr integraties.",
+      "radarrHeader": "Radarr Instellingen:",
+      "radarrAddress": "Adres",
+      "radarrAddressError": "Voer een geldige URL in (bijv. http://localhost:3000 of https://api.example.com)",
+      "radarrApiKey": "API-sleutel",
+      "radarrApiKeyError": "API-sleutel moet {minLength} tekens bevatten",
+      "radarrSyncButton": "Radarr synchroniseren",
+      "radarrUpdating": "updating",
+      "sonarrHeader": "Sonarr Instellingen:",
+      "sonarrAddress": "Adres",
+      "sonarrAddressError": "Voer een geldige URL in (bijv. http://localhost:3000 of https://api.example.com)",
+      "sonarrApiKey": "API-sleutel",
+      "sonarrApiKeyError": "API-sleutel moet {minLength} tekens bevatten",
+      "sonarrSyncButton": "Sonarr synchroniseren",
+      "sonarrUpdating": "updating"
+    },
+    "services": {
+      "title": "Diensten",
+      "description": "Configureer de vertaalservice voor ondertitelingslokalisatie.",
+      "serviceSelect": "Selecteer vertaalservice:"
+    },
+    "language": {
+      "title": "Bron- en doelvertaling",
+      "description": "Selecteer een bron- en doeltaal. Zowel de bron als de doel worden gebruikt om vertalingen aan te vragen.",
+      "selectSourceDescription": "Selecteer brontalen:",
+      "selectTargetDescription": "Selecteer doeltalen:",
+      "selectOrSearchLanguagePlaceholder": "Selecteer of zoek taal",
+      "languageSelectPlaceholder": "Selecteer taal...",
+      "languageSelectTargetNotification": "Selecteer eerst een brontaal."
+    },
+    "automation": {
+      "title": "Automatisering",
+      "description": "Stel automatisering in. Let op dat als automatisering is geïmplementeerd, je ook de benodigde",
+      "descriptionLink": "diensten",
+      "indexingHeader": "Indexeringsschema:",
+      "indexingMoviesLabel": "Stel filmindexer in:",
+      "indexingTvShowLabel": "Stel tv-show indexer in:",
+      "automatedTranslationHeader": "Geautomatiseerde vertaling:",
+      "translationScheduleLabel": "Stel vertaal schema in:",
+      "limitsHeader": "Limieten:",
+      "scheduleLimitLabel": "Beperk het aantal vertalingen per schema"
+    },
+    "cronOptions": {
+      "everyFifteenMinutes": "Elke 15 minuten",
+      "everyThirtyMinutes": "Elke 30 minuten",
+      "hourly": "Elke uur",
+      "everyTwoHours": "Elke 2 uur",
+      "everyFourHours": "Elke 4 uur",
+      "everySixHours": "Elke 6 uur",
+      "twiceADay": "Twee keer per dag (Elke 12 uur)",
+      "dailyAtMidnight": "Dagelijks om middernacht",
+      "dailyAtFour": "Dagelijks om 04:00",
+      "weeklyOnSundayAtMidnight": "Wekelijks op zondag om middernacht"
+    }
+  }
+}

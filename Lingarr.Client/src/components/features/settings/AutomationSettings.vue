@@ -1,46 +1,50 @@
 ﻿<template>
-    <CardComponent title="Automation">
+    <CardComponent :title="translate('settings.automation.title')">
         <template #description>
-            Set up automation. Note that if automation is implemented, you also need to configure
-            the necessary
-            <a
-                class="cursor-pointer underline"
-                @click="router.push({ name: 'services-settings' })">
-                services
+            {{ translate('settings.automation.description') }}
+
+            <a class="cursor-pointer underline" @click="router.push({ name: 'services-settings' })">
+                {{ translate('settings.automation.descriptionLink') }}
             </a>
             .
         </template>
         <template #content>
             <SaveNotification ref="saveNotification" />
             <div class="flex flex-col space-y-2 pb-4">
-                <span class="font-semibold">Indexing schedule:</span>
+                <span class="font-semibold">
+                    {{ translate('settings.automation.indexingHeader') }}
+                </span>
                 <SelectComponent
                     v-model:selected="movieSchedule"
-                    label="Set movie indexer:"
+                    :label="translate('settings.automation.indexingMoviesLabel')"
                     :options="cronOptions" />
                 <SelectComponent
                     v-model:selected="showSchedule"
-                    label="Set show indexer:"
+                    :label="translate('settings.automation.indexingTvShowLabel')"
                     :options="cronOptions" />
             </div>
             <div class="flex flex-col space-y-2 pb-4">
-                <span class="font-semibold">Automated translation:</span>
+                <span class="font-semibold">
+                    {{ translate('settings.automation.automatedTranslationHeader') }}
+                </span>
                 <ToggleButton v-model="automationEnabled" />
             </div>
             <div class="flex flex-col space-y-2 pb-4">
                 <SelectComponent
                     v-model:selected="translationSchedule"
-                    label="Set translation schedule:"
+                    :label="translate('settings.automation.translationScheduleLabel')"
                     :options="cronOptions" />
             </div>
             <div class="flex flex-col space-y-2">
-                <span class="font-semibold">Limits:</span>
+                <span class="font-semibold">
+                    {{ translate('settings.automation.limitsHeader') }}
+                </span>
                 <InputComponent
                     v-model="maxTranslationsPerRun"
                     input-type="number"
                     validation-type="number"
                     :min-length="0"
-                    label="Limit the amount of translations per schedule"
+                    :label="translate('settings.automation.scheduleLimitLabel')"
                     @update:validation="(val) => (maxTranslationsPerRunIsValid = val)" />
             </div>
         </template>
@@ -57,11 +61,13 @@ import InputComponent from '@/components/common/InputComponent.vue'
 import SelectComponent from '@/components/common/SelectComponent.vue'
 import ToggleButton from '@/components/common/ToggleButton.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
+import { useI18n } from '@/plugins/i18n'
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const maxTranslationsPerRunIsValid = ref(false)
 const settingsStore = useSettingStore()
 const router = useRouter()
+const { translate } = useI18n()
 
 const automationEnabled: WritableComputedRef<string> = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.AUTOMATION_ENABLED) as string,
@@ -102,43 +108,43 @@ const maxTranslationsPerRun: WritableComputedRef<string> = computed({
 const cronOptions = [
     {
         value: '*/15 * * * *',
-        label: 'Every 15 minutes'
+        label: translate('settings.cronOptions.everyFifteenMinutes')
     },
     {
         value: '*/30 * * * *',
-        label: 'Every 30 minutes'
+        label: translate('settings.cronOptions.everyThirtyMinutes')
     },
     {
         value: '0 * * * *',
-        label: 'Hourly'
+        label: translate('settings.cronOptions.hourly')
     },
     {
         value: '0 */2 * * *',
-        label: 'Every 2 hours'
+        label: translate('settings.cronOptions.everyTwoHours')
     },
     {
         value: '0 */4 * * *',
-        label: 'Every 4 hours'
+        label: translate('settings.cronOptions.everyFourHours')
     },
     {
         value: '0 */6 * * *',
-        label: 'Every 6 hours'
+        label: translate('settings.cronOptions.everySixHours')
     },
     {
         value: '0 */12 * * *',
-        label: 'Twice daily (Every 12 hours)'
+        label: translate('settings.cronOptions.twiceADay')
     },
     {
         value: '0 0 * * *',
-        label: 'Daily at midnight'
+        label: translate('settings.cronOptions.dailyAtMidnight')
     },
     {
         value: '0 4 * * *',
-        label: 'Daily at 04:00'
+        label: translate('settings.cronOptions.dailyAtFour')
     },
     {
         value: '0 0 * * SUN',
-        label: 'Weekly on Sunday at midnight'
+        label: translate('settings.cronOptions.weeklyOnSundayAtMidnight')
     }
 ]
 </script>

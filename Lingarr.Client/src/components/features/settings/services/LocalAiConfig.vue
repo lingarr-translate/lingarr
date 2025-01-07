@@ -3,6 +3,8 @@
         <p class="text-xs">
             Local AI addresses usually consist of the following path
             <span class="rounded-md bg-primary p-1">/v1/chat/completions</span>
+            or
+            <span class="my-1 inline-block rounded-md bg-primary p-1">/api/generate</span>
             and should follow the
             <a
                 href="https://platform.openai.com/docs/api-reference/chat/create"

@@ -55,10 +55,18 @@
                     <BadgeComponent
                         v-if="instanceStore.getVersion.newVersion"
                         classes="text-white border-green-200 bg-green-500/50">
-                        Update {{ instanceStore.getVersion.latestVersion }} is available
+                        {{
+                            translate('common.updateAvailable').format({
+                                version: instanceStore.getVersion.latestVersion
+                            })
+                        }}
                     </BadgeComponent>
                     <BadgeComponent v-else>
-                        Version: {{ instanceStore.getVersion.currentVersion }} beta
+                        {{
+                            translate('common.currentVersion').format({
+                                version: instanceStore.getVersion.currentVersion
+                            })
+                        }}
                     </BadgeComponent>
                 </div>
             </div>
@@ -69,6 +77,7 @@
 <script setup lang="ts">
 import { computed, ComputedRef } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from '@/plugins/i18n'
 import { useInstanceStore } from '@/store/instance'
 import { useTranslationRequestStore } from '@/store/translationRequest'
 import { MenuItem } from '@/ts'
@@ -84,6 +93,7 @@ const translationRequestStore = useTranslationRequestStore()
 const instanceStore = useInstanceStore()
 const router = useRouter()
 const route = useRoute()
+const { translate } = useI18n()
 
 const activeRequests: ComputedRef<number> = computed(
     () => translationRequestStore.getActiveTranslationRequests
@@ -95,12 +105,17 @@ const isOpen = computed({
 })
 
 const menuItems: MenuItem[] = [
-    { label: 'Dashboard', icon: HomeIcon, route: 'dashboard', children: [] },
-    { label: 'Movies', icon: MovieIcon, route: 'movies', children: [] },
-    { label: 'TV Shows', icon: ShowIcon, route: 'shows', children: [] },
-    { label: 'Translations', icon: LanguageIcon, route: 'translations', children: [] },
+    { label: translate('navigation.dashboard'), icon: HomeIcon, route: 'dashboard', children: [] },
+    { label: translate('navigation.movies'), icon: MovieIcon, route: 'movies', children: [] },
+    { label: translate('navigation.tvShows'), icon: ShowIcon, route: 'shows', children: [] },
     {
-        label: 'Settings',
+        label: translate('navigation.translations'),
+        icon: LanguageIcon,
+        route: 'translations',
+        children: []
+    },
+    {
+        label: translate('navigation.settings'),
         icon: SettingIcon,
         route: 'integration-settings',
         children: [

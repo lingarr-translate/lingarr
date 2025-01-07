@@ -69,18 +69,19 @@ import CardComponent from '@/components/common/CardComponent.vue'
 
 const changelog = ref([
     {
+        date: '2025',
+        version: '0.9.5',
+        title: '',
+        changes: ['']
+    },
+    {
         date: '2024-10-30',
         version: '0.9.4',
         title: 'Enhanced Notifications and Translation History',
         changes: [
             'Changed volume mapping and removed `/app/media` which is a `BREAKING CHANGE`  make sure you map the new volumes and synchronise your libraries via the settings.',
             'Added a new notification system which displays automated and manually instantiated translations.',
-            'Improved automated volume mapping and added support for manual in-application mapping.',
-            'Improved services, made them thread-safe, and ensured one-time initialization of service dependencies.',
-            'Added language definition per service, languages now need to be reconfigured when selecting a new service to match the definition.',
-            'Sonarr and Radarr images are now optional.',
-            'Set input fields to password on API key fields.',
-            'Numerous other bug fixes and improvements.'
+            '... read more on GitHub'
         ]
     }
 ])
