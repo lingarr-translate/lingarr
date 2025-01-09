@@ -101,10 +101,7 @@
                                         {{ episode.title }}
                                     </div>
                                     <div
-                                        v-if="
-                                            episode?.fileName &&
-                                            getSubtitle(episode.fileName).length
-                                        "
+                                        v-if="episode?.fileName"
                                         class="col-span-4 flex flex-wrap items-center gap-2 md:col-span-5">
                                         <ContextMenu
                                             v-for="(subtitle, jndex) in getSubtitle(
@@ -116,6 +113,11 @@
                                             :subtitle="subtitle">
                                             <BadgeComponent>
                                                 {{ subtitle.language.toUpperCase() }}
+                                                <span
+                                                    v-if="subtitle.caption"
+                                                    class="text-primary-content/50">
+                                                    - {{ subtitle.caption.toUpperCase() }}
+                                                </span>
                                             </BadgeComponent>
                                         </ContextMenu>
                                     </div>
@@ -199,8 +201,9 @@ async function collectSubtitles() {
 }
 
 const getSubtitle = (fileName: string | null) => {
+    if (!fileName) return null
     return subtitles.value
-        .filter((subtitle: ISubtitle) => subtitle.fileName === fileName)
+        .filter((subtitle: ISubtitle) => subtitle.fileName.includes(fileName))
         .slice()
         .sort((a, b) => a.language.localeCompare(b.language))
 }

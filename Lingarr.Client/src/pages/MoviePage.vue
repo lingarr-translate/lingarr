@@ -42,6 +42,9 @@
                                 @update:toggle="toggleMovie(item)">
                                 <BadgeComponent>
                                     {{ subtitle.language.toUpperCase() }}
+                                    <span v-if="subtitle.caption" class="text-primary-content/50">
+                                        - {{ subtitle.caption.toUpperCase() }}
+                                    </span>
                                 </BadgeComponent>
                             </ContextMenu>
                         </div>
