@@ -35,7 +35,9 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     }
 
     /// <inheritdoc />
-    public async Task<bool> ProcessMedia(IMedia media, MediaType mediaType)
+    public async Task<bool> ProcessMedia(
+        IMedia media, 
+        MediaType mediaType)
     {
         var subtitles = await _subtitleService.GetAllSubtitles(media.Path);
         if (subtitles.Count == 0)
@@ -60,7 +62,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     /// <summary>
     /// Processes subtitle files for translation based on configured languages.
     /// </summary>
-    /// <param name="subtitleFiles">List of subtitle files to process.</param>
+    /// <param name="subtitles">List of subtitle files to process.</param>
     /// <returns>True if new translation requests were created, false otherwise.</returns>
     private async Task<bool> ProcessSubtitles(List<Subtitles> subtitles)
     {
@@ -127,7 +129,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     /// <summary>
     /// Creates a hash of the current subtitle file state.
     /// </summary>
-    /// <param name="files">List of subtitle file paths to include in the hash.</param>
+    /// <param name="subtitles">List of subtitle file paths to include in the hash.</param>
     /// <returns>A Base64 encoded string representing the hash of the current subtitle state.</returns>
     private string CreateHash(List<Subtitles> subtitles)
     {
@@ -142,7 +144,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     /// <summary>
     /// Extracts language codes from subtitle file names.
     /// </summary>
-    /// <param name="subtitleFiles">List of subtitle file paths to process.</param>
+    /// <param name="subtitles">List of subtitle file paths to process.</param>
     /// <returns>A HashSet of valid language codes found in the file names.</returns>
     private HashSet<string> ExtractLanguageCodes(List<Subtitles> subtitles)
     {

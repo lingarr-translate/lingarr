@@ -17,12 +17,12 @@ public class TranslationRequestService : ITranslationRequestService
 {
     private readonly LingarrDbContext _dbContext;
     private readonly IBackgroundJobClient _backgroundJobClient;
-    private readonly IHubContext<TranslationRequestsProgressHub> _hubContext;
+    private readonly IHubContext<TranslationRequestsHub> _hubContext;
 
     public TranslationRequestService(
         LingarrDbContext dbContext,
         IBackgroundJobClient backgroundJobClient,
-        IHubContext<TranslationRequestsProgressHub> hubContext)
+        IHubContext<TranslationRequestsHub> hubContext)
     {
         _dbContext = dbContext;
         _hubContext = hubContext;
@@ -49,7 +49,7 @@ public class TranslationRequestService : ITranslationRequestService
         await _dbContext.SaveChangesAsync();
 
         var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
-            job.Execute(null, translationRequest, CancellationToken.None)
+            job.Execute(translationRequest, new CancellationToken())
         );
         await UpdateTranslationRequest(translationRequest, jobId, TranslationStatus.Pending);
 
@@ -91,19 +91,10 @@ public class TranslationRequestService : ITranslationRequestService
         {
             return null;
         }
-
-        translationRequest.Status = TranslationStatus.Cancelled;
-        translationRequest.CompletedAt = DateTime.UtcNow;
-        await _dbContext.SaveChangesAsync();
-        
-        if (translationRequest?.JobId == null)
-        {
-            return $"Translation request {cancelRequest.Id} has been cancelled without cancelling the job.";
-        }
         
         _backgroundJobClient.Delete(translationRequest.JobId);
+        
         return $"Cancelled Translation request with id {cancelRequest.Id} has been cancelled";
-
     }
     
     /// <inheritdoc />

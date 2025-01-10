@@ -35,7 +35,8 @@ export interface ITranslationRequest {
     translatedSubtitle?: string
     mediaType: MediaType
     status: TranslationStatus
-    completedAt?: Date | null
+    progress: number
+    completedAt?: string | null
 }
 
 export interface IRequestProgress {
@@ -44,10 +45,8 @@ export interface IRequestProgress {
     status: TranslationStatus
     progress: number
     completed: boolean
-    completedAt?: Date | null
+    completedAt?: string | null
 }
-
-export type IProgressMap = Map<number, IRequestProgress>
 
 export interface IImage {
     id: number
@@ -94,7 +93,7 @@ export type MediaType = (typeof MEDIA_TYPE)[keyof typeof MEDIA_TYPE]
 
 export const TRANSLATION_STATUS = {
     PENDING: 'Pending',
-    INPROGRESS: 'In Progress',
+    INPROGRESS: 'InProgress',
     COMPLETED: 'Completed',
     FAILED: 'Failed',
     CANCELLED: 'Cancelled'

@@ -3,4 +3,5 @@
     language: string
     fileName: string
     format: string
+    caption: string
 }
