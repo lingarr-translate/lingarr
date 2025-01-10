@@ -18,7 +18,6 @@ export const useTranslationRequestStore = defineStore({
             pageNumber: 0,
             items: []
         },
-        progressMap: new Map<number, IRequestProgress>(),
         filter: {
             searchQuery: '',
             sortBy: 'CreatedAt',
@@ -32,7 +31,6 @@ export const useTranslationRequestStore = defineStore({
         getTranslationRequests(): IPagedResult<ITranslationRequest> {
             return this.translationRequests
         },
-        getProgressMap: (state: IUseTranslationRequestStore) => state.progressMap,
         getFilter: (state: IUseTranslationRequestStore): IFilter => state.filter
     },
     actions: {
@@ -60,11 +58,21 @@ export const useTranslationRequestStore = defineStore({
         },
         async cancel(translationRequest: ITranslationRequest) {
             await services.translationRequest.cancel<ITranslationRequest>(translationRequest)
-            await this.fetch()
-            await this.getActiveCount()
         },
         async updateProgress(requestProgress: IRequestProgress) {
-            this.progressMap.set(requestProgress.id, requestProgress)
+            this.translationRequests.items = this.translationRequests.items.map(
+                (request: ITranslationRequest) => {
+                    if (request.id === requestProgress.id) {
+                        return {
+                            ...request,
+                            status: requestProgress.status,
+                            progress: requestProgress.progress,
+                            completedAt: requestProgress.completedAt
+                        }
+                    }
+                    return request
+                }
+            )
         }
     }
 })

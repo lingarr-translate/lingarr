@@ -97,7 +97,7 @@ public class SubtitleTranslationService
             if (progress != _lastProgression)
             {
                 _logger.LogDebug($"Progress: {progress}% (Subtitle {iteration} of {totalSubtitles})");
-                await _progressService.Emit(translationRequest, progress, false);
+                await _progressService.Emit(translationRequest, progress);
                 _lastProgression = progress;
             }
         }

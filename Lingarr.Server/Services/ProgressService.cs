@@ -10,12 +10,12 @@ namespace Lingarr.Server.Services;
 
 public class ProgressService : IProgressService
 {
-    private readonly IHubContext<TranslationRequestsProgressHub> _hubContext;
+    private readonly IHubContext<TranslationRequestsHub> _hubContext;
     private readonly LingarrDbContext _dbContext;
     private readonly ITranslationRequestService _translationRequestService;
 
     public ProgressService(
-        IHubContext<TranslationRequestsProgressHub> hubContext, 
+        IHubContext<TranslationRequestsHub> hubContext, 
         LingarrDbContext dbContext,
         ITranslationRequestService translationRequestService)
     {
@@ -25,13 +25,11 @@ public class ProgressService : IProgressService
     }
 
     /// <inheritdoc />
-    public async Task Emit(TranslationRequest translationRequest, int progress, bool completed)
+    public async Task Emit(TranslationRequest translationRequest, int progress)
     {
-        if (completed)
+        if (translationRequest.Status == TranslationStatus.Cancelled || 
+            translationRequest.Status == TranslationStatus.Completed)
         {
-            translationRequest.CompletedAt = DateTime.UtcNow;
-            translationRequest.Status = TranslationStatus.Completed;
-            await _dbContext.SaveChangesAsync();
             await _translationRequestService.UpdateActiveCount();
         }
         
@@ -41,8 +39,7 @@ public class ProgressService : IProgressService
             JobId = translationRequest.JobId,
             CompletedAt = translationRequest.CompletedAt,
             Status = translationRequest.Status.GetDisplayName(),
-            Progress = progress,
-            Completed = completed
+            Progress = progress
         });
     }
 }

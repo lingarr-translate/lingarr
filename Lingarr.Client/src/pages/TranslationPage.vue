@@ -44,8 +44,7 @@
                     class="rounded-lg py-4 shadow md:grid md:grid-cols-12 md:rounded-none md:border-b md:border-accent md:bg-transparent md:p-0 md:shadow-none">
                     <div class="deletable float-right h-5 w-5 md:hidden">
                         <TranslationDeletable
-                            :item="item"
-                            :progress-map="requestProgressMap"
+                            :translation-status="item.status"
                             @toggle:remove="remove(item)" />
                     </div>
                     <div class="mb-2 md:col-span-3 md:mb-0 md:px-4 md:py-2">
@@ -77,29 +76,27 @@
                     </div>
                     <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
                         <span class="font-bold md:hidden">Status:&nbsp;</span>
-                        <TranslationStatus :item="item" :progress-map="requestProgressMap" />
+                        <TranslationStatus :translation-status="item.status" />
                     </div>
                     <div class="mb-2 flex items-center md:col-span-4 md:mb-0 md:px-4 md:py-2">
                         <div
-                            v-if="
-                                item?.status !== TRANSLATION_STATUS.COMPLETED &&
-                                item?.status !== TRANSLATION_STATUS.CANCELLED
-                            "
+                            v-if="item.status === TRANSLATION_STATUS.INPROGRESS && item.progress"
                             class="w-full">
                             <span class="mr-2 font-bold md:hidden">Progress:&nbsp;</span>
-                            <TranslationProgress :id="item.id" :progress-map="requestProgressMap" />
+                            <TranslationProgress :progress="item.progress" />
                         </div>
                     </div>
                     <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
                         <span class="font-bold md:hidden">Completed:&nbsp;</span>
-                        <TranslationCompletedAt :item="item" :progress-map="requestProgressMap" />
+                        <TranslationCompletedAt
+                            v-if="item.completedAt"
+                            :completed-at="item.completedAt" />
                     </div>
                     <div
                         class="hidden items-center justify-between md:col-span-1 md:flex md:justify-end md:px-4 md:py-2">
                         <div class="flex h-5 w-5 items-center justify-center">
                             <TranslationDeletable
-                                :item="item"
-                                :progress-map="requestProgressMap"
+                                :translation-status="item.status"
                                 @toggle:remove="remove(item)" />
                         </div>
                     </div>
@@ -115,11 +112,11 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, ComputedRef, computed } from 'vue'
+import { ref, onMounted, onUnmounted, ComputedRef, computed } from 'vue'
 import {
+    Hub,
     IFilter,
     IPagedResult,
-    IProgressMap,
     ITranslationRequest,
     MEDIA_TYPE,
     TRANSLATION_STATUS
@@ -139,14 +136,11 @@ import BadgeComponent from '@/components/common/BadgeComponent.vue'
 import PageLayout from '@/components/layout/PageLayout.vue'
 
 const signalR = useSignalR()
+const hubConnection = ref<Hub>()
 const translationRequestStore = useTranslationRequestStore()
 
 const translationRequests: ComputedRef<IPagedResult<ITranslationRequest>> = computed(
     () => translationRequestStore.getTranslationRequests
-)
-
-const requestProgressMap: ComputedRef<IProgressMap> = computed(
-    () => translationRequestStore.progressMap
 )
 
 const filter: ComputedRef<IFilter> = computed({
@@ -162,19 +156,16 @@ function remove(translationRequest: ITranslationRequest) {
 
 onMounted(async () => {
     await translationRequestStore.fetch()
-    const translationRequest = await signalR.connect(
+    hubConnection.value = await signalR.connect(
         'TranslationRequests',
         '/signalr/TranslationRequests'
     )
 
-    await translationRequest.joinGroup({ group: 'TranslationRequests' })
-    translationRequest.on('RequestProgress', translationRequestStore.updateProgress)
+    await hubConnection.value.joinGroup({ group: 'TranslationRequests' })
+    hubConnection.value.on('RequestProgress', translationRequestStore.updateProgress)
 })
+
 onUnmounted(async () => {
-    const translationRequest = await signalR.connect(
-        'TranslationRequests',
-        '/signalr/TranslationRequest'
-    )
-    translationRequest.off('RequestProgress', translationRequestStore.updateProgress)
+    hubConnection.value?.off('RequestProgress', translationRequestStore.updateProgress)
 })
 </script>

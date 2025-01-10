@@ -1,8 +1,7 @@
-﻿import { IFilter, IPagedResult, IProgressMap, ITranslationRequest } from '@/ts'
+﻿import { IFilter, IPagedResult, ITranslationRequest } from '@/ts'
 
 export interface IUseTranslationRequestStore {
     activeTranslationRequests: number
     translationRequests: IPagedResult<ITranslationRequest>
-    progressMap: IProgressMap
     filter: IFilter
 }

@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Lingarr.Server.Hubs;
 
-public class TranslationRequestsProgressHub : Hub
+public class TranslationRequestsHub : Hub
 {
     public async Task JoinGroup(GroupRequest request)
     {
