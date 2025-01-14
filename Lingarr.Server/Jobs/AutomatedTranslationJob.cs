@@ -84,16 +84,28 @@ public class AutomatedTranslationJob
         int translationsInitiated = 0;
         foreach (var movie in movies)
         {
-            if (translationsInitiated >= _maxTranslationsPerRun)
+            try 
             {
-                _logger.LogInformation("Max translations per run reached. Stopping translation process.");
-                break;
-            }
+                if (translationsInitiated >= _maxTranslationsPerRun)
+                {
+                    _logger.LogInformation("Max translations per run reached. Stopping translation process.");
+                    break;
+                }
 
-            var isProcessed = await _mediaSubtitleProcessor.ProcessMedia(movie, MediaType.Movie);
-            if (isProcessed)
+                var isProcessed = await _mediaSubtitleProcessor.ProcessMedia(movie, MediaType.Movie);
+                if (isProcessed)
+                {
+                    translationsInitiated++;
+                }
+            }
+            catch (DirectoryNotFoundException)
             {
-                translationsInitiated++;
+                _logger.LogWarning("Directory not found at path: |Red|{Path}|/Red|, skipping subtitle",  movie.Path);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing subtitles for movie at path: |Red|{Path}|/Red|, skipping subtitle", 
+                    movie.Path);
             }
         }
     }
@@ -115,16 +127,28 @@ public class AutomatedTranslationJob
         int translationsInitiated = 0;
         foreach (var episode in episodes)
         {
-            if (translationsInitiated >= _maxTranslationsPerRun)
+            try 
             {
-                _logger.LogInformation("Max translations per run reached. Stopping translation process.");
-                break;
-            }
+                if (translationsInitiated >= _maxTranslationsPerRun)
+                {
+                    _logger.LogInformation("Max translations per run reached. Stopping translation process.");
+                    break;
+                }
 
-            var isProcessed = await _mediaSubtitleProcessor.ProcessMedia(episode, MediaType.Episode);
-            if (isProcessed)
+                var isProcessed = await _mediaSubtitleProcessor.ProcessMedia(episode, MediaType.Episode);
+                if (isProcessed)
+                {
+                    translationsInitiated++;
+                }
+            }
+            catch (DirectoryNotFoundException)
             {
-                translationsInitiated++;
+                _logger.LogWarning("Directory not found for show at path: |Red|{Path}|/Red|, skipping episode", episode.Path);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing subtitles for episode at path: |Red|{Path}|/Red|, skipping episode", 
+                    episode.Path);
             }
         }
     }
