@@ -140,6 +140,12 @@ feature requests, or code contributions, please feel free to help out. Visit the
 Icons: [Lucide](https://lucide.dev/icons)  
 Subtitle Parsing: [AlexPoint](https://github.com/AlexPoint/SubtitlesParser)    
 Translation Services: [libretranslate](https://libretranslate.com)  
-GTranslate: [GTranslate](https://github.com/d4n3436/GTranslate)  
+GTranslate: [GTranslate](https://github.com/d4n3436/GTranslate)
+
+#### 🙏 Special thanks:
+For supporting open source:  
+[selfh.st by Ethan](https://selfh.st/?ref=lingarr)  
+[r/selfhosted](https://www.reddit.com/r/selfhosted/)
+
 For helping to squash a big bug:  
-[HomerSimpson](https://github.com/HomerSimpson)  
+[FrankieBBBB](https://github.com/FrankieBBBB)  
