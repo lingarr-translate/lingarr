@@ -12,8 +12,10 @@
     "dependencies": {
         "@microsoft/signalr": "^8.0.7",
         "axios": "^1.7.7",
+        "chart.js": "^4.4.7",
         "pinia": "^2.2.2",
         "vue": "^3.5.7",
+        "vue-chartjs": "^5.3.2",
         "vue-router": "^4.4.5"
     },
     "devDependencies": {

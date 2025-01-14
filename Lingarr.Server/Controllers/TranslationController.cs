@@ -1,18 +1,23 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using Lingarr.Server.Interfaces.Services;
 
 namespace Lingarr.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class TranslationsController : ControllerBase
+public class TranslationController : ControllerBase
 {
-    private readonly ILogger<TranslationsController> _logger;
+    private readonly ISettingService _settingService;
+    private readonly ILogger<TranslationController> _logger;
     private const string ConfigPath = "/app/config/translations";
     private const string DefaultPath = "/app/Statics/Translations";
 
-    public TranslationsController(ILogger<TranslationsController> logger)
+    public TranslationController(
+        ISettingService settingService,
+        ILogger<TranslationController> logger)
     {
+        _settingService = settingService;
         _logger = logger;
     }
 
@@ -36,11 +41,12 @@ public class TranslationsController : ControllerBase
         }
     }
 
-    [HttpGet("{locale}")]
-    public ActionResult GetTranslations(string locale)
+    [HttpGet]
+    public async Task<ActionResult> GetTranslations()
     {
         try
         {
+            var locale = await _settingService.GetSetting("locale") ?? "en";
             var filePath = Path.Combine(ConfigPath, $"{locale}.json");
             
             // If file doesn't exist in config, try default path
@@ -55,38 +61,18 @@ public class TranslationsController : ControllerBase
 
             var jsonContent = System.IO.File.ReadAllText(filePath);
             var translations = JsonSerializer.Deserialize<Dictionary<string, object>>(jsonContent);
-            return Ok(translations);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving translations for locale {Locale}", locale);
-            return StatusCode(500, $"Error retrieving translations for locale '{locale}'");
-        }
-    }
-
-    [HttpPut("{locale}")]
-    public ActionResult UpdateTranslations(string locale, [FromBody] Dictionary<string, object> translations)
-    {
-        try
-        {
-            if (!Directory.Exists(ConfigPath))
-            {
-                Directory.CreateDirectory(ConfigPath);
-            }
-
-            var filePath = Path.Combine(ConfigPath, $"{locale}.json");
-            var jsonContent = JsonSerializer.Serialize(translations, new JsonSerializerOptions 
-            { 
-                WriteIndented = true 
-            });
             
-            System.IO.File.WriteAllText(filePath, jsonContent);
-            return Ok();
+            var response = new {
+                locale = locale,
+                messages = translations
+            };
+            
+            return Ok(response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating translations for locale {Locale}", locale);
-            return StatusCode(500, $"Error updating translations for locale '{locale}'");
+            _logger.LogError(ex, "Error retrieving translations");
+            return StatusCode(500, "Error retrieving translations");
         }
     }
 }

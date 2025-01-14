@@ -4,7 +4,6 @@ import { createPinia } from 'pinia'
 import { useTranslationRequestStore } from '@/store/translationRequest'
 import { useInstanceStore } from '@/store/instance'
 import { useSettingStore } from '@/store/setting'
-import { useScheduleStore } from '@/store/schedule'
 import { createI18nPlugin } from '@/plugins/i18n'
 
 import router from '@/router'
@@ -36,8 +35,6 @@ new Promise((resolve) => resolve(true))
     .then(async () => {
         await useSettingStore().applySettingsOnLoad()
         await useInstanceStore().applyVersionOnLoad()
-        await useInstanceStore().applyThemeOnLoad()
-        useScheduleStore().loadRunningJobs()
         await useTranslationRequestStore().getActiveCount()
     })
     .finally(() => {

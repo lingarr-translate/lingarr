@@ -39,21 +39,25 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         IMedia media, 
         MediaType mediaType)
     {
-        var subtitles = await _subtitleService.GetAllSubtitles(media.Path);
-        if (subtitles.Count == 0)
+        var allSubtitles = await _subtitleService.GetAllSubtitles(media.Path);
+        var matchingSubtitles = allSubtitles
+            .Where(s => Path.GetFileNameWithoutExtension(s.FileName) == media.FileName)
+            .ToList();
+
+        if (!matchingSubtitles.Any())
         {
             return false;
         }
 
         _media = media;
         _mediaType = mediaType;
-        _hash = CreateHash(subtitles);
+        _hash = CreateHash(matchingSubtitles);
 
 
         if (string.IsNullOrEmpty(media.MediaHash) || media.MediaHash != _hash)
         {
             _logger.LogInformation("Initiating subtitle processing.");
-            return await ProcessSubtitles(subtitles);
+            return await ProcessSubtitles(matchingSubtitles);
         }
 
         return false;
@@ -87,7 +91,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             {
                 foreach (var targetLanguage in targetLanguages.Except(existingLanguages))
                 {
-                    var translationId = await _translationRequestService.CreateRequest(new TranslateAbleSubtitle
+                    await _translationRequestService.CreateRequest(new TranslateAbleSubtitle
                     {
                         MediaId = _media.Id,
                         MediaType = _mediaType,
@@ -96,9 +100,11 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
                         SourceLanguage = sourceLanguage,
                         SubtitleFormat = sourceSubtitle.Format
                     });
-                    _logger.LogInformation("Initiating translation for {subtitleFile} under {translationId}",
-                        sourceSubtitle.Path,
-                        translationId);
+                    _logger.LogInformation(
+                        "Initiating translation from |Orange|{sourceLanguage}|/Orange| to |Orange|{targetLanguage}|/Orange| for |Green|{subtitleFile}|/Green|",
+                        sourceLanguage,
+                        targetLanguage,
+                        sourceSubtitle.Path);
                 }
 
                 await UpdateHash();

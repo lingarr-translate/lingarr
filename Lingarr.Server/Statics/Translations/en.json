@@ -7,7 +7,24 @@
     "settings": "Settings",
     "integrations": "Integrations",
     "services": "Services",
-    "automation": "Automation"
+    "automation": "Automation",
+    "tasks": "Tasks"
+  },
+  "statistics": {
+    "notAvailable": "No statistics available",
+    "translationServices": "Translation Services",
+    "availableSubtitles": "Available Subtitles",
+    "failedFetch": "Failed to fetch statistics",
+    "mediaOverview": "Media Overview",
+    "movies": "Movies",
+    "tvShows": "TV Shows",
+    "translationActivity": "Translation Activity",
+    "linesTranslated": "Lines Translated",
+    "filesProcessed": "Files Processed",
+    "charactersTranslated": "Characters Translated",
+    "languageStatistics": "Language Statistics",
+    "translated": "Translated",
+    "noDataAvailable": "No data available"
   },
   "movies": {
     "title": "Title",
@@ -30,6 +47,21 @@
     "status": "Status",
     "progress": "Progress",
     "completed": "Completed"
+  },
+  "schedule": {
+    "jobName": "Job Name",
+    "state": "State",
+    "lastExecution": "Last Execution",
+    "nextExecution": "Next Execution",
+    "actions": "Actions",
+    "run": "Run",
+    "enqueued": "Enqueued",
+    "planned": "Planned",
+    "scheduled": "Scheduled",
+    "processing": "Processing",
+    "succeeded": "Succeeded",
+    "cancelled": "Cancelled",
+    "failed": "Failed"
   },
   "common": {
     "page": "page",

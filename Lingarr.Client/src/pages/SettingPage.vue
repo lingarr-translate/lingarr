@@ -41,23 +41,33 @@ import PageLayout from '@/components/layout/PageLayout.vue'
 import IntegrationIcon from '@/components/icons/IntegrationIcon.vue'
 import SettingIcon from '@/components/icons/SettingIcon.vue'
 import AutomationIcon from '@/components/icons/AutomationIcon.vue'
+import TaskIcon from '@/components/icons/TaskIcon.vue'
+import { MenuItem } from '@/ts'
 
 const router = useRouter()
 const route = useRoute()
 const { translate } = useI18n()
 
-const menuItems = [
+const menuItems: MenuItem[] = [
     {
         label: translate('navigation.integrations'),
         icon: IntegrationIcon,
-        route: 'integration-settings'
+        route: 'integration-settings',
+        children: []
     },
-    { label: translate('navigation.services'), icon: SettingIcon, route: 'services-settings' },
+    {
+        label: translate('navigation.services'),
+        icon: SettingIcon,
+        route: 'services-settings',
+        children: []
+    },
     {
         label: translate('navigation.automation'),
         icon: AutomationIcon,
-        route: 'automation-settings'
-    }
+        route: 'automation-settings',
+        children: []
+    },
+    { label: translate('navigation.tasks'), icon: TaskIcon, route: 'schedule', children: [] }
 ]
 
 function navigate(route: string) {

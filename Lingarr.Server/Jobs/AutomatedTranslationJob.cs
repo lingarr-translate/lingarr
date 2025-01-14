@@ -2,7 +2,9 @@
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Enum;
+using Lingarr.Server.Filters;
 using Lingarr.Server.Interfaces.Services;
+using Microsoft.OpenApi.Extensions;
 
 namespace Lingarr.Server.Jobs;
 
@@ -12,16 +14,20 @@ public class AutomatedTranslationJob
     private readonly ILogger<AutomatedTranslationJob> _logger;
     private readonly IMediaSubtitleProcessor _mediaSubtitleProcessor;
     private readonly ISettingService _settingService;
+    private readonly IScheduleService _scheduleService;
     private int _maxTranslationsPerRun = 10;
 
-    public AutomatedTranslationJob(LingarrDbContext dbContext,
+    public AutomatedTranslationJob(
+        LingarrDbContext dbContext,
         ILogger<AutomatedTranslationJob> logger,
         IMediaSubtitleProcessor mediaSubtitleProcessor,
+        IScheduleService scheduleService,
         ISettingService settingService)
     {
         _dbContext = dbContext;
         _logger = logger;
         _settingService = settingService;
+        _scheduleService = scheduleService;
         _mediaSubtitleProcessor = mediaSubtitleProcessor;
     }
 
@@ -29,6 +35,9 @@ public class AutomatedTranslationJob
     [AutomaticRetry(Attempts = 0)]
     public async Task Execute()
     {
+        var jobName = JobContextFilter.GetCurrentJobTypeName();
+        await _scheduleService.UpdateJobState(jobName, JobStatus.Processing.GetDisplayName());
+
         var settings =
             await _settingService.GetSettings([
                 SettingKeys.Automation.AutomationEnabled,
@@ -58,6 +67,7 @@ public class AutomatedTranslationJob
                 await ProcessShows();
                 break;
         }
+        await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());
     }
 
     private async Task ProcessMovies()

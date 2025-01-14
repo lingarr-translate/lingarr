@@ -9,6 +9,7 @@ import { scheduleService } from '@/services/scheduleService'
 import { translationRequestService } from '@/services/translationRequestService'
 import { mappingService } from '@/services/mappingService'
 import { directoryService } from '@/services/directoryService'
+import { statisticsService } from '@/services/statisticsService'
 
 const services = (axios: AxiosStatic): Services => ({
     setting: settingService(axios),
@@ -19,7 +20,8 @@ const services = (axios: AxiosStatic): Services => ({
     media: mediaService(axios),
     schedule: scheduleService(axios),
     mapping: mappingService(axios),
-    directory: directoryService(axios)
+    directory: directoryService(axios),
+    statistics: statisticsService(axios)
 })
 
 export default services(axios)

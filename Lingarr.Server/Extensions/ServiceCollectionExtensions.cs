@@ -6,6 +6,7 @@ using Lingarr.Core;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Logging;
+using Lingarr.Server.Filters;
 using Lingarr.Server.Interfaces.Providers;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Integration;
@@ -123,6 +124,7 @@ public static class ServiceCollectionExtensions
         builder.Services.AddTransient<OpenAiService>();
         
         builder.Services.AddTransient<PathConversionService>();
+        builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 
     }
 
@@ -137,10 +139,15 @@ public static class ServiceCollectionExtensions
                     : 1;
         });
 
-        builder.Services.AddHangfire(configuration => configuration
-            .UseSimpleAssemblyNameTypeSerializer()
-            .UseRecommendedSerializerSettings()
-            .UseSQLiteStorage());
+        builder.Services.AddHangfire(configuration => 
+        {
+            configuration
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UseSQLiteStorage();
+
+            configuration.UseFilter(new JobContextFilter());
+        });
     }
 
     private static void ConfigureSignalR(this WebApplicationBuilder builder)

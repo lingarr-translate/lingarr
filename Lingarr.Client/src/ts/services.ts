@@ -18,6 +18,7 @@ export interface Services {
     schedule: IScheduleService
     mapping: IMappingService
     directory: IDirectoryService
+    statistics: IStatisticsService
 }
 
 export interface IMediaService {
@@ -73,6 +74,8 @@ export interface ITranslationRequestService {
 }
 
 export interface IScheduleService {
+    startJob<T>(jobName: string): Promise<T>
+    recurringJobs<T>(): Promise<T>
     remove<T>(jobId: string): Promise<T>
     indexShows<T>(): Promise<T>
     indexMovies<T>(): Promise<T>
@@ -85,4 +88,9 @@ export interface IMappingService {
 
 export interface IDirectoryService {
     get(path: string): Promise<DirectoryItem[]>
+}
+
+export interface IStatisticsService {
+    getStatistics<T>(): Promise<T>
+    getDailyStatistics<T>(days?: number): Promise<T>
 }

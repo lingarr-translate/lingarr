@@ -2,12 +2,29 @@
   "navigation": {
     "dashboard": "Dashboard",
     "movies": "Films",
-    "tvShows": "Tv-shows",
+    "tvShows": "Series",
     "translations": "Vertalingen",
     "settings": "Instellingen",
     "integrations": "Integraties",
     "services": "Diensten",
-    "automation": "Automatisering"
+    "automation": "Automatisering",
+    "tasks": "Taken"
+  },
+  "statistics": {
+    "notAvailable": "Geen statistieken beschikbaar",
+    "translationServices": "Vertaaldiensten",
+    "availableSubtitles": "Beschikbare ondertitels",
+    "failedFetch": "Kan statistieken niet ophalen",
+    "mediaOverview": "Mediaoverzicht",
+    "movies": "Films",
+    "tvShows": "Series",
+    "translationActivity": "Vertaalactiviteit",
+    "linesTranslated": "Regels vertaald",
+    "filesProcessed": "Verwerkte bestanden",
+    "charactersTranslated": "Vertaalde karakters",
+    "languageStatistics": "Taalstatistieken",
+    "translated": "Vertaald",
+    "noDataAvailable": "Geen gegevens beschikbaar"
   },
   "movies": {
     "title": "Titel",
@@ -30,6 +47,21 @@
     "status": "Status",
     "progress": "Voortgang",
     "completed": "Voltooid"
+  },
+  "schedule": {
+    "jobName": "Taaknaam",
+    "state": "Status",
+    "lastExecution": "Laatste Uitvoering",
+    "nextExecution": "Volgende Uitvoering",
+    "actions": "Acties",
+    "run": "Uitvoeren",
+    "enqueued": "In Wachtrij Geplaatst",
+    "planned": "Gepland",
+    "scheduled": "Ingepland",
+    "processing": "Verwerken",
+    "succeeded": "Geslaagd",
+    "cancelled": "Geannuleerd",
+    "failed": "Mislukt"
   },
   "common": {
     "page": "pagina",
@@ -86,9 +118,9 @@
       "title": "Automatisering",
       "description": "Stel automatisering in. Let op dat als automatisering is geïmplementeerd, je ook de benodigde",
       "descriptionLink": "diensten",
-      "indexingHeader": "Indexeringsschema:",
-      "indexingMoviesLabel": "Stel filmindexer in:",
-      "indexingTvShowLabel": "Stel tv-show indexer in:",
+      "indexingHeader": "Geplande taken:",
+      "indexingMoviesLabel": "Stel film taak in:",
+      "indexingTvShowLabel": "Stel serie taak in:",
       "automatedTranslationHeader": "Geautomatiseerde vertaling:",
       "translationScheduleLabel": "Stel vertaal schema in:",
       "limitsHeader": "Limieten:",

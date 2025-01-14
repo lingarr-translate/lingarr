@@ -38,6 +38,12 @@ RUN dotnet publish "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/pub
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-
+ENV PUID=1000
+ENV PGID=1000
+RUN groupadd -g ${PGID:-1000} appgroup && \
+    useradd -u ${PUID:-1000} -g appgroup -s /bin/bash appuser && \
+    chown -R ${PUID:-1000}:${PGID:-1000} /app
+USER ${PUID:-1000}:${PGID:-1000}
+    
 # Start the application
 ENTRYPOINT ["dotnet", "Lingarr.Server.dll"]

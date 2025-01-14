@@ -1,5 +1,7 @@
 ﻿using Hangfire;
+using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Jobs;
+using Lingarr.Server.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lingarr.Server.Controllers;
@@ -8,11 +10,37 @@ namespace Lingarr.Server.Controllers;
 [ApiController]
 public class ScheduleController : ControllerBase
 {
+    private readonly IScheduleService _scheduleService;
     private readonly IBackgroundJobClient _backgroundJobClient;
 
-    public ScheduleController(IBackgroundJobClient backgroundJobClient)
+    public ScheduleController(
+        IScheduleService scheduleService,
+        IBackgroundJobClient backgroundJobClient)
     {
         _backgroundJobClient = backgroundJobClient;
+        _scheduleService = scheduleService;
+    }
+
+    /// <summary>
+    /// Retrieves information about all jobs in the system.
+    /// </summary>
+    /// <returns>A list of job information including status, progress, and other details.</returns>
+    [HttpGet("jobs")]
+    public IActionResult RecurringJobs()
+    {
+        var jobs = _scheduleService.GetRecurringJobs();
+        return Ok(jobs);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    [HttpPost("job/start")]
+    public IActionResult StartJob([FromBody] StartJobRequest recurringJob)
+    {
+        RecurringJob.TriggerJob(recurringJob.JobName);
+        return Ok();
     }
 
     /// <summary>
@@ -33,7 +61,7 @@ public class ScheduleController : ControllerBase
     [HttpGet("job/movie")]
     public IActionResult StartMovieJob()
     {
-        _backgroundJobClient.Enqueue<GetMovieJob>(job => job.Execute(JobCancellationToken.Null));
+        _backgroundJobClient.Enqueue<GetMovieJob>(job => job.Execute());
         return Ok();
     }
 
@@ -44,7 +72,7 @@ public class ScheduleController : ControllerBase
     [HttpGet("job/show")]
     public IActionResult StartShowJob()
     {
-        _backgroundJobClient.Enqueue<GetShowJob>(job => job.Execute(JobCancellationToken.Null));
+        _backgroundJobClient.Enqueue<GetShowJob>(job => job.Execute());
         return Ok();
     }
     
@@ -76,7 +104,7 @@ public class ScheduleController : ControllerBase
     [HttpPost("job/index/movies")]
     public IActionResult IndexMovies()
     {
-        _backgroundJobClient.Enqueue<GetMovieJob>(job => job.Execute(JobCancellationToken.Null));
+        _backgroundJobClient.Enqueue<GetMovieJob>(job => job.Execute());
         return Ok();
     }
     
@@ -87,7 +115,7 @@ public class ScheduleController : ControllerBase
     [HttpPost("job/index/shows")]
     public IActionResult IndexShows()
     {
-        _backgroundJobClient.Enqueue<GetShowJob>(job => job.Execute(JobCancellationToken.Null));
+        _backgroundJobClient.Enqueue<GetShowJob>(job => job.Execute());
         return Ok();
     }
 }
