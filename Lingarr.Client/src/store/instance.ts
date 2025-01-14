@@ -44,11 +44,6 @@ export const useInstanceStore = defineStore({
             localStorage.setItem('version', version)
             this.version = version
         },
-        async applyThemeOnLoad(): Promise<void> {
-            let theme = localStorage.getItem<ITheme>('theme')
-            theme = (await services.setting.getSetting<ITheme>('theme')) ?? theme
-            this.setTheme(theme)
-        },
         setTheme(theme: ITheme): void {
             localStorage.setItem('theme', theme)
             this.theme = theme

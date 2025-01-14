@@ -2,10 +2,13 @@
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
+using Lingarr.Server.Filters;
+using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Integration;
 using Lingarr.Server.Models.Integrations;
 using Lingarr.Server.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Extensions;
 
 namespace Lingarr.Server.Jobs;
 
@@ -16,27 +19,33 @@ public class GetShowJob
     private readonly LingarrDbContext _dbContext;
     private readonly ISonarrService _sonarrService;
     private readonly ILogger<GetShowJob> _logger;
+    private readonly IScheduleService _scheduleService;
     private readonly PathConversionService _pathConversionService;
 
     public GetShowJob(
         LingarrDbContext dbContext,
         ISonarrService sonarrService,
         ILogger<GetShowJob> logger, 
+        IScheduleService scheduleService,
         PathConversionService pathConversionService)
     {
         _dbContext = dbContext;
         _sonarrService = sonarrService;
         _logger = logger;
+        _scheduleService = scheduleService;
         _pathConversionService = pathConversionService;
     }
 
     [DisableConcurrentExecution(timeoutInSeconds: 5 * 60)]
     [AutomaticRetry(Attempts = 0)]
-    public async Task Execute(IJobCancellationToken cancellationToken)
+    public async Task Execute()
     {
+        var jobName = JobContextFilter.GetCurrentJobTypeName();
         _logger.LogInformation("Sonarr job initiated");
+        
         try
         {
+            await _scheduleService.UpdateJobState(jobName, JobStatus.Processing.GetDisplayName());
             var shows = await _sonarrService.GetShows();
             if (shows == null) return;
 
@@ -83,11 +92,12 @@ public class GetShowJob
             }
 
             await transaction.CommitAsync();
-
+            await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());
             _logger.LogInformation("Shows processed successfully.");
         }
         catch (Exception ex)
         {
+            await _scheduleService.UpdateJobState(jobName, JobStatus.Failed.GetDisplayName());
             _logger.LogError(ex,
                 "An error occurred when processing shows. Exception details: {ExceptionMessage}, Stack Trace: {StackTrace}",
                 ex.Message, ex.StackTrace);

@@ -23,6 +23,13 @@ export const THEMES = {
 
 export type ITheme = (typeof THEMES)[keyof typeof THEMES]
 
+export const LOCALE = {
+    ENGLISH: 'en',
+    DUTCH: 'nl'
+} as const
+
+export type ILocale = (typeof LOCALE)[keyof typeof LOCALE]
+
 export type IFilter = {
     pageNumber: number
     searchQuery: string

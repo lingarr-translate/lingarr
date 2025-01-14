@@ -1,4 +1,6 @@
-﻿namespace Lingarr.Server.Interfaces.Services;
+﻿using Lingarr.Server.Models;
+
+namespace Lingarr.Server.Interfaces.Services;
 
 /// <summary>
 /// Defines a service responsible for initializing and configuring recurring jobs for media indexing.
@@ -16,4 +18,25 @@ public interface IScheduleService
     /// </remarks>
     /// <returns>A task that represents the asynchronous initialization operation.</returns>
     Task Initialize();
+    
+    
+    /// <summary>
+    /// Gets a list of recurring jobs with their current status.
+    /// </summary>
+    /// <returns>A list of recurring job statuses</returns>
+    List<RecurringJobStatus> GetRecurringJobs();
+    
+    /// <summary>
+    /// Gets the current state of a specific job.
+    /// </summary>
+    /// <param name="jobId">The ID of the job</param>
+    /// <returns>The current state of the job</returns>
+    string GetJobState(string jobId);
+    
+    /// <summary>
+    /// Updates the state of a job and notifies clients.
+    /// </summary>
+    /// <param name="jobId">The ID of the job</param>
+    /// <param name="state">The current state</param>
+    Task UpdateJobState(string jobId, string state);
 }

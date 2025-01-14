@@ -1,27 +1,7 @@
-﻿import { App, ref, Ref, computed, inject, InjectionKey, ComputedRef } from 'vue'
+﻿import { App, ref, Ref, computed, inject, InjectionKey } from 'vue'
+import { I18n, I18nPluginOptions, Translations, Language } from '@/ts/plugins/i18n'
 import { useLocalStorage } from '@/composables/useLocalStorage'
-
-// Types
-export interface Translations {
-    [key: string]: string | Translations
-}
-
-export interface Language {
-    code: string
-    name: string
-}
-
-export interface I18nPluginOptions {
-    defaultLocale?: string
-}
-
-export interface I18n {
-    translate: (key: string) => string
-    loadTranslations: () => Promise<void>
-    setLocale: (locale: string) => Promise<void>
-    locale: ComputedRef<string>
-    languages: ComputedRef<Language[]>
-}
+import services from '@/services'
 
 export const I18nInjectionKey: InjectionKey<I18n> = Symbol('i18n')
 
@@ -49,32 +29,22 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
         return typeof value === 'string' ? value : key
     }
 
-    const loadTranslations = async () => {
-        try {
-            const response = await fetch(`/api/translations/languages`)
-            availableLanguages.value = await response.json()
-            await loadLocaleMessages(currentLocale.value)
-        } catch (error) {
-            console.error('Failed to load translations:', error)
+    const loadTranslations = async (languages = true) => {
+        if (languages) {
+            const languagesResponse = await fetch(`/api/translation/languages`)
+            availableLanguages.value = await languagesResponse.json()
         }
-    }
-
-    const loadLocaleMessages = async (locale: string) => {
-        try {
-            const response = await fetch(`/api/translations/${locale}`)
-            messages.value[locale] = await response.json()
-        } catch (error) {
-            console.error(`Failed to load messages for locale ${locale}:`, error)
-        }
+        const response = await fetch(`/api/translation`)
+        const data = await response.json()
+        messages.value = { [data.locale]: data.messages }
+        currentLocale.value = data.locale
+        localStorage.setItem('locale', data.locale)
     }
 
     const setLocale = async (locale: string) => {
-        if (!messages.value[locale]) {
-            await loadLocaleMessages(locale)
-        }
-        currentLocale.value = locale
-        localStorage.setItem('locale', locale)
-        document.querySelector('html')?.setAttribute('lang', locale)
+        await services.setting.setSetting('locale', locale)
+        await loadTranslations(false)
+        window.location.reload()
     }
 
     const i18n: I18n = {

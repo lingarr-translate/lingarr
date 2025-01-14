@@ -1,19 +1,29 @@
 ﻿using Hangfire;
+using Hangfire.Storage;
 using Lingarr.Core.Configuration;
+using Lingarr.Core.Enum;
+using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Jobs;
+using Lingarr.Server.Models;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.OpenApi.Extensions;
 
 namespace Lingarr.Server.Services;
 
 public class ScheduleService : IScheduleService
 {
+    private readonly IHubContext<JobProgressHub> _hubContext;
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<IScheduleService> _logger;
 
-    public ScheduleService(IServiceProvider serviceProvider,
+    public ScheduleService(
+        IHubContext<JobProgressHub> hubContext,
+        IServiceProvider serviceProvider,
         ILogger<IScheduleService> logger)
     {
         _serviceProvider = serviceProvider;
+        _hubContext = hubContext;
         _logger = logger;
     }
 
@@ -38,14 +48,14 @@ public class ScheduleService : IScheduleService
                     RecurringJob.AddOrUpdate<GetMovieJob>(
                         "GetMovieJob",
                         "movies",
-                        job => job.Execute(JobCancellationToken.Null),
+                        job => job.Execute(),
                         setting.Value);
                     break;
                 case "show_schedule":
                     RecurringJob.AddOrUpdate<GetShowJob>(
                         "GetShowJob",
                         "shows",
-                        job => job.Execute(JobCancellationToken.Null),
+                        job => job.Execute(),
                         setting.Value);
                     break;
                 case "automation_enabled":
@@ -65,7 +75,95 @@ public class ScheduleService : IScheduleService
         RecurringJob.AddOrUpdate<CleanupJob>(
             "CleanupJob",
             job => job.Execute(),
-            Cron.Weekly(),
+            Cron.Weekly,
             new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        
+        RecurringJob.AddOrUpdate<StatisticsJob>(
+            "StatisticsJob",
+            job => job.Execute(),
+            Cron.Daily,
+            new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+    }
+
+    public List<RecurringJobStatus> GetRecurringJobs()
+    {
+        var monitor = JobStorage.Current.GetMonitoringApi();
+        var recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
+
+        return recurringJobs
+            .Select(job => MapToJobStatus(job, monitor))
+            .OrderBy(j => j.Id)
+            .ToList();
+    }
+
+    public string GetJobState(string jobId)
+    {
+        var monitor = JobStorage.Current.GetMonitoringApi();
+
+        // Check each possible state
+        if (monitor.SucceededJobs(0, 1).Any(j => j.Key == jobId))
+            return JobStatus.Succeeded.GetDisplayName();
+        if (monitor.FailedJobs(0, 1).Any(j => j.Key == jobId))
+            return JobStatus.Failed.GetDisplayName();
+        if (monitor.ScheduledJobs(0, 1).Any(j => j.Key == jobId))
+            return JobStatus.Scheduled.GetDisplayName();
+        if (monitor.EnqueuedJobs("default", 0, 1).Any(j => j.Key == jobId))
+            return JobStatus.Enqueued.GetDisplayName();
+
+        return JobStatus.Planned.GetDisplayName();
+    }
+
+    public async Task UpdateJobState(string jobId, string state)
+    {
+        try
+        {
+            await _hubContext.Clients.Group("JobProgress")
+                .SendAsync("JobStateUpdated", jobId, state);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating job state for job {JobId}", jobId);
+            throw;
+        }
+    }
+
+    private RecurringJobStatus MapToJobStatus(RecurringJobDto dto, IMonitoringApi monitor)
+    {
+        var status = new RecurringJobStatus
+        {
+            Id = dto.Id,
+            Cron = dto.Cron,
+            Queue = dto.Queue,
+            JobMethod = dto.Job?.Method?.Name ?? string.Empty,
+            NextExecution = dto.NextExecution,
+            LastJobId = dto.LastJobId,
+            LastJobState = dto.LastJobState,
+            LastExecution = dto.LastExecution,
+            CreatedAt = dto.CreatedAt,
+            TimeZoneId = dto.TimeZoneId
+        };
+
+        // Check if there's a currently running job for this recurring job
+        if (!string.IsNullOrEmpty(dto.LastJobId))
+        {
+            var processingJobs = monitor.ProcessingJobs(0, int.MaxValue);
+            var currentJob = processingJobs.FirstOrDefault(j => 
+                j.Key == dto.LastJobId || 
+                (j.Value?.Job?.Args?.Contains(dto.Id) ?? false));
+
+            if (currentJob.Value != null)
+            {
+                status.IsCurrentlyRunning = true;
+                status.CurrentState = "Processing";
+                status.CurrentJobId = currentJob.Key;
+            }
+            else
+            {
+                // Check other states if not processing
+                status.CurrentState = GetJobState(dto.LastJobId);
+            }
+        }
+
+        return status;
     }
 }

@@ -26,11 +26,11 @@
 
             <div class="w-full px-4">
                 <div class="hidden border-b border-accent font-bold md:grid md:grid-cols-12">
-                    <div class="col-span-3 px-4 py-2">{{ translate('translations.title') }}</div>
+                    <div class="col-span-4 px-4 py-2">{{ translate('translations.title') }}</div>
                     <div class="col-span-1 px-4 py-2">{{ translate('translations.source') }}</div>
                     <div class="col-span-1 px-4 py-2">{{ translate('translations.target') }}</div>
                     <div class="col-span-1 px-4 py-2">{{ translate('translations.status') }}</div>
-                    <div class="col-span-4 px-4 py-2">{{ translate('translations.progress') }}</div>
+                    <div class="col-span-3 px-4 py-2">{{ translate('translations.progress') }}</div>
                     <div class="col-span-1 px-4 py-2">
                         {{ translate('translations.completed') }}
                     </div>
@@ -47,9 +47,9 @@
                             :translation-status="item.status"
                             @toggle:remove="remove(item)" />
                     </div>
-                    <div class="mb-2 md:col-span-3 md:mb-0 md:px-4 md:py-2">
+                    <div class="mb-2 md:col-span-4 md:mb-0 md:px-4 md:py-2">
                         <span :id="`deletable-${item.id}`" class="font-bold md:hidden">
-                            Title:&nbsp;
+                            {{ translate('translations.title') }}:&nbsp;
                         </span>
                         <span
                             v-if="item.mediaType === MEDIA_TYPE.EPISODE"
@@ -63,31 +63,41 @@
                         </span>
                     </div>
                     <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
-                        <span class="font-bold md:hidden">Source:&nbsp;</span>
+                        <span class="font-bold md:hidden">
+                            {{ translate('translations.source') }}:&nbsp;
+                        </span>
                         <BadgeComponent classes="text-primary-content border-accent bg-secondary">
                             {{ item.sourceLanguage.toUpperCase() }}
                         </BadgeComponent>
                     </div>
                     <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
-                        <span class="font-bold md:hidden">Target:&nbsp;</span>
+                        <span class="font-bold md:hidden">
+                            {{ translate('translations.target') }}:&nbsp;
+                        </span>
                         <BadgeComponent classes="text-primary-content border-accent bg-secondary">
                             {{ item.targetLanguage.toUpperCase() }}
                         </BadgeComponent>
                     </div>
                     <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
-                        <span class="font-bold md:hidden">Status:&nbsp;</span>
+                        <span class="font-bold md:hidden">
+                            {{ translate('translations.status') }}:&nbsp;
+                        </span>
                         <TranslationStatus :translation-status="item.status" />
                     </div>
-                    <div class="mb-2 flex items-center md:col-span-4 md:mb-0 md:px-4 md:py-2">
+                    <div class="mb-2 flex items-center md:col-span-3 md:mb-0 md:px-4 md:py-2">
                         <div
                             v-if="item.status === TRANSLATION_STATUS.INPROGRESS && item.progress"
                             class="w-full">
-                            <span class="mr-2 font-bold md:hidden">Progress:&nbsp;</span>
+                            <span class="mr-2 font-bold md:hidden">
+                                {{ translate('translations.progress') }}:&nbsp;
+                            </span>
                             <TranslationProgress :progress="item.progress" />
                         </div>
                     </div>
                     <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
-                        <span class="font-bold md:hidden">Completed:&nbsp;</span>
+                        <span class="font-bold md:hidden">
+                            {{ translate('translations.completed') }}:&nbsp;
+                        </span>
                         <TranslationCompletedAt
                             v-if="item.completedAt"
                             :completed-at="item.completedAt" />

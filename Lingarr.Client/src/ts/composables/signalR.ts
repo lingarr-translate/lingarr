@@ -20,6 +20,8 @@ export type EventCallbacks = {
     SettingUpdate: (setting: { key: keyof ISettings; value: string }) => void
     RequestProgress: (requestProgress: IRequestProgress) => void
     RequestActive: (request: { count: number }) => void
+    JobProgressUpdated: (jobId: string, progress: number) => void
+    JobStateUpdated: (jobId: string, state: string) => void
 }
 
 export interface Hub {

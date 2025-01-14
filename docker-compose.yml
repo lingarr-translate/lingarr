@@ -6,6 +6,8 @@ networks:
 
 services:
   Lingarr.Server:
+    extra_hosts: # added for ollama 
+      - "host.docker.internal:host-gateway"
     container_name: Lingarr.Server
     image: ${DOCKER_REGISTRY-}lingarrserver
     build:
@@ -54,7 +56,7 @@ services:
     image: libretranslate/libretranslate:latest
     restart: unless-stopped
     environment:
-      - LT_LOAD_ONLY=en,tr,nl
+      - LT_LOAD_ONLY=en,tr,nl,pt
       - LT_DISABLE_WEB_UI=false # Optional, enable if you would like to make use of the LibreTranslate web interface 
     ports:
       - 5000:5000

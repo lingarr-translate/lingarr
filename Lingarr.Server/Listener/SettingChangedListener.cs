@@ -118,7 +118,7 @@ public class SettingChangedListener
 
                     await settingService.SetSetting("radarr_settings_completed", "true");
                     BackgroundJob.Schedule<GetMovieJob>("movies",
-                        job => job.Execute(JobCancellationToken.Null),
+                        job => job.Execute(),
                         TimeSpan.FromMinutes(1));
                     break;
                 case "Sonarr":
@@ -133,7 +133,7 @@ public class SettingChangedListener
 
                     await settingService.SetSetting("sonarr_settings_completed", "true");
                     BackgroundJob.Schedule<GetShowJob>("shows",
-                        job => job.Execute(JobCancellationToken.Null),
+                        job => job.Execute(),
                         TimeSpan.FromMinutes(1));
                     break;
                 case "Automation":
@@ -192,12 +192,12 @@ public class SettingChangedListener
                     RecurringJob.AddOrUpdate<GetMovieJob>(
                         "GetMovieJob",
                         "movies",
-                        job => job.Execute(JobCancellationToken.Null),
+                        job => job.Execute(),
                         settings[SettingKeys.Automation.MovieSchedule]);
                     RecurringJob.AddOrUpdate<GetShowJob>(
                         "GetShowJob",
                         "shows",
-                        job => job.Execute(JobCancellationToken.Null),
+                        job => job.Execute(),
                         settings[SettingKeys.Automation.ShowSchedule]);
                     break;
             }
