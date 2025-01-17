@@ -40,7 +40,7 @@ public class DeepLService : BaseTranslationService
             await _initLock.WaitAsync();
             if (_initialized) return;
 
-            var authKey = await _settings.GetSetting(SettingKeys.Translation.DeeplApiKey);
+            var authKey = await _settings.GetSetting(SettingKeys.Translation.DeepL.DeeplApiKey);
             if (string.IsNullOrWhiteSpace(authKey))
             {
                 throw new InvalidOperationException("Translation using DeepL failed, please validate the API key.");

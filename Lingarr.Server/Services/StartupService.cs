@@ -1,5 +1,6 @@
 ﻿using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
+using Lingarr.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Services;
@@ -25,6 +26,8 @@ public class StartupService : IHostedService
     {
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
+
+        await ApplySettingsFromEnvironment(dbContext);
 
         await CheckAndUpdateIntegrationSettings(dbContext, "radarr", [
             SettingKeys.Integration.RadarrUrl,
@@ -64,6 +67,57 @@ public class StartupService : IHostedService
                 setting.Value = "true";
                 await dbContext.SaveChangesAsync();
                 _logger.LogInformation($"{serviceName} settings completed.");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Applies settings from environment variables to the database.
+    /// </summary>
+    /// <param name="dbContext">The database context used to access and update settings.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    private async Task ApplySettingsFromEnvironment(LingarrDbContext dbContext)
+    {
+        var environmentSettings = new Dictionary<string, string>
+        {
+            { "RADARR_URL", SettingKeys.Integration.RadarrUrl },
+            { "RADARR_API_KEY", SettingKeys.Integration.RadarrApiKey },
+            { "SONARR_URL", SettingKeys.Integration.SonarrUrl },
+            { "SONARR_API_KEY", SettingKeys.Integration.SonarrApiKey },
+            { "SOURCE_LANGUAGES", SettingKeys.Translation.SourceLanguages },
+            { "TARGET_LANGUAGES", SettingKeys.Translation.TargetLanguages },
+            
+            { "SERVICE_TYPE", SettingKeys.Translation.ServiceType },
+            { "LIBRE_TRANSLATE_URL", SettingKeys.Translation.LibreTranslateUrl },
+            { "AI_PROMPT", SettingKeys.Translation.AiPrompt },
+            
+            { "OPENAI_MODEL", SettingKeys.Translation.OpenAi.Model },
+            { "OPENAI_API_KEY", SettingKeys.Translation.OpenAi.ApiKey },
+            
+            { "ANTHROPIC_MODEL", SettingKeys.Translation.Anthropic.Model },
+            { "ANTHROPIC_API_KEY", SettingKeys.Translation.Anthropic.ApiKey },
+            { "ANTHROPIC_VERSION", SettingKeys.Translation.Anthropic.Version },
+            
+            { "LOCAL_AI_MODEL", SettingKeys.Translation.LocalAi.Model },
+            { "LOCAL_AI_API_KEY", SettingKeys.Translation.LocalAi.ApiKey },
+            { "LOCAL_AI_ENDPOINT", SettingKeys.Translation.LocalAi.Endpoint },
+            
+            { "DEEPL_API_KEY", SettingKeys.Translation.DeepL.DeeplApiKey }
+        };
+
+        foreach (var (envVar, settingKey) in environmentSettings)
+        {
+            var value = Environment.GetEnvironmentVariable(envVar);
+            if (!string.IsNullOrEmpty(value))
+            {
+                var setting = await dbContext.Settings.FirstOrDefaultAsync(s => s.Key == settingKey);
+                if (setting != null)
+                {
+                    setting.Value = value;
+                    await dbContext.SaveChangesAsync();
+                }
+
+                _logger.LogInformation($"Updated setting '{settingKey}' from environment variable '{envVar}'.");
             }
         }
     }
