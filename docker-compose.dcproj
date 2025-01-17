@@ -12,7 +12,7 @@
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="docker-compose.yml" />
+    <None Include="docker-compose.dev.yml" />
     <None Include=".dockerignore" />
   </ItemGroup>
   <ItemGroup>

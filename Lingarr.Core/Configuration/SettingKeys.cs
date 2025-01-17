@@ -15,7 +15,6 @@ public static class SettingKeys
     public static class Translation 
     {
         public const string ServiceType = "service_type";
-        public const string DeeplApiKey = "deepl_api_key";
         
         public static class OpenAi 
         {
@@ -37,8 +36,14 @@ public static class SettingKeys
             public const string ApiKey = "local_ai_api_key";
         }
 
+        public static class DeepL 
+        {
+            public const string DeeplApiKey = "deepl_api_key";
+        }
+
         public const string LibreTranslateUrl = "libretranslate_url";
         public const string SourceLanguages = "source_languages";
+        public const string TargetLanguages = "target_languages";
         public const string AiPrompt = "ai_prompt";
     }
 

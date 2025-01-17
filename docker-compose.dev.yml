@@ -1,7 +1,10 @@
-version: "3.9"
+# This is a development Docker Compose file.
+# It is intended for development purposes only and should not be used as a production example.
+# Misuse in production environments may lead to unexpected behavior or security risks.
 
 networks:
   lingarr:
+    
     external: true
 
 services:
@@ -23,6 +26,10 @@ services:
       - DB_DATABASE=LingarrMysql
       - DB_USERNAME=LingarrMysql
       - DB_PASSWORD=Secret1234
+      - SERVICE_TYPE=libretranslate
+      - LIBRE_TRANSLATE_URL=http://libretranslate:5000
+      - SOURCE_LANGUAGES=[{"name":"English","code":"en"},{"name":"Dutch","code":"nl"}]
+      - TARGET_LANGUAGES=[{"name":"Turkish","code":"tr"},{"name":"Dutch","code":"nl"}]
     volumes:
       - ../media/data/movies:/movies
       - ../media/data/tv:/tv

@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Enum;
 using Lingarr.Core.Interfaces;
@@ -71,8 +72,8 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     private async Task<bool> ProcessSubtitles(List<Subtitles> subtitles)
     {
         var existingLanguages = ExtractLanguageCodes(subtitles);
-        var sourceLanguages = await GetLanguagesSetting<SourceLanguage>("source_languages");
-        var targetLanguages = await GetLanguagesSetting<TargetLanguage>("target_languages");
+        var sourceLanguages = await GetLanguagesSetting<SourceLanguage>(SettingKeys.Translation.SourceLanguages);
+        var targetLanguages = await GetLanguagesSetting<TargetLanguage>(SettingKeys.Translation.TargetLanguages);
 
         if (sourceLanguages.Count == 0 || targetLanguages.Count == 0)
         {
