@@ -22,6 +22,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Lingarr.Root", "Lingarr.Roo
 		Readme.MD = Readme.MD
 		LICENSE = LICENSE
 		CONTRIBUTING.md = CONTRIBUTING.md
+		Settings.MD = Settings.MD
 	EndProjectSection
 EndProject
 Global

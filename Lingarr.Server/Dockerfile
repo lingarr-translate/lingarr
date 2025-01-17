@@ -38,12 +38,25 @@ RUN dotnet publish "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/pub
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENV PUID=1000
-ENV PGID=1000
-RUN groupadd -g ${PGID:-1000} appgroup && \
-    useradd -u ${PUID:-1000} -g appgroup -s /bin/bash appuser && \
-    chown -R ${PUID:-1000}:${PGID:-1000} /app
-USER ${PUID:-1000}:${PGID:-1000}
     
 # Start the application
-ENTRYPOINT ["dotnet", "Lingarr.Server.dll"]
+RUN echo '#!/bin/bash\n\
+if [ "${PUID:-0}" != "0" ] && [ "${PGID:-0}" != "0" ]; then\n\
+
+    # Create user and group with specified IDs if they dont exist\n\
+    groupadd -g ${PGID} lingarr 2>/dev/null || groupmod -g ${PGID} lingarr\n\
+    useradd -u ${PUID} -g lingarr -s /bin/bash lingarr 2>/dev/null || usermod -u ${PUID} lingarr\n\
+    
+    # Set ownership\n\
+    chown -R lingarr:lingarr /app\n\
+    
+    # Run app as lingarr user\n\
+    exec su lingarr -c "dotnet Lingarr.Server.dll"\n\
+else\n\
+    # Run as root\n\
+    exec dotnet Lingarr.Server.dll\n\
+fi' > /entrypoint.sh && \
+    chmod +x /entrypoint.sh
+
+VOLUME /app/config
+ENTRYPOINT ["/entrypoint.sh"]
