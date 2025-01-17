@@ -1,7 +1,8 @@
 name: Bug Report
 description: Create a report to help us improve Lingarr
-title: 'Bug report: Provide a descriptive title'
-labels: bug
+title: '[BUG] Provide a descriptive title'
+labels: 
+  - bug
 body:
   - type: markdown
     attributes:
