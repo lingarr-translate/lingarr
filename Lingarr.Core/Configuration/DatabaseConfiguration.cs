@@ -48,7 +48,7 @@ public static class DatabaseConfiguration
     private static void ConfigureSqlite(DbContextOptionsBuilder options)
     {
         var sqliteDbPath = Environment.GetEnvironmentVariable("SQLITE_DB_PATH") ?? "local.db";
-        options.UseSqlite($"Data Source=/app/config/{sqliteDbPath}",
+        options.UseSqlite($"Data Source=/app/config/{sqliteDbPath};Foreign Keys=True",
                 sqliteOptions => sqliteOptions.MigrationsAssembly("Lingarr.Migrations.SQLite")
                     .UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
             .UseSnakeCaseNamingConvention();
