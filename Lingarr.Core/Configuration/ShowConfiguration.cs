@@ -19,5 +19,7 @@ public class ShowConfiguration : IEntityTypeConfiguration<Show>
             .WithOne(i => i.Show)
             .HasForeignKey(i => i.ShowId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation(s => s.Seasons).AutoInclude();
     }
 }

@@ -13,5 +13,13 @@ public class SeasonConfiguration : IEntityTypeConfiguration<Season>
             .WithOne(e => e.Season)
             .HasForeignKey(e => e.SeasonId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Navigation(s => s.Episodes).AutoInclude();
+
+        builder
+            .HasOne(s => s.Show)
+            .WithMany(show => show.Seasons)
+            .HasForeignKey(s => s.ShowId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
