@@ -58,9 +58,26 @@ public class GetMovieJob
             var radarrIds = movies.Select(radarrMovie => radarrMovie.Id).ToList();
             var moviesToRemove = await _dbContext.Movies
                 .Where(movie => !radarrIds.Contains(movie.RadarrId))
+                .Include(m => m.Images)
+                .AsSplitQuery()
                 .ToListAsync();
-            
-            _dbContext.Movies.RemoveRange(moviesToRemove);
+
+            if (moviesToRemove.Any())
+            {
+                _logger.LogInformation("Removing {Count} movies that no longer exist in Radarr", moviesToRemove.Count);
+                
+                foreach (var movie in moviesToRemove)
+                {
+                    var images = await _dbContext.Images
+                        .Where(i => i.MovieId == movie.Id)
+                        .ToListAsync();
+                        
+                    // Remove images first
+                    _dbContext.Images.RemoveRange(images);
+                    _dbContext.Movies.Remove(movie);
+                    await _dbContext.SaveChangesAsync();
+                }
+            }
 
             await _dbContext.SaveChangesAsync();
             await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());

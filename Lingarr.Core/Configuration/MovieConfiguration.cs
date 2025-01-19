@@ -13,5 +13,8 @@ public class MovieConfiguration : IEntityTypeConfiguration<Movie>
             .WithOne(i => i.Movie)
             .HasForeignKey(i => i.MovieId)
             .OnDelete(DeleteBehavior.Cascade);
+        
+        builder.Navigation(m => m.Images)
+            .AutoInclude();
     }
 }
