@@ -34,7 +34,6 @@ public class TranslationRequestService : ITranslationRequestService
     {
         var mediaTitle = await FormatMediaTitle(translateAbleSubtitle);
 
-        
         var translationRequest = new TranslationRequest
         {
             Title = mediaTitle,
@@ -49,7 +48,7 @@ public class TranslationRequestService : ITranslationRequestService
         await _dbContext.SaveChangesAsync();
 
         var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
-            job.Execute(translationRequest, new CancellationToken())
+            job.Execute(translationRequest, CancellationToken.None)
         );
         await UpdateTranslationRequest(translationRequest, jobId, TranslationStatus.Pending);
 
