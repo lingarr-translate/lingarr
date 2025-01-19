@@ -117,7 +117,7 @@ public class SettingChangedListener
                     });
 
                     await settingService.SetSetting("radarr_settings_completed", "true");
-                    BackgroundJob.Schedule<GetMovieJob>("movies",
+                    BackgroundJob.Schedule<SyncMovieJob>("movies",
                         job => job.Execute(),
                         TimeSpan.FromMinutes(1));
                     break;
@@ -132,7 +132,7 @@ public class SettingChangedListener
                     });
 
                     await settingService.SetSetting("sonarr_settings_completed", "true");
-                    BackgroundJob.Schedule<GetShowJob>("shows",
+                    BackgroundJob.Schedule<SyncShowJob>("shows",
                         job => job.Execute(),
                         TimeSpan.FromMinutes(1));
                     break;
@@ -189,13 +189,13 @@ public class SettingChangedListener
                     break;
 
                 case "Schedule":
-                    RecurringJob.AddOrUpdate<GetMovieJob>(
-                        "GetMovieJob",
+                    RecurringJob.AddOrUpdate<SyncMovieJob>(
+                        "SyncMovieJob",
                         "movies",
                         job => job.Execute(),
                         settings[SettingKeys.Automation.MovieSchedule]);
-                    RecurringJob.AddOrUpdate<GetShowJob>(
-                        "GetShowJob",
+                    RecurringJob.AddOrUpdate<SyncShowJob>(
+                        "SyncShowJob",
                         "shows",
                         job => job.Execute(),
                         settings[SettingKeys.Automation.ShowSchedule]);

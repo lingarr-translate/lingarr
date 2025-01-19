@@ -45,7 +45,7 @@ The project is organized into several key components:
 ### Development
 Navigate to the root directory and start up the project:
 ```bash
-docker-compose up -d
+docker-compose -f .\docker-compose.dev.yml up -d
 ```
 Configure and sync with Sonarr and Radarr to create test data.   
 The frontend supports hot reload while the backend needs to be rebuilt each time a change has been made.
