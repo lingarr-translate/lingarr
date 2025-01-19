@@ -61,7 +61,7 @@ public class ScheduleController : ControllerBase
     [HttpGet("job/movie")]
     public IActionResult StartMovieJob()
     {
-        _backgroundJobClient.Enqueue<GetMovieJob>(job => job.Execute());
+        _backgroundJobClient.Enqueue<SyncMovieJob>(job => job.Execute());
         return Ok();
     }
 
@@ -72,7 +72,7 @@ public class ScheduleController : ControllerBase
     [HttpGet("job/show")]
     public IActionResult StartShowJob()
     {
-        _backgroundJobClient.Enqueue<GetShowJob>(job => job.Execute());
+        _backgroundJobClient.Enqueue<SyncShowJob>(job => job.Execute());
         return Ok();
     }
     
@@ -104,7 +104,7 @@ public class ScheduleController : ControllerBase
     [HttpPost("job/index/movies")]
     public IActionResult IndexMovies()
     {
-        _backgroundJobClient.Enqueue<GetMovieJob>(job => job.Execute());
+        _backgroundJobClient.Enqueue<SyncMovieJob>(job => job.Execute());
         return Ok();
     }
     
@@ -115,7 +115,7 @@ public class ScheduleController : ControllerBase
     [HttpPost("job/index/shows")]
     public IActionResult IndexShows()
     {
-        _backgroundJobClient.Enqueue<GetShowJob>(job => job.Execute());
+        _backgroundJobClient.Enqueue<SyncShowJob>(job => job.Execute());
         return Ok();
     }
 }

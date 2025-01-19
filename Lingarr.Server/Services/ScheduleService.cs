@@ -45,15 +45,15 @@ public class ScheduleService : IScheduleService
             switch (setting.Key)
             {
                 case "movie_schedule":
-                    RecurringJob.AddOrUpdate<GetMovieJob>(
-                        "GetMovieJob",
+                    RecurringJob.AddOrUpdate<SyncMovieJob>(
+                        "SyncMovieJob",
                         "movies",
                         job => job.Execute(),
                         setting.Value);
                     break;
                 case "show_schedule":
-                    RecurringJob.AddOrUpdate<GetShowJob>(
-                        "GetShowJob",
+                    RecurringJob.AddOrUpdate<SyncShowJob>(
+                        "SyncShowJob",
                         "shows",
                         job => job.Execute(),
                         setting.Value);

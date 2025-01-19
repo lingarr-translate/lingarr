@@ -11,12 +11,14 @@ using Lingarr.Server.Interfaces.Providers;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Integration;
 using Lingarr.Server.Interfaces.Services.Subtitle;
+using Lingarr.Server.Interfaces.Services.Sync;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Listener;
 using Lingarr.Server.Providers;
 using Lingarr.Server.Services;
 using Lingarr.Server.Services.Integration;
 using Lingarr.Server.Services.Subtitle;
+using Lingarr.Server.Services.Sync;
 using Lingarr.Server.Services.Translation;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
@@ -125,7 +127,16 @@ public static class ServiceCollectionExtensions
         
         builder.Services.AddTransient<PathConversionService>();
         builder.Services.AddScoped<IStatisticsService, StatisticsService>();
-
+        
+        // Add Sync services
+        builder.Services.AddScoped<IShowSyncService, ShowSyncService>();
+        builder.Services.AddScoped<IShowSync, ShowSync>();
+        builder.Services.AddScoped<IMovieSyncService, MovieSyncService>();
+        builder.Services.AddScoped<IMovieSync, MovieSync>();
+        builder.Services.AddScoped<IEpisodeSync, EpisodeSync>();
+        builder.Services.AddScoped<ISeasonSync, SeasonSync>();
+        builder.Services.AddScoped<IShowSync, ShowSync>();
+        builder.Services.AddScoped<IImageSync, ImageSync>();
     }
 
     private static void ConfigureHangfire(this WebApplicationBuilder builder)
