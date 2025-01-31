@@ -97,13 +97,13 @@ public class AnthropicService : BaseLanguageService
                 {
                     model = _model,
                     max_tokens = 1024,
+                    system = _prompt,
                     messages = new[]
                     {
-                        new { role = "system", content = _prompt },
                         new { role = "user", content = text }
                     }
                 }), Encoding.UTF8, "application/json");
-
+                
                 var response =
                     await _httpClient.PostAsync("https://api.anthropic.com/v1/messages", content, linked.Token);
                 if (!response.IsSuccessStatusCode)
