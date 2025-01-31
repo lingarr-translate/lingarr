@@ -1,7 +1,7 @@
 ﻿<template>
     <PageLayout>
         <div v-if="settingsCompleted === 'true'" class="w-full">
-            <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
+            <div class="bg-tertiary flex flex-wrap items-center justify-between gap-2 p-4">
                 <SearchComponent v-model="filter" />
                 <div class="flex w-full justify-between space-x-2 md:w-fit">
                     <SortControls
@@ -20,7 +20,7 @@
             </div>
 
             <div class="w-full px-4">
-                <div class="grid grid-cols-12 border-b border-accent font-bold">
+                <div class="border-accent grid grid-cols-12 border-b font-bold">
                     <div class="col-span-1 px-4 py-2"></div>
                     <div class="col-span-5 px-4 py-2">{{ translate('tvShows.title') }}</div>
                     <div class="col-span-4 px-4 py-2">{{ translate('tvShows.subtitles') }}</div>
@@ -30,7 +30,7 @@
                 </div>
                 <div v-for="item in shows.items" :key="item.id">
                     <div
-                        class="grid cursor-pointer grid-cols-12 border-b border-accent"
+                        class="border-accent grid cursor-pointer grid-cols-12 border-b"
                         @click="toggleShow(item)">
                         <div class="col-span-1 px-2 py-2 md:px-4">
                             <CaretButton :is-expanded="expandedShow !== item.id" />
@@ -41,7 +41,7 @@
                     </div>
                     <div v-if="expandedShow === item.id" class="bg-secondary p-4">
                         <div
-                            class="grid grid-cols-12 border-b-2 border-secondary bg-primary font-bold text-secondary-content">
+                            class="border-secondary bg-primary text-secondary-content grid grid-cols-12 border-b-2 font-bold">
                             <div class="col-span-1 px-4 py-2"></div>
                             <div class="col-span-5 px-4 py-2 md:col-span-3">
                                 {{ translate('tvShows.season') }}
@@ -53,7 +53,7 @@
                         <div
                             v-for="season in item.seasons"
                             :key="season.id"
-                            class="bg-primary text-sm text-accent-content md:text-base">
+                            class="bg-primary text-accent-content text-sm md:text-base">
                             <div
                                 class="grid grid-cols-12"
                                 :class="{ 'cursor-pointer': season.episodes.length }"
@@ -63,20 +63,20 @@
                                         v-if="season.episodes.length"
                                         :is-expanded="expandedSeason?.id !== season.id" />
                                 </div>
-                                <div class="col-span-5 select-none px-4 py-2 md:col-span-3">
+                                <div class="col-span-5 px-4 py-2 select-none md:col-span-3">
                                     <span v-if="season.seasonNumber == 0">
                                         {{ translate('tvShows.specials') }}
                                     </span>
                                     <span v-else>Season {{ season.seasonNumber }}</span>
                                 </div>
-                                <div class="col-span-6 select-none px-4 py-2 md:col-span-8">
+                                <div class="col-span-6 px-4 py-2 select-none md:col-span-8">
                                     {{ season.episodes.length }} episodes
                                 </div>
                             </div>
                             <div
                                 v-if="expandedSeason?.id === season.id"
-                                class="w-full bg-tertiary text-tertiary-content">
-                                <div class="grid grid-cols-12 border-b-2 border-primary font-bold">
+                                class="bg-tertiary text-tertiary-content w-full">
+                                <div class="border-primary grid grid-cols-12 border-b-2 font-bold">
                                     <div class="col-span-1 px-4 py-2 md:col-span-2">
                                         <span class="hidden md:block">
                                             {{ translate('tvShows.episode') }}

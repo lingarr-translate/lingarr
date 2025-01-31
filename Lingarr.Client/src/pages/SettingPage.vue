@@ -1,8 +1,8 @@
 <template>
     <PageLayout>
-        <div class="grid h-full grid-cols-[auto,1fr]">
-            <aside class="w-[3.175rem] shrink-0 bg-secondary md:w-40">
-                <nav class="pt-4 md:pl-4 md:pt-8">
+        <div class="grid h-full grid-cols-[auto_1fr]">
+            <aside class="bg-secondary w-[3.175rem] shrink-0 md:w-40">
+                <nav class="pt-4 md:pt-8 md:pl-4">
                     <ul class="flex flex-col space-y-4">
                         <li
                             v-for="(item, index) in menuItems"

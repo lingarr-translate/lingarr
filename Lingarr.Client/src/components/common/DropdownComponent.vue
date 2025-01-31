@@ -16,7 +16,7 @@
             <div
                 v-if="isOpen"
                 :class="getClasses()"
-                class="absolute right-0 mt-2 origin-top-right rounded-md border border-accent bg-secondary shadow-lg">
+                class="border-accent bg-secondary absolute right-0 mt-2 origin-top-right rounded-md border shadow-lg">
                 <slot name="content"></slot>
             </div>
         </transition>

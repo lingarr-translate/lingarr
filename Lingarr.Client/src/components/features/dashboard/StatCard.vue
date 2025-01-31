@@ -1,26 +1,26 @@
 ﻿<template>
-    <div class="rounded-lg bg-primary p-4 shadow">
+    <div class="bg-primary rounded-lg p-4 shadow-sm">
         <div class="flex justify-between">
             <div>
-                <h3 class="text-sm font-medium text-primary-content/70">
+                <h3 class="text-primary-content/70 text-sm font-medium">
                     {{ title }}
                 </h3>
-                <p class="mt-2 text-2xl font-bold text-primary-content">
+                <p class="text-primary-content mt-2 text-2xl font-bold">
                     {{ formatNumber(total) }}
                 </p>
             </div>
             <div class="text-right">
-                <h3 class="text-sm font-medium text-primary-content/70">
+                <h3 class="text-primary-content/70 text-sm font-medium">
                     {{ translate('statistics.translated') }}
                 </h3>
-                <p class="mt-2 text-xl font-bold text-accent">
+                <p class="text-accent mt-2 text-xl font-bold">
                     {{ formatNumber(translated) }}
                 </p>
             </div>
         </div>
-        <div class="mt-2 h-2 w-full rounded-full bg-secondary">
+        <div class="bg-secondary mt-2 h-2 w-full rounded-full">
             <div
-                class="h-full rounded-full bg-accent transition-all duration-500"
+                class="bg-accent h-full rounded-full transition-all duration-500"
                 :style="{ width: `${calculatePercentage(translated, total)}%` }"></div>
         </div>
     </div>

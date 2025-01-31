@@ -8,10 +8,10 @@
         leave-to-class="opacity-0">
         <div
             v-if="isVisible"
-            class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
+            class="ring-opacity-5 pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg ring-1 shadow-lg ring-black">
             <div class="p-4">
                 <div class="flex items-start">
-                    <div class="flex-shrink-0">
+                    <div class="shrink-0">
                         <CheckMarkIcon v-if="type === 'success'" class="h-6 w-6 text-green-400" />
                         <TimesCircleIcon
                             v-else-if="type === 'error'"
@@ -26,7 +26,7 @@
                             {{ message }}
                         </p>
                     </div>
-                    <div class="ml-4 flex flex-shrink-0">
+                    <div class="ml-4 flex shrink-0">
                         <button class="inline-flex rounded-md bg-white" @click="close">
                             <span class="sr-only">Close</span>
                             <TimesIcon class="h-5 w-5" />

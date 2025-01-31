@@ -1,5 +1,5 @@
 <template>
-    <div class="relative select-none items-center transition duration-300 ease-in-out">
+    <div class="relative items-center transition duration-300 ease-in-out select-none">
         <!-- Context -->
         <TooltipComponent ref="tooltip" alignment="left">
             <div ref="clickOutside" @click="toggle">
@@ -10,7 +10,7 @@
         <div
             v-show="isOpen"
             ref="excludeClickOutside"
-            class="absolute right-0 top-8 z-10 w-56 rounded-md border border-accent bg-primary bg-clip-border shadow-lg">
+            class="border-accent bg-primary absolute top-8 right-0 z-10 w-56 rounded-md border bg-clip-border shadow-lg">
             <div class="px-3 py-1" role="menu" aria-orientation="vertical">
                 <span class="text-xs" role="menuitem">Translate to ...</span>
                 <div

@@ -1,6 +1,6 @@
 <template>
     <div
-        :class="[`${instanceStore.getTheme}`, 'flex min-h-screen bg-primary text-primary-content']">
+        :class="[`${instanceStore.getTheme}`, 'bg-primary text-primary-content flex min-h-screen']">
         <AsideNavigation />
 
         <div class="flex w-full flex-col drop-shadow-xl">
@@ -25,7 +25,7 @@
                                     <button
                                         v-for="theme in Object.values(THEMES)"
                                         :key="theme"
-                                        class="hover:bg-secondary-focus block w-full px-4 py-2 text-left text-sm capitalize text-secondary-content"
+                                        class="hover:bg-secondary-focus text-secondary-content block w-full cursor-pointer px-4 py-2 text-left text-sm capitalize"
                                         @click="setTheme(theme)">
                                         {{ theme }}
                                     </button>
@@ -62,6 +62,8 @@ const isOpen: ComputedRef<boolean> = computed({
 })
 
 const setTheme = (theme: ITheme) => {
+    console.log(theme)
+
     instanceStore.storeTheme(theme)
     themeDropdown.value = false
 }
