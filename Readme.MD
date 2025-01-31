@@ -67,8 +67,8 @@ These variables can be used
 
 | **Environment Variable**   | **Description**                                                                          |
 |----------------------------|------------------------------------------------------------------------------------------|
-| `PUID=1000`                | *experimental:* The user ID under which the application will run and files are written.  |
-| `PGID=1000`                | *experimental:* The group ID under which the application will run and files are written. |
+| `PUID=1000`                | The user ID under which the application will run and files are written.  |
+| `PGID=1000`                | The group ID under which the application will run and files are written. |
 | `MAX_CONCURRENT_JOBS=1`    | Sets the amount of jobs that can run concurrently, defaults to 1.                        |
 | `DB_CONNECTION=mysql`      | Specifies the database connection type. Options are `mysql` or `sqlite`.                 |
 | `DB_HOST=Lingarr.Mysql`    | The hostname for the MySQL database (required when using `mysql`).                       |
