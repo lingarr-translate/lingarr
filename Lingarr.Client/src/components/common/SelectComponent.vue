@@ -5,13 +5,13 @@
         </label>
         <div
             ref="excludeClickOutside"
-            class="flex h-12 cursor-pointer items-center justify-between rounded-md border border-accent px-4 py-2"
+            class="border-accent flex h-12 cursor-pointer items-center justify-between rounded-md border px-4 py-2"
             @click="toggleDropdown">
             <span v-if="!selected" class="text-gray-400">Select items...</span>
             <div v-else class="flex max-h-12 flex-wrap gap-2 overflow-auto">
                 <span
-                    class="flex cursor-pointer items-center rounded-md bg-accent px-3 py-1 text-sm font-medium">
-                    <span class="mr-2 text-accent-content">{{ selectedOption(selected) }}</span>
+                    class="bg-accent flex cursor-pointer items-center rounded-md px-3 py-1 text-sm font-medium">
+                    <span class="text-accent-content mr-2">{{ selectedOption(selected) }}</span>
                 </span>
             </div>
             <CaretRightIcon
@@ -21,7 +21,7 @@
         <ul
             v-show="isOpen"
             ref="clickOutside"
-            class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-accent bg-primary shadow-lg">
+            class="border-accent bg-primary absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border shadow-lg">
             <li v-if="!options?.length" class="p-3">Select a source language first.</li>
             <li
                 v-for="(option, index) in options"

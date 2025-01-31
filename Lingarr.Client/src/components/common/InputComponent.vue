@@ -59,7 +59,7 @@ const { isValid, isInvalid, error, validate } = useValidation(props)
 
 const showPassword = ref(false)
 const inputClasses = computed(() => [
-    'w-full rounded-md border bg-transparent px-4 py-2 outline-none transition-colors duration-200',
+    'w-full rounded-md border bg-transparent px-4 py-2 outline-hidden transition-colors duration-200',
     { 'border-green-500': isValid.value },
     { 'border-red-500': isInvalid.value },
     { 'border-accent': !isValid.value && !isInvalid.value },

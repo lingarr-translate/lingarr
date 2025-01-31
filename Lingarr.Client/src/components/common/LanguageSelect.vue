@@ -2,7 +2,7 @@
     <div class="relative">
         <select
             v-model="selectedLocale"
-            class="rounded-md border border-accent bg-primary px-2 py-1">
+            class="border-accent bg-primary rounded-md border px-2 py-1">
             <option v-for="lang in languages" :key="lang.code" :value="lang.code">
                 {{ lang.name }}
             </option>

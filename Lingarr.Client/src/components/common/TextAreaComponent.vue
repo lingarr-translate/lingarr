@@ -6,13 +6,13 @@
         <div class="mb-2 flex gap-2">
             <button
                 type="button"
-                class="rounded-md bg-accent px-3 py-1 text-sm hover:bg-accent/80"
+                class="bg-accent hover:bg-accent/80 rounded-md px-3 py-1 text-sm"
                 @click="insertPlaceholder('{sourceLanguage}')">
                 Insert {sourceLanguage}
             </button>
             <button
                 type="button"
-                class="rounded-md bg-accent px-3 py-1 text-sm hover:bg-accent/80"
+                class="bg-accent hover:bg-accent/80 rounded-md px-3 py-1 text-sm"
                 @click="insertPlaceholder('{targetLanguage}')">
                 Insert {targetLanguage}
             </button>
@@ -29,7 +29,7 @@
             <ValidationIcon
                 :is-valid="isValid"
                 :is-invalid="isInvalid"
-                class="absolute right-3 top-3" />
+                class="absolute top-3 right-3" />
         </div>
         <p v-if="missingPlaceholders.length > 0" class="mt-1 text-sm text-red-600">
             Missing required placeholders: {{ missingPlaceholders.join(' and ') }}
@@ -61,7 +61,7 @@ const isInvalid = ref(false)
 const missingPlaceholders = ref<string[]>([])
 
 const textareaClasses = computed(() => [
-    'w-full rounded-md border bg-transparent px-4 py-2 outline-none transition-colors duration-200',
+    'w-full rounded-md border bg-transparent px-4 py-2 outline-hidden transition-colors duration-200',
     { 'border-green-500': isValid.value },
     { 'border-red-500': isInvalid.value },
     { 'border-accent': !isValid.value && !isInvalid.value },

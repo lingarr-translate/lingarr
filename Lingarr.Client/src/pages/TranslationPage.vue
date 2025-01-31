@@ -2,7 +2,7 @@
     <PageLayout>
         <div class="w-full">
             <!-- Search and Filters -->
-            <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
+            <div class="bg-tertiary flex flex-wrap items-center justify-between gap-2 p-4">
                 <SearchComponent v-model="filter" />
                 <div class="flex w-full justify-between space-x-2 md:w-fit">
                     <SortControls
@@ -25,7 +25,7 @@
             </div>
 
             <div class="w-full px-4">
-                <div class="hidden border-b border-accent font-bold md:grid md:grid-cols-12">
+                <div class="border-accent hidden border-b font-bold md:grid md:grid-cols-12">
                     <div class="col-span-4 px-4 py-2">{{ translate('translations.title') }}</div>
                     <div class="col-span-1 px-4 py-2">{{ translate('translations.source') }}</div>
                     <div class="col-span-1 px-4 py-2">{{ translate('translations.target') }}</div>
@@ -41,7 +41,7 @@
                 <div
                     v-for="item in translationRequests.items"
                     :key="item.id"
-                    class="rounded-lg py-4 shadow md:grid md:grid-cols-12 md:rounded-none md:border-b md:border-accent md:bg-transparent md:p-0 md:shadow-none">
+                    class="md:border-accent rounded-lg py-4 shadow-sm md:grid md:grid-cols-12 md:rounded-none md:border-b md:bg-transparent md:p-0 md:shadow-none">
                     <div class="deletable float-right h-5 w-5 md:hidden">
                         <TranslationDeletable
                             :translation-status="item.status"

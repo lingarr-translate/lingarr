@@ -17,7 +17,7 @@
                     <div
                         class="flex h-96 w-full max-w-md flex-col rounded-lg bg-black p-2"
                         @click.stop>
-                        <div class="shell-scroll flex-grow overflow-auto text-sm">
+                        <div class="shell-scroll grow overflow-auto text-sm">
                             <div class="mb-2 text-gray-400">
                                 <div v-if="currentPath.length > 0" class="flex items-center p-1">
                                     <button class="mr-2" @click="navigateUp">
@@ -61,7 +61,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="select-none space-y-1 text-gray-400">
+                            <div class="space-y-1 text-gray-400 select-none">
                                 <div
                                     v-for="dir in directoryContents"
                                     :key="dir.fullPath"

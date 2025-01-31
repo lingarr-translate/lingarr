@@ -15,7 +15,7 @@
                 </template>
 
                 <template v-else-if="!statistics">
-                    <div class="flex h-64 items-center justify-center text-primary-content">
+                    <div class="text-primary-content flex h-64 items-center justify-center">
                         {{ translate('statistics.notAvailable') }}
                     </div>
                 </template>
@@ -54,18 +54,18 @@
                 </div>
 
                 <div v-if="translationServices.length" class="mt-4">
-                    <h3 class="mb-4 text-sm font-medium text-primary-content">
+                    <h3 class="text-primary-content mb-4 text-sm font-medium">
                         {{ translate('statistics.translationServices') }}
                     </h3>
                     <div class="grid grid-cols-2 gap-2 xl:grid-cols-3">
                         <div
                             v-for="[service, count] in translationServices"
                             :key="service"
-                            class="rounded bg-primary p-2">
-                            <h4 class="text-xs font-medium text-primary-content/70">
+                            class="bg-primary rounded-sm p-2">
+                            <h4 class="text-primary-content/70 text-xs font-medium">
                                 {{ formatServiceName(service) }}
                             </h4>
-                            <p class="text-lg font-bold text-primary-content">
+                            <p class="text-primary-content text-lg font-bold">
                                 {{ formatNumber(count) }}
                             </p>
                         </div>
@@ -84,18 +84,18 @@
                 </div>
 
                 <div v-if="subtitleLanguages.length" class="mt-4">
-                    <h3 class="mb-2 text-sm font-medium text-primary-content">
+                    <h3 class="text-primary-content mb-2 text-sm font-medium">
                         {{ translate('statistics.availableSubtitles') }}
                     </h3>
                     <div class="grid grid-cols-3 gap-2 md:grid-cols-4 xl:grid-cols-6">
                         <div
                             v-for="[language, count] in subtitleLanguages"
                             :key="language"
-                            class="rounded bg-primary p-2">
-                            <h4 class="text-xs font-medium text-primary-content/70">
+                            class="bg-primary rounded-sm p-2">
+                            <h4 class="text-primary-content/70 text-xs font-medium">
                                 {{ language.toUpperCase() }}
                             </h4>
-                            <p class="text-lg font-bold text-primary-content">
+                            <p class="text-primary-content text-lg font-bold">
                                 {{ formatNumber(count) }}
                             </p>
                         </div>
