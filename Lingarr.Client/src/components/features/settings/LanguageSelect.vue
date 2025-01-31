@@ -85,6 +85,7 @@ const searchTerm: Ref<string> = ref('')
 const filteredLanguages = computed(() => {
     return options
         .filter((option) => {
+            if (!option) return false
             if (!searchTerm.value) return true
             return option.name.toLowerCase().includes(searchTerm.value.toLowerCase())
         })
