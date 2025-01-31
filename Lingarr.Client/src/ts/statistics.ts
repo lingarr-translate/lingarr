@@ -9,3 +9,8 @@
     translationsByService: Record<string, number>
     subtitlesByLanguage: Record<string, number>
 }
+
+export interface DailyStatistic {
+    date: string
+    translationCount: number
+}

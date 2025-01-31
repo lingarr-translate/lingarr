@@ -1,13 +1,6 @@
 ﻿<template>
     <div class="relative h-full w-full">
-        <div v-if="loading" class="flex h-full w-full items-center justify-center">
-            <LoaderCircleIcon class="h-8 w-8 animate-spin" />
-        </div>
-        <Bar
-            v-else-if="chartData"
-            :data="chartData"
-            :options="chartOptions"
-            class="h-full w-full" />
+        <Bar v-if="chartData" :data="chartData" :options="chartOptions" class="h-full w-full" />
         <div v-else class="flex h-full w-full items-center justify-center text-primary-content">
             {{ translate('statistics.noDataAvailable') }}
         </div>
@@ -15,10 +8,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import type { ChartData, ChartOptions, ChartDataset } from 'chart.js'
+import { computed } from 'vue'
+import type { ChartData, ChartOptions } from 'chart.js'
 import {
     Chart as ChartJS,
+    ChartDataset,
     CategoryScale,
     LinearScale,
     BarElement,
@@ -29,8 +23,7 @@ import {
     Legend
 } from 'chart.js'
 import { Bar } from 'vue-chartjs'
-import LoaderCircleIcon from '@/components/icons/LoaderCircleIcon.vue'
-import services from '@/services'
+import { DailyStatistic } from '@/ts'
 
 ChartJS.register(
     CategoryScale,
@@ -43,24 +36,9 @@ ChartJS.register(
     Legend
 )
 
-interface DailyStatistic {
-    date: string
-    translationCount: number
-}
-
-const loading = ref(false)
-const dailyStats = ref<DailyStatistic[]>([])
-
-const fetchDailyStats = async () => {
-    loading.value = true
-    try {
-        dailyStats.value = await services.statistics.getDailyStatistics<DailyStatistic[]>()
-    } catch (error) {
-        console.error('Error fetching daily statistics:', error)
-    } finally {
-        loading.value = false
-    }
-}
+const { dailyStats } = defineProps<{
+    dailyStats: DailyStatistic[]
+}>()
 
 const calculateMovingAverage = (data: number[], windowSize: number): number[] => {
     return data.map((_, index) => {
@@ -70,28 +48,22 @@ const calculateMovingAverage = (data: number[], windowSize: number): number[] =>
     })
 }
 
-type Dataset = ChartDataset<'bar' | 'line', number[]>
-
-const chartData = computed(() => {
-    if (!dailyStats.value.length) {
-        return {
-            labels: [],
-            datasets: []
-        }
-    }
-
-    // dates axis
-    const dates = dailyStats.value.map((stat) =>
+const dates = computed(() =>
+    dailyStats.map((stat) =>
         new Date(stat.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     )
-    // translation axis
-    const translationCounts = dailyStats.value.map((stat) => stat.translationCount)
+)
 
-    const movingAverage = calculateMovingAverage(translationCounts, 7)
-    const datasets: Dataset[] = [
+const translationCounts = computed(() => dailyStats.map((stat) => stat.translationCount))
+const movingAverage = computed(() => calculateMovingAverage(translationCounts.value, 7))
+
+const chartData = computed<ChartData<'bar'> | undefined>(() => {
+    if (!dailyStats.length) return undefined
+
+    const datasets: ChartDataset<'bar' | 'line'>[] = [
         {
             label: 'Daily Translations',
-            data: translationCounts,
+            data: translationCounts.value,
             backgroundColor: '#466e8c',
             barThickness: 6,
             borderRadius: 4,
@@ -100,7 +72,7 @@ const chartData = computed(() => {
         },
         {
             label: '7-Day Average',
-            data: movingAverage,
+            data: movingAverage.value,
             backgroundColor: '#68d391',
             borderColor: '#68d391',
             borderWidth: 2,
@@ -113,7 +85,7 @@ const chartData = computed(() => {
     ]
 
     return {
-        labels: dates,
+        labels: dates.value,
         datasets
     } as ChartData<'bar'>
 })
@@ -207,9 +179,5 @@ const chartOptions: ChartOptions<'bar'> = {
         intersect: false,
         mode: 'index'
     }
-}
-
-onMounted(() => {
-    fetchDailyStats()
-})
+} as const
 </script>

@@ -77,7 +77,10 @@
         <CardComponent :title="translate('statistics.languageStatistics')">
             <template #content>
                 <div class="h-80">
-                    <LanguageChart :statistics="statistics" />
+                    <LanguageChart v-if="dailyStats?.length" :daily-stats="dailyStats" />
+                    <div v-else class="flex h-full w-full items-center justify-center">
+                        <LoaderCircleIcon class="h-8 w-8 animate-spin" />
+                    </div>
                 </div>
 
                 <div v-if="subtitleLanguages.length" class="mt-4">
@@ -105,7 +108,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { MEDIA_TYPE, Statistics } from '@/ts'
+import { DailyStatistic, MEDIA_TYPE, Statistics } from '@/ts'
 import { useI18n } from '@/plugins/i18n'
 import services from '@/services'
 import CardComponent from '@/components/common/CardComponent.vue'
@@ -118,6 +121,7 @@ const { translate } = useI18n()
 const loading = ref(true)
 const error = ref<string | null>(null)
 const statistics = ref<Statistics>()
+const dailyStats = ref<DailyStatistic[]>()
 
 const translationServices = computed(() => {
     if (!statistics.value?.translationsByService) return []
@@ -156,7 +160,19 @@ const fetchStatistics = async () => {
     }
 }
 
-onMounted(() => {
-    fetchStatistics()
+const fetchDailyStats = async () => {
+    loading.value = true
+    try {
+        dailyStats.value = await services.statistics.getDailyStatistics<DailyStatistic[]>()
+    } catch (error) {
+        console.error('Error fetching daily statistics:', error)
+    } finally {
+        loading.value = false
+    }
+}
+
+onMounted(async () => {
+    await fetchDailyStats()
+    await fetchStatistics()
 })
 </script>
