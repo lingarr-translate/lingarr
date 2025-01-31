@@ -64,11 +64,6 @@ public class SeasonSync : ISeasonSync
     /// <returns>The converted and mapped path for the season, or an empty string if no path could be determined</returns>
     private async Task<string> GetSeasonPath(SonarrShow show, SonarrSeason season)
     {
-        if (!show.SeasonFolder)
-        {
-            return string.Empty;
-        }
-        
         var episodes = await _sonarrService.GetEpisodes(show.Id, season.SeasonNumber);
         var episode = episodes?.Where(episode => episode.HasFile).FirstOrDefault();
         if (episode == null)
