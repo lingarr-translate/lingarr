@@ -9,10 +9,10 @@ namespace Lingarr.Server.Extensions;
 
 public static class ApplicationBuilderExtensions
 {
-    public static void Configure(this WebApplication app)
+    public static async Task Configure(this WebApplication app)
     {
         app.MapHubs();
-        app.ApplyMigrations();
+        await app.ApplyMigrations();
 
         if (app.Environment.IsDevelopment())
         {
@@ -43,7 +43,7 @@ public static class ApplicationBuilderExtensions
 
     }
 
-    private static void ApplyMigrations(this WebApplication app)
+    private static async Task ApplyMigrations(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
         var services = scope.ServiceProvider;
@@ -51,7 +51,7 @@ public static class ApplicationBuilderExtensions
         {
             var context = services.GetRequiredService<LingarrDbContext>();
             Console.WriteLine("Applying migrations...");
-            context.Database.Migrate();
+            await context.Database.MigrateAsync();
             Console.WriteLine("Migrations applied successfully.");
         }
         catch (Exception ex)
