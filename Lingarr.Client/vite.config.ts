@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import * as path from 'path'
-import tailwindcss from "@tailwindcss/vite";
+import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ command, mode }) => {
     const isProduction = mode === 'production'
@@ -10,10 +10,7 @@ export default defineConfig(({ command, mode }) => {
         esbuild: {
             drop: isProduction ? ['console'] : []
         },
-        plugins: [
-            vue(),
-            tailwindcss()
-        ],
+        plugins: [vue(), tailwindcss()],
         resolve: {
             alias: {
                 '@': path.resolve(__dirname, './src')
