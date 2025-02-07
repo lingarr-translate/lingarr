@@ -47,6 +47,7 @@ export const useInstanceStore = defineStore({
         setTheme(theme: ITheme): void {
             localStorage.setItem('theme', theme)
             this.theme = theme
+            document.documentElement.className = theme
         },
         storeTheme(theme: ITheme): void {
             services.setting.setSetting('theme', theme)
