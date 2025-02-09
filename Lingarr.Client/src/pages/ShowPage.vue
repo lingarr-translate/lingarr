@@ -91,11 +91,11 @@
                                     </div>
                                 </div>
                                 <div
-                                    v-for="(episode, index) in season.episodes"
+                                    v-for="episode in season.episodes"
                                     :key="episode.id"
                                     class="grid grid-cols-12">
                                     <div class="col-span-1 px-4 py-2 md:col-span-2">
-                                        {{ index + 1 }}
+                                        {{ episode.episodeNumber }}
                                     </div>
                                     <div class="col-span-7 px-4 py-2 md:col-span-5">
                                         {{ episode.title }}
