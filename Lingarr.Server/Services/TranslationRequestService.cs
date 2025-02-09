@@ -112,6 +112,24 @@ public class TranslationRequestService : ITranslationRequestService
 
         return request;
     }
+    
+    /// <inheritdoc />
+    public async Task ResumeTranslationRequests()
+    {
+        var requests = await _dbContext.TranslationRequests
+            .Where(tr => tr.Status == TranslationStatus.Pending || 
+                         tr.Status == TranslationStatus.InProgress)
+            .ToListAsync();
+
+        foreach (var request in requests)
+        {
+            var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
+                job.Execute(request, CancellationToken.None)
+            );
+            await UpdateTranslationRequest(request, jobId, TranslationStatus.Pending);
+        }
+    }
+    
 
     /// <inheritdoc />
     public async Task<PagedResult<TranslationRequest>> GetTranslationRequests(
@@ -121,7 +139,6 @@ public class TranslationRequestService : ITranslationRequestService
         int pageNumber,
         int pageSize)
     {
-        
         var query = _dbContext.TranslationRequests
             .AsSplitQuery()
             .AsQueryable();

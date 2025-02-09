@@ -28,6 +28,12 @@ public interface ITranslationRequestService
     Task<int> UpdateActiveCount();
     
     /// <summary>
+    /// Resumes all pending and in-progress translation requests by re-enqueueing them in the job queue.
+    /// </summary>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task ResumeTranslationRequests();
+    
+    /// <summary>
     /// Retrieves a paginated list of translation requests with optional filtering and sorting.
     /// </summary>
     /// <param name="searchQuery">Optional search term to filter requests by title</param>
