@@ -1,6 +1,11 @@
 ﻿<template>
     <div class="relative h-full w-full">
-        <Bar v-if="chartData" :data="chartData" :options="chartOptions" class="h-full w-full" />
+        <Bar
+            v-if="chartData"
+            :key="key"
+            :data="chartData"
+            :options="chartOptions"
+            class="h-full w-full" />
         <div v-else class="text-primary-content flex h-full w-full items-center justify-center">
             {{ translate('statistics.noDataAvailable') }}
         </div>
@@ -8,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import type { ChartData, ChartOptions } from 'chart.js'
 import {
     Chart as ChartJS,
@@ -21,9 +26,10 @@ import {
     Title,
     Tooltip,
     Legend
-} from 'chart.js'
+} from 'chart.js/auto'
 import { Bar } from 'vue-chartjs'
 import { DailyStatistic } from '@/ts'
+import { useInstanceStore } from '@/store/instance'
 
 ChartJS.register(
     CategoryScale,
@@ -36,9 +42,38 @@ ChartJS.register(
     Legend
 )
 
-const { dailyStats } = defineProps<{
+const props = defineProps<{
     dailyStats: DailyStatistic[]
 }>()
+
+const getCssVariable = (variableName: string): string => {
+    return getComputedStyle(document.documentElement).getPropertyValue(variableName).trim()
+}
+
+const colors = computed(() => {
+    return {
+        key: key.value, // force reload
+        bar: {
+            background: getCssVariable('--accent') + '80', // added opacity
+            border: getCssVariable('--primary')
+        },
+        line: {
+            border: getCssVariable('--accent-content')
+        },
+        card: {
+            background: getCssVariable('--primary'),
+            border: getCssVariable('--accent')
+        }
+    }
+})
+const instanceStore = useInstanceStore()
+const key = ref(0)
+watch(
+    () => instanceStore.getTheme,
+    async () => {
+        key.value++
+    }
+)
 
 const calculateMovingAverage = (data: number[], windowSize: number): number[] => {
     return data.map((_, index) => {
@@ -49,22 +84,23 @@ const calculateMovingAverage = (data: number[], windowSize: number): number[] =>
 }
 
 const dates = computed(() =>
-    dailyStats.map((stat) =>
+    props.dailyStats.map((stat) =>
         new Date(stat.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     )
 )
 
-const translationCounts = computed(() => dailyStats.map((stat) => stat.translationCount))
+const translationCounts = computed(() => props.dailyStats.map((stat) => stat.translationCount))
 const movingAverage = computed(() => calculateMovingAverage(translationCounts.value, 7))
 
 const chartData = computed<ChartData<'bar'> | undefined>(() => {
-    if (!dailyStats.length) return undefined
+    if (!props.dailyStats.length) return undefined
 
     const datasets: ChartDataset<'bar' | 'line'>[] = [
         {
             label: 'Daily Translations',
             data: translationCounts.value,
-            backgroundColor: '#466e8c',
+            backgroundColor: colors.value.bar.background,
+            borderColor: colors.value.bar.border,
             barThickness: 6,
             borderRadius: 4,
             maxBarThickness: 12,
@@ -73,8 +109,7 @@ const chartData = computed<ChartData<'bar'> | undefined>(() => {
         {
             label: '7-Day Average',
             data: movingAverage.value,
-            backgroundColor: '#68d391',
-            borderColor: '#68d391',
+            borderColor: colors.value.line.border,
             borderWidth: 2,
             pointRadius: 0,
             fill: false,
@@ -149,8 +184,8 @@ const chartOptions: ChartOptions<'bar'> = {
             }
         },
         tooltip: {
-            backgroundColor: '#1a202c',
-            borderColor: '#466e8c',
+            backgroundColor: colors.value.card.background,
+            borderColor: colors.value.card.border,
             borderWidth: 1,
             padding: 12,
             titleColor: '#c0c8d2',
@@ -179,5 +214,5 @@ const chartOptions: ChartOptions<'bar'> = {
         intersect: false,
         mode: 'index'
     }
-} as const
+}
 </script>
