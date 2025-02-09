@@ -78,4 +78,24 @@ public class TranslationRequestController : ControllerBase
 
         return NotFound(translationRequest);
     }
+    
+    /// <summary>
+    /// Removes an existing translation request
+    /// </summary>
+    /// <param name="cancelRequest">The translation request to remove</param>
+    /// <response code="200">Returns the removed translation request</response>
+    /// <response code="404">If the translation request was not found</response>
+    /// <response code="500">If there was an error checking for updates</response>
+    /// <returns>ActionResult containing the removed translation request if found, or NotFound if the request doesn't exist</returns>
+    [HttpPost("remove")]
+    public async Task<ActionResult<string>> RemoveTranslationRequest([FromBody] TranslationRequest cancelRequest)
+    {
+        var translationRequest = await _translationRequestService.RemoveTranslationRequest(cancelRequest);
+        if (translationRequest != null)
+        {
+            return Ok(translationRequest);
+        }
+
+        return NotFound(translationRequest);
+    }
 }

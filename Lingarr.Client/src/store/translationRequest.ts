@@ -57,7 +57,14 @@ export const useTranslationRequestStore = defineStore({
             await this.setActiveCount(activeTranslationRequests)
         },
         async cancel(translationRequest: ITranslationRequest) {
-            await services.translationRequest.cancel<ITranslationRequest>(translationRequest)
+            await services.translationRequest.cancel<string>(translationRequest)
+        },
+        async remove(translationRequest: ITranslationRequest) {
+            await services.translationRequest.remove<string>(translationRequest).finally(() => {
+                this.translationRequests.items = this.translationRequests.items.filter(
+                    (request) => request.id !== translationRequest.id
+                )
+            })
         },
         async updateProgress(requestProgress: IRequestProgress) {
             this.translationRequests.items = this.translationRequests.items.map(

@@ -52,6 +52,17 @@ public interface ITranslationRequestService
         int pageSize);
 
     /// <summary>
+    /// Removes an existing translation request and its associated background job.
+    /// </summary>
+    /// <param name="cancelRequest">The translation request to remove</param>
+    /// <returns>
+    /// A message indicating the result of the remove operation, or null if the request wasn't found
+    /// </returns>
+    Task<string?> RemoveTranslationRequest(
+        TranslationRequest cancelRequest
+    );
+
+    /// <summary>
     /// Cancels an existing translation request and its associated background job.
     /// </summary>
     /// <param name="cancelRequest">The translation request to cancel</param>

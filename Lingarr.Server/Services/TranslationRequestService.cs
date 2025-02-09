@@ -93,7 +93,23 @@ public class TranslationRequestService : ITranslationRequestService
         
         _backgroundJobClient.Delete(translationRequest.JobId);
         
-        return $"Cancelled Translation request with id {cancelRequest.Id} has been cancelled";
+        return $"Translation request with id {cancelRequest.Id} has been cancelled";
+    }
+    
+    /// <inheritdoc />
+    public async Task<string?> RemoveTranslationRequest(TranslationRequest cancelRequest)
+    {
+        var translationRequest = await _dbContext.TranslationRequests.FirstOrDefaultAsync(
+            translationRequest => translationRequest.Id == cancelRequest.Id);
+        if (translationRequest == null)
+        {
+            return null;
+        }
+        
+        _dbContext.TranslationRequests.Remove(translationRequest);
+        await _dbContext.SaveChangesAsync();
+        
+        return $"Translation request with id {cancelRequest.Id} has been removed";
     }
     
     /// <inheritdoc />
