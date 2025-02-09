@@ -32,6 +32,7 @@ public class ScheduleService : IScheduleService
     {
         using var scope = _serviceProvider.CreateScope();
         var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
+        var translationRequestService = scope.ServiceProvider.GetRequiredService<ITranslationRequestService>();
 
         var settings = await settingService.GetSettings([
             SettingKeys.Automation.MovieSchedule,
@@ -83,6 +84,9 @@ public class ScheduleService : IScheduleService
             job => job.Execute(),
             Cron.Daily,
             new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        
+        _logger.LogInformation("Starting pending translation requests.");
+        await translationRequestService.ResumeTranslationRequests();
     }
 
     public List<RecurringJobStatus> GetRecurringJobs()
