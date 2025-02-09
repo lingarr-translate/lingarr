@@ -49,6 +49,17 @@ const service = (
                     reject(error.response)
                 })
         })
+    },
+    remove<T>(translationRequest: ITranslationRequest): Promise<T> {
+        return new Promise((resolve, reject) => {
+            http.post(`${resource}/remove`, translationRequest)
+                .then((response: AxiosResponse<T>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
     }
 })
 
