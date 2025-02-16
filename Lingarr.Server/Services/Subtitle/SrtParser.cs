@@ -1,179 +1,239 @@
-﻿using System.Text.RegularExpressions;
-using System.Text;
+﻿using System.Text;
+using System.Text.RegularExpressions;
 using Lingarr.Server.Interfaces.Services.Subtitle;
 using Lingarr.Server.Models.FileSystem;
 
 namespace Lingarr.Server.Services.Subtitle;
 
-/// <summary>
-/// Forked from: https://github.com/AlexPoint/SubtitlesParser
-/// Parser for the .srt subrip subtitle files
-/// </summary>
 public class SrtParser : ISubtitleParser
 {
-    private readonly string[] _delimiters = { "-->", "- >", "->" };
+    private readonly string[] _timeDelimiters = { "-->", "- >", "->" };
+    private static readonly Regex TimeCodeRegex = new(@"([0-9]+):([0-9]+):([0-9]+)(?:[,\.]([0-9]+))?", RegexOptions.Compiled);
+    private const int MinimumSubtitleBlockSize = 2;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="SrtParser"/> class.
-    /// </summary>
-    public SrtParser()
-    {
-    }
-    
     /// <inheritdoc />
     public List<SubtitleItem> ParseStream(Stream subtitleStream, Encoding encoding)
     {
-        // Ensure the stream is readable and seekable
-        if (!subtitleStream.CanRead || !subtitleStream.CanSeek)
-        {
-            throw new ArgumentException($"Stream must be seekable and readable in a subtitles parser. " +
-                                        $"Operation interrupted; isSeekable: {subtitleStream.CanSeek} - isReadable: {subtitleStream.CanSeek}");
-        }
-
-        // Seek the beginning of the stream
-        subtitleStream.Position = 0;
-
+        ValidateStream(subtitleStream);
         using var reader = new StreamReader(subtitleStream, encoding, true);
-
-        var items = new List<SubtitleItem>();
-        var subtitleParts = GetSubtitleParts(reader).ToList();
-
-        if (!subtitleParts.Any())
+        var subtitles = ParseSubtitles(reader).ToList();
+        
+        if (subtitles.Count == 0)
         {
-            throw new FormatException("Parsing as srt returned no srt part.");
+            throw new FormatException("No valid subtitles found in the stream");
         }
 
-        foreach (var subtitlePart in subtitleParts)
-        {
-            var subtitleLines = subtitlePart.Split(Environment.NewLine)
-                .Select(s => s.Trim())
-                .Where(l => !string.IsNullOrEmpty(l))
-                .ToList();
-
-            var item = new SubtitleItem();
-
-            foreach (var subtitleLine in subtitleLines)
-            {
-                if (item.StartTime == 0 && item.EndTime == 0 &&
-                    TryParseTimeCodeLine(subtitleLine, out var startTc, out var endTc))
-                {
-                    item.StartTime = startTc;
-                    item.EndTime = endTc;
-                }
-                else
-                {
-                    if (int.TryParse(subtitleLine, out _))
-                    {
-                        item.Position = int.Parse(subtitleLine);
-                    }
-                    else
-                    {
-                        item.Lines.Add(subtitleLine);
-                        // Strip formatting by removing anything within curly braces or angle brackets,
-                        // which is how SRT styles text according to Wikipedia (https://en.wikipedia.org/wiki/SubRip#Formatting)
-                        item.PlaintextLines.Add(Regex.Replace(subtitleLine, @"\{.*?\}|<.*?>", string.Empty));
-                    }
-                }
-            }
-
-            if ((item.StartTime != 0 || item.EndTime != 0) && item.Lines.Any())
-            {
-                // Parsing succeeded
-                items.Add(item);
-            }
-        }
-
-        if (!items.Any())
-        {
-            throw new ArgumentException("Stream is not in a valid Srt format");
-        }
-
-        return items;
+        ValidateSubtitles(subtitles);
+        return subtitles;
     }
 
-
     /// <summary>
-    /// Enumerates the subtitle parts in a .srt file based on the standard line break observed between them.
-    /// A .srt subtitle part is in the form:
-    /// 
-    /// 1
-    /// 00:00:20,000 --> 00:00:24,400
-    /// Altocumulus clouds occur between six thousand
+    /// Parses subtitle lines into subtitle items.
     /// </summary>
-    /// <param name="reader">The text reader associated with the .srt file.</param>
-    /// <returns>An IEnumerable(string) object containing all the subtitle parts.</returns>
-    private IEnumerable<string> GetSubtitleParts(TextReader reader)
+    /// <param name="reader">The text reader to read subtitle lines from.</param>
+    /// <returns>An enumerable collection of subtitle items.</returns>
+    private IEnumerable<SubtitleItem> ParseSubtitles(TextReader reader)
     {
-        var stringBuilder = new StringBuilder();
+        var currentBlock = new List<string>();
         string? line;
 
-        while ((line = reader.ReadLine()) is not null)
+        while ((line = ReadNonEmptyLine(reader)) != null)
         {
-            if (string.IsNullOrWhiteSpace(line))
+            if (IsBlockSeparator(line, currentBlock, reader))
             {
-                // Return only if not empty
-                var result = stringBuilder.ToString().TrimEnd();
-                if (!string.IsNullOrEmpty(result))
+                if (TryParseBlock(currentBlock, out var subtitle))
                 {
-                    yield return result;
+                    yield return subtitle;
                 }
-
-                stringBuilder.Clear();
+                currentBlock.Clear();
             }
-            else
-            {
-                stringBuilder.AppendLine(line);
-            }
+            currentBlock.Add(line);
         }
 
-        if (stringBuilder.Length > 0)
+        if (TryParseBlock(currentBlock, out var lastSubtitle))
         {
-            yield return stringBuilder.ToString();
+            yield return lastSubtitle;
         }
     }
 
     /// <summary>
-    /// Attempts to parse a timecode line and extracts start and end timecodes.
+    /// Reads the next non-empty line from the subtitle.
     /// </summary>
-    /// <param name="line">The timecode line to parse.</param>
-    /// <param name="startTimeCode">The parsed start timecode.</param>
-    /// <param name="endTimeCode">The parsed end timecode.</param>
-    /// <returns>
-    /// <c>true</c> if the parsing is successful; otherwise, <c>false</c>.
-    /// </returns>
-    private bool TryParseTimeCodeLine(string line, out int startTimeCode, out int endTimeCode)
+    /// <param name="reader">The text reader to read from.</param>
+    /// <returns>The next non-empty line, or null if none remain.</returns>
+    private static string? ReadNonEmptyLine(TextReader reader)
     {
-        var parts = line.Split(_delimiters, StringSplitOptions.None);
+        string? line;
+        while ((line = reader.ReadLine()) != null)
+        {
+            var trimmed = line.Trim();
+            if (!string.IsNullOrWhiteSpace(trimmed))
+            {
+                return trimmed;
+            }
+        }
+        return null;
+    }
+    
+    /// <summary>
+    /// Determines if the given line marks the start of a new subtitle block.
+    /// </summary>
+    /// <param name="line">The current line.</param>
+    /// <param name="currentBlock">The current subtitle block being processed.</param>
+    /// <param name="reader">The text reader.</param>
+    /// <returns>True if the line is a block separator; otherwise, false.</returns>
+    private bool IsBlockSeparator(string line, List<string> currentBlock, TextReader reader)
+    {
+        if (currentBlock.Count == 0)
+        {
+            return false;
+        }
+        return IsNumericLine(line) && IsNumericLine(currentBlock[0]);
+    }
+
+    /// <summary>
+    /// Attempts to parse a subtitle block.
+    /// </summary>
+    /// <param name="block">The subtitle block to parse.</param>
+    /// <param name="subtitle">The parsed subtitle item.</param>
+    /// <returns>True if parsing was successful; otherwise, false.</returns>
+    private bool TryParseBlock(List<string> block, out SubtitleItem subtitle)
+    {
+        subtitle = new SubtitleItem();
+
+        if (block.Count < MinimumSubtitleBlockSize || !IsNumericLine(block[0]))
+        {
+            return false;
+        }
+
+        if (!TryParseTimeCodes(block[1], out var start, out var end))
+        {
+            return false;
+        }
+
+        subtitle.Position = int.Parse(block[0]);
+        subtitle.StartTime = start;
+        subtitle.EndTime = end;
+        ParseTextLines(block.Skip(2), subtitle);
+
+        return subtitle.Lines.Count > 0;
+    }
+
+    /// <summary>
+    /// Attempts to parse timecodes from a subtitle line.
+    /// </summary>
+    /// <param name="line">The subtitle line containing timecodes.</param>
+    /// <param name="start">The parsed start time in milliseconds.</param>
+    /// <param name="end">The parsed end time in milliseconds.</param>
+    /// <returns>True if the timecodes were successfully parsed; otherwise, false.</returns>
+    private bool TryParseTimeCodes(string line, out int start, out int end)
+    {
+        start = end = -1;
+        var parts = line.Split(_timeDelimiters, StringSplitOptions.RemoveEmptyEntries);
 
         if (parts.Length != 2)
         {
-            // This is not a timecode line
-            (startTimeCode, endTimeCode) = (-1, -1);
             return false;
         }
-        else
+        
+        start = ParseTimeCode(parts[0]);
+        end = ParseTimeCode(parts[1]);
+        return start >= 0 && end >= 0 && start < end;
+    }
+
+    /// <summary>
+    /// Parses an SRT timecode string into milliseconds.
+    /// </summary>
+    /// <param name="timeCode">The timecode string in HH:MM:SS,mmm format.</param>
+    /// <returns>The parsed timecode in milliseconds, or -1 if parsing fails.</returns>
+    private static int ParseTimeCode(string timeCode)
+    {
+        var match = TimeCodeRegex.Match(timeCode.Trim());
+        if (!match.Success) return -1;
+
+        var hours = int.Parse(match.Groups[1].Value);
+        var minutes = int.Parse(match.Groups[2].Value);
+        var seconds = int.Parse(match.Groups[3].Value);
+        var milliseconds = match.Groups[4].Success 
+            ? int.Parse(match.Groups[4].Value.PadRight(3, '0').Substring(0, 3))
+            : 0;
+
+        if (minutes >= 60 || seconds >= 60)
         {
-            (startTimeCode, endTimeCode) = (ParseTimeCode(parts[0]), ParseTimeCode(parts[1]));
-            return true;
+            return -1;
+        }
+
+        return hours * 3600000 + minutes * 60000 + seconds * 1000 + milliseconds;
+    }
+
+    /// <summary>
+    /// Parses subtitle text lines and removes markup.
+    /// </summary>
+    /// <param name="lines">The subtitle text lines.</param>
+    /// <param name="subtitle">The subtitle item to populate.</param>
+    private static void ParseTextLines(IEnumerable<string> lines, SubtitleItem subtitle)
+    {
+        foreach (var line in lines)
+        {
+            var cleanedLine = line.Trim();
+            if (string.IsNullOrEmpty(cleanedLine))
+            {
+                continue;
+            }
+            
+            subtitle.Lines.Add(cleanedLine);
+            subtitle.PlaintextLines.Add(RemoveMarkup(cleanedLine));
         }
     }
 
     /// <summary>
-    /// Parses a timecode string in SRT format into milliseconds.
+    /// Removes markup tags from a subtitle line.
     /// </summary>
-    /// <param name="line">The SRT timecode string.</param>
-    /// <returns>
-    /// The parsed timecode in milliseconds. If parsing fails, -1 is returned.
-    /// </returns>
-    private static int ParseTimeCode(string line)
+    /// <param name="input">The subtitle line with potential markup.</param>
+    /// <returns>The cleaned subtitle text without markup.</returns>
+    private static string RemoveMarkup(string input)
     {
-        var match = Regex.Match(line, @"[0-9]+:[0-9]+:[0-9]+([,\.][0-9]+)?");
+        return Regex.Replace(input, @"\{.*?\}|<.*?>", string.Empty).Trim();
+    }
 
-        if (match.Success && TimeSpan.TryParse(match.Value.Replace(',', '.'), out var result))
+    /// <summary>
+    /// Determines if a given line is numeric.
+    /// </summary>
+    /// <param name="line">The line to check.</param>
+    /// <returns>True if the line is numeric; otherwise, false.</returns>
+    private static bool IsNumericLine(string line)
+    {
+        return int.TryParse(line.Trim(), out _);
+    }
+    
+    /// <summary>
+    /// Validates if the given stream is readable and seekable.
+    /// </summary>
+    /// <param name="stream">The stream to validate.</param>
+    /// <exception cref="ArgumentException">Thrown if the stream is not readable or seekable.</exception>
+    private static void ValidateStream(Stream stream)
+    {
+        if (!stream.CanRead || !stream.CanSeek)
         {
-            return (int)result.TotalMilliseconds;
+            throw new ArgumentException("Stream must be readable and seekable");
         }
 
-        return -1;
+        stream.Position = 0;
+    }
+
+    /// <summary>
+    /// Validates that subtitles do not have overlapping timestamps.
+    /// </summary>
+    /// <param name="subtitles">The list of subtitle items to validate.</param>
+    /// <exception cref="FormatException">Thrown if overlapping subtitles are detected.</exception>
+    private static void ValidateSubtitles(IReadOnlyList<SubtitleItem> subtitles)
+    {
+        for (var i = 0; i < subtitles.Count - 1; i++)
+        {
+            if (subtitles[i].EndTime > subtitles[i + 1].StartTime)
+            {
+                throw new FormatException($"Overlapping subtitles detected at position {subtitles[i].Position}");
+            }
+        }
     }
 }
