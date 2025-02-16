@@ -41,6 +41,18 @@ public static class SettingKeys
             public const string DeeplApiKey = "deepl_api_key";
         }
 
+        public static class Gemini 
+        {
+            public const string Model = "gemini_model";
+            public const string ApiKey = "gemini_api_key";
+        }
+
+        public static class DeepSeek 
+        {
+            public const string Model = "deepseek_model";
+            public const string ApiKey = "deepseek_api_key";
+        }
+
         public const string LibreTranslateUrl = "libretranslate_url";
         public const string SourceLanguages = "source_languages";
         public const string TargetLanguages = "target_languages";

@@ -26,6 +26,10 @@ export const SETTINGS = {
     LOCAL_AI_ENDPOINT: 'local_ai_endpoint',
     LOCAL_AI_MODEL: 'local_ai_model',
     LOCAL_AI_API_KEY: 'local_ai_api_key',
+    GEMINI_MODEL: 'gemini_model',
+    GEMINI_API_KEY: 'gemini_api_key',
+    DEEPSEEK_MODEL: 'deepseek_model',
+    DEEPSEEK_API_KEY: 'deepseek_api_key',
     AI_PROMPT: 'ai_prompt',
     THEME: 'theme',
     LOCALE: 'locale'
@@ -56,6 +60,10 @@ export interface ISettings {
     local_ai_endpoint: string
     local_ai_model: string
     local_ai_api_key: string
+    gemini_model: string
+    gemini_api_key: string
+    deepseek_model: string
+    deepseek_api_key: string
     ai_prompt: string
     theme: ITheme
     locale: ILocale

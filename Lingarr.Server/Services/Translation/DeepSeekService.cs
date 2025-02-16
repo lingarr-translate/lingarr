@@ -9,19 +9,19 @@ using Lingarr.Server.Services.Translation.Base;
 
 namespace Lingarr.Server.Services.Translation;
 
-public class LocalAiService : BaseLanguageService
+public class DeepSeekService : BaseLanguageService
 {
+    private string? _endpoint = "https://api.deepseek.com/v1/chat/completions";
     private readonly HttpClient _httpClient;
     private string? _model;
-    private string? _endpoint;
     private string? _prompt;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
-    public LocalAiService(
+    public DeepSeekService(
         ISettingService settings,
         HttpClient httpClient,
-        ILogger<LocalAiService> logger)
+        ILogger<DeepSeekService> logger)
         : base(settings, logger, "/app/Statics/ai_languages.json")
     {
         _httpClient = httpClient;
@@ -45,29 +45,27 @@ public class LocalAiService : BaseLanguageService
             if (_initialized) return;
 
             var settings = await _settings.GetSettings([
-                SettingKeys.Translation.LocalAi.Model,
-                SettingKeys.Translation.LocalAi.Endpoint,
-                SettingKeys.Translation.LocalAi.ApiKey,
+                SettingKeys.Translation.DeepSeek.Model,
+                SettingKeys.Translation.DeepSeek.ApiKey,
                 SettingKeys.Translation.AiPrompt
             ]);
 
-            if (string.IsNullOrEmpty(settings[SettingKeys.Translation.LocalAi.Model]) ||
-                string.IsNullOrEmpty(settings[SettingKeys.Translation.LocalAi.Endpoint]))
+            if (string.IsNullOrEmpty(settings[SettingKeys.Translation.DeepSeek.Model]))
             {
-                throw new InvalidOperationException("Local AI address or model is not configured.");
+                throw new InvalidOperationException("DeepSeek model is not configured.");
             }
 
-            _model = settings[SettingKeys.Translation.LocalAi.Model];
-            _endpoint = settings[SettingKeys.Translation.LocalAi.Endpoint];
+            var apiKey = settings[SettingKeys.Translation.DeepSeek.ApiKey];
+            if (string.IsNullOrEmpty(apiKey))
+            {
+                throw new InvalidOperationException("DeepSeek API key is not configured.");
+            }
 
+            _model = settings[SettingKeys.Translation.DeepSeek.Model];
+            
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            if (settings.TryGetValue(SettingKeys.Translation.LocalAi.ApiKey, out var apiKey) &&
-                !string.IsNullOrEmpty(apiKey))
-            {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-            }
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
             _prompt = !string.IsNullOrEmpty(settings[SettingKeys.Translation.AiPrompt])
                 ? settings[SettingKeys.Translation.AiPrompt]
@@ -91,43 +89,12 @@ public class LocalAiService : BaseLanguageService
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
 
-        if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_endpoint) || string.IsNullOrEmpty(_prompt))
+        if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_prompt))
         {
-            throw new InvalidOperationException("Local AI service was not properly initialized.");
+            throw new InvalidOperationException("DeepSeek service was not properly initialized.");
         }
 
-        var isChatEndpoint = _endpoint.TrimEnd('/').EndsWith("completions", StringComparison.OrdinalIgnoreCase);
-        return isChatEndpoint 
-            ? await TranslateWithChatApi(text, cancellationToken)
-            : await TranslateWithGenerateApi(text, cancellationToken);
-    }
-
-    private async Task<string> TranslateWithGenerateApi(string text, CancellationToken cancellationToken)
-    {
-        var content = new StringContent(JsonSerializer.Serialize(new
-        {
-            model = _model,
-            prompt = _prompt + "\\n\\n" + text,
-            stream = false
-        }), Encoding.UTF8, "application/json");
-
-        var response = await _httpClient.PostAsync(_endpoint, content, cancellationToken);
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new TranslationException("Translation using Local AI failed.");
-        }
-
-        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-        var generateResponse = JsonSerializer.Deserialize<GenerateResponse>(responseBody);
-        
-        if (generateResponse == null || string.IsNullOrEmpty(generateResponse.Response))
-        {
-            throw new TranslationException("Invalid or empty response from generate API.");
-        }
-
-        return generateResponse.Response;
+        return await TranslateWithChatApi(text, cancellationToken);
     }
 
     private async Task<string> TranslateWithChatApi(string? text, CancellationToken cancellationToken)
@@ -138,11 +105,18 @@ public class LocalAiService : BaseLanguageService
             new { role = "user", content = text }
         };
 
-        var content = new StringContent(JsonSerializer.Serialize(new
+        var requestBody = new
         {
             model = _model,
-            messages
-        }), Encoding.UTF8, "application/json");
+            messages,
+            stream = false
+        };
+
+        var content = new StringContent(
+            JsonSerializer.Serialize(requestBody),
+            Encoding.UTF8,
+            "application/json"
+        );
 
         var response = await _httpClient.PostAsync(_endpoint, content, cancellationToken);
         
@@ -150,17 +124,17 @@ public class LocalAiService : BaseLanguageService
         {
             _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
             _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new TranslationException("Translation using chat API failed.");
+            throw new TranslationException("Translation using DeepSeek API failed.");
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-        var chatResponse = JsonSerializer.Deserialize<ChatResponse>(responseBody);
+        var chatResponse = JsonSerializer.Deserialize<DeepSeekChatResponse>(responseBody);
         
         if (chatResponse?.Choices == null || chatResponse.Choices.Count == 0)
         {
-            throw new TranslationException("Invalid or empty response from chat API.");
+            throw new TranslationException("Invalid or empty response from DeepSeek API.");
         }
 
-        return chatResponse.Choices[0].Message.Content;
+        return chatResponse.Choices[0].Message.Content.Trim();
     }
 }

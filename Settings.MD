@@ -61,6 +61,22 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 | `ANTHROPIC_VERSION`      | The version of the Anthropic API to use.                                        |
 | `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
 
+#### **Gemini**
+
+| **Environment Variable** | **Description**                                                                 |
+|--------------------------|---------------------------------------------------------------------------------|
+| `GEMINI_MODEL`        | The model to use for Anthropic translations. Example: `gemini-2.0-flash`.        |
+| `GEMINI_API_KEY`      | The API key for authenticating with Anthropic.                                  |
+| `AI_PROMPT`            | The prompt template for AI-based translation services.                          |
+
+#### **DeepSeek**
+
+| **Environment Variable** | **Description**                                                                 |
+|--------------------------|---------------------------------------------------------------------------------|
+| `DEEPSEEK_MODEL`        | The model to use for Anthropic translations. Example: `deepseek-chat`.               |
+| `DEEPSEEK_API_KEY`      | The API key for authenticating with Anthropic.                                  |
+| `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
+
 #### **LocalAI**
 
 | **Environment Variable** | **Description**                                                                 |
