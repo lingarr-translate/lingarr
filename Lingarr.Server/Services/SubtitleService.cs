@@ -106,10 +106,50 @@ public class SubtitleService : ISubtitleService
     /// <inheritdoc />
     public string CreateFilePath(string originalPath, string targetLanguage)
     {
-        var extension = Path.GetExtension(originalPath).ToLower();
-        var pattern = @"(\.([a-zA-Z]{2,3}))?\." + extension[1..] + "$";
-        var replacement = $".{targetLanguage}{extension}";
-        return Regex.Replace(originalPath, pattern, replacement);
+        var extension = Path.GetExtension(originalPath);
+        var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(originalPath);
+        var parts = fileNameWithoutExtension.Split('.');
+        var reversedParts = parts.Reverse().ToList();
+
+        // Extract caption if present
+        string? caption = null;
+        int captionIndex = reversedParts.FindIndex(p => SupportedCaptions.Contains(p.ToLower()));
+        if (captionIndex != -1)
+        {
+            caption = reversedParts[captionIndex].ToLowerInvariant();
+            reversedParts.RemoveAt(captionIndex);
+        }
+
+        // Extract language
+        int languageIndex = reversedParts.FindIndex(part => TryGetLanguageByPart(part, out _));
+        if (languageIndex != -1)
+        {
+            reversedParts.RemoveAt(languageIndex);
+        }
+
+        // Resolve target language code
+        if (!TryGetLanguageByPart(targetLanguage, out var targetLanguageCode))
+        {
+            targetLanguageCode = targetLanguage;
+        }
+
+        // Reconstruct base parts
+        var baseParts = reversedParts.AsEnumerable().Reverse().ToList();
+        var newParts = new List<string>(baseParts);
+        if (targetLanguageCode != null) {
+            newParts.Add(targetLanguageCode.ToLowerInvariant());
+        }
+
+        // Add caption if present
+        if (!string.IsNullOrEmpty(caption))
+        {
+            newParts.Add(caption);
+        }
+
+        // Build new file name and path
+        var newFileName = string.Join(".", newParts) + extension;
+        var directory = Path.GetDirectoryName(originalPath) ?? "";
+        return Path.Combine(directory, newFileName);
     }
     
     /// <summary>

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Lingarr.Server.Models.Integrations;
+namespace Lingarr.Server.Models.Integrations.Translation;
 
 public class GenerateResponse
 {

@@ -32,6 +32,8 @@ import FreeServiceConfig from '@/components/features/settings/services/FreeServi
 import AnthropicConfig from '@/components/features/settings/services/AnthropicConfig.vue'
 import OpenAiConfig from '@/components/features/settings/services/OpenAiConfig.vue'
 import LocalAiConfig from '@/components/features/settings/services/LocalAiConfig.vue'
+import GeminiConfig from '@/components/features/settings/services/GeminiConfig.vue'
+import DeepSeekConfig from '@/components/features/settings/services/DeepSeekConfig.vue'
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
@@ -45,15 +47,17 @@ const serviceType = computed({
 })
 
 const serviceOptions = [
-    { value: 'libretranslate', label: 'LibreTranslate' },
-    { value: 'deepl', label: 'DeepL' },
-    { value: 'google', label: 'Google' },
-    { value: 'bing', label: 'Bing' },
-    { value: 'microsoft', label: 'Microsoft' },
-    { value: 'yandex', label: 'Yandex' },
-    { value: 'openai', label: 'OpenAI' },
     { value: 'anthropic', label: 'Anthropic' },
-    { value: 'localai', label: 'Local AI' }
+    { value: 'bing', label: 'Bing' },
+    { value: 'deepl', label: 'DeepL' },
+    { value: 'deepseek', label: 'DeepSeek' },
+    { value: 'gemini', label: 'Gemini' },
+    { value: 'google', label: 'Google' },
+    { value: 'libretranslate', label: 'LibreTranslate' },
+    { value: 'localai', label: 'Local AI' },
+    { value: 'microsoft', label: 'Microsoft' },
+    { value: 'openai', label: 'OpenAI' },
+    { value: 'yandex', label: 'Yandex' }
 ]
 
 const serviceConfigComponent = computed(() => {
@@ -68,6 +72,10 @@ const serviceConfigComponent = computed(() => {
             return LocalAiConfig
         case 'deepl':
             return DeepLConfig
+        case 'gemini':
+            return GeminiConfig
+        case 'deepseek':
+            return DeepSeekConfig
         case 'google':
         case 'bing':
         case 'microsoft':
