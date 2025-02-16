@@ -65,8 +65,9 @@ public class TranslationRequestService : ITranslationRequestService
     public async Task<int> GetActiveCount()
     {
         return await _dbContext.TranslationRequests.CountAsync(translation =>
-            translation.Status != TranslationStatus.Cancelled &&
-            translation.Status != TranslationStatus.Completed);
+            translation.Status == TranslationStatus.InProgress &&
+            translation.Status == TranslationStatus.Pending);
+
     }
 
     /// <inheritdoc />
@@ -90,9 +91,9 @@ public class TranslationRequestService : ITranslationRequestService
         {
             return null;
         }
-        
+
         _backgroundJobClient.Delete(translationRequest.JobId);
-        
+
         return $"Translation request with id {cancelRequest.Id} has been cancelled";
     }
     
