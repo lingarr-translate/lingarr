@@ -53,12 +53,13 @@ public class TranslationJob
         CancellationToken cancellationToken)
     {
         var jobName = JobContextFilter.GetCurrentJobTypeName();
+        var jobId = JobContextFilter.GetCurrentJobId();
+        
         try
         {
             await _scheduleService.UpdateJobState(jobName, JobStatus.Processing.GetDisplayName());
             cancellationToken.ThrowIfCancellationRequested();
 
-            var jobId = JobContextFilter.GetCurrentJobId();
             var request = await _translationRequestService.UpdateTranslationRequest(translationRequest,
                 jobId,
                 TranslationStatus.InProgress);
@@ -86,6 +87,8 @@ public class TranslationJob
         }
         catch (Exception)
         {
+            await _translationRequestService.UpdateTranslationRequest(translationRequest, jobId,
+                TranslationStatus.Failed);
             await _scheduleService.UpdateJobState(jobName, JobStatus.Failed.GetDisplayName());
         }
     }

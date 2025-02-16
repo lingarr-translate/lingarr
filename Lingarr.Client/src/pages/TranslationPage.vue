@@ -44,7 +44,7 @@
                     class="md:border-accent rounded-lg py-4 shadow-sm md:grid md:grid-cols-12 md:rounded-none md:border-b md:bg-transparent md:p-0 md:shadow-none">
                     <div class="deletable float-right h-5 w-5 md:hidden">
                         <TranslationAction
-                            :translation-status="item.status"
+                            :status="item.status"
                             @toggle:action="(action) => handleAction(item, action)" />
                     </div>
                     <div class="mb-2 md:col-span-4 md:mb-0 md:px-4 md:py-2">
@@ -106,7 +106,7 @@
                         class="hidden items-center justify-between md:col-span-1 md:flex md:justify-end md:px-4 md:py-2">
                         <div class="flex h-5 w-5 items-center justify-center">
                             <TranslationAction
-                                :translation-status="item.status"
+                                :status="item.status"
                                 @toggle:action="(action) => handleAction(item, action)" />
                         </div>
                     </div>
@@ -161,14 +161,11 @@ const filter: ComputedRef<IFilter> = computed({
 })
 
 function handleAction(translationRequest: ITranslationRequest, action: string) {
-    switch (action) {
-        case 'cancel':
-            return translationRequestStore.cancel(translationRequest)
-        case 'remove':
-            return translationRequestStore.remove(translationRequest)
-        default:
-            return null
+    if (!action) return
+    if (action === 'cancel') {
+        return translationRequestStore.cancel(translationRequest)
     }
+    return translationRequestStore.remove(translationRequest)
 }
 
 onMounted(async () => {
