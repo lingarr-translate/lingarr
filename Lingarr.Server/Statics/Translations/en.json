@@ -90,15 +90,11 @@
       "radarrAddressError": "Please enter a valid URL (e.g., http://localhost:3000 or https://api.example.com)",
       "radarrApiKey": "API key",
       "radarrApiKeyError": "API Key must be {minLength} characters",
-      "radarrSyncButton": "Sync radarr",
-      "radarrUpdating": "updating",
       "sonarrHeader": "Sonarr Settings:",
       "sonarrAddress": "Address",
       "sonarrAddressError": "Please enter a valid URL (e.g., http://localhost:3000 or https://api.example.com)",
       "sonarrApiKey": "API key",
-      "sonarrApiKeyError": "API Key must be {minLength} characters",
-      "sonarrSyncButton": "Sync sonarr",
-      "sonarrUpdating": "updating"
+      "sonarrApiKeyError": "API Key must be {minLength} characters"
     },
     "services": {
       "title": "Services",
