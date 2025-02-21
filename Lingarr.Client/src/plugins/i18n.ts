@@ -66,10 +66,10 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
             // directive for translations
             app.directive('translate', {
                 mounted(el, binding) {
-                    el.textContent = translate(binding.value)
+                    el.innerHTML = translate(binding.value)
                 },
                 updated(el, binding) {
-                    el.textContent = translate(binding.value)
+                    el.innerHTML = translate(binding.value)
                 }
             })
         }

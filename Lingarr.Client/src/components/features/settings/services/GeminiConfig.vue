@@ -1,26 +1,31 @@
 ﻿<template>
     <div class="flex flex-col space-y-2">
         <div>
-            Automation is:
+            {{ translate('settings.services.geminiWarningIntro') }}
             <span :class="automationEnabled == 'true' ? 'text-red-500' : 'text-green-500'">
-                {{ automationEnabled == 'true' ? 'Enabled' : 'Disabled' }}
+                {{
+                    automationEnabled == 'true'
+                        ? translate('settings.services.geminiEnabled')
+                        : translate('settings.services.geminiDisabled')
+                }}
             </span>
         </div>
         <p class="text-xs">
-            AI translation can be costly in terms of pricing. Only use it when you know what you are
-            doing and make sure automation is disabled.
+            {{ translate('settings.services.geminiDescription') }}
         </p>
 
-        <label class="mb-1 block text-sm">AI Model</label>
+        <label class="mb-1 block text-sm">
+            {{ translate('settings.services.geminiAiModel') }}
+        </label>
         <SelectComponent v-model:selected="aiModel" :options="options" />
 
         <InputComponent
             v-model="apiKey"
             validation-type="string"
             type="password"
-            label="API key"
+            :label="translate('settings.services.geminiApiKey')"
             :min-length="1"
-            error-message="API Key must not be empty"
+            :error-message="translate('settings.services.geminiError')"
             @update:validation="(val) => (apiKeyIsValid = val)" />
 
         <AiPromptConfig @save="emit('save')" />

@@ -1,3 +1,3 @@
 ﻿<template>
-    <div class="text-xs">Free translation services have rate limiting that may cause failures.</div>
+    <div class="text-xs">{{ translate('settings.services.freeServiceLimits') }}</div>
 </template>

@@ -3,21 +3,11 @@
         v-model="deepLApiKey"
         validation-type="string"
         type="password"
-        :min-length="0"
-        label="API key"
-        error-message="API Key must be greater than {minLength} characters"
+        :min-length="1"
+        :label="translate('settings.services.deeplApiKey')"
+        :error-message="translate('settings.services.deeplError')"
         @update:validation="(val) => (isValid = val)" />
-    <div class="pt-2 text-xs">
-        Please note that DeepL has
-        <a
-            href="https://developers.deepl.com/docs/resources/usage-limits"
-            class="underline"
-            target="_blank">
-            usage limits
-        </a>
-        . A single subtitle file typically contains between 60,000 and 120,000 characters. To avoid
-        exceeding these limits, it's recommended to keep automated translation disabled.
-    </div>
+    <div v-translate="translate('settings.services.deeplNotification')" class="pt-2 text-xs" />
 </template>
 
 <script lang="ts" setup>
