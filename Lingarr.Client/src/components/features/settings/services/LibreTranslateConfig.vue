@@ -2,8 +2,8 @@
     <InputComponent
         v-model="libreTranslateUrl"
         validation-type="url"
-        label="Address"
-        error-message="Please enter a valid URL (e.g., http://localhost:3000 or https://api.example.com)"
+        :label="translate('settings.services.libreTranslateAddress')"
+        :error-message="translate('settings.services.libreTranslateAddressError')"
         @update:validation="(val) => (isValid = val)" />
 </template>
 <script setup lang="ts">

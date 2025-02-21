@@ -1,4 +1,26 @@
 ﻿<template>
+    <CardComponent :title="translate('settings.indexing.title')">
+        <template #description>
+            {{ translate('settings.indexing.description') }}
+        </template>
+        <template #content>
+            <SaveNotification ref="saveNotification" />
+            <div class="flex flex-col space-y-2 pb-4">
+                <span class="font-semibold">
+                    {{ translate('settings.indexing.indexingHeader') }}
+                </span>
+                <SelectComponent
+                    v-model:selected="movieSchedule"
+                    :label="translate('settings.indexing.indexingMoviesLabel')"
+                    :options="cronOptions" />
+                <SelectComponent
+                    v-model:selected="showSchedule"
+                    :label="translate('settings.indexing.indexingTvShowLabel')"
+                    :options="cronOptions" />
+            </div>
+        </template>
+    </CardComponent>
+
     <CardComponent :title="translate('settings.automation.title')">
         <template #description>
             {{ translate('settings.automation.description') }}
@@ -9,33 +31,17 @@
             .
         </template>
         <template #content>
-            <SaveNotification ref="saveNotification" />
-            <div class="flex flex-col space-y-2 pb-4">
-                <span class="font-semibold">
-                    {{ translate('settings.automation.indexingHeader') }}
-                </span>
-                <SelectComponent
-                    v-model:selected="movieSchedule"
-                    :label="translate('settings.automation.indexingMoviesLabel')"
-                    :options="cronOptions" />
-                <SelectComponent
-                    v-model:selected="showSchedule"
-                    :label="translate('settings.automation.indexingTvShowLabel')"
-                    :options="cronOptions" />
-            </div>
-            <div class="flex flex-col space-y-2 pb-4">
-                <span class="font-semibold">
-                    {{ translate('settings.automation.automatedTranslationHeader') }}
-                </span>
-                <ToggleButton v-model="automationEnabled" />
-            </div>
-            <div class="flex flex-col space-y-2 pb-4">
+            <div class="flex flex-col space-y-4">
+                <div class="flex items-center space-x-2">
+                    <span>{{ translate('settings.automation.enableAutomatedTranslation') }}</span>
+                    <ToggleButton v-model="automationEnabled" />
+                </div>
+
                 <SelectComponent
                     v-model:selected="translationSchedule"
                     :label="translate('settings.automation.translationScheduleLabel')"
                     :options="cronOptions" />
-            </div>
-            <div class="flex flex-col space-y-2">
+
                 <span class="font-semibold">
                     {{ translate('settings.automation.limitsHeader') }}
                 </span>
@@ -46,6 +52,24 @@
                     :min-length="0"
                     :label="translate('settings.automation.scheduleLimitLabel')"
                     @update:validation="(val) => (maxTranslationsPerRunIsValid = val)" />
+
+                <span class="font-semibold">
+                    {{ translate('settings.automation.defaultAgeThresholdLabel') }}
+                </span>
+                <InputComponent
+                    v-model="movieAgeThreshold"
+                    input-type="number"
+                    validation-type="number"
+                    :min-length="0"
+                    :label="translate('settings.automation.movieAgeThresholdLabel')"
+                    @update:validation="(val) => (movieAgeThresholdIsValid = val)" />
+                <InputComponent
+                    v-model="showAgeThreshold"
+                    input-type="number"
+                    validation-type="number"
+                    :min-length="0"
+                    :label="translate('settings.automation.showAgeThresholdLabel')"
+                    @update:validation="(val) => (showAgeThresholdIsValid = val)" />
             </div>
         </template>
     </CardComponent>
@@ -65,6 +89,8 @@ import { useI18n } from '@/plugins/i18n'
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const maxTranslationsPerRunIsValid = ref(false)
+const movieAgeThresholdIsValid = ref(false)
+const showAgeThresholdIsValid = ref(false)
 const settingsStore = useSettingStore()
 const router = useRouter()
 const { translate } = useI18n()
@@ -101,6 +127,22 @@ const maxTranslationsPerRun: WritableComputedRef<string> = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.MAX_TRANSLATIONS_PER_RUN) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.MAX_TRANSLATIONS_PER_RUN, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+
+const movieAgeThreshold: WritableComputedRef<string> = computed({
+    get: (): string => settingsStore.getSetting(SETTINGS.MOVIE_AGE_THRESHOLD) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.MOVIE_AGE_THRESHOLD, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+
+const showAgeThreshold: WritableComputedRef<string> = computed({
+    get: (): string => settingsStore.getSetting(SETTINGS.SHOW_AGE_THRESHOLD) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.SHOW_AGE_THRESHOLD, newValue, true)
         saveNotification.value?.show()
     }
 })

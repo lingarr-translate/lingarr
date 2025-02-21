@@ -1,39 +1,39 @@
 ﻿<template>
     <div class="flex flex-col space-y-2">
         <p class="text-xs">
-            Local AI addresses usually consist of the following path
+            {{ translate('settings.services.localAiDescriptionPath') }}
             <span class="bg-primary rounded-md p-1">/v1/chat/completions</span>
-            or
+            {{ translate('settings.services.localAiDescriptionOr') }}
             <span class="bg-primary my-1 inline-block rounded-md p-1">/api/generate</span>
-            and should follow the
+            {{ translate('settings.services.localAiDescriptionFollow') }}
             <a
                 href="https://platform.openai.com/docs/api-reference/chat/create"
                 class="underline"
                 target="_blank">
                 Open AI
             </a>
-            API specification.
+            {{ translate('settings.services.localAiDescriptionSpecification') }}
         </p>
 
         <InputComponent
             v-model="address"
             validation-type="url"
-            label="Address"
+            :label="translate('settings.services.localAiAddress')"
             @update:validation="(val) => (isValid.address = val)" />
 
         <InputComponent
             v-model="aiModel"
             validation-type="string"
-            label="Model"
+            :label="translate('settings.services.localAiAiModel')"
             @update:validation="(val) => (isValid.model = val)" />
 
         <InputComponent
             v-model="apiKey"
             validation-type="string"
-            label="API key"
             type="password"
+            :label="translate('settings.services.localAiApiKey')"
             @update:validation="(val) => (isValid.apiKey = val)" />
-        <p class="text-xs">API key is optional and can be left empty.</p>
+        <p class="text-xs">{{ translate('settings.services.localAiNotification') }}</p>
 
         <AiPromptConfig @save="emit('save')" />
     </div>

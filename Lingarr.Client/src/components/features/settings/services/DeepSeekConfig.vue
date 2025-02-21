@@ -1,26 +1,31 @@
 ﻿<template>
     <div class="flex flex-col space-y-2">
         <div>
-            Automation is:
+            {{ translate('settings.services.deepseekWarningIntro') }}
             <span :class="automationEnabled == 'true' ? 'text-red-500' : 'text-green-500'">
-                {{ automationEnabled == 'true' ? 'Enabled' : 'Disabled' }}
+                {{
+                    automationEnabled == 'true'
+                        ? translate('settings.services.deepseekEnabled')
+                        : translate('settings.services.deepseekDisabled')
+                }}
             </span>
         </div>
         <p class="text-xs">
-            AI translation is very costly in terms of pricing. Only use it when you know what you
-            are doing and make sure automation is disabled.
+            {{ translate('settings.services.deepseekDescription') }}
         </p>
 
-        <label class="mb-1 block text-sm">AI Model</label>
+        <label class="mb-1 block text-sm">
+            {{ translate('settings.services.deepseekAiModel') }}
+        </label>
         <SelectComponent v-model:selected="aiModel" :options="options" />
 
         <InputComponent
             v-model="apiKey"
             validation-type="string"
             type="password"
-            label="API key"
+            :label="translate('settings.services.deepseekApiKey')"
             :min-length="1"
-            error-message="API Key must not be empty"
+            :error-message="translate('settings.services.deepseekError')"
             @update:validation="(val) => (apiKeyIsValid = val)" />
 
         <AiPromptConfig @save="emit('save')" />

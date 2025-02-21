@@ -2,11 +2,10 @@
     <TextAreaComponent
         v-model="aiPrompt"
         :rows="10"
-        label="Prompt"
+        :label="translate('settings.services.aIPromptLabel')"
         @update:validation="(val) => (isValid = val)" />
     <p class="text-xs">
-        The prompt is used to start a translation with an AI model. Note that extensive prompts cost
-        more, while simple prompts may lead to more hallucinations.
+        {{ translate('settings.services.aIPromptDescription') }}
     </p>
 </template>
 
