@@ -48,14 +48,12 @@ public class ScheduleService : IScheduleService
                 case "movie_schedule":
                     RecurringJob.AddOrUpdate<SyncMovieJob>(
                         "SyncMovieJob",
-                        "movies",
                         job => job.Execute(),
                         setting.Value);
                     break;
                 case "show_schedule":
                     RecurringJob.AddOrUpdate<SyncShowJob>(
                         "SyncShowJob",
-                        "shows",
                         job => job.Execute(),
                         setting.Value);
                     break;
@@ -69,22 +67,23 @@ public class ScheduleService : IScheduleService
                             translationSchedule,
                             new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
                     }
+
                     break;
             }
         }
-        
+
         RecurringJob.AddOrUpdate<CleanupJob>(
             "CleanupJob",
             job => job.Execute(),
             Cron.Weekly,
             new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-        
+
         RecurringJob.AddOrUpdate<StatisticsJob>(
             "StatisticsJob",
             job => job.Execute(),
             Cron.Daily,
             new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-        
+
         _logger.LogInformation("Starting pending translation requests.");
         await translationRequestService.ResumeTranslationRequests();
     }
@@ -151,8 +150,8 @@ public class ScheduleService : IScheduleService
         if (!string.IsNullOrEmpty(dto.LastJobId))
         {
             var processingJobs = monitor.ProcessingJobs(0, int.MaxValue);
-            var currentJob = processingJobs.FirstOrDefault(j => 
-                j.Key == dto.LastJobId || 
+            var currentJob = processingJobs.FirstOrDefault(j =>
+                j.Key == dto.LastJobId ||
                 (j.Value?.Job?.Args?.Contains(dto.Id) ?? false));
 
             if (currentJob.Value != null)

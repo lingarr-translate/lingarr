@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using GTranslate.Translators;
 using Hangfire;
+using Hangfire.MySql;
 using Hangfire.Storage.SQLite;
 using Lingarr.Core;
 using Lingarr.Core.Configuration;
@@ -33,10 +34,10 @@ public static class ServiceCollectionExtensions
         {
             options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
             options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-
         });
 
-        builder.Services.AddEndpointsApiExplorer();;
+        builder.Services.AddEndpointsApiExplorer();
+        ;
         builder.Services.AddMemoryCache();
         builder.Services.AddHttpClient();
 
@@ -45,8 +46,8 @@ public static class ServiceCollectionExtensions
         builder.ConfigureDatabase();
         builder.ConfigureProviders();
         builder.ConfigureServices();
-        builder.ConfigureHangfire();
         builder.ConfigureSignalR();
+        builder.ConfigureHangfire();
     }
 
     private static void ConfigureSwagger(this WebApplicationBuilder builder)
@@ -93,7 +94,7 @@ public static class ServiceCollectionExtensions
 
         builder.Services.AddHostedService<ScheduleInitializationService>();
         builder.Services.AddSingleton<IScheduleService, ScheduleService>();
-        
+
         builder.Services.AddScoped<IImageService, ImageService>();
         builder.Services.AddScoped<IIntegrationService, IntegrationService>();
         builder.Services.AddScoped<IMediaService, MediaService>();
@@ -114,20 +115,20 @@ public static class ServiceCollectionExtensions
 
         // Register translate services
         builder.Services.AddScoped<ITranslationServiceFactory, TranslationFactory>();
-        
+
         // Added startup service to validate new settings
         builder.Services.AddHostedService<StartupService>();
-        
+
         // Add translation services
         builder.Services.AddTransient<GoogleTranslator>();
         builder.Services.AddTransient<BingTranslator>();
         builder.Services.AddTransient<MicrosoftTranslator>();
         builder.Services.AddTransient<YandexTranslator>();
         builder.Services.AddTransient<OpenAiService>();
-        
+
         builder.Services.AddTransient<PathConversionService>();
         builder.Services.AddScoped<IStatisticsService, StatisticsService>();
-        
+
         // Add Sync services
         builder.Services.AddScoped<IShowSyncService, ShowSyncService>();
         builder.Services.AddScoped<IShowSync, ShowSync>();
@@ -139,30 +140,60 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<IImageSync, ImageSync>();
     }
 
+    private static void ConfigureSignalR(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddSignalR();
+    }
+
     private static void ConfigureHangfire(this WebApplicationBuilder builder)
     {
+        var tablePrefix = "_hangfire";
         builder.Services.AddHangfireServer(options =>
         {
-            options.Queues = ["movies", "shows", "default"];
+            options.Queues = ["movies", "shows", "system", "translation", "default"];
             options.WorkerCount =
                 int.TryParse(Environment.GetEnvironmentVariable("MAX_CONCURRENT_JOBS"), out int maxConcurrentJobs)
                     ? maxConcurrentJobs
                     : 1;
         });
 
-        builder.Services.AddHangfire(configuration => 
+        builder.Services.AddHangfire(configuration =>
         {
             configuration
                 .UseSimpleAssemblyNameTypeSerializer()
-                .UseRecommendedSerializerSettings()
-                .UseSQLiteStorage();
+                .UseRecommendedSerializerSettings();
+
+            var dbConnection = Environment.GetEnvironmentVariable("DB_CONNECTION")?.ToLower() ?? "sqlite";
+            if (dbConnection == "mysql")
+            {
+                var variables = new Dictionary<string, string>
+                {
+                    { "DB_HOST", Environment.GetEnvironmentVariable("DB_HOST") ?? "Lingarr.Mysql" },
+                    { "DB_PORT", Environment.GetEnvironmentVariable("DB_PORT") ?? "3306" },
+                    { "DB_DATABASE", Environment.GetEnvironmentVariable("DB_DATABASE") ?? "LingarrMysql" },
+                    { "DB_USERNAME", Environment.GetEnvironmentVariable("DB_USERNAME") ?? "LingarrMysql" },
+                    { "DB_PASSWORD", Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "Secret1234" }
+                };
+
+                var connectionString =
+                    $"Server={variables["DB_HOST"]};Port={variables["DB_PORT"]};Database={variables["DB_DATABASE"]};Uid={variables["DB_USERNAME"]};Pwd={variables["DB_PASSWORD"]};Allow User Variables=True";
+
+                configuration.UseStorage(new MySqlStorage(connectionString, new MySqlStorageOptions
+                {
+                    TablesPrefix = tablePrefix
+                }));
+            }
+            else
+            {
+                var sqliteDbPath = Environment.GetEnvironmentVariable("SQLITE_HANGFIRE_DB_PATH") ?? "hangfire.db";
+                var options = new SQLiteStorageOptions
+                {
+                    Prefix = tablePrefix
+                };
+                configuration.UseSQLiteStorage($"Data Source=/app/config/{sqliteDbPath};Foreign Keys=True", options);
+            }
 
             configuration.UseFilter(new JobContextFilter());
         });
-    }
-
-    private static void ConfigureSignalR(this WebApplicationBuilder builder)
-    {
-        builder.Services.AddSignalR();
     }
 }

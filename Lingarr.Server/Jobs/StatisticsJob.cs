@@ -29,6 +29,7 @@ public class StatisticsJob
     }
 
     [AutomaticRetry(Attempts = 0)]
+    [Queue("system")]
     public async Task Execute()
     {
         var jobName = JobContextFilter.GetCurrentJobTypeName();
