@@ -54,7 +54,6 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         _mediaType = mediaType;
         _hash = CreateHash(matchingSubtitles);
 
-
         if (string.IsNullOrEmpty(media.MediaHash) || media.MediaHash != _hash)
         {
             _logger.LogInformation("Initiating subtitle processing.");

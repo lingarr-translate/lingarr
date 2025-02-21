@@ -33,25 +33,26 @@ public class SyncMovieJob
 
     [DisableConcurrentExecution(timeoutInSeconds: 5 * 60)]
     [AutomaticRetry(Attempts = 0)]
+    [Queue("shows")]
     public async Task Execute()
     {
         var jobName = JobContextFilter.GetCurrentJobTypeName();
         _logger.LogInformation("Radarr sync job initiated");
-        
+
         try
         {
             await _scheduleService.UpdateJobState(jobName, JobStatus.Processing.GetDisplayName());
-            
+
             var movies = await _radarrService.GetMovies();
             if (movies == null) return;
 
             _logger.LogInformation("Fetched {Count} movies from Radarr", movies.Count());
 
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
-            
+
             await _movieSyncService.SyncMovies(movies);
             await _movieSyncService.RemoveNonExistentMovies(movies.Select(m => m.Id));
-            
+
             await transaction.CommitAsync();
             await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());
             _logger.LogInformation("Movies synced successfully.");

@@ -146,7 +146,6 @@ public class SettingChangedListener
                         RecurringJob.RemoveIfExists(SettingKeys.Automation.TranslationSchedule);
                         RecurringJob.AddOrUpdate<AutomatedTranslationJob>(
                             "AutomatedTranslationJob",
-                            "default",
                             job => job.Execute(),
                             translationSchedule);
                     }
@@ -191,12 +190,10 @@ public class SettingChangedListener
                 case "Schedule":
                     RecurringJob.AddOrUpdate<SyncMovieJob>(
                         "SyncMovieJob",
-                        "movies",
                         job => job.Execute(),
                         settings[SettingKeys.Automation.MovieSchedule]);
                     RecurringJob.AddOrUpdate<SyncShowJob>(
                         "SyncShowJob",
-                        "shows",
                         job => job.Execute(),
                         settings[SettingKeys.Automation.ShowSchedule]);
                     break;

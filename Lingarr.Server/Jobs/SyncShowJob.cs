@@ -33,25 +33,26 @@ public class SyncShowJob
 
     [DisableConcurrentExecution(timeoutInSeconds: 5 * 60)]
     [AutomaticRetry(Attempts = 0)]
+    [Queue("movies")]
     public async Task Execute()
     {
         var jobName = JobContextFilter.GetCurrentJobTypeName();
         _logger.LogInformation("Sonarr sync job initiated");
-        
+
         try
         {
             await _scheduleService.UpdateJobState(jobName, JobStatus.Processing.GetDisplayName());
-            
+
             var shows = await _sonarrService.GetShows();
             if (shows == null) return;
 
             _logger.LogInformation("Fetched {ShowCount} shows from Sonarr", shows.Count);
 
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
-            
+
             await _showSyncService.SyncShows(shows);
             await _showSyncService.RemoveNonExistentShows(shows.Select(s => s.Id).ToHashSet());
-            
+
             await transaction.CommitAsync();
             await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());
             _logger.LogInformation("Shows synced successfully.");

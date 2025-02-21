@@ -15,7 +15,7 @@ public class CleanupJob
     private readonly IScheduleService _scheduleService;
 
     public CleanupJob(
-        LingarrDbContext dbContext, 
+        LingarrDbContext dbContext,
         IScheduleService scheduleService,
         ILogger<CleanupJob> logger)
     {
@@ -25,6 +25,7 @@ public class CleanupJob
     }
 
     [AutomaticRetry(Attempts = 0)]
+    [Queue("system")]
     public async Task Execute()
     {
         var jobName = JobContextFilter.GetCurrentJobTypeName();

@@ -48,6 +48,7 @@ public class TranslationJob
     }
 
     [AutomaticRetry(Attempts = 0)]
+    [Queue("translation")]
     public async Task Execute(
         TranslationRequest translationRequest,
         CancellationToken cancellationToken)
