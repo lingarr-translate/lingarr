@@ -90,15 +90,11 @@
       "radarrAddressError": "Voer een geldige URL in (bijv. http://localhost:3000 of https://api.example.com)",
       "radarrApiKey": "API-sleutel",
       "radarrApiKeyError": "API-sleutel moet {minLength} tekens bevatten",
-      "radarrSyncButton": "Radarr synchroniseren",
-      "radarrUpdating": "updating",
       "sonarrHeader": "Sonarr Instellingen:",
       "sonarrAddress": "Adres",
       "sonarrAddressError": "Voer een geldige URL in (bijv. http://localhost:3000 of https://api.example.com)",
       "sonarrApiKey": "API-sleutel",
-      "sonarrApiKeyError": "API-sleutel moet {minLength} tekens bevatten",
-      "sonarrSyncButton": "Sonarr synchroniseren",
-      "sonarrUpdating": "updating"
+      "sonarrApiKeyError": "API-sleutel moet {minLength} tekens bevatten"
     },
     "services": {
       "title": "Diensten",
