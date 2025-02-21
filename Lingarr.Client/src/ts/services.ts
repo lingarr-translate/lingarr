@@ -34,6 +34,7 @@ export interface IMediaService {
         sortBy: string,
         ascending: boolean
     ): Promise<T>
+    exclude<T>(mediaType: MediaType, id: number): Promise<T>
 }
 
 export interface ISettingService {

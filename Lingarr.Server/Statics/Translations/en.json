@@ -32,9 +32,10 @@
   },
   "tvShows": {
     "title": "Title",
-    "subtitles": "Subtitles",
+    "exclude": "Exclude",
     "season": "Season",
     "episodes": "Episodes",
+    "episodesLine": "episodes",
     "specials": "Specials",
     "episode": "Episode",
     "episodeTitle": "Title",
@@ -172,8 +173,8 @@
       "limitsHeader": "Limits:",
       "scheduleLimitLabel": "Limit the amount of translations per schedule",
       "defaultAgeThresholdLabel": "Default age threshold of files to be translated:",
-      "movieAgeThresholdLabel": "Age threshold of movies",
-      "showAgeThresholdLabel": "Age threshold of shows"
+      "movieAgeThresholdLabel": "Age threshold in 'hours' of movies",
+      "showAgeThresholdLabel": "Age threshold in 'hours' of shows"
     },
     "cronOptions": {
       "everyFifteenMinutes": "Every 15 minutes",

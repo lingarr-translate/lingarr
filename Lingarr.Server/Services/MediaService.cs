@@ -1,5 +1,6 @@
 ﻿using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
+using Lingarr.Core.Enum;
 using Lingarr.Server.Models;
 using Microsoft.EntityFrameworkCore;
 using Lingarr.Server.Models.Api;
@@ -68,7 +69,8 @@ public class MediaService : IMediaService
                 Path = movie.Path,
                 DateAdded = movie.DateAdded,
                 Images = movie.Images,
-                Subtitles = subtitles
+                Subtitles = subtitles,
+                ExcludeFromTranslation = movie.ExcludeFromTranslation
             };
             enrichedMovies.Add(enrichedMovie);
         }
@@ -123,5 +125,69 @@ public class MediaService : IMediaService
             PageNumber = pageNumber,
             PageSize = pageSize
         };
+    }
+    
+    /// <inheritdoc />
+    public async Task<bool> Exclude(
+        MediaType mediaType,
+        int id)
+    {
+        try
+        {
+            switch (mediaType)
+            {
+                case MediaType.Movie:
+                    var movie = await _dbContext.Movies.FindAsync(id);
+                    if (movie != null)
+                    {
+                        movie.ExcludeFromTranslation = !movie.ExcludeFromTranslation;
+                        await _dbContext.SaveChangesAsync();
+                        return true;
+                    }
+                    break;
+
+                case MediaType.Show:
+                    var show = await _dbContext.Shows.FindAsync(id);
+                    if (show != null)
+                    {
+                        show.ExcludeFromTranslation = !show.ExcludeFromTranslation;
+                        await _dbContext.SaveChangesAsync();
+                        return true;
+                    }
+                    break;
+
+                case MediaType.Season:
+                    var season = await _dbContext.Seasons.FindAsync(id);
+                    if (season != null)
+                    {
+                        season.ExcludeFromTranslation = !season.ExcludeFromTranslation;
+                        await _dbContext.SaveChangesAsync();
+                        return true;
+                    }
+                    break;
+
+                case MediaType.Episode:
+                    var episode = await _dbContext.Episodes.FindAsync(id);
+                    if (episode != null)
+                    {
+                        episode.ExcludeFromTranslation = !episode.ExcludeFromTranslation;
+                        await _dbContext.SaveChangesAsync();
+                        return true;
+                    }
+                    break;
+
+                default:
+                    _logger.LogWarning("Unsupported media type: {MediaType}", mediaType);
+                    return false;
+            }
+
+            _logger.LogWarning("Media item not found. Type: {MediaType}, Id: {Id}", mediaType, id);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error excluding media item. Type: {MediaType}, Id: {Id}", mediaType, id);
+            return false;
+        }
     }
 }

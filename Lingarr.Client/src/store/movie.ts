@@ -1,5 +1,5 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { IFilter, IMovie, IPagedResult, IUseMovieStore } from '@/ts'
+import { IFilter, IMovie, IPagedResult, IUseMovieStore, MediaType } from '@/ts'
 import services from '@/services'
 
 export const useMovieStore = defineStore({
@@ -44,6 +44,9 @@ export const useMovieStore = defineStore({
                 this.filter.sortBy,
                 this.filter.isAscending
             )
+        },
+        async exclude(type: MediaType, id: number) {
+            await services.media.exclude(type, id)
         }
     }
 })

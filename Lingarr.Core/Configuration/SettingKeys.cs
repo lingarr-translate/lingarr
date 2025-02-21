@@ -67,5 +67,7 @@ public static class SettingKeys
         public const string TranslationCycle = "translation_cycle";
         public const string MovieSchedule = "movie_schedule";
         public const string ShowSchedule = "show_schedule";
+        public const string MovieAgeThreshold = "movie_age_threshold";
+        public const string ShowAgeThreshold = "show_age_threshold";
     }
 }

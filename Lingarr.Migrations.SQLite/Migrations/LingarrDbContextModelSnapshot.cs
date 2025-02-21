@@ -61,6 +61,10 @@ namespace Lingarr.Migrations.SQLite.Migrations
                         .HasColumnType("INTEGER")
                         .HasColumnName("episode_number");
 
+                    b.Property<bool>("ExcludeFromTranslation")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("exclude_from_translation");
+
                     b.Property<string>("FileName")
                         .HasColumnType("TEXT")
                         .HasColumnName("file_name");
@@ -151,6 +155,10 @@ namespace Lingarr.Migrations.SQLite.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("date_added");
 
+                    b.Property<bool>("ExcludeFromTranslation")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("exclude_from_translation");
+
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasColumnType("TEXT")
@@ -173,6 +181,10 @@ namespace Lingarr.Migrations.SQLite.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("title");
+
+                    b.Property<int?>("TranslationAgeThreshold")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("translation_age_threshold");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT")
@@ -229,6 +241,10 @@ namespace Lingarr.Migrations.SQLite.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT")
                         .HasColumnName("created_at");
+
+                    b.Property<bool>("ExcludeFromTranslation")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("exclude_from_translation");
 
                     b.Property<string>("Path")
                         .HasColumnType("TEXT")
@@ -288,6 +304,10 @@ namespace Lingarr.Migrations.SQLite.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("date_added");
 
+                    b.Property<bool>("ExcludeFromTranslation")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("exclude_from_translation");
+
                     b.Property<string>("Path")
                         .IsRequired()
                         .HasColumnType("TEXT")
@@ -301,6 +321,10 @@ namespace Lingarr.Migrations.SQLite.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("title");
+
+                    b.Property<int?>("TranslationAgeThreshold")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("translation_age_threshold");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT")

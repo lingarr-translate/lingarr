@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Lingarr.Core.Configuration;
@@ -57,7 +58,7 @@ public class GoogleGeminiService : BaseLanguageService
             }
 
             _apiKey = settings[SettingKeys.Translation.Gemini.ApiKey];
-            _model = settings[SettingKeys.Translation.Gemini.Model] ?? "gemini-pro";
+            _model = settings[SettingKeys.Translation.Gemini.Model];
 
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -89,7 +90,46 @@ public class GoogleGeminiService : BaseLanguageService
             throw new InvalidOperationException("Gemini service was not properly initialized.");
         }
 
-        return await TranslateWithGeminiApi(message, cancellationToken);
+        using var retry = new CancellationTokenSource();
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
+
+        int maxRetries = 5;
+        var delay = TimeSpan.FromSeconds(1);
+        var maxDelay = TimeSpan.FromSeconds(32);
+
+        for (var attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                return await TranslateWithGeminiApi(message, linked.Token);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                if (attempt == maxRetries)
+                {
+                    _logger.LogError(ex, "Too many requests. Max retries exhausted for text: {Text}", message);
+                    throw new TranslationException("Too many requests. Retry limit reached.", ex);
+                }
+
+                _logger.LogWarning(
+                    "429 Too Many Requests. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    delay, attempt, maxRetries);
+
+                await Task.Delay(delay, linked.Token);
+                delay = TimeSpan.FromTicks(Math.Min(delay.Ticks * 2, maxDelay.Ticks));
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during translation attempt {Attempt}", attempt);
+                throw new TranslationException("Unexpected error occurred during translation.", ex);
+            }
+        }
+
+        throw new TranslationException("Translation failed after maximum retry attempts.");
     }
 
     private async Task<string> TranslateWithGeminiApi(string? message, CancellationToken cancellationToken)

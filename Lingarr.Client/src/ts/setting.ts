@@ -32,7 +32,9 @@ export const SETTINGS = {
     DEEPSEEK_API_KEY: 'deepseek_api_key',
     AI_PROMPT: 'ai_prompt',
     THEME: 'theme',
-    LOCALE: 'locale'
+    LOCALE: 'locale',
+    MOVIE_AGE_THRESHOLD: 'movie_age_threshold',
+    SHOW_AGE_THRESHOLD: 'show_age_threshold'
 } as const
 
 export interface ISettings {
@@ -65,6 +67,8 @@ export interface ISettings {
     deepseek_model: string
     deepseek_api_key: string
     ai_prompt: string
+    movie_age_threshold: string
+    show_age_threshold: string
     theme: ITheme
     locale: ILocale
 }

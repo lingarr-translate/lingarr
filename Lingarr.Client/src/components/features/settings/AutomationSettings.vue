@@ -34,7 +34,15 @@
             <div class="flex flex-col space-y-4">
                 <div class="flex items-center space-x-2">
                     <span>{{ translate('settings.automation.enableAutomatedTranslation') }}</span>
-                    <ToggleButton v-model="automationEnabled" />
+                    <ToggleButton v-model="automationEnabled">
+                        <span class="text-primary-content text-sm font-medium">
+                            {{
+                                automationEnabled === 'true'
+                                    ? translate('common.enabled')
+                                    : translate('common.disabled')
+                            }}
+                        </span>
+                    </ToggleButton>
                 </div>
 
                 <SelectComponent
