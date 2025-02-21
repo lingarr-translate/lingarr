@@ -65,8 +65,9 @@ public class TranslationRequestService : ITranslationRequestService
     public async Task<int> GetActiveCount()
     {
         return await _dbContext.TranslationRequests.CountAsync(translation =>
-            translation.Status == TranslationStatus.InProgress &&
-            translation.Status == TranslationStatus.Pending);
+            translation.Status != TranslationStatus.Cancelled &&
+            translation.Status != TranslationStatus.Failed &&
+            translation.Status != TranslationStatus.Completed);
 
     }
 
