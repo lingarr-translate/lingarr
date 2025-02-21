@@ -117,9 +117,7 @@ public class SettingChangedListener
                     });
 
                     await settingService.SetSetting("radarr_settings_completed", "true");
-                    BackgroundJob.Schedule<SyncMovieJob>("movies",
-                        job => job.Execute(),
-                        TimeSpan.FromMinutes(1));
+                    BackgroundJob.Schedule<SyncMovieJob>(job => job.Execute(), TimeSpan.FromMinutes(1));
                     break;
                 case "Sonarr":
                     _logger.LogInformation(
@@ -132,9 +130,7 @@ public class SettingChangedListener
                     });
 
                     await settingService.SetSetting("sonarr_settings_completed", "true");
-                    BackgroundJob.Schedule<SyncShowJob>("shows",
-                        job => job.Execute(),
-                        TimeSpan.FromMinutes(1));
+                    BackgroundJob.Schedule<SyncShowJob>(job => job.Execute(), TimeSpan.FromMinutes(1));
                     break;
                 case "Automation":
                     _logger.LogInformation(

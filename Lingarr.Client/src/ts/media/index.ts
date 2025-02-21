@@ -13,6 +13,7 @@ export interface IShow extends IBaseEntity {
     dateAdded?: Date | null
     images: IImage[]
     seasons: ISeason[]
+    excludeFromTranslation: string
 }
 
 export interface IMovie extends IBaseEntity {
@@ -23,6 +24,7 @@ export interface IMovie extends IBaseEntity {
     dateAdded?: Date | null
     images: IImage[]
     subtitles?: ISubtitle[]
+    excludeFromTranslation: string
 }
 
 export interface ITranslationRequest {
@@ -64,6 +66,7 @@ export interface ISeason extends IBaseEntity {
     episodes: IEpisode[]
     showId: number
     show: IShow
+    excludeFromTranslation: string
 }
 
 export interface IEpisode extends IBaseEntity {
@@ -74,6 +77,7 @@ export interface IEpisode extends IBaseEntity {
     path?: string | null
     seasonId: number
     season: ISeason
+    excludeFromTranslation: string
 }
 
 export interface IPagedResult<T> {
@@ -86,6 +90,7 @@ export interface IPagedResult<T> {
 export const MEDIA_TYPE = {
     MOVIE: 'Movie',
     SHOW: 'Show',
+    SEASON: 'Season',
     EPISODE: 'Episode'
 } as const
 

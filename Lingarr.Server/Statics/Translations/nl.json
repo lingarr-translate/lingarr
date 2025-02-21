@@ -32,9 +32,10 @@
   },
   "tvShows": {
     "title": "Titel",
-    "subtitles": "Ondertitels",
+    "exclude": "Uitsluiten",
     "season": "Seizoen",
     "episodes": "Afleveringen",
+    "episodesLine": "afleveringen",
     "specials": "Specials",
     "episode": "Aflevering",
     "episodeTitle": "Titel",
@@ -172,8 +173,8 @@
       "limitsHeader": "Limieten:",
       "scheduleLimitLabel": "Beperk het aantal vertalingen per iteratie van de geplande taak",
       "defaultAgeThresholdLabel": "Standaard bestandsleeftijdsdrempel voor vertaling:",
-      "movieAgeThresholdLabel": "Leeftijdsdrempel van films",
-      "showAgeThresholdLabel": "Leeftijdsdrempel van shows"
+      "movieAgeThresholdLabel": "Leeftijdsdrempel in 'uren' van films",
+      "showAgeThresholdLabel": "Leeftijdsdrempel in 'uren' van shows"
     },
     "cronOptions": {
       "everyFifteenMinutes": "Elke 15 minuten",

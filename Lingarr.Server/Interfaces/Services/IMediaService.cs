@@ -1,4 +1,5 @@
 ﻿using Lingarr.Core.Entities;
+using Lingarr.Core.Enum;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
 
@@ -46,4 +47,16 @@ public interface IMediaService
         bool ascending,
         int pageNumber,
         int pageSize);
+
+    /// <summary>
+    /// Toggles the exclusion status of a media item from translation.
+    /// </summary>
+    /// <param name="mediaType">The type of media (Movie, Show, Season, or Episode).</param>
+    /// <param name="id">The unique identifier of the media item.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a boolean value:
+    /// - true if the exclusion status was successfully toggled
+    /// - false if the item was not found or an error occurred
+    /// </returns>
+    Task<bool> Exclude(MediaType mediaType, int id);
 }

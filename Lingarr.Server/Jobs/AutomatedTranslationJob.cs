@@ -2,8 +2,10 @@
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Enum;
+using Lingarr.Core.Interfaces;
 using Lingarr.Server.Filters;
 using Lingarr.Server.Interfaces.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Extensions;
 
 namespace Lingarr.Server.Jobs;
@@ -16,6 +18,8 @@ public class AutomatedTranslationJob
     private readonly ISettingService _settingService;
     private readonly IScheduleService _scheduleService;
     private int _maxTranslationsPerRun = 10;
+    private TimeSpan _defaultMovieAgeThreshold;
+    private TimeSpan _defaultShowAgeThreshold;
 
     public AutomatedTranslationJob(
         LingarrDbContext dbContext,
@@ -33,19 +37,19 @@ public class AutomatedTranslationJob
 
     [DisableConcurrentExecution(timeoutInSeconds: 10 * 60)]
     [AutomaticRetry(Attempts = 0)]
+    [Queue("translation")]
     public async Task Execute()
     {
         var jobName = JobContextFilter.GetCurrentJobTypeName();
         await _scheduleService.UpdateJobState(jobName, JobStatus.Processing.GetDisplayName());
 
-        var settings =
-            await _settingService.GetSettings([
-                SettingKeys.Automation.AutomationEnabled,
-                SettingKeys.Automation.TranslationCycle,
-                SettingKeys.Automation.MaxTranslationsPerRun
-            ]);
-        int.TryParse(settings[SettingKeys.Automation.MaxTranslationsPerRun], out int maxTranslations);
-        _maxTranslationsPerRun = maxTranslations;
+        var settings = await _settingService.GetSettings([
+            SettingKeys.Automation.AutomationEnabled,
+            SettingKeys.Automation.TranslationCycle,
+            SettingKeys.Automation.MaxTranslationsPerRun,
+            SettingKeys.Automation.MovieAgeThreshold,
+            SettingKeys.Automation.ShowAgeThreshold
+        ]);
 
         if (settings[SettingKeys.Automation.AutomationEnabled] == "false")
         {
@@ -53,43 +57,95 @@ public class AutomatedTranslationJob
             return;
         }
 
+        int.TryParse(settings[SettingKeys.Automation.MaxTranslationsPerRun], out int maxTranslations);
+        int.TryParse(settings[SettingKeys.Automation.MovieAgeThreshold], out int movieAgeThreshold);
+        int.TryParse(settings[SettingKeys.Automation.ShowAgeThreshold], out int showAgeThreshold);
+
+        _maxTranslationsPerRun = maxTranslations;
+        _defaultMovieAgeThreshold = TimeSpan.FromHours(movieAgeThreshold);
+        _defaultShowAgeThreshold = TimeSpan.FromHours(showAgeThreshold);
+
         var translationCycle = settings[SettingKeys.Automation.TranslationCycle] == "true" ? "movies" : "shows";
         _logger.LogInformation($"Starting translation cycle for |Green|{translationCycle}|/Green|");
+        
         switch (translationCycle)
         {
             case "movies":
                 await _settingService.SetSetting(SettingKeys.Automation.TranslationCycle, "false");
-                await ProcessMovies();
+                if (!await ProcessMovies())
+                {
+                    await ProcessShows();
+                }
+
                 break;
             case "shows":
-
                 await _settingService.SetSetting(SettingKeys.Automation.TranslationCycle, "true");
-                await ProcessShows();
+                if (!await ProcessShows())
+                {
+                    await ProcessMovies();
+                }
+
                 break;
         }
+
         await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());
     }
 
-    private async Task ProcessMovies()
+    private bool ShouldProcessMedia(IMedia media, MediaType mediaType, TimeSpan? customAgeThreshold = null)
+    {
+        var fileInfo = new FileInfo(media.Path);
+        var fileAge = DateTime.Now - fileInfo.CreationTime;
+        var threshold = customAgeThreshold ??
+                        (mediaType == MediaType.Movie ? _defaultMovieAgeThreshold : _defaultShowAgeThreshold);
+
+        double fileAgeHours = fileAge.TotalHours;
+        double thresholdHours = threshold.TotalHours;
+
+        if (fileAgeHours < thresholdHours)
+        {
+            _logger.LogInformation(
+                "Media {FileName} does not meet age threshold. Age: {Age} hours, Required: {Threshold} hours",
+                media.FileName,
+                fileAgeHours.ToString("F2"),
+                thresholdHours.ToString("F2"));
+            return false;
+        }
+
+        return true;
+    }
+
+    private async Task<bool>  ProcessMovies()
     {
         _logger.LogInformation("Movie Translation job initiated");
-        var movies = _dbContext.Movies.ToList();
+
+        var movies = await _dbContext.Movies
+            .Where(movie => !movie.ExcludeFromTranslation)
+            .ToListAsync();
+
         if (!movies.Any())
         {
             _logger.LogInformation("No translatable movies found, starting show translation.");
-            await ProcessShows();
-            return;
+            return false;
         }
 
         int translationsInitiated = 0;
         foreach (var movie in movies)
         {
-            try 
+            try
             {
                 if (translationsInitiated >= _maxTranslationsPerRun)
                 {
                     _logger.LogInformation("Max translations per run reached. Stopping translation process.");
                     break;
+                }
+
+                TimeSpan? threshold = movie.TranslationAgeThreshold.HasValue
+                    ? TimeSpan.FromHours(movie.TranslationAgeThreshold.Value)
+                    : null;
+
+                if (!ShouldProcessMedia(movie, MediaType.Movie, threshold))
+                {
+                    continue;
                 }
 
                 var isProcessed = await _mediaSubtitleProcessor.ProcessMedia(movie, MediaType.Movie);
@@ -100,39 +156,65 @@ public class AutomatedTranslationJob
             }
             catch (DirectoryNotFoundException)
             {
-                _logger.LogWarning("Directory not found at path: |Red|{Path}|/Red|, skipping subtitle",  movie.Path);
+                _logger.LogWarning("Directory not found at path: |Red|{Path}|/Red|, skipping subtitle", movie.Path);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing subtitles for movie at path: |Red|{Path}|/Red|, skipping subtitle", 
+                _logger.LogError(ex,
+                    "Error processing subtitles for movie at path: |Red|{Path}|/Red|, skipping subtitle",
                     movie.Path);
             }
         }
+
+        return true;
     }
 
-    private async Task ProcessShows()
+    private async Task<bool>  ProcessShows()
     {
         _logger.LogInformation("Show Translation job initiated");
-        var episodes = _dbContext.Shows
-            .SelectMany(s => s.Seasons)
-            .SelectMany(season => season.Episodes)
-            .ToList();
+
+        var shows = await _dbContext.Shows
+            .Where(show => !show.ExcludeFromTranslation)
+            .ToListAsync();
+
+        var seasons = await _dbContext.Seasons
+            .Where(season => shows.Select(s => s.Id).Contains(season.ShowId) && !season.ExcludeFromTranslation)
+            .ToListAsync();
+
+        var episodes = await _dbContext.Episodes
+            .Where(episode =>
+                seasons.Select(s => s.Id).Contains(episode.SeasonId) && !episode.ExcludeFromTranslation)
+            .ToListAsync();
+
         if (!episodes.Any())
         {
             _logger.LogInformation("No translatable shows found, starting movie translation.");
-            await ProcessMovies();
-            return;
+            return false;
         }
 
         int translationsInitiated = 0;
         foreach (var episode in episodes)
         {
-            try 
+            if (translationsInitiated >= _maxTranslationsPerRun)
             {
-                if (translationsInitiated >= _maxTranslationsPerRun)
+                _logger.LogInformation("Max translations per run reached. Stopping translation process.");
+                break;
+            }
+
+            try
+            {
+                var season = seasons.FirstOrDefault(s => s.Id == episode.SeasonId);
+                var show = shows.FirstOrDefault(s => s.Id == season?.ShowId);
+
+                TimeSpan? threshold = null;
+                if (show != null && show.TranslationAgeThreshold.HasValue)
                 {
-                    _logger.LogInformation("Max translations per run reached. Stopping translation process.");
-                    break;
+                    threshold = TimeSpan.FromHours(show.TranslationAgeThreshold.Value);
+                }
+
+                if (!ShouldProcessMedia(episode, MediaType.Episode, threshold))
+                {
+                    continue;
                 }
 
                 var isProcessed = await _mediaSubtitleProcessor.ProcessMedia(episode, MediaType.Episode);
@@ -143,13 +225,17 @@ public class AutomatedTranslationJob
             }
             catch (DirectoryNotFoundException)
             {
-                _logger.LogWarning("Directory not found for show at path: |Red|{Path}|/Red|, skipping episode", episode.Path);
+                _logger.LogWarning("Directory not found for show at path: |Red|{Path}|/Red|, skipping episode",
+                    episode.Path);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error processing subtitles for episode at path: |Red|{Path}|/Red|, skipping episode", 
+                _logger.LogError(ex,
+                    "Error processing subtitles for episode at path: |Red|{Path}|/Red|, skipping episode",
                     episode.Path);
             }
         }
+
+        return true;
     }
 }

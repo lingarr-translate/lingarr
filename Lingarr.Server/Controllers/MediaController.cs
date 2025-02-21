@@ -1,4 +1,5 @@
 ﻿using Lingarr.Core.Entities;
+using Lingarr.Core.Enum;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
@@ -67,6 +68,17 @@ public class MediaController : ControllerBase
             ascending,
             pageNumber,
             pageSize);
+        return Ok(value);
+    }
+    
+    /// <summary>
+    /// Toggles the exclusion status of a specified media item from translation.
+    /// </summary>
+    /// <param name="request">The request object containing the media type and id.</param>
+    [HttpPost("exclude")]
+    public async Task<ActionResult<PagedResult<Show>>> Exclude([FromBody] ExcludeRequest request)
+    {
+        var value = await _mediaService.Exclude(request.MediaType, request.Id);
         return Ok(value);
     }
 }

@@ -1,6 +1,6 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import services from '@/services'
-import { IFilter, IUseShowStore, IPagedResult, IShow } from '@/ts'
+import { IFilter, IUseShowStore, IPagedResult, IShow, MediaType } from '@/ts'
 
 export const useShowStore = defineStore({
     id: 'show',
@@ -34,6 +34,9 @@ export const useShowStore = defineStore({
                 this.filter.sortBy,
                 this.filter.isAscending
             )
+        },
+        async exclude(type: MediaType, id: number) {
+            await services.media.exclude(type, id)
         }
     }
 })

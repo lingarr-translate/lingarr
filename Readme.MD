@@ -12,6 +12,8 @@ Lingarr now offers multiple services for automated translation:
 - **[DeepL](https://www.deepl.com/)**
 - **[Anthropic](https://www.anthropic.com/)**
 - **[OpenAI](https://openai.com/)**
+- **[DeepSeek](https://deepseek.com)**
+- **[Gemini](https://gemini.google.com/)**
 - **[Local AI](https://localai.io/)** 
 - **[Google](https://translate.google.com/)** 
 - **[Bing](https://www.bing.com/translator)**
@@ -30,14 +32,14 @@ If your mapping involves more than a single directory, please consult the [wiki]
 ```yaml
 services:
   lingarr:
-    image: lingarr/lingarr:latest
+    image: lingarr/lingarr:latest # Use latest-arm64 for the ARM build
     container_name: lingarr
     restart: unless-stopped
     ports:
       - "9876:8080"
     volumes:
-      - /path/to/media/movies:/movies #match with radarr
-      - /path/to/media/tv:/tv #match with sonarr
+      - /path/to/media/movies:/movies
+      - /path/to/media/tv:/tv
       - /path/to/config:/app/config
     networks:
       - lingarr

@@ -70,6 +70,10 @@ namespace Lingarr.Migrations.MySQL.Migrations
                         .HasColumnType("int")
                         .HasColumnName("episode_number");
 
+                    b.Property<bool>("ExcludeFromTranslation")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("exclude_from_translation");
+
                     b.Property<string>("FileName")
                         .HasColumnType("longtext")
                         .HasColumnName("file_name");
@@ -164,6 +168,10 @@ namespace Lingarr.Migrations.MySQL.Migrations
                         .HasColumnType("datetime(6)")
                         .HasColumnName("date_added");
 
+                    b.Property<bool>("ExcludeFromTranslation")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("exclude_from_translation");
+
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasColumnType("longtext")
@@ -186,6 +194,10 @@ namespace Lingarr.Migrations.MySQL.Migrations
                         .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("title");
+
+                    b.Property<int?>("TranslationAgeThreshold")
+                        .HasColumnType("int")
+                        .HasColumnName("translation_age_threshold");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)")
@@ -247,6 +259,10 @@ namespace Lingarr.Migrations.MySQL.Migrations
                         .HasColumnType("datetime(6)")
                         .HasColumnName("created_at");
 
+                    b.Property<bool>("ExcludeFromTranslation")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("exclude_from_translation");
+
                     b.Property<string>("Path")
                         .HasColumnType("longtext")
                         .HasColumnName("path");
@@ -307,6 +323,10 @@ namespace Lingarr.Migrations.MySQL.Migrations
                         .HasColumnType("datetime(6)")
                         .HasColumnName("date_added");
 
+                    b.Property<bool>("ExcludeFromTranslation")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("exclude_from_translation");
+
                     b.Property<string>("Path")
                         .IsRequired()
                         .HasColumnType("longtext")
@@ -320,6 +340,10 @@ namespace Lingarr.Migrations.MySQL.Migrations
                         .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("title");
+
+                    b.Property<int?>("TranslationAgeThreshold")
+                        .HasColumnType("int")
+                        .HasColumnName("translation_age_threshold");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("datetime(6)")

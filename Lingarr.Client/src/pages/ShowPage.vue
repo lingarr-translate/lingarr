@@ -20,10 +20,13 @@
             </div>
 
             <div class="w-full px-4">
+                <!-- Shows -->
                 <div class="border-accent grid grid-cols-12 border-b font-bold">
                     <div class="col-span-1 px-4 py-2"></div>
-                    <div class="col-span-5 px-4 py-2">{{ translate('tvShows.title') }}</div>
-                    <div class="col-span-4 px-4 py-2">{{ translate('tvShows.subtitles') }}</div>
+                    <div class="col-span-7 px-4 py-2">{{ translate('tvShows.title') }}</div>
+                    <div class="col-span-2 px-4 py-2">
+                        {{ translate('tvShows.exclude') }}
+                    </div>
                     <div class="col-span-2 flex justify-end px-4 py-2">
                         <ReloadComponent @toggle:update="showStore.fetch()" />
                     </div>
@@ -35,8 +38,16 @@
                         <div class="col-span-1 px-2 py-2 md:px-4">
                             <CaretButton :is-expanded="expandedShow !== item.id" />
                         </div>
-                        <div class="col-span-11 px-4 py-2">
+                        <div class="col-span-7 px-4 py-2">
                             {{ item.title }}
+                        </div>
+                        <div class="col-span-4 flex items-center px-4 py-2" @click.stop>
+                            <ToggleButton
+                                v-model="item.excludeFromTranslation"
+                                size="small"
+                                @toggle:update="
+                                    () => showStore.exclude(MEDIA_TYPE.SHOW, item.id)
+                                " />
                         </div>
                     </div>
                     <div v-if="expandedShow === item.id" class="bg-secondary p-4">
@@ -46,10 +57,12 @@
                             <div class="col-span-5 px-4 py-2 md:col-span-3">
                                 {{ translate('tvShows.season') }}
                             </div>
-                            <div class="col-span-6 px-4 py-2 md:col-span-8">
-                                {{ translate('tvShows.episodes') }}
+                            <div class="col-span-6 flex justify-between px-4 py-2 md:col-span-8">
+                                <span>{{ translate('tvShows.episodes') }}</span>
+                                <span>{{ translate('tvShows.exclude') }}</span>
                             </div>
                         </div>
+                        <!-- Seasons -->
                         <div
                             v-for="season in item.seasons"
                             :key="season.id"
@@ -67,12 +80,28 @@
                                     <span v-if="season.seasonNumber == 0">
                                         {{ translate('tvShows.specials') }}
                                     </span>
-                                    <span v-else>Season {{ season.seasonNumber }}</span>
+                                    <span v-else>
+                                        {{ translate('tvShows.season') }} {{ season.seasonNumber }}
+                                    </span>
                                 </div>
-                                <div class="col-span-6 px-4 py-2 select-none md:col-span-8">
-                                    {{ season.episodes.length }} episodes
+                                <div
+                                    class="col-span-6 flex justify-between px-4 py-2 select-none md:col-span-8">
+                                    <span>
+                                        {{ season.episodes.length }}
+                                        {{ translate('tvShows.episodesLine') }}
+                                    </span>
+                                    <span @click.stop>
+                                        <ToggleButton
+                                            v-model="season.excludeFromTranslation"
+                                            size="small"
+                                            @toggle:update="
+                                                () =>
+                                                    showStore.exclude(MEDIA_TYPE.SEASON, season.id)
+                                            " />
+                                    </span>
                                 </div>
                             </div>
+                            <!-- Episodes -->
                             <div
                                 v-if="expandedSeason?.id === season.id"
                                 class="bg-tertiary text-tertiary-content w-full">
@@ -86,8 +115,10 @@
                                     <div class="col-span-7 px-4 py-2 md:col-span-5">
                                         {{ translate('tvShows.episodeTitle') }}
                                     </div>
-                                    <div class="col-span-4 px-4 py-2 md:col-span-5">
-                                        {{ translate('tvShows.episodeSubtitles') }}
+                                    <div
+                                        class="col-span-4 flex justify-between px-4 py-2 md:col-span-5">
+                                        <span>{{ translate('tvShows.episodeSubtitles') }}</span>
+                                        <span>{{ translate('tvShows.exclude') }}</span>
                                     </div>
                                 </div>
                                 <div
@@ -100,26 +131,40 @@
                                     <div class="col-span-7 px-4 py-2 md:col-span-5">
                                         {{ episode.title }}
                                     </div>
-                                    <div
-                                        v-if="episode?.fileName"
-                                        class="col-span-4 flex flex-wrap items-center gap-2 md:col-span-5">
-                                        <ContextMenu
-                                            v-for="(subtitle, jndex) in getSubtitle(
-                                                episode.fileName
-                                            )"
-                                            :key="`${episode.id}-${jndex}`"
-                                            :media-type="MEDIA_TYPE.EPISODE"
-                                            :media="episode"
-                                            :subtitle="subtitle">
-                                            <BadgeComponent>
-                                                {{ subtitle.language.toUpperCase() }}
-                                                <span
-                                                    v-if="subtitle.caption"
-                                                    class="text-primary-content/50">
-                                                    - {{ subtitle.caption.toUpperCase() }}
-                                                </span>
-                                            </BadgeComponent>
-                                        </ContextMenu>
+                                    <div class="col-span-4 flex justify-between pr-4 md:col-span-5">
+                                        <div
+                                            v-if="episode?.fileName"
+                                            class="flex flex-wrap items-center gap-2">
+                                            <ContextMenu
+                                                v-for="(subtitle, jndex) in getSubtitle(
+                                                    episode.fileName
+                                                )"
+                                                :key="`${episode.id}-${jndex}`"
+                                                :media-type="MEDIA_TYPE.EPISODE"
+                                                :media="episode"
+                                                :subtitle="subtitle">
+                                                <BadgeComponent>
+                                                    {{ subtitle.language.toUpperCase() }}
+                                                    <span
+                                                        v-if="subtitle.caption"
+                                                        class="text-primary-content/50">
+                                                        - {{ subtitle.caption.toUpperCase() }}
+                                                    </span>
+                                                </BadgeComponent>
+                                            </ContextMenu>
+                                        </div>
+                                        <div class="col-span-1 px-1 py-2 md:col-span-1">
+                                            <ToggleButton
+                                                v-model="episode.excludeFromTranslation"
+                                                size="small"
+                                                @toggle:update="
+                                                    () =>
+                                                        showStore.exclude(
+                                                            MEDIA_TYPE.EPISODE,
+                                                            episode.id
+                                                        )
+                                                " />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -155,6 +200,7 @@ import BadgeComponent from '@/components/common/BadgeComponent.vue'
 import ContextMenu from '@/components/layout/ContextMenu.vue'
 import ReloadComponent from '@/components/common/ReloadComponent.vue'
 import NoMediaNotification from '@/components/common/NoMediaNotification.vue'
+import ToggleButton from '@/components/common/ToggleButton.vue'
 
 const instanceStore = useInstanceStore()
 const showStore = useShowStore()
