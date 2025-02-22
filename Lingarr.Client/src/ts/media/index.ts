@@ -14,6 +14,7 @@ export interface IShow extends IBaseEntity {
     images: IImage[]
     seasons: ISeason[]
     excludeFromTranslation: string
+    translationAgeThreshold: string
 }
 
 export interface IMovie extends IBaseEntity {
@@ -25,6 +26,7 @@ export interface IMovie extends IBaseEntity {
     images: IImage[]
     subtitles?: ISubtitle[]
     excludeFromTranslation: string
+    translationAgeThreshold: string
 }
 
 export interface ITranslationRequest {

@@ -23,8 +23,11 @@
                 <div class="border-accent grid grid-cols-12 border-b font-bold">
                     <div class="col-span-5 px-4 py-2">{{ translate('movies.title') }}</div>
                     <div class="col-span-4 px-4 py-2">{{ translate('movies.subtitles') }}</div>
-                    <div class="col-span-2 px-4 py-2">
-                        {{ translate('tvShows.exclude') }}
+                    <div class="col-span-1 px-4 py-2">
+                        {{ translate('movies.exclude') }}
+                    </div>
+                    <div class="col-span-1 px-4 py-2">
+                        {{ translate('movies.ageThreshold') }}
                     </div>
                     <div class="col-span-1 flex justify-end px-4 py-2">
                         <ReloadComponent @toggle:update="movieStore.fetch()" />
@@ -51,12 +54,27 @@
                                 </BadgeComponent>
                             </ContextMenu>
                         </div>
-                        <div class="col-span-3 flex flex-wrap items-center gap-2 px-4 py-2">
+                        <div class="col-span-1 flex flex-wrap items-center gap-2 px-4 py-2">
                             <ToggleButton
                                 v-model="item.excludeFromTranslation"
                                 size="small"
                                 @toggle:update="
                                     () => movieStore.exclude(MEDIA_TYPE.MOVIE, item.id)
+                                " />
+                        </div>
+                        <div class="col-span-2 flex items-center px-4 py-2" @click.stop>
+                            <InputComponent
+                                :model-value="item?.translationAgeThreshold"
+                                :placeholder="translate('movies.hours')"
+                                class="w-14"
+                                size="sm"
+                                type="number"
+                                validation-type="number"
+                                @update:value="
+                                    (value) => {
+                                        item.translationAgeThreshold = value
+                                        movieStore.updateThreshold(MEDIA_TYPE.MOVIE, item.id, value)
+                                    }
                                 " />
                         </div>
                     </div>
@@ -89,6 +107,7 @@ import ContextMenu from '@/components/layout/ContextMenu.vue'
 import ReloadComponent from '@/components/common/ReloadComponent.vue'
 import NoMediaNotification from '@/components/common/NoMediaNotification.vue'
 import ToggleButton from '@/components/common/ToggleButton.vue'
+import InputComponent from '@/components/common/InputComponent.vue'
 
 const movieStore = useMovieStore()
 const settingStore = useSettingStore()

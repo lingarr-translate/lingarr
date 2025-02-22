@@ -70,7 +70,8 @@ public class MediaService : IMediaService
                 DateAdded = movie.DateAdded,
                 Images = movie.Images,
                 Subtitles = subtitles,
-                ExcludeFromTranslation = movie.ExcludeFromTranslation
+                ExcludeFromTranslation = movie.ExcludeFromTranslation,
+                TranslationAgeThreshold = movie.TranslationAgeThreshold
             };
             enrichedMovies.Add(enrichedMovie);
         }
@@ -176,6 +177,51 @@ public class MediaService : IMediaService
                     }
                     break;
 
+                default:
+                    _logger.LogWarning("Unsupported media type: {MediaType}", mediaType);
+                    return false;
+            }
+
+            _logger.LogWarning("Media item not found. Type: {MediaType}, Id: {Id}", mediaType, id);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error excluding media item. Type: {MediaType}, Id: {Id}", mediaType, id);
+            return false;
+        }
+    }
+    
+    /// <inheritdoc />
+    public async Task<bool> Threshold(
+        MediaType mediaType,
+        int id,
+        int hours)
+    {
+        try
+        {
+            switch (mediaType)
+            {
+                case MediaType.Movie:
+                    var movie = await _dbContext.Movies.FindAsync(id);
+                    if (movie != null)
+                    {
+                        movie.TranslationAgeThreshold = hours;
+                        await _dbContext.SaveChangesAsync();
+                        return true;
+                    }
+                    break;
+
+                case MediaType.Show:
+                    var show = await _dbContext.Shows.FindAsync(id);
+                    if (show != null)
+                    {
+                        show.TranslationAgeThreshold = hours;
+                        await _dbContext.SaveChangesAsync();
+                        return true;
+                    }
+                    break;
+                
                 default:
                     _logger.LogWarning("Unsupported media type: {MediaType}", mediaType);
                     return false;

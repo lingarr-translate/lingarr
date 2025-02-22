@@ -37,6 +37,9 @@ export const useShowStore = defineStore({
         },
         async exclude(type: MediaType, id: number) {
             await services.media.exclude(type, id)
+        },
+        async updateThreshold(type: MediaType, id: number, hours: string) {
+            await services.media.threshold(type, id, hours)
         }
     }
 })

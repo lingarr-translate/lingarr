@@ -19,8 +19,8 @@ namespace Lingarr.Migrations.SQLite.Migrations
                     { "gemini_api_key", "" },
                     { "deepseek_model", "" },
                     { "deepseek_api_key", "" },
-                    { "movie_age_threshold", 0 },
-                    { "show_age_threshold", 0 }
+                    { "movie_age_threshold", "0" },
+                    { "show_age_threshold", "0" }
                 });
             
             migrationBuilder.AddColumn<bool>(

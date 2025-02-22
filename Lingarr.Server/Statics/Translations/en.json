@@ -28,7 +28,10 @@
   },
   "movies": {
     "title": "Title",
-    "subtitles": "Subtitles"
+    "subtitles": "Subtitles",
+    "exclude": "Exclude",
+    "ageThreshold": "Delay",
+    "hours": "hours"
   },
   "tvShows": {
     "title": "Title",
@@ -39,7 +42,9 @@
     "specials": "Specials",
     "episode": "Episode",
     "episodeTitle": "Title",
-    "episodeSubtitles": "Subtitles"
+    "episodeSubtitles": "Subtitles",
+    "ageThreshold": "Delay",
+    "hours": "hours"
   },
   "translations": {
     "title": "Title",
@@ -172,9 +177,9 @@
       "translationScheduleLabel": "Set translation schedule:",
       "limitsHeader": "Limits:",
       "scheduleLimitLabel": "Limit the amount of translations per schedule",
-      "defaultAgeThresholdLabel": "Default age threshold of files to be translated:",
-      "movieAgeThresholdLabel": "Age threshold in 'hours' of movies",
-      "showAgeThresholdLabel": "Age threshold in 'hours' of shows"
+      "defaultAgeThresholdLabel": "Default file age delay for translation:",
+      "movieAgeThresholdLabel": "Movie file age delay in 'hours'",
+      "showAgeThresholdLabel": "Show file age delay in 'hours'"
     },
     "cronOptions": {
       "everyFifteenMinutes": "Every 15 minutes",

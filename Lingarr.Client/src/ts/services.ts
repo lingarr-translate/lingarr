@@ -35,6 +35,7 @@ export interface IMediaService {
         ascending: boolean
     ): Promise<T>
     exclude<T>(mediaType: MediaType, id: number): Promise<T>
+    threshold<T>(mediaType: MediaType, id: number, hours: string): Promise<T>
 }
 
 export interface ISettingService {

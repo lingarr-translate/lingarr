@@ -81,4 +81,15 @@ public class MediaController : ControllerBase
         var value = await _mediaService.Exclude(request.MediaType, request.Id);
         return Ok(value);
     }
+    
+    /// <summary>
+    /// Sets the amount of hours a media file needs to exist before translation is initiated.
+    /// </summary>
+    /// <param name="request">The request object containing the media type, id, and amount of hours to be set.</param>
+    [HttpPost("threshold")]
+    public async Task<ActionResult<PagedResult<Show>>> Threshold([FromBody] ThresholdRequest request)
+    {
+        var value = await _mediaService.Threshold(request.MediaType, request.Id, request.Hours);
+        return Ok(value);
+    }
 }

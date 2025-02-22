@@ -61,6 +61,21 @@ const service = (http: AxiosStatic, resource = '/api/media'): IMediaService => (
                     reject(error.response)
                 })
         })
+    },
+    threshold<T>(mediaType: MediaType, id: number, hours: string): Promise<T> {
+        return new Promise((resolve, reject) => {
+            http.post(`${resource}/threshold`, {
+                mediaType: mediaType,
+                id: id,
+                hours: hours
+            })
+                .then((response: AxiosResponse<T>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
     }
 })
 
