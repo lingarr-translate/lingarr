@@ -10,18 +10,18 @@
                             class="w-full hover:brightness-150"
                             :class="[
                                 'w-full hover:brightness-150',
-                                { 'brightness-150': route.name === item.route }
+                                { 'brightness-150': $route.name === item.route }
                             ]">
-                            <a
+                            <router-link
+                                :to="{ name: item.route }"
                                 :title="item.label"
                                 :aria-label="item.label"
-                                class="flex w-full cursor-pointer items-center justify-center md:justify-start"
-                                @click="navigate(item.route)">
+                                class="flex w-full cursor-pointer items-center justify-center md:justify-start">
                                 <component :is="item.icon" class="h-4 w-4 md:mr-3" />
                                 <span class="hidden text-sm md:inline-block">
                                     {{ item.label }}
                                 </span>
-                            </a>
+                            </router-link>
                         </li>
                     </ul>
                 </nav>
@@ -35,7 +35,6 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from '@/plugins/i18n'
 import PageLayout from '@/components/layout/PageLayout.vue'
 import IntegrationIcon from '@/components/icons/IntegrationIcon.vue'
@@ -44,8 +43,6 @@ import AutomationIcon from '@/components/icons/AutomationIcon.vue'
 import TaskIcon from '@/components/icons/TaskIcon.vue'
 import { MenuItem } from '@/ts'
 
-const router = useRouter()
-const route = useRoute()
 const { translate } = useI18n()
 
 const menuItems: MenuItem[] = [
@@ -67,10 +64,6 @@ const menuItems: MenuItem[] = [
         route: 'automation-settings',
         children: []
     },
-    { label: translate('navigation.tasks'), icon: TaskIcon, route: 'schedule', children: [] }
+    { label: translate('navigation.tasks'), icon: TaskIcon, route: 'tasks-settings', children: [] }
 ]
-
-function navigate(route: string) {
-    router.push({ name: route })
-}
 </script>

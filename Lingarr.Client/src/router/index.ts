@@ -47,9 +47,9 @@ const routes: RouteRecordRaw[] = [
                 component: () => import('@/pages/settings/MappingPage.vue')
             },
             {
-                path: '/schedule',
-                component: () => import('@/pages/settings/SchedulePage.vue'),
-                name: 'schedule'
+                name: 'tasks-settings',
+                path: 'tasks',
+                component: () => import('@/pages/settings/SchedulePage.vue')
             }
         ]
     }
