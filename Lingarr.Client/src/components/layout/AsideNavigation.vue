@@ -18,27 +18,23 @@
             <!-- Navigation -->
             <nav class="grow overflow-y-auto p-6">
                 <ul class="space-y-4">
-                    <li
-                        v-for="(item, index) in menuItems"
-                        :key="index"
-                        class="flex w-full cursor-pointer items-center justify-start"
-                        :class="[
-                            'hover:brightness-150',
-                            {
-                                'brightness-150': isActive(item)
-                            }
-                        ]"
-                        @click="navigate(item.route)">
-                        <component :is="item.icon" class="mr-2 h-4 w-4" />
-                        <div class="relative">
-                            {{ item.label }}
+                    <li v-for="(item, index) in menuItems" :key="index">
+                        <router-link
+                            :to="{ name: item.route }"
+                            class="flex w-full items-center justify-start hover:brightness-150"
+                            :class="{ 'brightness-150': isActive(item) }"
+                            @click="isOpen = false">
+                            <component :is="item.icon" class="mr-2 h-4 w-4" />
+                            <div class="relative">
+                                {{ item.label }}
 
-                            <span
-                                v-if="item.route == 'translations' && activeRequests > 0"
-                                class="bg-accent text-secondary-content absolute -top-1 -right-4 inline-flex items-center justify-center rounded-full px-1 py-0.5 text-xs leading-none font-bold">
-                                {{ activeRequests }}
-                            </span>
-                        </div>
+                                <span
+                                    v-if="item.route == 'translations' && activeRequests > 0"
+                                    class="bg-accent text-secondary-content absolute -top-1 -right-4 inline-flex items-center justify-center rounded-full px-1 py-0.5 text-xs leading-none font-bold">
+                                    {{ activeRequests }}
+                                </span>
+                            </div>
+                        </router-link>
                     </li>
                 </ul>
             </nav>
@@ -76,7 +72,7 @@
 
 <script setup lang="ts">
 import { computed, ComputedRef } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useI18n } from '@/plugins/i18n'
 import { useInstanceStore } from '@/store/instance'
 import { useTranslationRequestStore } from '@/store/translationRequest'
@@ -91,7 +87,6 @@ import LanguageIcon from '@/components/icons/LanguageIcon.vue'
 
 const translationRequestStore = useTranslationRequestStore()
 const instanceStore = useInstanceStore()
-const router = useRouter()
 const route = useRoute()
 const { translate } = useI18n()
 
@@ -122,7 +117,7 @@ const menuItems: MenuItem[] = [
             'integration-settings',
             'services-settings',
             'automation-settings',
-            'mapping-settings'
+            'tasks-settings'
         ]
     }
 ]
@@ -134,10 +129,5 @@ function isActive(item: MenuItem) {
         return item.children.includes(route.name as string)
     }
     return false
-}
-
-function navigate(route: string) {
-    isOpen.value = false
-    router.push({ name: route })
 }
 </script>
