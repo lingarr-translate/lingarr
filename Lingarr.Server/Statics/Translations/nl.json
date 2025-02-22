@@ -28,7 +28,10 @@
   },
   "movies": {
     "title": "Titel",
-    "subtitles": "Ondertitels"
+    "subtitles": "Ondertitels",
+    "exclude": "Uitsluiten",
+    "ageThreshold": "Vertraging",
+    "hours": "uren"
   },
   "tvShows": {
     "title": "Titel",
@@ -39,7 +42,9 @@
     "specials": "Specials",
     "episode": "Aflevering",
     "episodeTitle": "Titel",
-    "episodeSubtitles": "Ondertitels"
+    "episodeSubtitles": "Ondertitels",
+    "ageThreshold": "Vertraging",
+    "hours": "uren"
   },
   "translations": {
     "title": "Titel",
@@ -172,9 +177,9 @@
       "translationScheduleLabel": "Stel vertaal aantal van de geplande taak in:",
       "limitsHeader": "Limieten:",
       "scheduleLimitLabel": "Beperk het aantal vertalingen per iteratie van de geplande taak",
-      "defaultAgeThresholdLabel": "Standaard bestandsleeftijdsdrempel voor vertaling:",
-      "movieAgeThresholdLabel": "Leeftijdsdrempel in 'uren' van films",
-      "showAgeThresholdLabel": "Leeftijdsdrempel in 'uren' van shows"
+      "defaultAgeThresholdLabel": "Standaard vertraging op basis van bestandsleeftijd voor vertaling:",
+      "movieAgeThresholdLabel": "Vertraging in 'uren' op basis van bestandsleeftijd voor films",
+      "showAgeThresholdLabel": "Vertraging in 'uren' op basis van bestandsleeftijd voor shows"
     },
     "cronOptions": {
       "everyFifteenMinutes": "Elke 15 minuten",

@@ -59,4 +59,12 @@ public interface IMediaService
     /// - false if the item was not found or an error occurred
     /// </returns>
     Task<bool> Exclude(MediaType mediaType, int id);
+
+    /// <summary>
+    /// Sets the amount of hours a media file needs to exist before translation is initiated.
+    /// </summary>
+    /// <param name="mediaType">The type of media (Movie, Show, Season, or Episode).</param>
+    /// <param name="id">The unique identifier of the media item.</param>
+    /// <param name="hours">The amount of hours that needs to be set</param>
+    Task<bool> Threshold(MediaType mediaType, int id, int hours);
 }
