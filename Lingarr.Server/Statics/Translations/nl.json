@@ -153,14 +153,18 @@
       "openAiApiKey": "API-sleutel",
       "openAiError": "API-sleutel mag niet leeg zijn"
     },
-    "language": {
-      "title": "Bron- en doelvertaling",
-      "description": "Selecteer een bron- en doeltaal. Zowel de bron als de doel worden gebruikt om vertalingen aan te vragen.",
-      "selectSourceDescription": "Selecteer brontalen:",
-      "selectTargetDescription": "Selecteer doeltalen:",
+    "translate": {
+      "title": "Vertaling",
+      "description": "Configureer de vertaalconfiguratie",
+      "sourceAndTargetTitle": "Bron- en doelvertaling",
+      "sourceAndTargetDescription": "Selecteer een bron- en doeltaal. Zowel de bron als de doel worden gebruikt om vertalingen aan te vragen.",
+      "selectSourceDescription": "Brontalen:",
+      "selectTargetDescription": "Doeltalen:",
       "selectOrSearchLanguagePlaceholder": "Selecteer of zoek taal",
       "languageSelectPlaceholder": "Selecteer taal...",
-      "languageSelectTargetNotification": "Selecteer eerst een brontaal."
+      "languageSelectTargetNotification": "Selecteer eerst een brontaal.",
+      "fixOverlappingSubtitles": "Overlappende ondertitels verbeteren:",
+      "fixOverlappingSubtitlesDescription": "Verbetert automatisch overlappende ondertitels door de timing aan te passen van de vorige, huidige en volgende ondertitel op basis van tekstlengte."
     },
     "indexing": {
       "title": "Indexering",

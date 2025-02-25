@@ -34,7 +34,8 @@ export const SETTINGS = {
     THEME: 'theme',
     LOCALE: 'locale',
     MOVIE_AGE_THRESHOLD: 'movie_age_threshold',
-    SHOW_AGE_THRESHOLD: 'show_age_threshold'
+    SHOW_AGE_THRESHOLD: 'show_age_threshold',
+    FIX_OVERLAPPING_SUBTITLES: 'fix_overlapping_subtitles'
 } as const
 
 export interface ISettings {
@@ -51,7 +52,7 @@ export interface ISettings {
     translation_schedule: string
     source_languages: string | ILanguage[]
     target_languages: string | ILanguage[]
-    automation_enabled: boolean
+    automation_enabled: string
     sonarr_settings_completed: string
     radarr_settings_completed: string
     openai_model: string
@@ -69,6 +70,7 @@ export interface ISettings {
     ai_prompt: string
     movie_age_threshold: string
     show_age_threshold: string
+    fix_overlapping_subtitles: string
     theme: ITheme
     locale: ILocale
 }

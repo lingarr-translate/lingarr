@@ -39,4 +39,11 @@ public interface ISubtitleService
     /// <param name="targetLanguage">The target language code to be added to the file name.</param>
     /// <returns>A new file path with the target language code inserted before the .srt extension.</returns>
     string CreateFilePath(string originalPath, string targetLanguage);
+    
+    /// <summary>
+    /// Adjusts subtitle timings to prevent overlaps and ensure optimal duration based on content length.
+    /// </summary>
+    /// <param name="subtitles">The list of subtitle items to process</param>
+    /// <returns>The modified list of subtitles with fixed timings</returns>
+    List<SubtitleItem> FixOverlappingSubtitles(List<SubtitleItem> subtitles);
 }

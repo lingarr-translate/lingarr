@@ -20,7 +20,7 @@ services:
         BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Debug}
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - DB_CONNECTION=mysql
+      - DB_CONNECTION=sqlite
       - DB_HOST=Lingarr.Mysql
       - DB_PORT=3306
       - DB_DATABASE=LingarrMysql
@@ -34,6 +34,7 @@ services:
       - ../media/data/movies:/movies
       - ../media/data/tv:/tv
       - ../media/data/series/anime:/anime
+      - ../media/data/config:/app/config
     ports:
       - "9877:8080"
     networks:

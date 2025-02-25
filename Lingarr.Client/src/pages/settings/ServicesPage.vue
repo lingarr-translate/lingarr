@@ -2,7 +2,7 @@
     <div
         class="grid grid-flow-row auto-rows-max grid-cols-1 gap-4 p-4 xl:grid-cols-2 2xl:grid-cols-3">
         <ServicesSettings />
-        <LanguageSettings v-if="serviceType" :service-type="serviceType" />
+        <TranslationSettings v-if="serviceType" :service-type="serviceType" />
     </div>
 </template>
 
@@ -11,7 +11,7 @@ import { computed } from 'vue'
 import { SETTINGS } from '@/ts'
 import { useSettingStore } from '@/store/setting'
 import ServicesSettings from '@/components/features/settings/ServicesSettings.vue'
-import LanguageSettings from '@/components/features/settings/LanguageSettings.vue'
+import TranslationSettings from '@/components/features/settings/TranslationSettings.vue'
 
 const settingsStore = useSettingStore()
 

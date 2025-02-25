@@ -69,12 +69,16 @@ public class TranslationJob
                 translationRequest.SubtitleToTranslate);
 
             var serviceType = await _settings.GetSetting(SettingKeys.Translation.ServiceType) ?? "libretranslate";
+            var fixOverlappingSubtitles = await _settings.GetSetting(SettingKeys.Translation.FixOverlappingSubtitles);
 
             var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
             var translator = new SubtitleTranslationService(translationService, _logger, _progressService);
             var subtitles = await _subtitleService.ReadSubtitles(request.SubtitleToTranslate);
-            var translatedSubtitles =
-                await translator.TranslateSubtitles(subtitles, request, cancellationToken);
+            var translatedSubtitles = await translator.TranslateSubtitles(subtitles, request, cancellationToken);
+            if (fixOverlappingSubtitles == "true")
+            {
+                translatedSubtitles = _subtitleService.FixOverlappingSubtitles(translatedSubtitles);
+            }
             
             // statistics tracking
             await _statisticsService.UpdateTranslationStatistics(request, serviceType, subtitles, translatedSubtitles);
