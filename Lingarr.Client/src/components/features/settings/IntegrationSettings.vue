@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { WritableComputedRef, computed, ref, reactive } from 'vue'
+import { computed, ref, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 import { SETTINGS } from '@/ts'
@@ -66,7 +66,7 @@ const isValid = reactive({
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
 
-const radarrApiKey: WritableComputedRef<string> = computed({
+const radarrApiKey = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.RADARR_API_KEY) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.RADARR_API_KEY, newValue, isValid.radarrApiKey)
@@ -75,7 +75,7 @@ const radarrApiKey: WritableComputedRef<string> = computed({
         }
     }
 })
-const sonarrApiKey: WritableComputedRef<string> = computed({
+const sonarrApiKey = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.SONARR_API_KEY) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.SONARR_API_KEY, newValue, isValid.sonarrApiKey)
@@ -84,7 +84,7 @@ const sonarrApiKey: WritableComputedRef<string> = computed({
         }
     }
 })
-const radarrUrl: WritableComputedRef<string> = computed({
+const radarrUrl = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.RADARR_URL) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.RADARR_URL, newValue, isValid.radarrUrl)
@@ -93,7 +93,7 @@ const radarrUrl: WritableComputedRef<string> = computed({
         }
     }
 })
-const sonarrUrl: WritableComputedRef<string> = computed({
+const sonarrUrl = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.SONARR_URL) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.SONARR_URL, newValue, isValid.sonarrUrl)

@@ -84,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { WritableComputedRef, computed, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import { useRouter } from 'vue-router'
 import { SETTINGS } from '@/ts'
@@ -103,35 +103,35 @@ const settingsStore = useSettingStore()
 const router = useRouter()
 const { translate } = useI18n()
 
-const automationEnabled: WritableComputedRef<string> = computed({
+const automationEnabled = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.AUTOMATION_ENABLED) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.AUTOMATION_ENABLED, newValue, true)
         saveNotification.value?.show()
     }
 })
-const movieSchedule: WritableComputedRef<string> = computed({
+const movieSchedule = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.MOVIE_SCHEDULE) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.MOVIE_SCHEDULE, newValue, true)
         saveNotification.value?.show()
     }
 })
-const showSchedule: WritableComputedRef<string> = computed({
+const showSchedule = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.SHOW_SCHEDULE) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.SHOW_SCHEDULE, newValue, true)
         saveNotification.value?.show()
     }
 })
-const translationSchedule: WritableComputedRef<string> = computed({
+const translationSchedule = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.TRANSLATION_SCHEDULE) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.TRANSLATION_SCHEDULE, newValue, true)
         saveNotification.value?.show()
     }
 })
-const maxTranslationsPerRun: WritableComputedRef<string> = computed({
+const maxTranslationsPerRun = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.MAX_TRANSLATIONS_PER_RUN) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.MAX_TRANSLATIONS_PER_RUN, newValue, true)
@@ -139,7 +139,7 @@ const maxTranslationsPerRun: WritableComputedRef<string> = computed({
     }
 })
 
-const movieAgeThreshold: WritableComputedRef<string> = computed({
+const movieAgeThreshold = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.MOVIE_AGE_THRESHOLD) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.MOVIE_AGE_THRESHOLD, newValue, true)
@@ -147,7 +147,7 @@ const movieAgeThreshold: WritableComputedRef<string> = computed({
     }
 })
 
-const showAgeThreshold: WritableComputedRef<string> = computed({
+const showAgeThreshold = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.SHOW_AGE_THRESHOLD) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.SHOW_AGE_THRESHOLD, newValue, true)

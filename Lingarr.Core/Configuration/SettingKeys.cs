@@ -57,6 +57,7 @@ public static class SettingKeys
         public const string SourceLanguages = "source_languages";
         public const string TargetLanguages = "target_languages";
         public const string AiPrompt = "ai_prompt";
+        public const string FixOverlappingSubtitles = "fix_overlapping_subtitles";
     }
 
     public static class Automation 

@@ -11,12 +11,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, WritableComputedRef } from 'vue'
+import { computed } from 'vue'
 import { useI18n } from '@/plugins/i18n'
 import { ILocale } from '@/ts'
 const { languages, locale, setLocale } = useI18n()
 
-const selectedLocale: WritableComputedRef<ILocale> = computed({
+const selectedLocale = computed({
     get: () => locale.value as ILocale,
     set: (value: ILocale) => setLocale(value)
 })

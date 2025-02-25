@@ -11,7 +11,7 @@
 </template>
 
 <script lang="ts" setup>
-import { WritableComputedRef, computed, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import { SETTINGS } from '@/ts'
 import InputComponent from '@/components/common/InputComponent.vue'
@@ -20,7 +20,7 @@ const isValid = ref(false)
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])
 
-const deepLApiKey: WritableComputedRef<string> = computed({
+const deepLApiKey = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.DEEPL_API_KEY) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.DEEPL_API_KEY, newValue, isValid.value)

@@ -20,7 +20,8 @@ namespace Lingarr.Migrations.MySQL.Migrations
                     { "deepseek_model", "" },
                     { "deepseek_api_key", "" },
                     { "movie_age_threshold", "0" },
-                    { "show_age_threshold", "0" }
+                    { "show_age_threshold", "0" },
+                    { "fix_overlapping_subtitles", "false" }
                 });
             
             migrationBuilder.AddColumn<bool>(
@@ -77,7 +78,8 @@ namespace Lingarr.Migrations.MySQL.Migrations
                     "deepseek_model",
                     "deepseek_api_key",
                     "movie_age_threshold",
-                    "show_age_threshold"
+                    "show_age_threshold",
+                    "fix_overlapping_subtitles"
                 });
             
             migrationBuilder.DropColumn(

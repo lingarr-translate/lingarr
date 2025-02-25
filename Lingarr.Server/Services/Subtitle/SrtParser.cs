@@ -14,17 +14,24 @@ public class SrtParser : ISubtitleParser
     /// <inheritdoc />
     public List<SubtitleItem> ParseStream(Stream subtitleStream, Encoding encoding)
     {
-        ValidateStream(subtitleStream);
-        using var reader = new StreamReader(subtitleStream, encoding, true);
-        var subtitles = ParseSubtitles(reader).ToList();
-        
-        if (subtitles.Count == 0)
+        try
         {
-            throw new FormatException("No valid subtitles found in the stream");
-        }
+            ValidateStream(subtitleStream);
+            using var reader = new StreamReader(subtitleStream, encoding, true);
+            var subtitles = ParseSubtitles(reader).ToList();
+            
+            if (subtitles.Count == 0)
+            {
+                throw new FormatException("No valid subtitles found in the stream");
+            }
 
-        ValidateSubtitles(subtitles);
-        return subtitles;
+            return subtitles;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error parsing subtitle file: {ex.Message}");
+            return new List<SubtitleItem>();
+        }
     }
 
     /// <summary>
@@ -138,7 +145,13 @@ public class SrtParser : ISubtitleParser
         
         start = ParseTimeCode(parts[0]);
         end = ParseTimeCode(parts[1]);
-        return start >= 0 && end >= 0 && start < end;
+        
+        if (start >= 0 && end >= 0 && end < start)
+        {
+            (start, end) = (end, start);
+        }
+        
+        return start >= 0 && end >= 0;
     }
 
     /// <summary>
@@ -219,21 +232,5 @@ public class SrtParser : ISubtitleParser
         }
 
         stream.Position = 0;
-    }
-
-    /// <summary>
-    /// Validates that subtitles do not have overlapping timestamps.
-    /// </summary>
-    /// <param name="subtitles">The list of subtitle items to validate.</param>
-    /// <exception cref="FormatException">Thrown if overlapping subtitles are detected.</exception>
-    private static void ValidateSubtitles(IReadOnlyList<SubtitleItem> subtitles)
-    {
-        for (var i = 0; i < subtitles.Count - 1; i++)
-        {
-            if (subtitles[i].EndTime > subtitles[i + 1].StartTime)
-            {
-                throw new FormatException($"Overlapping subtitles detected at position {subtitles[i].Position}");
-            }
-        }
     }
 }

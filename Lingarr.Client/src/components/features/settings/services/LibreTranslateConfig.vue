@@ -7,7 +7,7 @@
         @update:validation="(val) => (isValid = val)" />
 </template>
 <script setup lang="ts">
-import { WritableComputedRef, computed, ref } from 'vue'
+import { computed, ref } from 'vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 import { useSettingStore } from '@/store/setting'
 import { SETTINGS } from '@/ts'
@@ -16,7 +16,7 @@ const isValid = ref(false)
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])
 
-const libreTranslateUrl: WritableComputedRef<string> = computed({
+const libreTranslateUrl = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.LIBRETRANSLATE_URL) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.LIBRETRANSLATE_URL, newValue, isValid.value)
