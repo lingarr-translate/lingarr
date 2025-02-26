@@ -95,11 +95,50 @@ public class LocalAiService : BaseLanguageService
         {
             throw new InvalidOperationException("Local AI service was not properly initialized.");
         }
-
+        
+        using var retry = new CancellationTokenSource();
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
         var isChatEndpoint = _endpoint.TrimEnd('/').EndsWith("completions", StringComparison.OrdinalIgnoreCase);
-        return isChatEndpoint 
-            ? await TranslateWithChatApi(text, cancellationToken)
-            : await TranslateWithGenerateApi(text, cancellationToken);
+        
+        const int maxRetries = 5;
+        var delay = TimeSpan.FromSeconds(1);
+        var maxDelay = TimeSpan.FromSeconds(32);
+
+        for (var attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                return isChatEndpoint 
+                    ? await TranslateWithChatApi(text, cancellationToken)
+                    : await TranslateWithGenerateApi(text, cancellationToken);
+            }
+            catch (TranslationResponseException ex)
+            {
+                if (attempt == maxRetries)
+                {
+                    _logger.LogError(ex, "Too many requests. Max retries exhausted for text: {Text}", text);
+                    throw new TranslationException("Too many requests. Retry limit reached.", ex);
+                }
+
+                _logger.LogWarning(
+                    "429 Too Many Requests. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    delay, attempt, maxRetries);
+
+                await Task.Delay(delay, linked.Token);
+                delay = TimeSpan.FromTicks(Math.Min(delay.Ticks * 2, maxDelay.Ticks));
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during translation attempt {Attempt}", attempt);
+                throw new TranslationException("Unexpected error occurred during translation.", ex);
+            }
+        }
+
+        throw new TranslationException("Translation failed after maximum retry attempts.");
     }
 
     private async Task<string> TranslateWithGenerateApi(string text, CancellationToken cancellationToken)
@@ -150,7 +189,7 @@ public class LocalAiService : BaseLanguageService
         {
             _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
             _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new TranslationException("Translation using chat API failed.");
+            throw new TranslationResponseException("Translation using chat API failed.");
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -158,7 +197,7 @@ public class LocalAiService : BaseLanguageService
         
         if (chatResponse?.Choices == null || chatResponse.Choices.Count == 0)
         {
-            throw new TranslationException("Invalid or empty response from chat API.");
+            throw new TranslationResponseException("Invalid or empty response from chat API.");
         }
 
         return chatResponse.Choices[0].Message.Content;
