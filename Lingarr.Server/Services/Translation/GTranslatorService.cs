@@ -29,7 +29,7 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
         
-        int maxRetries = 5;
+        const int maxRetries = 5;
         var delay = TimeSpan.FromSeconds(1);
         var maxDelay = TimeSpan.FromSeconds(32);
         for (var attempt = 1; attempt <= maxRetries; attempt++)

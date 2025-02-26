@@ -93,7 +93,7 @@ public class GoogleGeminiService : BaseLanguageService
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
 
-        int maxRetries = 5;
+        const int maxRetries = 5;
         var delay = TimeSpan.FromSeconds(1);
         var maxDelay = TimeSpan.FromSeconds(32);
 
