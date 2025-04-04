@@ -12,7 +12,7 @@ namespace Lingarr.Server.Services.Translation;
 
 public class GoogleGeminiService : BaseLanguageService
 {
-    private string? _endpoint = "https://generativelanguage.googleapis.com/v1beta";
+    private readonly string? _endpoint = "https://generativelanguage.googleapis.com/v1beta";
     private readonly HttpClient _httpClient;
     private string? _model;
     private string? _apiKey;
@@ -178,11 +178,11 @@ public class GoogleGeminiService : BaseLanguageService
         
         if (geminiResponse?.Candidates == null || geminiResponse.Candidates.Count == 0 ||
             geminiResponse.Candidates[0].Content?.Parts == null || 
-            geminiResponse.Candidates[0]?.Content?.Parts.Count == 0)
+            geminiResponse.Candidates[0].Content?.Parts.Count == 0)
         {
             throw new TranslationException("Invalid or empty response from Gemini API.");
         }
 
-        return geminiResponse?.Candidates[0]?.Content?.Parts[0].Text ?? "";
+        return geminiResponse.Candidates[0].Content?.Parts[0].Text ?? "";
     }
 }
