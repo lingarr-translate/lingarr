@@ -12,7 +12,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DeepL.net" Version="1.10.0" />
+    <PackageReference Include="DeepL.net" Version="1.14.0" />
     <PackageReference Include="EFCore.NamingConventions" Version="8.0.3" />
     <PackageReference Include="GTranslate" Version="2.2.8" />
     <PackageReference Include="Hangfire" Version="1.8.15" />
