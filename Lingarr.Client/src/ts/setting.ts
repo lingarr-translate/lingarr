@@ -35,7 +35,8 @@ export const SETTINGS = {
     LOCALE: 'locale',
     MOVIE_AGE_THRESHOLD: 'movie_age_threshold',
     SHOW_AGE_THRESHOLD: 'show_age_threshold',
-    FIX_OVERLAPPING_SUBTITLES: 'fix_overlapping_subtitles'
+    FIX_OVERLAPPING_SUBTITLES: 'fix_overlapping_subtitles',
+    LOCAL_AI_PARAMETERS: 'local_ai_parameters'
 } as const
 
 export interface ISettings {
@@ -73,4 +74,26 @@ export interface ISettings {
     fix_overlapping_subtitles: string
     theme: ITheme
     locale: ILocale
+    local_ai_parameters: string | ILocalAiParams[]
 }
+
+export interface ILocalAiParams {
+    key: string
+    value: string
+}
+
+export const SERVICE_TYPE = {
+    LIBRETRANSLATE: 'libretranslate',
+    OPENAI: 'openai',
+    ANTHROPIC: 'anthropic',
+    LOCALAI: 'localai',
+    DEEPL: 'deepl',
+    GEMINI: 'gemini',
+    DEEPSEEK: 'deepseek',
+    GOOGLE: 'google',
+    BING: 'bing',
+    MICROSOFT: 'microsoft',
+    YANDEX: 'yandex'
+} as const
+
+export type ServiceType = (typeof SERVICE_TYPE)[keyof typeof SERVICE_TYPE]

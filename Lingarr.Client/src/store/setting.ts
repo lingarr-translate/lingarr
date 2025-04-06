@@ -1,5 +1,5 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { IUseSettingStore, ISettings, SETTINGS, ILanguage } from '@/ts'
+import { IUseSettingStore, ISettings, SETTINGS } from '@/ts'
 import services from '@/services'
 import { useTranslateStore } from '@/store/translate'
 import { useInstanceStore } from '@/store/instance'
@@ -11,10 +11,12 @@ export const useSettingStore = defineStore({
     }),
     getters: {
         getSettings: (state: IUseSettingStore): ISettings => {
+            console.log(state.settings)
             return {
                 ...state.settings,
                 source_languages: JSON.parse(state.settings.source_languages as string),
-                target_languages: JSON.parse(state.settings.target_languages as string)
+                target_languages: JSON.parse(state.settings.target_languages as string),
+                local_ai_parameters: JSON.parse(state.settings.local_ai_parameters as string)
             }
         },
         getSetting: (state: IUseSettingStore) => (key: keyof ISettings) => state.settings[key]
@@ -22,8 +24,9 @@ export const useSettingStore = defineStore({
     actions: {
         async updateSetting(
             key: keyof ISettings,
-            value: string | boolean | ILanguage[],
-            isValid: boolean
+            value: string | boolean | unknown[],
+            isValid: boolean,
+            isJson: boolean = false
         ): Promise<void> {
             if (typeof value === 'string' && (key === 'radarr_url' || key === 'sonarr_url')) {
                 value = value.replace(/\/+$/, '')
@@ -31,7 +34,8 @@ export const useSettingStore = defineStore({
 
             this.storeSetting(key, value)
             if (isValid) {
-                if (key === SETTINGS.SOURCE_LANGUAGES || key === SETTINGS.TARGET_LANGUAGES) {
+                if (isJson) {
+                    if (!allKeysHaveValues(value)) return
                     await this.saveSetting(key, JSON.stringify(value))
                 } else {
                     await this.saveSetting(key, value as string)
@@ -46,7 +50,7 @@ export const useSettingStore = defineStore({
                 }
             }
         },
-        storeSetting(key: keyof ISettings, value: string | boolean | ILanguage[]) {
+        storeSetting(key: keyof ISettings, value: string | boolean | unknown[]) {
             this.settings[key] = value as never
         },
         async saveSetting(key: keyof ISettings, value: string) {
@@ -60,13 +64,38 @@ export const useSettingStore = defineStore({
             this.settings = {
                 ...settings,
                 source_languages: JSON.parse(settings.source_languages as string),
-                target_languages: JSON.parse(settings.target_languages as string)
+                target_languages: JSON.parse(settings.target_languages as string),
+                local_ai_parameters: JSON.parse(settings.local_ai_parameters as string)
             }
 
             instanceStore.storeTheme(settings.theme)
         }
     }
 })
+
+function allKeysHaveValues(values: string | boolean | unknown[]) {
+    // If values is not an array, return false immediately
+    if (!Array.isArray(values)) {
+        return true
+    }
+
+    // Check if every item in the array is a valid object
+    const isArrayOfObjects = values.every(
+        (item): item is Record<string, unknown> =>
+            item !== null && typeof item === 'object' && !Array.isArray(item)
+    )
+
+    if (!isArrayOfObjects) {
+        return false
+    }
+
+    // Now TypeScript knows values is an array of objects
+    return values.every((obj) => {
+        return Object.values(obj).every(
+            (value) => value !== null && value !== undefined && value !== ''
+        )
+    })
+}
 
 if (import.meta.hot) {
     import.meta.hot.accept(acceptHMRUpdate(useSettingStore, import.meta.hot))

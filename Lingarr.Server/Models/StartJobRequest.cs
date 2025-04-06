@@ -2,5 +2,5 @@
 
 public class StartJobRequest
 {
-    public string JobName { get; set; }
+    public string JobName { get; set; } = string.Empty;
 }

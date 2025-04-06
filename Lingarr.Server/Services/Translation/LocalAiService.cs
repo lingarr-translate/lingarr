@@ -15,6 +15,7 @@ public class LocalAiService : BaseLanguageService
     private string? _model;
     private string? _endpoint;
     private string? _prompt;
+    private List<KeyValuePair<string, object>>? _localAiParameters;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
@@ -48,6 +49,7 @@ public class LocalAiService : BaseLanguageService
                 SettingKeys.Translation.LocalAi.Model,
                 SettingKeys.Translation.LocalAi.Endpoint,
                 SettingKeys.Translation.LocalAi.ApiKey,
+                SettingKeys.Translation.LocalAi.LocalAiParameters,
                 SettingKeys.Translation.AiPrompt
             ]);
 
@@ -59,6 +61,7 @@ public class LocalAiService : BaseLanguageService
 
             _model = settings[SettingKeys.Translation.LocalAi.Model];
             _endpoint = settings[SettingKeys.Translation.LocalAi.Endpoint];
+            _localAiParameters = PrepareLocalAiParameters(settings);
 
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -80,6 +83,69 @@ public class LocalAiService : BaseLanguageService
         {
             _initLock.Release();
         }
+    }
+    
+    /// <summary>
+    /// Prepares LocalAI parameters from settings for use in API requests.
+    /// </summary>
+    /// <param name="settings">Dictionary containing application settings.</param>
+    private List<KeyValuePair<string, object>>? PrepareLocalAiParameters(Dictionary<string, string> settings)
+    {
+        if (!settings.TryGetValue(SettingKeys.Translation.LocalAi.LocalAiParameters, out var parametersJson) ||
+            string.IsNullOrEmpty(parametersJson))
+        {
+            return null;
+        }
+
+        try
+        {
+            var parametersArray = JsonSerializer.Deserialize<JsonElement[]>(parametersJson);
+            if (parametersArray == null)
+            {
+                return null;
+            }
+
+            var parameters = new List<KeyValuePair<string, object>>();
+            foreach (var param in parametersArray)
+            {
+                if (!param.TryGetProperty("key", out var key) ||
+                    !param.TryGetProperty("value", out var value)) continue;
+                
+                object valueObj = value.ValueKind switch
+                {
+                    JsonValueKind.String => value.GetString()!,
+                    JsonValueKind.Number => value.TryGetInt64(out var intVal) ? intVal : value.GetDouble(),
+                    JsonValueKind.True => true,
+                    JsonValueKind.False => false,
+                    _ => value.GetString()!
+                };
+
+                parameters.Add(new KeyValuePair<string, object>(key.GetString()!, valueObj));
+            }
+            return parameters;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse LocalAiParameters: {Parameters}", parametersJson);
+            return null;
+        }
+    }
+    
+    /// <summary>
+    /// Adds Local AI parameters to the request data if they exist.
+    /// </summary>
+    /// <param name="requestData">The dictionary containing the base request parameters.</param>
+    private Dictionary<string, object> AddLocalAiParameters(Dictionary<string, object> requestData)
+    {
+        if (_localAiParameters != null && _localAiParameters.Count > 0)
+        {
+            foreach (var param in _localAiParameters)
+            {
+                requestData[param.Key] = param.Value;
+            }
+        }
+    
+        return requestData;
     }
 
     /// <inheritdoc />
@@ -109,8 +175,8 @@ public class LocalAiService : BaseLanguageService
             try
             {
                 return isChatEndpoint 
-                    ? await TranslateWithChatApi(text, cancellationToken)
-                    : await TranslateWithGenerateApi(text, cancellationToken);
+                    ? await TranslateWithChatApi(text, retry.Token)
+                    : await TranslateWithGenerateApi(text, retry.Token);
             }
             catch (TranslationResponseException ex)
             {
@@ -143,12 +209,16 @@ public class LocalAiService : BaseLanguageService
 
     private async Task<string> TranslateWithGenerateApi(string text, CancellationToken cancellationToken)
     {
-        var content = new StringContent(JsonSerializer.Serialize(new
+        var requestData = new Dictionary<string, object>
         {
-            model = _model,
-            prompt = _prompt + "\\n\\n" + text,
-            stream = false
-        }), Encoding.UTF8, "application/json");
+            ["model"] = _model!,
+            ["prompt"] = _prompt + "\n\n" + text,
+            ["stream"] = false
+        };
+        requestData = AddLocalAiParameters(requestData);
+
+        var content = new StringContent(JsonSerializer.Serialize(requestData), 
+            Encoding.UTF8, "application/json");
 
         var response = await _httpClient.PostAsync(_endpoint, content, cancellationToken);
         if (!response.IsSuccessStatusCode)
@@ -177,11 +247,15 @@ public class LocalAiService : BaseLanguageService
             new { role = "user", content = text }
         };
 
-        var content = new StringContent(JsonSerializer.Serialize(new
+        var requestData = new Dictionary<string, object>
         {
-            model = _model,
-            messages
-        }), Encoding.UTF8, "application/json");
+            ["model"] = _model!,
+            ["messages"] = messages
+        };
+        requestData = AddLocalAiParameters(requestData);
+
+        var content = new StringContent(JsonSerializer.Serialize(requestData),
+            Encoding.UTF8, "application/json");
 
         var response = await _httpClient.PostAsync(_endpoint, content, cancellationToken);
         

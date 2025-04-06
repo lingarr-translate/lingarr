@@ -93,25 +93,29 @@ public class AutomatedTranslationJob
 
     private bool ShouldProcessMedia(IMedia media, MediaType mediaType, TimeSpan? customAgeThreshold = null)
     {
+        if (media.Path == null)
+        {
+            return false;
+        }
+
         var fileInfo = new FileInfo(media.Path);
         var fileAge = DateTime.Now - fileInfo.CreationTime;
         var threshold = customAgeThreshold ??
                         (mediaType == MediaType.Movie ? _defaultMovieAgeThreshold : _defaultShowAgeThreshold);
 
-        double fileAgeHours = fileAge.TotalHours;
-        double thresholdHours = threshold.TotalHours;
-
-        if (fileAgeHours < thresholdHours)
+        var fileAgeHours = fileAge.TotalHours;
+        var thresholdHours = threshold.TotalHours;
+        if (!(fileAgeHours < thresholdHours))
         {
-            _logger.LogInformation(
-                "Media {FileName} does not meet age threshold. Age: {Age} hours, Required: {Threshold} hours",
-                media.FileName,
-                fileAgeHours.ToString("F2"),
-                thresholdHours.ToString("F2"));
-            return false;
+            return true;
         }
+        _logger.LogInformation(
+            "Media {FileName} does not meet age threshold. Age: {Age} hours, Required: {Threshold} hours",
+            media.FileName,
+            fileAgeHours.ToString("F2"),
+            thresholdHours.ToString("F2"));
+        return false;
 
-        return true;
     }
 
     private async Task<bool>  ProcessMovies()

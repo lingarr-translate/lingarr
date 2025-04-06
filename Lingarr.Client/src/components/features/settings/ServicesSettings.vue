@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useSettingStore } from '@/store/setting'
-import { SETTINGS } from '@/ts'
+import { SETTINGS, SERVICE_TYPE } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import SelectComponent from '@/components/common/SelectComponent.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
@@ -47,39 +47,39 @@ const serviceType = computed({
 })
 
 const serviceOptions = [
-    { value: 'anthropic', label: 'Anthropic' },
-    { value: 'bing', label: 'Bing' },
-    { value: 'deepl', label: 'DeepL' },
-    { value: 'deepseek', label: 'DeepSeek' },
-    { value: 'gemini', label: 'Gemini' },
-    { value: 'google', label: 'Google' },
-    { value: 'libretranslate', label: 'LibreTranslate' },
-    { value: 'localai', label: 'Local AI' },
-    { value: 'microsoft', label: 'Microsoft' },
-    { value: 'openai', label: 'OpenAI' },
-    { value: 'yandex', label: 'Yandex' }
+    { value: SERVICE_TYPE.ANTHROPIC, label: 'Anthropic' },
+    { value: SERVICE_TYPE.BING, label: 'Bing' },
+    { value: SERVICE_TYPE.DEEPL, label: 'DeepL' },
+    { value: SERVICE_TYPE.DEEPSEEK, label: 'DeepSeek' },
+    { value: SERVICE_TYPE.GEMINI, label: 'Gemini' },
+    { value: SERVICE_TYPE.GOOGLE, label: 'Google' },
+    { value: SERVICE_TYPE.LIBRETRANSLATE, label: 'LibreTranslate' },
+    { value: SERVICE_TYPE.LOCALAI, label: 'Local AI (Custom)' },
+    { value: SERVICE_TYPE.MICROSOFT, label: 'Microsoft' },
+    { value: SERVICE_TYPE.OPENAI, label: 'OpenAI' },
+    { value: SERVICE_TYPE.YANDEX, label: 'Yandex' }
 ]
 
 const serviceConfigComponent = computed(() => {
     switch (serviceType.value) {
-        case 'libretranslate':
+        case SERVICE_TYPE.LIBRETRANSLATE:
             return LibreTranslateConfig
-        case 'openai':
+        case SERVICE_TYPE.OPENAI:
             return OpenAiConfig
-        case 'anthropic':
+        case SERVICE_TYPE.ANTHROPIC:
             return AnthropicConfig
-        case 'localai':
+        case SERVICE_TYPE.LOCALAI:
             return LocalAiConfig
-        case 'deepl':
+        case SERVICE_TYPE.DEEPL:
             return DeepLConfig
-        case 'gemini':
+        case SERVICE_TYPE.GEMINI:
             return GeminiConfig
-        case 'deepseek':
+        case SERVICE_TYPE.DEEPSEEK:
             return DeepSeekConfig
-        case 'google':
-        case 'bing':
-        case 'microsoft':
-        case 'yandex':
+        case SERVICE_TYPE.GOOGLE:
+        case SERVICE_TYPE.BING:
+        case SERVICE_TYPE.MICROSOFT:
+        case SERVICE_TYPE.YANDEX:
             return FreeServiceConfig
         default:
             return null

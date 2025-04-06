@@ -44,6 +44,10 @@ public class StatisticsJob
         {
             try 
             {
+                if (movie.Path == null)
+                {
+                    continue;
+                }
                 var subtitles = await _subtitleService.GetAllSubtitles(movie.Path);
                 movieSubtitles += subtitles.Count;
                 

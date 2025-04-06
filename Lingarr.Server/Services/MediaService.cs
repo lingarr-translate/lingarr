@@ -59,13 +59,17 @@ public class MediaService : IMediaService
         foreach (var movie in movies)
         {
             _logger.LogInformation("Processing movie: {RadarrId} - {Title} with Path: |Green|{Path}|/Green|", movie.RadarrId, movie.Title, movie.Path);
+            if (movie.Path == null)
+            {
+                continue;
+            }
             var subtitles = await _subtitleService.GetAllSubtitles(movie.Path);
             var enrichedMovie = new MovieResponse
             {
                 Id = movie.Id,
                 RadarrId = movie.RadarrId,
                 Title = movie.Title,
-                FileName = movie.FileName,
+                FileName = movie.FileName ?? string.Empty,
                 Path = movie.Path,
                 DateAdded = movie.DateAdded,
                 Images = movie.Images,

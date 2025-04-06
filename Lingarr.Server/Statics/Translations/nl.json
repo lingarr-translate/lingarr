@@ -196,6 +196,16 @@
       "dailyAtMidnight": "Dagelijks om middernacht",
       "dailyAtFour": "Dagelijks om 04:00",
       "weeklyOnSundayAtMidnight": "Wekelijks op zondag om middernacht"
+    },
+    "custom": {
+      "parameters": "Aangepaste Parameters",
+      "description": "Definieer aangepaste parameters (bijv. temperature, top_p) om mee te sturen met verzoeken naar uw lokale AI.",
+      "key": "Sleutel",
+      "value": "Waarde",
+      "key_placeholder": "temperature",
+      "value_placeholder": "0.3",
+      "remove": "Parameter Verwijderen",
+      "addParameter": "Parameter Toevoegen"
     }
   }
 }

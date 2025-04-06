@@ -34,6 +34,7 @@ public static class SettingKeys
             public const string Model = "local_ai_model";
             public const string Endpoint = "local_ai_endpoint";
             public const string ApiKey = "local_ai_api_key";
+            public const string LocalAiParameters = "local_ai_parameters";
         }
 
         public static class DeepL 

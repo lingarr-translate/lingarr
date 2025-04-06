@@ -4,6 +4,7 @@ using System.Text.Json;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
 using Lingarr.Server.Services.Translation.Base;
 
@@ -48,6 +49,44 @@ public class LibreService : BaseLanguageService
         {
             _initLock.Release();
         }
+    }
+    
+    /// <inheritdoc />
+    public override async Task<List<SourceLanguage>> GetLanguages()
+    {
+        _logger.LogInformation($"Retrieving |Green|LibreTranslate|/Green| languages");
+        await InitializeAsync();
+
+        var libreTranslateLanguagesUrl = "https://libretranslate.com/languages";
+        List<JsonLanguage>? libreLanguages;
+        try
+        {
+            libreLanguages = await _httpClient.GetFromJsonAsync<List<JsonLanguage>>(libreTranslateLanguagesUrl);
+            if (libreLanguages == null || !libreLanguages.Any())
+            {
+                _logger.LogWarning("Received no languages from LibreTranslate API at {Url}. The endpoint might be down or returned an empty list.", libreTranslateLanguagesUrl);
+                return [];
+            }
+
+            _logger.LogInformation("Successfully retrieved {Count} languages from LibreTranslate API.", libreLanguages.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while retrieving or processing LibreTranslate languages.");
+            return [];
+        }
+        
+        var languageCodes = libreLanguages.Select(l => l.Code).ToHashSet();
+        return libreLanguages
+            .Select(lang => new SourceLanguage
+            {
+                Code = lang.Code,
+                Name = lang.Name,
+                Targets = languageCodes
+                    .Where(code => code != lang.Code)
+                    .ToList()
+            })
+            .ToList();
     }
 
     /// <inheritdoc />
