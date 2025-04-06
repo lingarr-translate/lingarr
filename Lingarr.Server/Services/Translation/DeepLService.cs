@@ -1,5 +1,4 @@
-﻿using System.Net;
-using DeepL;
+﻿using DeepL;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
@@ -22,7 +21,7 @@ public class DeepLService : BaseTranslationService
     
     public DeepLService(
         ISettingService settings,
-        ILogger<LibreService> logger) : base(settings, logger)
+        ILogger<DeepLService> logger) : base(settings, logger)
     {
     }
 
@@ -112,52 +111,21 @@ public class DeepLService : BaseTranslationService
             throw new TranslationException("DeepL translator was not properly initialized.");
         }
 
-        using var retry = new CancellationTokenSource();
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
-
-        const int maxRetries = 5;
-        var delay = TimeSpan.FromSeconds(1);
-        var maxDelay = TimeSpan.FromSeconds(32);
-        
-        for (var attempt = 1; attempt <= maxRetries; attempt++)
+        try
         {
-            try
-            {
-                var result = await _translator.TranslateTextAsync(
-                    text,
-                    sourceLanguage,
-                    targetLanguage, 
-                    cancellationToken: linked.Token);
+            var result = await _translator.TranslateTextAsync(
+                text,
+                sourceLanguage,
+                targetLanguage, 
+                cancellationToken: cancellationToken);
 
-                return result.Text;
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
-            {
-                if (attempt == maxRetries)
-                {
-                    _logger.LogError(ex, "Too many requests. Max retries exhausted for text: {Text}", text);
-                    throw new TranslationException("Too many requests. Retry limit reached.", ex);
-                }
-
-                _logger.LogWarning(
-                    "429 Too Many Requests. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
-                    delay, attempt, maxRetries);
-
-                await Task.Delay(delay, linked.Token);
-                delay = TimeSpan.FromTicks(Math.Min(delay.Ticks * 2, maxDelay.Ticks));
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "DeepL translation failed");
-                throw new TranslationException("Translation using DeepL failed.");
-            }
+            return result.Text;
         }
-
-        throw new TranslationException("Translation failed after maximum retry attempts.");
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "DeepL translation failed");
+            throw new TranslationException("Translation using DeepL failed.");
+        }
     }
 
     /// <summary>
