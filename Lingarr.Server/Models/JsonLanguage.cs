@@ -6,7 +6,7 @@ namespace Lingarr.Server.Models;
 public class JsonLanguage : ILanguage
 {
     [JsonPropertyName("code")]
-    public string Code { get; set; }
+    public string Code { get; set; } = string.Empty;
     [JsonPropertyName("name")]
-    public string Name { get; set; }
+    public string Name { get; set; } = string.Empty;
 }

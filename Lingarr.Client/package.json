@@ -11,7 +11,6 @@
     },
     "dependencies": {
         "@microsoft/signalr": "^8.0.7",
-        "@tailwindcss/vite": "^4.0.1",
         "axios": "^1.7.9",
         "chart.js": "^4.4.7",
         "pinia": "^2.3.1",
@@ -20,6 +19,7 @@
         "vue-router": "^4.5.0"
     },
     "devDependencies": {
+        "@tailwindcss/vite": "^4.0.1",
         "@tailwindcss/postcss": "^4.0.0",
         "@types/node": "^22.12.0",
         "@typescript-eslint/eslint-plugin": "^8.22.0",

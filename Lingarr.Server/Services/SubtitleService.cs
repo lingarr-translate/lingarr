@@ -9,8 +9,9 @@ namespace Lingarr.Server.Services;
 
 public class SubtitleService : ISubtitleService
 {
-    private static readonly string[] SupportedExtensions = { ".srt", ".ssa", ".ass" };
-    private static readonly string[] SupportedCaptions = { "sdh", "cc", "forced", "hi" };
+    private static readonly string[] SupportedExtensions = [".srt", ".ssa", ".ass"];
+    private static readonly string[] SupportedCaptions = ["sdh", "cc", "forced", "hi"];
+    private static readonly char[] WhitespaceCharacters = [' ', '\t', '\n', '\r'];
 
     private static readonly CultureInfo[] Cultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
 
@@ -311,7 +312,7 @@ public class SubtitleService : ISubtitleService
     {
         return lines
             .Where(line => !string.IsNullOrWhiteSpace(line))
-            .Sum(line => line.Split([' ', '\t', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries).Length);
+            .Sum(line => line.Split(WhitespaceCharacters, StringSplitOptions.RemoveEmptyEntries).Length);
     }
 
     /// <summary>

@@ -8,16 +8,12 @@ namespace Lingarr.Server.Services;
 
 public class StatisticsService : IStatisticsService
 {
-    private Timer? _timer;
     private readonly LingarrDbContext _dbContext;
-    private readonly ILogger<StatisticsService> _logger;
 
     public StatisticsService(
-        LingarrDbContext dbContext,
-        ILogger<StatisticsService> logger)
+        LingarrDbContext dbContext)
     {
         _dbContext = dbContext;
-        _logger = logger;
     }
 
     public async Task<Statistics> GetStatistics()

@@ -67,7 +67,7 @@ const languages = computed(() => translateStore.getLanguages)
 const sourceLanguages = computed({
     get: (): ILanguage[] => settingsStore.getSetting(SETTINGS.SOURCE_LANGUAGES) as ILanguage[],
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.SOURCE_LANGUAGES, newValue, true)
+        settingsStore.updateSetting(SETTINGS.SOURCE_LANGUAGES, newValue, true, true)
         saveNotification.value?.show()
     }
 })
@@ -75,7 +75,7 @@ const sourceLanguages = computed({
 const targetLanguages = computed({
     get: (): ILanguage[] => settingsStore.getSetting(SETTINGS.TARGET_LANGUAGES) as ILanguage[],
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.TARGET_LANGUAGES, newValue, true)
+        settingsStore.updateSetting(SETTINGS.TARGET_LANGUAGES, newValue, true, true)
         saveNotification.value?.show()
     }
 })

@@ -49,7 +49,7 @@ public static class LingarrVersion
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to get latest version, returning default application version.");
+            Console.WriteLine($"Failed to get latest version, returning default application version. Error: {ex.Message}");
             return Number;
         }
     }

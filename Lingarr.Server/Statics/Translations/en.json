@@ -196,6 +196,16 @@
       "dailyAtMidnight": "Daily at midnight",
       "dailyAtFour": "Daily at 04:00",
       "weeklyOnSundayAtMidnight": "Weekly on Sunday at midnight"
+    },
+    "custom": {
+      "parameters": "Custom Parameters",
+      "description": "Define custom parameters (e.g., temperature, top_p) to send with requests to your local AI.",
+      "key": "Key",
+      "value": "Value",
+      "key_placeholder": "temperature",
+      "value_placeholder": "0.3",
+      "remove": "Remove Parameter",
+      "addParameter": "Add Parameter"
     }
   }
 }

@@ -173,7 +173,6 @@ namespace Lingarr.Migrations.MySQL.Migrations
                         .HasColumnName("exclude_from_translation");
 
                     b.Property<string>("FileName")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("file_name");
 
@@ -182,7 +181,6 @@ namespace Lingarr.Migrations.MySQL.Migrations
                         .HasColumnName("media_hash");
 
                     b.Property<string>("Path")
-                        .IsRequired()
                         .HasColumnType("longtext")
                         .HasColumnName("path");
 

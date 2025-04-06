@@ -40,6 +40,10 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         IMedia media, 
         MediaType mediaType)
     {
+        if (media.Path == null)
+        {
+            return false;
+        }
         var allSubtitles = await _subtitleService.GetAllSubtitles(media.Path);
         var matchingSubtitles = allSubtitles
             .Where(s => Path.GetFileNameWithoutExtension(s.FileName) == media.FileName)

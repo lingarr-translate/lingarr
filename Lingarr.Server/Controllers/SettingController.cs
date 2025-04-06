@@ -30,7 +30,7 @@ public class SettingController : ControllerBase
             return Ok(value);
         }
 
-        return NotFound();
+        return BadRequest("Setting not found");
     }
 
     /// <summary>
@@ -60,7 +60,7 @@ public class SettingController : ControllerBase
             return Ok();
         }
 
-        return NotFound();
+        return BadRequest("Setting not found or could not be updated.");
     }
 
     /// <summary>
