@@ -36,6 +36,7 @@ export const SETTINGS = {
     MOVIE_AGE_THRESHOLD: 'movie_age_threshold',
     SHOW_AGE_THRESHOLD: 'show_age_threshold',
     FIX_OVERLAPPING_SUBTITLES: 'fix_overlapping_subtitles',
+    STRIP_SUBTITLE_FORMATTING: 'strip_subtitle_formatting',
     LOCAL_AI_PARAMETERS: 'local_ai_parameters'
 } as const
 
@@ -72,6 +73,7 @@ export interface ISettings {
     movie_age_threshold: string
     show_age_threshold: string
     fix_overlapping_subtitles: string
+    strip_subtitle_formatting: string
     theme: ITheme
     locale: ILocale
     local_ai_parameters: string | ILocalAiParams[]

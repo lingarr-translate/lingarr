@@ -89,7 +89,7 @@ public class SubtitleService : ISubtitleService
     }
 
     /// <inheritdoc />
-    public async Task WriteSubtitles(string filePath, List<SubtitleItem> subtitles)
+    public async Task WriteSubtitles(string filePath, List<SubtitleItem> subtitles, bool stripSubtitleFormatting)
     {
         var extension = Path.GetExtension(filePath).ToLower();
         ISubtitleWriter writer = extension switch
@@ -100,7 +100,7 @@ public class SubtitleService : ISubtitleService
         };
 
         await using var fileStream = File.OpenWrite(filePath);
-        await writer.WriteStreamAsync(fileStream, subtitles);
+        await writer.WriteStreamAsync(fileStream, subtitles, stripSubtitleFormatting);
     }
 
     /// <inheritdoc />

@@ -119,7 +119,7 @@
       "anthropicError": "Version must not be empty",
       "deeplApiKey": "API key",
       "deeplError": "API Key must not be empty",
-      "deeplNotification": "Please note that DeepL has <a href=\"https://developers.deepl.com/docs/resources/usage-limits\" class=\"underline\" target=\"_blank\">usage limits</a>. A single subtitle file typically contains between 60,000 and 120,000 characters. To avoid exceeding these limits, it's recommended to keep automated translation disabled.",
+      "deeplNotification": "Please note that DeepL has <a href=\"https://developers.deepl.com/docs/resources/usage-limits\" class=\"underline\" target=\"_blank\">usage limits</a> and rate limits. A single subtitle file typically contains between 60,000 and 120,000 characters. To avoid exceeding these limits, it's recommended to keep automated translation disabled.",
       "deepseekEnabled": "Enabled",
       "deepseekDisabled": "Disabled",
       "deepseekWarningIntro": "Automation is:",
@@ -164,7 +164,9 @@
       "languageSelectPlaceholder": "Select language...",
       "languageSelectTargetNotification": "Select a source language first.",
       "fixOverlappingSubtitles": "Fix overlapping subtitles:",
-      "fixOverlappingSubtitlesDescription": "Automatically resolves overlapping subtitles by adjusting the timing of the previous, current and next subtitle based on text length."
+      "fixOverlappingSubtitlesDescription": "Automatically resolves overlapping subtitles by adjusting the timing of the previous, current and next subtitle based on text length.",
+      "stripSubtitleFormatting": "Strip subtitle formatting:",
+      "stripSubtitleFormattingDescription": "Enable this option to remove all formatting tags (e.g., italics, bold, color, position) from (SRT) subtitles, resulting in plain text subtitles."
     },
     "indexing": {
       "title": "Indexing",
@@ -199,7 +201,7 @@
     },
     "custom": {
       "parameters": "Custom Parameters",
-      "description": "Define custom parameters (e.g., temperature, top_p) to send with requests to your local AI.",
+      "description": "Define custom parameters (e.g., temperature, top_p) to send with requests to your custom endpoint.",
       "key": "Key",
       "value": "Value",
       "key_placeholder": "temperature",

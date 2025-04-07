@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Text.RegularExpressions;
 using Lingarr.Server.Interfaces.Services.Subtitle;
 using Lingarr.Server.Models.FileSystem;
 
@@ -7,7 +8,8 @@ namespace Lingarr.Server.Services.Subtitle;
 public class SsaParser : ISubtitleParser
 {
     private const string SCRIPT_INFO_SECTION = "[Script Info]";
-    private const string STYLES_SECTION = "[V4 Styles]";
+    private const string V4_PLUS_STYLES_SECTION = "[V4+ Styles]";
+    private const string V4_STYLES_SECTION = "[V4 Styles]";
     private const string EVENTS_SECTION = "[Events]";
     private const string DIALOGUE_PREFIX = "Dialogue:";
     private const string WRAP_STYLE_PREFIX = "WrapStyle:";
@@ -40,7 +42,10 @@ public class SsaParser : ISubtitleParser
                     case SCRIPT_INFO_SECTION:
                         ssaFormat.ScriptInfo.Add(line);
                         break;
-                    case STYLES_SECTION:
+                    case V4_PLUS_STYLES_SECTION:
+                        ssaFormat.Styles.Add(line);
+                        break;
+                    case V4_STYLES_SECTION:
                         ssaFormat.Styles.Add(line);
                         break;
                     case EVENTS_SECTION:
@@ -64,7 +69,10 @@ public class SsaParser : ISubtitleParser
                         }
                     }
                     break;
-                case STYLES_SECTION:
+                case V4_PLUS_STYLES_SECTION:
+                    ssaFormat.Styles.Add(line);
+                    break;
+                case V4_STYLES_SECTION:
                     ssaFormat.Styles.Add(line);
                     break;
                 case EVENTS_SECTION:
@@ -123,6 +131,25 @@ public class SsaParser : ISubtitleParser
         };
     }
 
+    /// <summary>
+    /// Removes markup tags from a subtitle line.
+    /// </summary>
+    /// <param name="input">The subtitle line with potential markup.</param>
+    /// <returns>The cleaned subtitle text without markup.</returns>
+    private static string RemoveMarkup(string input)
+    {
+        // Remove SSA style tags like {\an8}, {\i1}, etc.
+        string noSsaTags = Regex.Replace(input, @"\{.*?\}", string.Empty);
+        
+        // Remove HTML-style tags
+        string noHtmlTags = Regex.Replace(noSsaTags, @"<.*?>", string.Empty);
+        
+        // Replace SSA line breaks with spaces for plaintext
+        string noLineBreaks = noHtmlTags.Replace("\\N", " ").Replace("\\n", " ");
+        
+        return noLineBreaks.Trim();
+    }
+
     private SubtitleItem? ParseDialogueLine(string line, Dictionary<string, int> columnIndexes, SsaFormat ssaFormat)
     {
         var dialogueParts = line.Substring(DIALOGUE_PREFIX.Length).Split(',');
@@ -141,10 +168,12 @@ public class SsaParser : ISubtitleParser
             {
                 // Split text according to wrap style
                 var textLines = SplitTextByWrapStyle(text, ssaFormat.WrapStyle);
+                var plaintextLines = new List<string>();
+                foreach (var textLine in textLines)
+                {
+                    plaintextLines.Add(RemoveMarkup(textLine));
+                }
                 
-                // For plaintext, always replace all newlines with spaces
-                var plainText = text.Replace("\\N", " ")
-                                  .Replace("\\n", " ");
                 // Create SsaDialogue info
                 var ssaDialogue = new SsaDialogue
                 {
@@ -162,7 +191,7 @@ public class SsaParser : ISubtitleParser
                     StartTime = startTime,
                     EndTime = endTime,
                     Lines = textLines,
-                    PlaintextLines = new List<string> { plainText },
+                    PlaintextLines = plaintextLines,
                     SsaDialogue = ssaDialogue,
                     SsaFormat = ssaFormat
                 };

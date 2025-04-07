@@ -119,7 +119,7 @@
       "anthropicError": "Versie mag niet leeg zijn",
       "deeplApiKey": "API-sleutel",
       "deeplError": "API-sleutel mag niet leeg zijn",
-      "deeplNotification": "Houd er rekening mee dat DeepL <a href=\"https://developers.deepl.com/docs/resources/usage-limits\" class=\"underline\" target=\"_blank\">gebruikslimieten</a> heeft. Een enkel ondertitelbestand bevat doorgaans tussen de 60.000 en 120.000 tekens. Om te voorkomen dat deze limieten worden overschreden, wordt aanbevolen om geautomatiseerde vertaling uitgeschakeld te houden.",
+      "deeplNotification": "Let op dat DeepL <a href=\"https://developers.deepl.com/docs/resources/usage-limits\" class=\"underline\" target=\"_blank\">gebruikslimieten</a> en snelheid limieten heeft. Een enkel ondertitelbestand bevat doorgaans tussen de 60.000 en 120.000 tekens. Om te voorkomen dat deze limieten worden overschreden, wordt het aanbevolen om geautomatiseerde vertaling uit te schakelen.",
       "deepseekEnabled": "Ingeschakeld",
       "deepseekDisabled": "Uitgeschakeld",
       "deepseekWarningIntro": "Automatisering is:",
@@ -164,7 +164,9 @@
       "languageSelectPlaceholder": "Selecteer taal...",
       "languageSelectTargetNotification": "Selecteer eerst een brontaal.",
       "fixOverlappingSubtitles": "Overlappende ondertitels verbeteren:",
-      "fixOverlappingSubtitlesDescription": "Verbetert automatisch overlappende ondertitels door de timing aan te passen van de vorige, huidige en volgende ondertitel op basis van tekstlengte."
+      "fixOverlappingSubtitlesDescription": "Verbetert automatisch overlappende ondertitels door de timing aan te passen van de vorige, huidige en volgende ondertitel op basis van tekstlengte.",
+      "stripSubtitleFormatting": "Verwijder ondertitelopmaak:",
+      "stripSubtitleFormattingDescription": "Schakel deze optie in om alle opmaak-tags (bijv. cursief, vet, kleur, positie) uit (SRT) ondertitels te verwijderen, wat resulteert in platte tekst ondertitels."
     },
     "indexing": {
       "title": "Indexering",
@@ -199,7 +201,7 @@
     },
     "custom": {
       "parameters": "Aangepaste Parameters",
-      "description": "Definieer aangepaste parameters (bijv. temperature, top_p) om mee te sturen met verzoeken naar uw lokale AI.",
+      "description": "Definieer aangepaste parameters (bijv. temperature, top_p) om mee te sturen met verzoeken naar uw aangepaste api.",
       "key": "Sleutel",
       "value": "Waarde",
       "key_placeholder": "temperature",
