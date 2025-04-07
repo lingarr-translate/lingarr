@@ -52,6 +52,7 @@ public class SsaParser : ISubtitleParser
                         ssaFormat.EventsFormat.Add(line);
                         break;
                 }
+
                 continue;
             }
 
@@ -68,6 +69,7 @@ public class SsaParser : ISubtitleParser
                             ssaFormat.WrapStyle = (SsaWrapStyle)wrapStyleInt;
                         }
                     }
+
                     break;
                 case V4_PLUS_STYLES_SECTION:
                     ssaFormat.Styles.Add(line);
@@ -97,6 +99,7 @@ public class SsaParser : ISubtitleParser
                             items.Add(dialogue);
                         }
                     }
+
                     break;
             }
         }
@@ -109,25 +112,24 @@ public class SsaParser : ISubtitleParser
         return items;
     }
 
-    private List<string> SplitTextByWrapStyle(string text, SsaWrapStyle wrapStyle)
+    private static List<string> SplitTextByWrapStyle(string text, SsaWrapStyle wrapStyle)
     {
         return wrapStyle switch
         {
+            // Smart wrapping modes only recognize \N as line breaks
             SsaWrapStyle.Smart or SsaWrapStyle.SmartWideLowerLine => 
-                // For Smart wrapping, only \N breaks count
-                text.Split(new[] { "\\N" }, StringSplitOptions.None).ToList(),
-                
+                text.Split(["\\N"], StringSplitOptions.None).ToList(),
+            
+            // End-of-line wrapping only recognizes \N as line breaks
             SsaWrapStyle.EndOfLine => 
-                // For End-of-line wrapping, only \N breaks count
-                text.Split(new[] { "\\N" }, StringSplitOptions.None).ToList(),
-                
+                text.Split(["\\N"], StringSplitOptions.None).ToList(),
+            
+            // No wrapping mode recognizes both \N and \n as line breaks
             SsaWrapStyle.None => 
-                // For No wrapping, both \n and \N break
-                System.Text.RegularExpressions.Regex
-                    .Split(text, @"\\N|\\n")
-                    .ToList(),
-                
-            _ => new List<string> { text } // Default case
+                Regex.Split(text, @"\\N|\\n").ToList(),
+            
+            // Default case for any undefined wrap styles
+            _ => [text]
         };
     }
 
@@ -139,73 +141,101 @@ public class SsaParser : ISubtitleParser
     private static string RemoveMarkup(string input)
     {
         // Remove SSA style tags like {\an8}, {\i1}, etc.
-        string noSsaTags = Regex.Replace(input, @"\{.*?\}", string.Empty);
-        
+        var noSsaTags = Regex.Replace(input, @"\{.*?\}", string.Empty);
+
         // Remove HTML-style tags
-        string noHtmlTags = Regex.Replace(noSsaTags, @"<.*?>", string.Empty);
-        
+        var noHtmlTags = Regex.Replace(noSsaTags, @"<.*?>", string.Empty);
+
         // Replace SSA line breaks with spaces for plaintext
-        string noLineBreaks = noHtmlTags.Replace("\\N", " ").Replace("\\n", " ");
-        
+        var noLineBreaks = noHtmlTags.Replace("\\N", " ").Replace("\\n", " ");
+
         return noLineBreaks.Trim();
     }
 
     private SubtitleItem? ParseDialogueLine(string line, Dictionary<string, int> columnIndexes, SsaFormat ssaFormat)
     {
-        var dialogueParts = line.Substring(DIALOGUE_PREFIX.Length).Split(',');
-        if (dialogueParts.Length >= columnIndexes.Count)
+        // Find the first 9 commas (corresponding to the format fields before Text)
+        var textFieldStart = -1;
+        var commaCount = 0;
+        for (var index = DIALOGUE_PREFIX.Length; index < line.Length; index++)
         {
-            // Extract basic timing information
-            var startIndex = columnIndexes["Start"];
-            var endIndex = columnIndexes["End"];
-            var textIndex = columnIndexes["Text"];
-
-            var startTime = ParseSsaTimecode(dialogueParts[startIndex].Trim());
-            var endTime = ParseSsaTimecode(dialogueParts[endIndex].Trim());
-            var text = string.Join(",", dialogueParts.Skip(textIndex)).Trim();
-
-            if (startTime >= 0 && endTime >= 0 && !string.IsNullOrEmpty(text))
+            if (line[index] != ',')
             {
-                // Split text according to wrap style
-                var textLines = SplitTextByWrapStyle(text, ssaFormat.WrapStyle);
-                var plaintextLines = new List<string>();
-                foreach (var textLine in textLines)
-                {
-                    plaintextLines.Add(RemoveMarkup(textLine));
-                }
-                
-                // Create SsaDialogue info
-                var ssaDialogue = new SsaDialogue
-                {
-                    Marked = dialogueParts[0].Trim(),
-                    Style = dialogueParts[columnIndexes["Style"]].Trim(),
-                    Name = dialogueParts[columnIndexes["Name"]].Trim(),
-                    MarginL = dialogueParts[columnIndexes["MarginL"]].Trim(),
-                    MarginR = dialogueParts[columnIndexes["MarginR"]].Trim(),
-                    MarginV = dialogueParts[columnIndexes["MarginV"]].Trim(),
-                    Effect = dialogueParts[columnIndexes["Effect"]].Trim()
-                };
-
-                return new SubtitleItem
-                {
-                    StartTime = startTime,
-                    EndTime = endTime,
-                    Lines = textLines,
-                    PlaintextLines = plaintextLines,
-                    SsaDialogue = ssaDialogue,
-                    SsaFormat = ssaFormat
-                };
+                continue;
             }
+
+            commaCount++;
+            if (commaCount != columnIndexes["Text"])
+            {
+                continue;
+            }
+
+            textFieldStart = index + 1;
+            break;
         }
-        return null;
+
+        if (textFieldStart == -1 || textFieldStart >= line.Length)
+        {
+            return null;
+        }
+
+        // Extract the parts before the Text field
+        var dialoguePrefix = line.Substring(DIALOGUE_PREFIX.Length, textFieldStart - DIALOGUE_PREFIX.Length - 1);
+        var dialogueParts = dialoguePrefix.Split(',');
+
+        if (dialogueParts.Length < columnIndexes["Text"])
+        {
+            return null;
+        }
+
+        // Extract basic timing information
+        var startIndex = columnIndexes["Start"];
+        var endIndex = columnIndexes["End"];
+
+        var startTime = ParseSsaTimecode(dialogueParts[startIndex].Trim());
+        var endTime = ParseSsaTimecode(dialogueParts[endIndex].Trim());
+
+        // Extract the text part directly without splitting
+        var text = line.Substring(textFieldStart).Trim();
+
+        if (startTime < 0 || endTime < 0 || string.IsNullOrEmpty(text))
+        {
+            return null;
+        }
+
+        var textLines = SplitTextByWrapStyle(text, ssaFormat.WrapStyle);
+        var plaintextLines = textLines.Select(RemoveMarkup).ToList();
+
+        // Create SsaDialogue info
+        var ssaDialogue = new SsaDialogue
+        {
+            Marked = dialogueParts[0].Trim(),
+            Style = dialogueParts[columnIndexes["Style"]].Trim(),
+            Name = dialogueParts[columnIndexes["Name"]].Trim(),
+            MarginL = dialogueParts[columnIndexes["MarginL"]].Trim(),
+            MarginR = dialogueParts[columnIndexes["MarginR"]].Trim(),
+            MarginV = dialogueParts[columnIndexes["MarginV"]].Trim(),
+            Effect = dialogueParts[columnIndexes["Effect"]].Trim()
+        };
+
+        return new SubtitleItem
+        {
+            StartTime = startTime,
+            EndTime = endTime,
+            Lines = textLines,
+            PlaintextLines = plaintextLines,
+            SsaDialogue = ssaDialogue,
+            SsaFormat = ssaFormat
+        };
     }
 
-    private int ParseSsaTimecode(string timestamp)
+    private static int ParseSsaTimecode(string timestamp)
     {
         if (TimeSpan.TryParse(timestamp, out var timeSpan))
         {
             return (int)timeSpan.TotalMilliseconds;
         }
+
         return -1;
     }
 }
