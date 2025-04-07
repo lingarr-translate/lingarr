@@ -30,12 +30,19 @@ public class SubtitleItem
     public List<string> PlaintextLines { get; set; }
 
     /// <summary>
+    /// The translated subtitle line that
+    /// May include formatting
+    /// </summary>
+    public List<string> TranslatedLines { get; set; }
+
+    /// <summary>
     /// The empty constructor
     /// </summary>
     public SubtitleItem()
     {
         Lines = new List<string>();
         PlaintextLines = new List<string>();
+        TranslatedLines = new List<string>();
     }
     
     /// <summary>

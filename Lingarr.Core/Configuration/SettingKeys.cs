@@ -59,6 +59,7 @@ public static class SettingKeys
         public const string TargetLanguages = "target_languages";
         public const string AiPrompt = "ai_prompt";
         public const string FixOverlappingSubtitles = "fix_overlapping_subtitles";
+        public const string StripSubtitleFormatting = "strip_subtitle_formatting";
     }
 
     public static class Automation 

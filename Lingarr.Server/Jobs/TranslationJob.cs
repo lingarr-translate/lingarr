@@ -67,23 +67,41 @@ public class TranslationJob
 
             _logger.LogInformation("TranslateJob started for subtitle: |Green|{filePath}|/Green|",
                 translationRequest.SubtitleToTranslate);
-
-            var serviceType = await _settings.GetSetting(SettingKeys.Translation.ServiceType) ?? "libretranslate";
-            var fixOverlappingSubtitles = await _settings.GetSetting(SettingKeys.Translation.FixOverlappingSubtitles);
-
+            var settings = await _settings.GetSettings([
+                SettingKeys.Translation.ServiceType,
+                SettingKeys.Translation.FixOverlappingSubtitles,
+                SettingKeys.Translation.StripSubtitleFormatting,
+            ]);
+            var serviceType = settings[SettingKeys.Translation.ServiceType];
+            var stripSubtitleFormatting =  settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
+            
             var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
             var translator = new SubtitleTranslationService(translationService, _logger, _progressService);
             var subtitles = await _subtitleService.ReadSubtitles(request.SubtitleToTranslate);
-            var translatedSubtitles = await translator.TranslateSubtitles(subtitles, request, cancellationToken);
-            if (fixOverlappingSubtitles == "true")
+            var translatedSubtitles = await translator.TranslateSubtitles(
+                subtitles, 
+                request, 
+                stripSubtitleFormatting,
+                cancellationToken
+            );
+            
+            if (settings[SettingKeys.Translation.FixOverlappingSubtitles] == "true")
             {
                 translatedSubtitles = _subtitleService.FixOverlappingSubtitles(translatedSubtitles);
             }
-            
+            if (stripSubtitleFormatting)
+            {
+                var format = translatedSubtitles[0].SsaFormat;
+                if (format != null)
+                {
+                    format.Styles = [];
+                }
+            }
+
             // statistics tracking
             await _statisticsService.UpdateTranslationStatistics(request, serviceType, subtitles, translatedSubtitles);
 
-            await WriteSubtitles(request, translatedSubtitles);
+            await WriteSubtitles(request, translatedSubtitles, stripSubtitleFormatting);
             await HandleCompletion(jobName, request, cancellationToken);
         }
         catch (TaskCanceledException)
@@ -100,7 +118,8 @@ public class TranslationJob
     
     private async Task WriteSubtitles( 
         TranslationRequest translationRequest, 
-        List<SubtitleItem> translatedSubtitles)
+        List<SubtitleItem> translatedSubtitles, 
+        bool stripSubtitleFormatting)
     
     {
         try
@@ -108,7 +127,7 @@ public class TranslationJob
             var outputPath = _subtitleService.CreateFilePath(
                 translationRequest.SubtitleToTranslate,
                 translationRequest.TargetLanguage);
-            await _subtitleService.WriteSubtitles(outputPath, translatedSubtitles);
+            await _subtitleService.WriteSubtitles(outputPath, translatedSubtitles, stripSubtitleFormatting);
             
             _logger.LogInformation("TranslateJob completed and created subtitle: |Green|{filePath}|/Green|",
                 outputPath);

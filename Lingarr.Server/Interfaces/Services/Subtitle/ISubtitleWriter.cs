@@ -12,5 +12,9 @@ public interface ISubtitleWriter
     /// </summary>
     /// <param name="stream">The stream to write to</param>
     /// <param name="subtitleItems">The subtitle items to write</param>
-    Task WriteStreamAsync(Stream stream, IEnumerable<SubtitleItem> subtitleItems);
+    /// <param name="stripSubtitleFormatting">Boolean used for indicating that styles need to be stripped from the subtitle</param>
+    Task WriteStreamAsync(
+        Stream stream, 
+        IEnumerable<SubtitleItem> subtitleItems, 
+        bool stripSubtitleFormatting);
 }

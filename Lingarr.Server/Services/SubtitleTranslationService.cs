@@ -23,17 +23,19 @@ public class SubtitleTranslationService
         _progressService = progressService;
         _logger = logger;
     }
-    
+
     /// <summary>
     /// Translates a list of subtitle items from the source language to the target language.
     /// </summary>
     /// <param name="subtitles">The list of subtitle items to translate.</param>
     /// <param name="translationRequest">Contains the source and target language specifications.</param>
+    /// <param name="stripSubtitleFormatting">Boolean used for indicating that styles need to be stripped from the subtitle</param>
     /// <param name="cancellationToken">Token to support cancellation of the translation operation.</param>
     /// <returns>A list of translated subtitle items.</returns>
     public async Task<List<SubtitleItem>> TranslateSubtitles(
         List<SubtitleItem> subtitles,
         TranslationRequest translationRequest,
+        bool stripSubtitleFormatting,
         CancellationToken cancellationToken)
     {
         if (_progressService == null)
@@ -51,46 +53,46 @@ public class SubtitleTranslationService
                 _lastProgression =  -1;
                 break;
             }
-            
-            var combinedLines = string.Join(" ", subtitle.Lines);
-            var translatedText = await TranslateSubtitleLine(new TranslateAbleSubtitleLine
+                
+            var subtitleLine = string.Join(" ", stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines);
+            var translated = await TranslateSubtitleLine(new TranslateAbleSubtitleLine
             {
-                SubtitleLine = combinedLines,
+                SubtitleLine = subtitleLine,
                 SourceLanguage = translationRequest.SourceLanguage,
                 TargetLanguage = translationRequest.TargetLanguage
             },
             cancellationToken);
             
             // Rebuild lines based on max length
-            subtitle.Lines = translatedText.Split(' ')
-                // Start with a list containing one empty string - this will be our first line
-                .Aggregate(new List<string> { "" }, 
-                    
-                    // For each word, we look at our lines and the current word
-                    (lines, word) =>
-                {
-                    // Get the last line we're currently building
-                    var currentLine = lines.Last();
-
-                    // Check if adding this word (plus a space if needed) would exceed MaxLineLength
-                    // We only add a space if the current line isn't empty
-                    if (currentLine.Length + word.Length + 1 <= MaxLineLength)
+            subtitle.TranslatedLines = translated.Split(' ')
+                    // Start with a list containing one empty string - this will be our first line
+                    .Aggregate(new List<string> { "" }, 
+                        
+                        // For each word, we look at our lines and the current word
+                        (lines, word) =>
                     {
-                        // If it fits, append it to the current line
-                        // If the line is empty, just use the word
-                        // If the line has content, add a space before the word
-                        lines[^1] = currentLine.Length == 0 ? word : $"{currentLine} {word}";
-                    }
-                    else
-                    {
-                        // If it doesn't fit, start a new line with this word
-                        lines.Add(word);
-                    }
+                        // Get the last line we're currently building
+                        var currentLine = lines.Last();
 
-                    // Return the updated list of lines
-                    return lines;
-                });
-                
+                        // Check if adding this word (plus a space if needed) would exceed MaxLineLength
+                        // We only add a space if the current line isn't empty
+                        if (currentLine.Length + word.Length + 1 <= MaxLineLength)
+                        {
+                            // If it fits, append it to the current line
+                            // If the line is empty, just use the word
+                            // If the line has content, add a space before the word
+                            lines[^1] = currentLine.Length == 0 ? word : $"{currentLine} {word}";
+                        }
+                        else
+                        {
+                            // If it doesn't fit, start a new line with this word
+                            lines.Add(word);
+                        }
+
+                        // Return the updated list of lines
+                        return lines;
+                    });
+            
             iteration++;
             int progress = (int)Math.Round((double)iteration * 100 / totalSubtitles);
             

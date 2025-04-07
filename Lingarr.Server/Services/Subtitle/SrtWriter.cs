@@ -28,13 +28,16 @@ public class SrtWriter : ISubtitleWriter
         List<string> lines = new List<string>();
         lines.Add(subtitleEntryNumber.ToString());
         lines.Add(FormatTimeCodeLine());
-        lines.AddRange(subtitleItem.Lines);
+        lines.AddRange(subtitleItem.TranslatedLines);
 
         return lines;
     }
     
     /// <inheritdoc />
-    public async Task WriteStreamAsync(Stream stream, IEnumerable<SubtitleItem> subtitleItems)
+    public async Task WriteStreamAsync(
+        Stream stream, 
+        IEnumerable<SubtitleItem> subtitleItems, 
+        bool stripSubtitleFormatting)
     {
         try
         {

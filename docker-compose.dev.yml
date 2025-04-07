@@ -20,7 +20,7 @@ services:
         BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Debug}
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - DB_CONNECTION=sqlite
+      - DB_CONNECTION=mysql
       - DB_HOST=Lingarr.Mysql
       - DB_PORT=3306
       - DB_DATABASE=LingarrMysql

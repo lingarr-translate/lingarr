@@ -24,13 +24,14 @@ public interface ISubtitleService
     /// <param name="filePath">The path to the subtitle file to be read.</param>
     /// <returns>A list of SubtitleItem objects representing the parsed subtitles.</returns>
     Task<List<SubtitleItem>> ReadSubtitles(string filePath);
-    
+
     /// <summary>
     /// Writes a list of subtitle items to a file.
     /// </summary>
     /// <param name="filePath">The path where the subtitle file will be written.</param>
     /// <param name="subtitles">The list of SubtitleItem objects to be written to the file.</param>
-    Task WriteSubtitles(string filePath, List<SubtitleItem> subtitles);
+    /// <param name="stripSubtitleFormatting">Boolean used for indicating that styles need to be stripped from the subtitle</param>
+    Task WriteSubtitles(string filePath, List<SubtitleItem> subtitles, bool stripSubtitleFormatting);
     
     /// <summary>
     /// Creates a new file path for a subtitle file with a specified target language.
