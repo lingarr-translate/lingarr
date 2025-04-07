@@ -14,13 +14,21 @@ public class SubtitleService : ISubtitleService
     private static readonly char[] WhitespaceCharacters = [' ', '\t', '\n', '\r'];
 
     private static readonly CultureInfo[] Cultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
+    private readonly ILogger<SubtitleService> _logger;
+    
+    public SubtitleService(
+        ILogger<SubtitleService> logger)
+    {
+        _logger = logger;
+    }
 
     /// <inheritdoc />
     public Task<List<Subtitles>> GetAllSubtitles(string path)
     {
         if (!Directory.Exists(path))
         {
-            throw new DirectoryNotFoundException($"Directory not found: {path}");
+            _logger.LogInformation("Failed to collect subtitles in path |Red|{Path}|/Red|. Try reindexing or verify that the media is correctly set up in the source system.", path);
+            return Task.FromResult(new List<Subtitles>());
         }
 
         var subtitles = new List<Subtitles>();

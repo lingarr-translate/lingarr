@@ -100,7 +100,8 @@
       "sonarrAddress": "Adres",
       "sonarrAddressError": "Voer een geldige URL in (bijv. http://localhost:3000 of https://api.example.com)",
       "sonarrApiKey": "API-sleutel",
-      "sonarrApiKeyError": "API-sleutel moet {minLength} tekens bevatten"
+      "sonarrApiKeyError": "API-sleutel moet {minLength} tekens bevatten",
+      "reindexTask": "Geen media zichtbaar? Probeer opnieuw te indexeren door <a href=\"/settings/tasks\" class=\"underline\">hier</a> een synchronisatietaak te starten."
     },
     "services": {
       "title": "Diensten",

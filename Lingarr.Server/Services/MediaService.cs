@@ -5,6 +5,7 @@ using Lingarr.Server.Models;
 using Microsoft.EntityFrameworkCore;
 using Lingarr.Server.Models.Api;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Models.FileSystem;
 
 namespace Lingarr.Server.Services;
 
@@ -58,11 +59,11 @@ public class MediaService : IMediaService
         var enrichedMovies = new List<MovieResponse>();
         foreach (var movie in movies)
         {
-            _logger.LogInformation("Processing movie: {RadarrId} - {Title} with Path: |Green|{Path}|/Green|", movie.RadarrId, movie.Title, movie.Path);
             if (movie.Path == null)
             {
                 continue;
             }
+
             var subtitles = await _subtitleService.GetAllSubtitles(movie.Path);
             var enrichedMovie = new MovieResponse
             {

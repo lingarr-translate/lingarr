@@ -100,7 +100,7 @@
       "sonarrAddress": "Address",
       "sonarrAddressError": "Please enter a valid URL (e.g., http://localhost:3000 or https://api.example.com)",
       "sonarrApiKey": "API key",
-      "sonarrApiKeyError": "API Key must be {minLength} characters"
+      "reindexTask": "No media visible? Try reindexing by starting a sync task <a href=\"/settings/tasks\" class=\"underline\">here</a>"
     },
     "services": {
       "title": "Services",
