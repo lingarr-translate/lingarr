@@ -58,9 +58,10 @@ Follow the following steps to set up Lingarr and LibreTranslate via docker CLI
 docker run -d \
   --name lingarr \
   --restart unless-stopped \
-  -p 9876:8080 \
-  -v /path/to/movies:/app/media/movies \
-  -v /path/to/tv:/app/media/tv \
+  -p 9876:9876 \
+  -e ASPNETCORE_URLS=http://+:9876 \
+  -v /path/to/media/movies:/movies \
+  -v /path/to/media/tv:/tv \
   -v /path/to/config:/app/config \
   --network lingarr \
   lingarr/lingarr:latest
