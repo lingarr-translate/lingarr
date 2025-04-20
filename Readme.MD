@@ -35,8 +35,10 @@ services:
     image: lingarr/lingarr:latest # Use latest-arm64 for the ARM build
     container_name: lingarr
     restart: unless-stopped
+    environment:
+      - ASPNETCORE_URLS=http://+:9876
     ports:
-      - "9876:8080"
+      - "9876:9876"
     volumes:
       - /path/to/media/movies:/movies
       - /path/to/media/tv:/tv
@@ -67,17 +69,18 @@ docker run -d \
 ### Lingarr environment variables
 These variables can be used
 
-| **Environment Variable**   | **Description**                                                                          |
-|----------------------------|------------------------------------------------------------------------------------------|
-| `PUID=1000`                | The user ID under which the application will run and files are written.  |
-| `PGID=1000`                | The group ID under which the application will run and files are written. |
-| `MAX_CONCURRENT_JOBS=1`    | Sets the amount of jobs that can run concurrently, defaults to 1.                        |
-| `DB_CONNECTION=mysql`      | Specifies the database connection type. Options are `mysql` or `sqlite`.                 |
-| `DB_HOST=Lingarr.Mysql`    | The hostname for the MySQL database (required when using `mysql`).                       |
-| `DB_PORT=3306`             | The port for the MySQL database (required when using `mysql`).                           |
-| `DB_DATABASE=LingarrMysql` | The name of the database (required when using `mysql`).                                  |
-| `DB_USERNAME=LingarrMysql` | The username for the database (required when using `mysql`).                             |
-| `DB_PASSWORD=LingarrMysql` | The password for the database (required when using `mysql`).                             |
+| **Environment Variable**        | **Description**                                                          |
+|---------------------------------|--------------------------------------------------------------------------|
+| `ASPNETCORE_URLS=http://+:9876` | The internal port that Lingarr will listen on inside the container.      |
+| `PUID=1000`                     | The user ID under which the application will run and files are written.  |
+| `PGID=1000`                     | The group ID under which the application will run and files are written. |
+| `MAX_CONCURRENT_JOBS=1`         | Sets the amount of jobs that can run concurrently, defaults to 1.        |
+| `DB_CONNECTION=mysql`           | Specifies the database connection type. Options are `mysql` or `sqlite`. |
+| `DB_HOST=Lingarr.Mysql`         | The hostname for the MySQL database (required when using `mysql`).       |
+| `DB_PORT=3306`                  | The port for the MySQL database (required when using `mysql`).           |
+| `DB_DATABASE=LingarrMysql`      | The name of the database (required when using `mysql`).                  |
+| `DB_USERNAME=LingarrMysql`      | The username for the database (required when using `mysql`).             |
+| `DB_PASSWORD=LingarrMysql`      | The password for the database (required when using `mysql`).             |
 
 Additional [settings](Settings.MD) can be found here that can be set as environment variables to persist settings for each reinstall
 
