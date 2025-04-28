@@ -1,8 +1,10 @@
-﻿using Hangfire;
+﻿using System.Text;
+using Hangfire;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
+using Lingarr.Server.Exceptions;
 using Lingarr.Server.Filters;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
@@ -10,6 +12,7 @@ using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Extensions;
+using SubtitleValidationOptions = Lingarr.Server.Models.SubtitleValidationOptions;
 
 namespace Lingarr.Server.Jobs;
 
@@ -71,10 +74,74 @@ public class TranslationJob
                 SettingKeys.Translation.ServiceType,
                 SettingKeys.Translation.FixOverlappingSubtitles,
                 SettingKeys.Translation.StripSubtitleFormatting,
+                
+                SettingKeys.SubtitleValidation.ValidateSubtitles,
+                SettingKeys.SubtitleValidation.MaxFileSizeBytes,
+                SettingKeys.SubtitleValidation.MaxSubtitleLength,
+                SettingKeys.SubtitleValidation.MinSubtitleLength,
+                SettingKeys.SubtitleValidation.MinDurationMs,
+                SettingKeys.SubtitleValidation.MaxDurationSecs
             ]);
             var serviceType = settings[SettingKeys.Translation.ServiceType];
             var stripSubtitleFormatting =  settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
+            var validateSubtitles = settings[SettingKeys.SubtitleValidation.ValidateSubtitles] != "false";
+
+            // validate subtitles
+            if (validateSubtitles)
+            {
+                var validationOptions = new SubtitleValidationOptions
+                {
+                    // File size setting - default to 2MB if parsing fails
+                    MaxFileSizeBytes = long.TryParse(settings[SettingKeys.SubtitleValidation.MaxFileSizeBytes],
+                        out var maxFileSizeBytes)
+                        ? maxFileSizeBytes
+                        : 2 * 1024 * 1024,
+
+                    // Maximum characters per subtitle - default to 500 if parsing fails
+                    MaxSubtitleLength = int.TryParse(settings[SettingKeys.SubtitleValidation.MaxSubtitleLength],
+                        out var maxSubtitleLength)
+                        ? maxSubtitleLength
+                        : 500,
+
+                    // Minimum characters per subtitle - default to 1 if parsing fails
+                    MinSubtitleLength = int.TryParse(settings[SettingKeys.SubtitleValidation.MinSubtitleLength],
+                        out var minSubtitleLength)
+                        ? minSubtitleLength
+                        : 2,
+
+                    // Minimum duration in milliseconds - default to 500ms if parsing fails
+                    MinDurationMs = double.TryParse(settings[SettingKeys.SubtitleValidation.MinDurationMs],
+                        out var minDurationMs)
+                        ? minDurationMs
+                        : 500,
+
+                    // Maximum duration in seconds - default to 10s if parsing fails
+                    MaxDurationSecs = double.TryParse(settings[SettingKeys.SubtitleValidation.MaxDurationSecs],
+                        out var maxDurationSecs)
+                        ? maxDurationSecs
+                        : 10,
+
+                    // Used to determine content length when
+                    StripSubtitleFormatting = stripSubtitleFormatting
+                };
+
+                if (!_subtitleService.ValidateSubtitle(request.SubtitleToTranslate, validationOptions))
+                {
+                    _logger.LogWarning("Subtitle is not valid according to configured preferences.");
+                    throw new TaskCanceledException("Subtitle is not valid according to configured preferences.");
+                }
+                var isValid = _subtitleService.ValidateSubtitle(
+                    request.SubtitleToTranslate,
+                    validationOptions);
+        
+                if (!isValid)
+                {
+                    _logger.LogWarning("Subtitle is not valid according to configured preferences.");
+                    throw new TaskCanceledException("Subtitle is not valid according to configured preferences.");
+                }
+            }
             
+            // translate subtitles
             var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
             var translator = new SubtitleTranslationService(translationService, _logger, _progressService);
             var subtitles = await _subtitleService.ReadSubtitles(request.SubtitleToTranslate);

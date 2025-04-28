@@ -52,7 +52,10 @@
     "target": "Doel",
     "status": "Status",
     "progress": "Voortgang",
-    "completed": "Voltooid"
+    "completed": "Voltooid",
+    "cancel": "Annuleren",
+    "delete": "Verwijder",
+    "select": "Selecteren"
   },
   "schedule": {
     "jobName": "Taaknaam",
@@ -209,6 +212,16 @@
       "value_placeholder": "0.3",
       "remove": "Parameter Verwijderen",
       "addParameter": "Parameter Toevoegen"
+    },
+    "validation": {
+      "title": "Ondertitel Validatie",
+      "description": "Configureer de validatieregels in voor ondertitels. Deze regels worden toegepast bij het verwerken van ondertitelbestanden.",
+      "enabled": "Validatie inschakelen:",
+      "maxDurationSecs": "De maximale tijdsduur in seconden dat een ondertitel mag worden weergegeven:",
+      "minDurationMs": "De minimale tijdsduur in milliseconden dat een ondertitel moet worden weergegeven:",
+      "minSubtitleLength": "Het minimale aantal tekens dat een ondertitel moet bevatten:",
+      "maxSubtitleLength": "Het maximale aantal tekens dat een ondertitel mag bevatten:",
+      "maxFileSizeBytes": "De maximale grootte van een ondertitelbestand in bytes:"
     }
   }
 }

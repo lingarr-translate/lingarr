@@ -1,4 +1,5 @@
-﻿using Lingarr.Server.Models.FileSystem;
+﻿using Lingarr.Server.Models;
+using Lingarr.Server.Models.FileSystem;
 
 namespace Lingarr.Server.Interfaces.Services;
 
@@ -47,4 +48,9 @@ public interface ISubtitleService
     /// <param name="subtitles">The list of subtitle items to process</param>
     /// <returns>The modified list of subtitles with fixed timings</returns>
     List<SubtitleItem> FixOverlappingSubtitles(List<SubtitleItem> subtitles);
+    
+    
+    bool ValidateSubtitle(
+        string filePath,
+        SubtitleValidationOptions validationOptions);
 }

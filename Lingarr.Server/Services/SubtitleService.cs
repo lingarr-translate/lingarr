@@ -1,9 +1,11 @@
 using System.Globalization;
 using System.Text;
+using System.Text.RegularExpressions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Subtitle;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Services.Subtitle;
+using SubtitleValidationOptions = Lingarr.Server.Models.SubtitleValidationOptions;
 
 namespace Lingarr.Server.Services;
 
@@ -15,7 +17,7 @@ public class SubtitleService : ISubtitleService
 
     private static readonly CultureInfo[] Cultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
     private readonly ILogger<SubtitleService> _logger;
-    
+
     public SubtitleService(
         ILogger<SubtitleService> logger)
     {
@@ -27,7 +29,9 @@ public class SubtitleService : ISubtitleService
     {
         if (!Directory.Exists(path))
         {
-            _logger.LogInformation("Failed to collect subtitles in path |Red|{Path}|/Red|. Try reindexing or verify that the media is correctly set up in the source system.", path);
+            _logger.LogInformation(
+                "Failed to collect subtitles in path |Red|{Path}|/Red|. Try reindexing or verify that the media is correctly set up in the source system.",
+                path);
             return Task.FromResult(new List<Subtitles>());
         }
 
@@ -180,7 +184,7 @@ public class SubtitleService : ISubtitleService
             var optimalDuration = CalculateOptimalDuration(wordCount, wordsPerSecond, baseMinDuration, maxDuration);
 
             var hasOverlap = current.EndTime + buffer > next.StartTime;
-            var needsAdjustment = hasOverlap; 
+            var needsAdjustment = hasOverlap;
             if (!needsAdjustment)
             {
                 continue;
@@ -260,8 +264,9 @@ public class SubtitleService : ISubtitleService
             var first = subtitles[0];
             var second = subtitles[1];
             var firstWordCount = CountWords(first.Lines);
-            var firstOptimalDuration = CalculateOptimalDuration(firstWordCount, wordsPerSecond, baseMinDuration, maxDuration);
-            
+            var firstOptimalDuration =
+                CalculateOptimalDuration(firstWordCount, wordsPerSecond, baseMinDuration, maxDuration);
+
             var firstDuration = first.EndTime - first.StartTime;
             var hasOverlap = first.EndTime + buffer > second.StartTime;
             var isTooShort = firstDuration < firstOptimalDuration;
@@ -310,7 +315,159 @@ public class SubtitleService : ISubtitleService
         Console.WriteLine($"Fixed {fixCount} subtitle timings with content aware adjustments");
         return subtitles;
     }
-    
+
+    public bool ValidateSubtitle(string filePath, SubtitleValidationOptions options)
+    {
+        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+        {
+            _logger.LogWarning("Cannot validate non-existent subtitle file: {FilePath}", filePath);
+            return false;
+        }
+
+        try
+        {
+            using var stream = File.OpenRead(filePath);
+            return ValidateSubtitleStream(stream, Encoding.UTF8, options);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating subtitle file: {FilePath}", filePath);
+            return false;
+        }
+    }
+
+    private bool ValidateSubtitleStream(
+        Stream subtitleStream,
+        Encoding encoding,
+        SubtitleValidationOptions options)
+    {
+        try
+        {
+            if (!subtitleStream.CanSeek)
+            {
+                throw new ArgumentException("Stream must be seekable to validate file size.");
+            }
+
+            // Validate file size
+            if (subtitleStream.Length > options.MaxFileSizeBytes)
+            {
+                _logger.LogWarning("Subtitle file exceeds maximum size of {MaxSize} bytes", options.MaxFileSizeBytes);
+                return false;
+            }
+
+            // Reset stream position to the beginning before parsing
+            subtitleStream.Seek(0, SeekOrigin.Begin);
+
+            var parser = new SrtParser();
+            var subtitles = parser.ParseStream(subtitleStream, encoding);
+
+            if (subtitles == null || subtitles.Count < 2)
+            {
+                _logger.LogWarning("Subtitle file contains less than 2 valid subtitles");
+                return false;
+            }
+
+            var expectedPosition = 1;
+            SubtitleItem previousItem = null;
+
+            foreach (var item in subtitles)
+            {
+                // Validate subtitle exists and has text
+                if (item == null)
+                {
+                    _logger.LogWarning("Found null subtitle item");
+                    return false;
+                }
+
+                // Choose the appropriate text content based on stripSubtitleFormatting
+                List<string> contentLines = options.StripSubtitleFormatting ? item.PlaintextLines : item.Lines;
+
+                if (contentLines == null || contentLines.Count == 0 || contentLines.All(string.IsNullOrWhiteSpace))
+                {
+                    _logger.LogWarning("Subtitle at position {Position} has no content", item.Position);
+                    return false;
+                }
+
+                // Get the combined text for length checks
+                string combinedText = string.Join(" ", contentLines);
+
+                // Check that subtitle has at least the minimum length
+                string trimmedText = combinedText.Trim();
+                if (trimmedText.Length < options.MinSubtitleLength)
+                {
+                    _logger.LogWarning(
+                        "Subtitle at position {Position} is too short. Length: {Length}, Minimum: {MinLength}",
+                        item.Position, trimmedText.Length, options.MinSubtitleLength);
+                    return false;
+                }
+
+                // Check sequence number/position
+                if (item.Position != expectedPosition)
+                {
+                    _logger.LogWarning("Subtitle position mismatch. Expected: {Expected}, Found: {Found}",
+                        expectedPosition, item.Position);
+                    return false;
+                }
+
+                expectedPosition++;
+
+                // Validate timing
+                if (item.StartTime >= item.EndTime)
+                {
+                    _logger.LogWarning(
+                        "Subtitle at position {Position} has invalid timing. StartTime: {StartTime}, EndTime: {EndTime}",
+                        item.Position, item.StartTime, item.EndTime);
+                    return false;
+                }
+
+                // Validate text length
+                if (combinedText.Length > options.MaxSubtitleLength)
+                {
+                    _logger.LogWarning(
+                        "Subtitle at position {Position} exceeds maximum length. Length: {Length}, Maximum: {MaxLength}",
+                        item.Position, combinedText.Length, options.MaxSubtitleLength);
+                    return false;
+                }
+
+                // Check for realistic durations
+                var durationMs = item.EndTime - item.StartTime;
+                if (durationMs < options.MinDurationMs || durationMs > options.MaxDurationSecs * 1000)
+                {
+                    _logger.LogWarning(
+                        "Subtitle at position {Position} has unrealistic duration: {Duration}ms. Valid range: {MinDuration}ms to {MaxDuration}ms",
+                        item.Position, durationMs, options.MinDurationMs, options.MaxDurationSecs * 1000);
+                    return false;
+                }
+
+                // Check for overlapping with previous subtitle
+                if (previousItem != null && item.StartTime < previousItem.EndTime)
+                {
+                    _logger.LogWarning(
+                        "Subtitle at position {Position} overlaps with previous subtitle. Current start: {CurrentStart}, Previous end: {PreviousEnd}",
+                        item.Position, item.StartTime, previousItem.EndTime);
+                    return false;
+                }
+
+                // Check for control characters
+                if (contentLines.Any(line => line.Any(c => char.IsControl(c) && c != '\n' && c != '\r')))
+                {
+                    _logger.LogWarning("Subtitle at position {Position} contains invalid control characters",
+                        item.Position);
+                    return false;
+                }
+
+                previousItem = item;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Subtitle validation failed");
+            return false;
+        }
+    }
+
     /// <summary>
     /// Counts the number of words in a list of plaintext subtitle lines
     /// </summary>
