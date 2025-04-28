@@ -18,7 +18,7 @@ namespace Lingarr.Migrations.SQLite.Migrations
                     { "local_ai_parameters", "[]" },
                     { "strip_subtitle_formatting", "false" },
                     { "subtitle_validation_enabled", "false" },
-                    { "subtitle_validation_maxfilesizebytes", "2048" },
+                    { "subtitle_validation_maxfilesizebytes", "1048576" },
                     { "subtitle_validation_maxsubtitlelength", "500" },
                     { "subtitle_validation_minsubtitlelength", "2" },
                     { "subtitle_validation_mindurationms", "500" },
