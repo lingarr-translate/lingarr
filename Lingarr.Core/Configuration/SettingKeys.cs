@@ -73,4 +73,14 @@ public static class SettingKeys
         public const string MovieAgeThreshold = "movie_age_threshold";
         public const string ShowAgeThreshold = "show_age_threshold";
     }
+    
+    public static class SubtitleValidation
+    {
+        public const string MaxFileSizeBytes = "subtitle_validation_maxfilesizebytes";
+        public const string MaxSubtitleLength = "subtitle_validation_maxsubtitlelength";
+        public const string MinSubtitleLength = "subtitle_validation_minsubtitlelength";
+        public const string MinDurationMs = "subtitle_validation_mindurationms";
+        public const string MaxDurationSecs = "subtitle_validation_maxdurationsecs";
+        public const string ValidateSubtitles = "subtitle_validation_enabled";
+    }
 }
