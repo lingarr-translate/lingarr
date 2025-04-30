@@ -4,30 +4,43 @@
             {{ translate('settings.custom.description') }}
         </template>
         <template #content>
-            <div v-for="(param, index) in parameters" :key="index" class="flex items-center gap-2">
-                <InputComponent
-                    :model-value="param.key"
-                    validation-type="string"
-                    :label="translate('settings.custom.key')"
-                    :placeholder="translate('settings.custom.key_placeholder')"
-                    class="flex-1"
-                    @update:model-value="updateKey(index, $event)" />
-                <InputComponent
-                    :model-value="param.value"
-                    validation-type="string"
-                    :label="translate('settings.custom.value')"
-                    :placeholder="translate('settings.custom.value_placeholder')"
-                    class="flex-1"
-                    @update:model-value="updateValue(index, $event)" />
-                <TimesIcon
-                    class="h-5 w-5 cursor-pointer"
-                    :title="translate('settings.custom.remove')"
-                    @click="removeParameter(index)" />
-            </div>
+            <div>
+                <div class="mb-2 flex w-full justify-between">
+                    <div class="flex-1">{{ translate('settings.custom.key') }}</div>
+                    <div class="flex-1">{{ translate('settings.custom.value') }}</div>
+                    <div class="w-5"></div>
+                </div>
+                <div
+                    v-for="(param, index) in parameters"
+                    :key="index"
+                    class="mb-3 flex items-center gap-2">
+                    <InputComponent
+                        :model-value="param.key"
+                        validation-type="string"
+                        :placeholder="translate('settings.custom.key_placeholder')"
+                        class="flex-1"
+                        @update:model-value="updateKey(index, $event)" />
+                    <InputComponent
+                        :model-value="param.value"
+                        validation-type="string"
+                        :placeholder="translate('settings.custom.value_placeholder')"
+                        class="flex-1"
+                        @update:model-value="updateValue(index, $event)" />
+                    <TrashIcon
+                        class="flex h-5 w-5 cursor-pointer"
+                        :title="translate('settings.custom.remove')"
+                        @click="removeParameter(index)" />
+                    <!--                <TimesIcon" />-->
+                </div>
 
-            <button class="cursor-pointer" @click="addParameter">
-                {{ translate('settings.custom.addParameter') }}
-            </button>
+                <div class="flex justify-end">
+                    <button
+                        class="border-accent hover:bg-accent cursor-pointer justify-end rounded border px-3 py-2 transition-colors hover:text-white"
+                        @click="addParameter">
+                        {{ translate('settings.custom.addParameter') }}
+                    </button>
+                </div>
+            </div>
         </template>
     </CardComponent>
 </template>
@@ -38,6 +51,7 @@ import { ICustomAiParams, SETTINGS } from '@/ts'
 import InputComponent from '@/components/common/InputComponent.vue'
 import CardComponent from '@/components/common/CardComponent.vue'
 import TimesIcon from '@/components/icons/TimesIcon.vue'
+import TrashIcon from '@/components/icons/TrashIcon.vue'
 
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])
