@@ -1,32 +1,39 @@
 ﻿<template>
     <div class="flex flex-col space-y-2">
         <div>
-            {{ translate('settings.services.geminiWarningIntro') }}
+            {{ translate('settings.services.aiWarningIntro') }}
             <span :class="automationEnabled == 'true' ? 'text-red-500' : 'text-green-500'">
                 {{
                     automationEnabled == 'true'
-                        ? translate('settings.services.geminiEnabled')
-                        : translate('settings.services.geminiDisabled')
+                        ? translate('settings.services.serviceEnabled')
+                        : translate('settings.services.serviceDisabled')
                 }}
             </span>
         </div>
         <p class="text-xs">
-            {{ translate('settings.services.geminiDescription') }}
+            {{ translate('settings.services.aiCostDescription') }}
         </p>
-
-        <label class="mb-1 block text-sm">
-            {{ translate('settings.services.geminiAiModel') }}
-        </label>
-        <SelectComponent v-model:selected="aiModel" :options="options" />
 
         <InputComponent
             v-model="apiKey"
             validation-type="string"
             type="password"
-            :label="translate('settings.services.geminiApiKey')"
+            :label="translate('settings.services.apiKey')"
             :min-length="1"
-            :error-message="translate('settings.services.geminiError')"
+            :error-message="translate('settings.services.apiKeyError')"
             @update:validation="(val) => (apiKeyIsValid = val)" />
+
+        <label class="mb-1 block text-sm">
+            {{ translate('settings.services.aiModel') }}
+        </label>
+        <SelectComponent
+            ref="selectRef"
+            v-model:selected="aiModel"
+            :options="options"
+            :load-on-open="true"
+            :placeholder="translate('settings.services.selectModel')"
+            :no-options="errorMessage || translate('settings.services.loadingModels')"
+            @fetch-options="loadOptions" />
 
         <AiPromptConfig @save="emit('save')" />
     </div>
@@ -39,14 +46,11 @@ import { SETTINGS } from '@/ts'
 import SelectComponent from '@/components/common/SelectComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 import AiPromptConfig from '@/components/features/settings/services/AiPromptConfig.vue'
+import { useI18n } from '@/plugins/i18n'
+import { useModelOptions } from '@/composables/useModelOptions'
+const { translate } = useI18n()
+const { options, errorMessage, selectRef, loadOptions } = useModelOptions()
 
-const options = [
-    { label: 'Gemini 2.0 Flash', value: 'gemini-2.0-flash' },
-    { label: 'Gemini 2.0 Flash Lite', value: 'gemini-2.0-flash-lite-preview-02-05' },
-    { label: 'Gemini 1.5 Flash', value: 'gemini-1.5-flash' },
-    { label: 'Gemini 1.5 Flash 8B', value: 'gemini-1.5-flash-8b' },
-    { label: 'Gemini 1.5 Pro', value: 'gemini-1.5-pro' }
-]
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])
 const apiKeyIsValid = ref(false)

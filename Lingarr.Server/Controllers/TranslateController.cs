@@ -81,4 +81,28 @@ public class TranslateController : ControllerBase
         
         return await translationService.GetLanguages();
     }
+
+    /// <summary>
+    /// Retrieves available AI models for the currently active translation service.
+    /// </summary>
+    /// <returns>A list of models in a standardized label/value format for frontend consumption</returns>
+    /// <exception cref="InvalidOperationException">Thrown when service is not properly configured or initialization fails</exception>
+    [HttpGet("models")]
+    public async Task<ActionResult<List<LabelValue>>> GetModels()
+    {
+        try
+        {
+            var serviceType = await _settings.GetSetting(SettingKeys.Translation.ServiceType) ?? "libretranslate";
+            var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
+
+            // Service-specific logic to get models
+            var models = await translationService.GetModels();
+            return Ok(models);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving models for translation service");
+            return StatusCode(500, "Failed to retrieve available models");
+        }
+    }
 }

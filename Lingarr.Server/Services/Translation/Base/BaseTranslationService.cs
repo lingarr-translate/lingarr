@@ -24,4 +24,7 @@ public abstract class BaseTranslationService : ITranslationService
 
     /// <inheritdoc />
     public abstract Task<List<SourceLanguage>> GetLanguages();
+    
+    /// <inheritdoc />
+    public abstract Task<ModelsResponse> GetModels();
 }

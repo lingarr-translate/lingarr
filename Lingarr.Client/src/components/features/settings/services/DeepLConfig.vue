@@ -4,10 +4,10 @@
         validation-type="string"
         type="password"
         :min-length="1"
-        :label="translate('settings.services.deeplApiKey')"
-        :error-message="translate('settings.services.deeplError')"
+        :label="translate('settings.services.apiKey')"
+        :error-message="translate('settings.services.apiKeyError')"
         @update:validation="(val) => (isValid = val)" />
-    <div v-translate="translate('settings.services.deeplNotification')" class="pt-2 text-xs" />
+    <div v-translate="'settings.services.deeplNotification'" class="pt-2 text-xs" />
 </template>
 
 <script lang="ts" setup>
