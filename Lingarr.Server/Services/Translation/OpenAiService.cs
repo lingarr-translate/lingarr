@@ -1,8 +1,10 @@
 ﻿using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Models;
 using Lingarr.Server.Services.Translation.Base;
 using OpenAI.Chat;
+using OpenAI.Models;
 
 namespace Lingarr.Server.Services.Translation;
 
@@ -96,6 +98,52 @@ public class OpenAiService : BaseLanguageService
         {
             _logger.LogError(ex, "Error occurred during OpenAI translation");
             throw new TranslationException("Failed to translate using OpenAI", ex);
+        }
+    }
+    
+    /// <inheritdoc />
+    public override async Task<ModelsResponse> GetModels()
+    {
+        var apiKey = await _settings.GetSetting(
+            SettingKeys.Translation.OpenAi.ApiKey
+        );
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            return new ModelsResponse
+            {
+                Message = "OpenAI API key is not configured."
+            };
+        }
+    
+        var modelClient  = new OpenAIModelClient(
+            apiKey: apiKey
+        );
+
+        try
+        {
+            var models = (await modelClient.GetModelsAsync()).Value;
+        
+            var labelValues = models
+                .Select(model => new LabelValue
+                {
+                    Label = model.Id,
+                    Value = model.Id
+                })
+                .ToList();
+
+            return new ModelsResponse
+            {
+                Options = labelValues
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching models from OpenAI API");
+            return new ModelsResponse
+            {
+                Message = "Error fetching models from OpenAI API: " + ex.Message
+            };
         }
     }
 }

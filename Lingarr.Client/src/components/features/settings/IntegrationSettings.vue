@@ -45,7 +45,7 @@
                     :error-message="translate('settings.integrations.sonarrApiKeyError')"
                     @update:validation="(val) => (isValid.sonarrApiKey = val)" />
             </div>
-            <div v-translate="translate('settings.integrations.reindexTask')" />
+            <div v-translate="'settings.integrations.reindexTask'" />
         </template>
     </CardComponent>
 </template>

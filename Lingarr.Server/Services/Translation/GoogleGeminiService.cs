@@ -5,6 +5,7 @@ using System.Text.Json;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Models;
 using Lingarr.Server.Models.Integrations.Translation;
 using Lingarr.Server.Services.Translation.Base;
 
@@ -164,25 +165,97 @@ public class GoogleGeminiService : BaseLanguageService
             "application/json");
 
         var response = await _httpClient.PostAsync(endpoint, content, cancellationToken);
-        
+
         if (!response.IsSuccessStatusCode)
         {
             _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}", 
+            _logger.LogError("Response Content: {ResponseContent}",
                 await response.Content.ReadAsStringAsync(cancellationToken));
             throw new TranslationException("Translation using Gemini API failed.");
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
         var geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(responseBody);
-        
+
         if (geminiResponse?.Candidates == null || geminiResponse.Candidates.Count == 0 ||
-            geminiResponse.Candidates[0].Content?.Parts == null || 
+            geminiResponse.Candidates[0].Content?.Parts == null ||
             geminiResponse.Candidates[0].Content?.Parts.Count == 0)
         {
             throw new TranslationException("Invalid or empty response from Gemini API.");
         }
 
         return geminiResponse.Candidates[0].Content?.Parts[0].Text ?? "";
+    }
+
+    /// <inheritdoc />
+    public override async Task<ModelsResponse> GetModels()
+    {
+        var supportedGenerationMethods = new List<string> { "generateMessage", "generateContent", "generateText" };
+        var apiKey = await _settings.GetSetting(
+            SettingKeys.Translation.Gemini.ApiKey
+        );
+
+        if (string.IsNullOrEmpty(apiKey))
+        {
+            return new ModelsResponse
+            {
+                Message = "Gemini API key is not configured."
+            };
+        }
+
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, $"{_endpoint}/models?key={apiKey}");
+            var response = await _httpClient.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Failed to fetch models. Status: {StatusCode}", response.StatusCode);
+                return new ModelsResponse
+                {
+                    Message = $"Failed to fetch models. Status: {response.StatusCode}"
+                };
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+
+            if (!jsonResponse.TryGetProperty("models", out var modelsElement))
+            {
+                return new ModelsResponse
+                {
+                    Message = "Invalid response format from Gemini API."
+                };
+            }
+
+            var labelValues = modelsElement.EnumerateArray()
+                .Where(model =>
+                {
+                    if (!model.TryGetProperty("supportedGenerationMethods", out var methods))
+                        return false;
+
+                    return methods.EnumerateArray()
+                        .Any(method => supportedGenerationMethods.Contains(method.GetString()));
+                })
+                .Select(model => new LabelValue
+                {
+                    Label = model.GetProperty("displayName").GetString() ?? string.Empty,
+                    Value = model.GetProperty("name").GetString()?.Replace("models/", "") ?? string.Empty
+                })
+                .ToList();
+
+            return new ModelsResponse
+            {
+                Options = labelValues
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching models from Gemini API");
+            return new ModelsResponse
+            {
+                Message = "Error fetching models from Gemini API: " + ex.Message
+            };
+        }
     }
 }

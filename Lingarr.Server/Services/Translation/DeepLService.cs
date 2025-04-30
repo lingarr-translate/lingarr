@@ -169,4 +169,10 @@ public class DeepLService : BaseTranslationService
         
         return sourceLanguages;
     }
+    
+    /// <inheritdoc />
+    public override async Task<ModelsResponse> GetModels()
+    {
+        return await Task.FromResult(new ModelsResponse());
+    }
 }

@@ -29,4 +29,11 @@ public interface ITranslationService
     /// <exception cref="InvalidOperationException">Thrown when service is not properly configured or initialization fails</exception>
     /// <exception cref="JsonException">Thrown when language configuration files cannot be parsed (for file-based services)</exception>
     Task<List<SourceLanguage>> GetLanguages();
+    
+    /// <summary>
+    /// Retrieves available LLM (Large Language Model) models from AI services.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="ModelsResponse"/> with information about available models.</returns>
+    /// <exception cref="Exception">Thrown when an error occurs while fetching models from the AI service.</exception>
+    Task<ModelsResponse> GetModels();
 }

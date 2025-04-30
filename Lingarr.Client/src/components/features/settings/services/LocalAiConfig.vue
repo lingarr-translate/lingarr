@@ -18,20 +18,20 @@
         <InputComponent
             v-model="address"
             validation-type="url"
-            :label="translate('settings.services.localAiAddress')"
+            :label="translate('settings.services.serviceAddress')"
             @update:validation="(val) => (isValid.address = val)" />
 
         <InputComponent
             v-model="aiModel"
             validation-type="string"
-            :label="translate('settings.services.localAiAiModel')"
+            :label="translate('settings.services.aiModel')"
             @update:validation="(val) => (isValid.model = val)" />
 
         <InputComponent
             v-model="apiKey"
             validation-type="string"
             type="password"
-            :label="translate('settings.services.localAiApiKey')"
+            :label="translate('settings.services.apiKey')"
             @update:validation="(val) => (isValid.apiKey = val)" />
         <p class="text-xs">{{ translate('settings.services.localAiNotification') }}</p>
 

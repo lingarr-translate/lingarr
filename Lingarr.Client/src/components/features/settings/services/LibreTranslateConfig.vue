@@ -2,10 +2,11 @@
     <InputComponent
         v-model="libreTranslateUrl"
         validation-type="url"
-        :label="translate('settings.services.libreTranslateAddress')"
-        :error-message="translate('settings.services.libreTranslateAddressError')"
+        :label="translate('settings.services.serviceAddress')"
+        :error-message="translate('settings.services.addressUrlError')"
         @update:validation="(val) => (isValid = val)" />
 </template>
+
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import InputComponent from '@/components/common/InputComponent.vue'

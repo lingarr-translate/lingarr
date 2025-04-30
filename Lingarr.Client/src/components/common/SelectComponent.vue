@@ -7,22 +7,25 @@
             ref="excludeClickOutside"
             class="border-accent flex h-12 cursor-pointer items-center justify-between rounded-md border px-4 py-2"
             @click="toggleDropdown">
-            <span v-if="!selected" class="text-gray-400">Select items...</span>
+            <span v-if="!selected" class="text-gray-400">{{ placeholder }}</span>
             <div v-else class="flex max-h-12 flex-wrap gap-2 overflow-auto">
                 <span
                     class="bg-accent flex cursor-pointer items-center rounded-md px-3 py-1 text-sm font-medium">
                     <span class="text-accent-content mr-2">{{ selectedOption(selected) }}</span>
                 </span>
             </div>
-            <CaretRightIcon
-                :class="{ 'rotate-90': isOpen }"
-                class="arrow-right h-5 w-5 transition-transform duration-200" />
+            <div class="flex items-center">
+                <LoaderCircleIcon v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />
+                <CaretRightIcon
+                    :class="{ 'rotate-90': isOpen }"
+                    class="arrow-right h-5 w-5 transition-transform duration-200" />
+            </div>
         </div>
         <ul
             v-show="isOpen"
             ref="clickOutside"
             class="border-accent bg-primary absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border shadow-lg">
-            <li v-if="!options?.length" class="p-3">Select a source language first.</li>
+            <li v-if="!options?.length" class="p-3">{{ noOptions }}</li>
             <li
                 v-for="(option, index) in options"
                 :key="`${option.value}-${index}`"
@@ -38,6 +41,7 @@
 <script setup lang="ts">
 import { Ref, ref, nextTick } from 'vue'
 import CaretRightIcon from '@/components/icons/CaretRightIcon.vue'
+import LoaderCircleIcon from '@/components/icons/LoaderCircleIcon.vue'
 import useClickOutside from '@/composables/useClickOutside'
 
 export interface ISelectOption {
@@ -45,28 +49,48 @@ export interface ISelectOption {
     label: string
 }
 
-const {
-    label,
-    options,
-    selected,
-    disabled = false
-} = defineProps<{
-    label?: string
-    options: ISelectOption[]
-    selected?: string
-    disabled?: boolean
-}>()
+const props = withDefaults(
+    defineProps<{
+        label?: string
+        options: ISelectOption[]
+        selected?: string
+        disabled?: boolean
+        loadOnOpen?: boolean
+        placeholder?: string
+        noOptions?: string
+    }>(),
+    {
+        label: '',
+        options: () => [],
+        selected: '',
+        placeholder: 'Select items...',
+        noOptions: 'Select a source language first.'
+    }
+)
 
-const emit = defineEmits(['update:selected'])
+const emit = defineEmits(['update:selected', 'fetch-options'])
 
 const isOpen: Ref<boolean> = ref(false)
+const isLoading: Ref<boolean> = ref(false)
 const clickOutside: Ref<HTMLElement | undefined> = ref()
 const excludeClickOutside: Ref<HTMLElement | undefined> = ref()
 
 const toggleDropdown = async () => {
-    if (disabled) return
+    if (props.disabled) return
+
     isOpen.value = !isOpen.value
+
+    // If opening the dropdown and loadOnOpen is true, fetch options
+    if (isOpen.value && props.loadOnOpen) {
+        isLoading.value = true
+        emit('fetch-options')
+    }
+
     await nextTick()
+}
+
+const setLoadingState = async (loading: boolean) => {
+    isLoading.value = loading
 }
 
 const selectOption = (option: ISelectOption) => {
@@ -75,11 +99,11 @@ const selectOption = (option: ISelectOption) => {
 }
 
 const selectedOption = (option: string) => {
-    return options.find((item) => item.value === option)?.label
+    return props.options.find((item) => item.value === option)?.label
 }
 
 const isSelected = (option: string) => {
-    return selected == option
+    return props.selected == option
 }
 
 useClickOutside(
@@ -89,4 +113,8 @@ useClickOutside(
     },
     excludeClickOutside
 )
+
+defineExpose({
+    setLoadingState
+})
 </script>

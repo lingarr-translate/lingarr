@@ -62,6 +62,7 @@ export interface ITranslateService {
         mediaType: MediaType
     ): Promise<T>
     getLanguages<T>(): Promise<T>
+    getModels<T>(): Promise<T>
 }
 
 export interface ITranslationRequestService {

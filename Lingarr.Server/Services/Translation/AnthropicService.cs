@@ -4,12 +4,14 @@ using System.Text.Json;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Models;
 using Lingarr.Server.Services.Translation.Base;
 
 namespace Lingarr.Server.Services.Translation;
 
 public class AnthropicService : BaseLanguageService
 {
+    private readonly string? _endpoint = "https://api.anthropic.com/v1";
     private readonly HttpClient _httpClient;
     private string? _model;
     private string? _prompt;
@@ -103,9 +105,9 @@ public class AnthropicService : BaseLanguageService
                         new { role = "user", content = text }
                     }
                 }), Encoding.UTF8, "application/json");
-                
+
                 var response =
-                    await _httpClient.PostAsync("https://api.anthropic.com/v1/messages", content, linked.Token);
+                    await _httpClient.PostAsync($"{_endpoint}/messages", content, linked.Token);
                 if (!response.IsSuccessStatusCode)
                 {
                     if (response.StatusCode == HttpStatusCode.TooManyRequests)
@@ -114,7 +116,8 @@ public class AnthropicService : BaseLanguageService
                     }
 
                     _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-                    _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync(cancellationToken: linked.Token));
+                    _logger.LogError("Response Content: {ResponseContent}",
+                        await response.Content.ReadAsStringAsync(cancellationToken: linked.Token));
                     throw new TranslationException("Translation using Anthropic failed.");
                 }
 
@@ -150,5 +153,82 @@ public class AnthropicService : BaseLanguageService
         }
 
         throw new TranslationException("Translation failed after maximum retry attempts.");
+    }
+
+    /// <inheritdoc />
+    public override async Task<ModelsResponse> GetModels()
+    {
+        var settings = await _settings.GetSettings([
+            SettingKeys.Translation.Anthropic.ApiKey,
+            SettingKeys.Translation.Anthropic.Version
+        ]);
+
+        if (string.IsNullOrEmpty(settings[SettingKeys.Translation.Anthropic.ApiKey]))
+        {
+            return new ModelsResponse
+            {
+                Message = "Anthropic API key is not configured."
+            };
+        }
+
+        if (string.IsNullOrEmpty(settings[SettingKeys.Translation.Anthropic.Version]))
+        {
+            return new ModelsResponse
+            {
+                Message = "Anthropic version is not configured."
+            };
+        }
+
+        var url = $"{_endpoint}/models";
+
+        try
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, url);
+            request.Headers.Add("x-api-key", settings[SettingKeys.Translation.Anthropic.ApiKey]);
+            request.Headers.Add("anthropic-version", settings[SettingKeys.Translation.Anthropic.Version]);
+
+            var response = await _httpClient.SendAsync(request);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Failed to fetch models. Status: {StatusCode}", response.StatusCode);
+                return new ModelsResponse
+                {
+                    Message = $"Failed to fetch models. Status: {response.StatusCode}"
+                };
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
+
+            if (!jsonResponse.TryGetProperty("data", out var dataElement))
+            {
+                return new ModelsResponse
+                {
+                    Message = "Invalid response format from Anthropic API."
+                };
+            }
+
+            var labelValues = dataElement.EnumerateArray()
+                .Select(model => new LabelValue
+                {
+                    Label = model.GetProperty("display_name").GetString() ?? string.Empty,
+                    Value = model.GetProperty("id").GetString() ?? string.Empty
+                })
+                .ToList();
+
+            return new ModelsResponse
+            {
+                Options = labelValues
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching models from Anthropic API");
+            return new ModelsResponse
+            {
+                Message = "Error fetching models from Anthropic API: " + ex.Message
+            };
+        }
     }
 }
