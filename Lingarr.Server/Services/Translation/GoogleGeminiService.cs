@@ -138,19 +138,15 @@ public class GoogleGeminiService : BaseLanguageService
     private async Task<string> TranslateWithGeminiApi(string? message, CancellationToken cancellationToken)
     {
         var endpoint = $"{_endpoint}/models/{_model}:generateContent?key={_apiKey}";
-
         var requestBody = new Dictionary<string, object>
         {
-            ["system_instruction"] = new[]
+            ["systemInstruction"] = new 
             {
-                new
+                parts = new[]
                 {
-                    parts = new[]
+                    new
                     {
-                        new
-                        {
-                            text = _prompt
-                        }
+                        text = _prompt
                     }
                 }
             },
