@@ -15,7 +15,7 @@ namespace Lingarr.Migrations.SQLite.Migrations
                 columns: new[] { "key", "value" },
                 values: new object[,]
                 {
-                    { "local_ai_parameters", "[]" },
+                    { "custom_ai_parameters", "[]" },
                     { "strip_subtitle_formatting", "false" },
                     { "subtitle_validation_enabled", "false" },
                     { "subtitle_validation_maxfilesizebytes", "1048576" },

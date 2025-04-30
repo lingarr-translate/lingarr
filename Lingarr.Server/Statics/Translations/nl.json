@@ -181,7 +181,7 @@
     },
     "custom": {
       "parameters": "Aangepaste Parameters",
-      "description": "Definieer aangepaste parameters (bijv. temperature, top_p) om mee te sturen met verzoeken naar uw aangepaste api.",
+      "description": "Definieer aangepaste parameters (bijv. temperature, top_p) om mee te sturen met verzoeken naar je aangepaste endpoint. Pas deze alleen aan als je weet wat je doet, fouten zijn te vinden in de Docker logs.",
       "key": "Sleutel",
       "value": "Waarde",
       "key_placeholder": "temperature",
@@ -191,13 +191,40 @@
     },
     "validation": {
       "title": "Ondertitel Validatie",
-      "description": "Configureer de validatieregels in voor ondertitels. Deze regels worden toegepast bij het verwerken van ondertitelbestanden.",
+      "description": "Configureer validatieregels voor ondertitels. Deze regels worden toegepast bij het verwerken van ondertitelbestanden. Als een validatie faalt, wordt de vertaling geannuleerd.",
       "enabled": "Validatie inschakelen:",
       "maxDurationSecs": "De maximale tijdsduur in seconden dat een ondertitel mag worden weergegeven:",
       "minDurationMs": "De minimale tijdsduur in milliseconden dat een ondertitel moet worden weergegeven:",
       "minSubtitleLength": "Het minimale aantal tekens dat een ondertitel moet bevatten:",
       "maxSubtitleLength": "Het maximale aantal tekens dat een ondertitel mag bevatten:",
       "maxFileSizeBytes": "De maximale grootte van een ondertitelbestand in bytes:"
+    },
+    "prompt": {
+      "enterYourPromptHere": "Voer hier je prompt in",
+      "missingPlaceholders": "Vereiste placeholders ontbreken:",
+      "insertPlaceholder": "{placeholder} toevoegen",
+      "placeholders": {
+        "sourceLanguage": {
+          "title": "Brontaal",
+          "description": "De taal van de ondertitelregel"
+        },
+        "targetLanguage": {
+          "title": "Doeltaal",
+          "description": "De taal waarin de ondertitelregel moet worden vertaald"
+        },
+        "contextBefore": {
+          "title": "Context",
+          "description": "Ondertitels voor de ondertitelregel die als context kan dienen"
+        },
+        "contextAfter": {
+          "title": "Context",
+          "description": "Ondertitels na de ondertitelregel die als context kan dienen"
+        },
+        "lineToTranslate": {
+          "title": "Ondertitelregel",
+          "description": "ndertitelregel om te vertalen"
+        }
+      }
     }
   }
 }

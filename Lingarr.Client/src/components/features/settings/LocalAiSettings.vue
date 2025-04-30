@@ -34,7 +34,7 @@
 <script setup lang="ts">
 import { computed, WritableComputedRef } from 'vue'
 import { useSettingStore } from '@/store/setting'
-import { ILocalAiParams, SETTINGS } from '@/ts'
+import { ICustomAiParams, SETTINGS } from '@/ts'
 import InputComponent from '@/components/common/InputComponent.vue'
 import CardComponent from '@/components/common/CardComponent.vue'
 import TimesIcon from '@/components/icons/TimesIcon.vue'
@@ -42,10 +42,10 @@ import TimesIcon from '@/components/icons/TimesIcon.vue'
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])
 
-const parameters: WritableComputedRef<ILocalAiParams[]> = computed({
-    get: () => settingsStore.getSetting(SETTINGS.LOCAL_AI_PARAMETERS) as ILocalAiParams[],
+const parameters: WritableComputedRef<ICustomAiParams[]> = computed({
+    get: () => settingsStore.getSetting(SETTINGS.CUSTOM_AI_PARAMETERS) as ICustomAiParams[],
     set: (value) => {
-        settingsStore.updateSetting(SETTINGS.LOCAL_AI_PARAMETERS, value, true, true)
+        settingsStore.updateSetting(SETTINGS.CUSTOM_AI_PARAMETERS, value, true, true)
         emit('save')
     }
 })

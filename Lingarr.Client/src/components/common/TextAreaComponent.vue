@@ -1,21 +1,17 @@
 ﻿<template>
     <div class="relative">
-        <label v-if="label" :for="id" class="mb-1 block text-sm">
+        <label v-if="label.length" :for="id" class="mb-1 block text-sm">
             {{ label }}
         </label>
-        <div class="mb-2 flex gap-2">
-            <button
-                type="button"
-                class="bg-accent hover:bg-accent/80 rounded-md px-3 py-1 text-sm"
-                @click="insertPlaceholder('{sourceLanguage}')">
-                Insert {sourceLanguage}
-            </button>
-            <button
-                type="button"
-                class="bg-accent hover:bg-accent/80 rounded-md px-3 py-1 text-sm"
-                @click="insertPlaceholder('{targetLanguage}')">
-                Insert {targetLanguage}
-            </button>
+        <div class="mb-3 flex flex-wrap gap-3">
+            <PlaceholderButton
+                v-for="(item, index) in placeholders"
+                :key="index"
+                :placeholder="item.placeholder"
+                :placeholder-text="item.placeholderText"
+                :title="item.title"
+                :description="item.description"
+                @insert="insertPlaceholder" />
         </div>
         <div class="relative">
             <textarea
@@ -32,23 +28,47 @@
                 class="absolute top-3 right-3" />
         </div>
         <p v-if="missingPlaceholders.length > 0" class="mt-1 text-sm text-red-600">
-            Missing required placeholders: {{ missingPlaceholders.join(' and ') }}
+            {{ translate('settings.prompt.missingPlaceholders') }}
+            {{ missingPlaceholders.join(' and ') }}
         </p>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, nextTick } from 'vue'
+import { computed, ref, nextTick, onMounted } from 'vue'
 import useDebounce from '@/composables/useDebounce'
 import ValidationIcon from '@/components/common/ValidationIcon.vue'
+import PlaceholderButton from '@/components/common/PlaceholderButton.vue'
+import { useI18n } from '@/plugins/i18n'
+const { translate } = useI18n()
 
-const { id, label, modelValue, placeholder, rows } = defineProps<{
-    id?: string
-    label?: string
-    modelValue: string
-    placeholder?: string
-    rows?: number
-}>()
+interface Placeholder {
+    placeholder: string
+    placeholderText: string
+    title: string
+    description: string
+    required?: boolean
+}
+
+const props = withDefaults(
+    defineProps<{
+        id?: string
+        label?: string
+        modelValue: string
+        placeholder?: string
+        rows?: number
+        placeholders?: Placeholder[]
+        requiredPlaceholders?: string[]
+    }>(),
+    {
+        id: `textarea-${Math.random().toString(36).substring(2, 9)}`,
+        label: '',
+        rows: 4,
+        placeholder: '',
+        placeholders: () => [],
+        requiredPlaceholders: () => []
+    }
+)
 
 const emit = defineEmits<{
     (e: 'update:modelValue', value: string): void
@@ -61,7 +81,7 @@ const isInvalid = ref(false)
 const missingPlaceholders = ref<string[]>([])
 
 const textareaClasses = computed(() => [
-    'w-full rounded-md border bg-transparent px-4 py-2 outline-hidden transition-colors duration-200',
+    'w-full resize-y rounded-md border bg-transparent px-4 py-2 outline-hidden transition-colors duration-200',
     { 'border-green-500': isValid.value },
     { 'border-red-500': isInvalid.value },
     { 'border-accent': !isValid.value && !isInvalid.value },
@@ -69,8 +89,7 @@ const textareaClasses = computed(() => [
 ])
 
 const validatePlaceholders = (value: string) => {
-    const required = ['{sourceLanguage}', '{targetLanguage}']
-    const missing = required.filter((placeholder) => !value.includes(placeholder))
+    const missing = props.requiredPlaceholders.filter((placeholder) => !value.includes(placeholder))
     missingPlaceholders.value = missing
     isValid.value = missing.length === 0
     isInvalid.value = missing.length > 0
@@ -83,7 +102,8 @@ const handleInput = useDebounce((event: Event) => {
 
     emit('update:validation', isValidInput)
     emit('update:modelValue', value)
-}, 1000)
+    adjustHeight()
+}, 300)
 
 const insertPlaceholder = (placeholder: string) => {
     const textarea = textareaRef.value
@@ -97,11 +117,29 @@ const insertPlaceholder = (placeholder: string) => {
     emit('update:modelValue', newValue)
     validatePlaceholders(newValue)
 
-    // Force Vue to update the textarea value before setting the cursor position
     nextTick(() => {
         textarea.focus()
         const newPosition = start + placeholder.length
         textarea.setSelectionRange(newPosition, newPosition)
+        adjustHeight()
     })
 }
+
+const adjustHeight = () => {
+    const textarea = textareaRef.value
+    if (!textarea) return
+
+    textarea.style.height = 'auto'
+    textarea.style.height = `${textarea.scrollHeight}px`
+    textarea.style.overflowY = 'hidden'
+}
+
+onMounted(() => {
+    adjustHeight()
+    if (props.modelValue) {
+        nextTick(() => {
+            adjustHeight()
+        })
+    }
+})
 </script>

@@ -181,7 +181,7 @@
     },
     "custom": {
       "parameters": "Custom Parameters",
-      "description": "Define custom parameters (e.g., temperature, top_p) to send with requests to your custom endpoint.",
+      "description": "Define custom parameters (e.g., temperature, top_p) to include with requests to your custom endpoint. Only modify these if you understand what you're doing, errors can be found in the Docker logs.",
       "key": "Key",
       "value": "Value",
       "key_placeholder": "temperature",
@@ -191,13 +191,40 @@
     },
     "validation": {
       "title": "Subtitle Validation",
-      "description": "Configure validation rules for subtitles. These rules will be applied when processing subtitle files.",
+      "description": "Configure validation rules for subtitles. These rules will be applied when processing subtitle files. If a validation fails, the translation will be canceled.",
       "enabled": "Enable validation:",
       "maxDurationSecs": "The maximum time duration in seconds that a subtitle can be displayed:",
       "minDurationMs": "The minimum time duration in milliseconds that a subtitle must be displayed:",
       "minSubtitleLength": "The minimum number of characters that a subtitle must contain:",
       "maxSubtitleLength": "The maximum number of characters that a subtitle can contain:",
       "maxFileSizeBytes": "The maximum size of a subtitle file in bytes:"
+    },
+    "prompt": {
+      "enterYourPromptHere": "Enter your prompt here",
+      "missingPlaceholders": "Required placeholders missing:",
+      "insertPlaceholder": "insert {placeholder}",
+      "placeholders": {
+        "sourceLanguage": {
+          "title": "Source Language",
+          "description": "The language the provided subtitle line is in"
+        },
+        "targetLanguage": {
+          "title": "Target Language",
+          "description": "The language the provided subtitle line needs to be translated to"
+        },
+        "contextBefore": {
+          "title": "Context",
+          "description": "Subtitles before the provided subtitle line that can be used as context"
+        },
+        "contextAfter": {
+          "title": "Context",
+          "description": "Subtitles after the provided subtitle line that can be used as context"
+        },
+        "lineToTranslate": {
+          "title": "Subtitle line",
+          "description": "Subtitle line to translate"
+        }
+      }
     }
   }
 }

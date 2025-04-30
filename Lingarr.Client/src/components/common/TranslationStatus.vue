@@ -6,8 +6,8 @@
 
 <script setup lang="ts">
 import { useI18n } from '@/plugins/i18n'
-import { TranslationStatus } from '@/ts'
 const { translate } = useI18n()
+import { TranslationStatus } from '@/ts'
 
 defineProps<{
     translationStatus: TranslationStatus

@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Globalization;
+using System.Text.Json;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 
@@ -6,6 +7,7 @@ namespace Lingarr.Server.Services.Translation.Base;
 
 public abstract class BaseLanguageService : BaseTranslationService
 {
+    protected List<KeyValuePair<string, object>>? _customParameters;
     private readonly string _languageFilePath;
 
     protected BaseLanguageService(
@@ -14,6 +16,80 @@ public abstract class BaseLanguageService : BaseTranslationService
         string languageFilePath) : base(settings, logger)
     {
         _languageFilePath = languageFilePath;
+    }
+    
+    /// <summary>
+    /// Prepares custom parameters from settings for use in API requests.
+    /// </summary>
+    /// <param name="settings">Dictionary containing application settings.</param>
+    /// <param name="parameterKey">The key to access the custom parameters in the settings.</param>
+    protected List<KeyValuePair<string, object>>? PrepareCustomParameters(Dictionary<string, string> settings, string parameterKey)
+    {
+        if (!settings.TryGetValue(parameterKey, out var parametersJson) ||
+            string.IsNullOrEmpty(parametersJson))
+        {
+            return null;
+        }
+
+        try
+        {
+            var parametersArray = JsonSerializer.Deserialize<JsonElement[]>(parametersJson);
+            if (parametersArray == null)
+            {
+                return null;
+            }
+
+            var parameters = new List<KeyValuePair<string, object>>();
+            foreach (var param in parametersArray)
+            {
+                if (!param.TryGetProperty("key", out var key) ||
+                    !param.TryGetProperty("value", out var value)) continue;
+    
+                object valueObj = value.ValueKind switch
+                {
+                    JsonValueKind.String => TryParseNumeric(value.GetString()!),
+                    JsonValueKind.Number => value.TryGetInt64(out var intVal) ? intVal : value.GetDouble(),
+                    JsonValueKind.True => true,
+                    JsonValueKind.False => false,
+                    _ => value.GetString()!
+                };
+
+                parameters.Add(new KeyValuePair<string, object>(key.GetString()!, valueObj));
+            }
+            return parameters;
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse custom parameters: {Parameters}", parametersJson);
+            return null;
+        }
+    }
+    
+    private static object TryParseNumeric(string value)
+    {
+        if (float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out float floatVal))
+        {
+            return floatVal; 
+        }
+    
+        return value;
+    }
+    
+    /// <summary>
+    /// Adds custom parameters to the request data if they exist.
+    /// </summary>
+    /// <param name="requestData">The dictionary containing the base request parameters.</param>
+    protected Dictionary<string, object> AddCustomParameters(Dictionary<string, object> requestData)
+    {
+        if (_customParameters != null && _customParameters.Count > 0)
+        {
+            foreach (var param in _customParameters)
+            {
+                requestData[param.Key] = param.Value;
+            }
+        }
+    
+        return requestData;
     }
 
     /// <inheritdoc />

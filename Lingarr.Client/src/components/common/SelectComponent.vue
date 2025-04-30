@@ -11,7 +11,7 @@
             <div v-else class="flex max-h-12 flex-wrap gap-2 overflow-auto">
                 <span
                     class="bg-accent flex cursor-pointer items-center rounded-md px-3 py-1 text-sm font-medium">
-                    <span class="text-accent-content mr-2">{{ selectedOption(selected) }}</span>
+                    <span class="text-accent-content mr-2">{{ displaySelectedLabel }}</span>
                 </span>
             </div>
             <div class="flex items-center">
@@ -25,9 +25,9 @@
             v-show="isOpen"
             ref="clickOutside"
             class="border-accent bg-primary absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border shadow-lg">
-            <li v-if="!options?.length" class="p-3">{{ noOptions }}</li>
+            <li v-if="!sortedOptions.length" class="p-3">{{ noOptions }}</li>
             <li
-                v-for="(option, index) in options"
+                v-for="(option, index) in sortedOptions"
                 :key="`${option.value}-${index}`"
                 class="cursor-pointer px-4 py-2"
                 :class="{ 'bg-accent/20': isSelected(option.value) }"
@@ -39,7 +39,7 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, ref, nextTick } from 'vue'
+import { Ref, ref, nextTick, computed } from 'vue'
 import CaretRightIcon from '@/components/icons/CaretRightIcon.vue'
 import LoaderCircleIcon from '@/components/icons/LoaderCircleIcon.vue'
 import useClickOutside from '@/composables/useClickOutside'
@@ -64,7 +64,8 @@ const props = withDefaults(
         options: () => [],
         selected: '',
         placeholder: 'Select items...',
-        noOptions: 'Select a source language first.'
+        noOptions: 'Select a source language first.',
+        selectedLabel: ''
     }
 )
 
@@ -75,12 +76,20 @@ const isLoading: Ref<boolean> = ref(false)
 const clickOutside: Ref<HTMLElement | undefined> = ref()
 const excludeClickOutside: Ref<HTMLElement | undefined> = ref()
 
+const sortedOptions = computed(() => {
+    return [...props.options].sort((a, b) => a.label.localeCompare(b.label))
+})
+
+const displaySelectedLabel = computed(() => {
+    const option = props.options.find((item) => item.value === props.selected)
+    return option ? option.label : props.selected
+})
+
 const toggleDropdown = async () => {
     if (props.disabled) return
 
     isOpen.value = !isOpen.value
 
-    // If opening the dropdown and loadOnOpen is true, fetch options
     if (isOpen.value && props.loadOnOpen) {
         isLoading.value = true
         emit('fetch-options')
@@ -96,10 +105,6 @@ const setLoadingState = async (loading: boolean) => {
 const selectOption = (option: ISelectOption) => {
     emit('update:selected', option.value)
     isOpen.value = false
-}
-
-const selectedOption = (option: string) => {
-    return props.options.find((item) => item.value === option)?.label
 }
 
 const isSelected = (option: string) => {
