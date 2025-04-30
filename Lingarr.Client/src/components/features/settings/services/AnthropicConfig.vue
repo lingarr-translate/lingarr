@@ -42,8 +42,6 @@
             :placeholder="translate('settings.services.selectModel')"
             :no-options="errorMessage || translate('settings.services.loadingModels')"
             @fetch-options="loadOptions" />
-
-        <AiPromptConfig @save="emit('save')" />
     </div>
 </template>
 
@@ -53,7 +51,6 @@ import { useSettingStore } from '@/store/setting'
 import { SETTINGS } from '@/ts'
 import SelectComponent from '@/components/common/SelectComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
-import AiPromptConfig from '@/components/features/settings/services/AiPromptConfig.vue'
 import { useI18n } from '@/plugins/i18n'
 import { useModelOptions } from '@/composables/useModelOptions'
 

@@ -141,17 +141,25 @@ public class GoogleGeminiService : BaseLanguageService
 
         var requestBody = new Dictionary<string, object>
         {
-            ["contents"] = new[]
+            ["system_instruction"] = new[]
             {
                 new
                 {
-                    role = "user",
                     parts = new[]
                     {
                         new
                         {
                             text = _prompt
-                        },
+                        }
+                    }
+                }
+            },
+            ["contents"] = new[]
+            {
+                new
+                {
+                    parts = new[]
+                    {
                         new
                         {
                             text = message
@@ -161,7 +169,7 @@ public class GoogleGeminiService : BaseLanguageService
             }
         };
 
-        if (_customParameters != null && _customParameters.Count > 0)
+        if (_customParameters is { Count: > 0 })
         {
             var generationConfig = new Dictionary<string, object>();
             foreach (var param in _customParameters)
