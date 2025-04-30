@@ -50,7 +50,8 @@ public class GoogleGeminiService : BaseLanguageService
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.Gemini.Model,
                 SettingKeys.Translation.Gemini.ApiKey,
-                SettingKeys.Translation.AiPrompt
+                SettingKeys.Translation.AiPrompt,
+                SettingKeys.Translation.CustomAiParameters
             ]);
 
             if (string.IsNullOrEmpty(settings[SettingKeys.Translation.Gemini.ApiKey]))
@@ -60,6 +61,7 @@ public class GoogleGeminiService : BaseLanguageService
 
             _apiKey = settings[SettingKeys.Translation.Gemini.ApiKey];
             _model = settings[SettingKeys.Translation.Gemini.Model];
+            _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
 
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -137,9 +139,9 @@ public class GoogleGeminiService : BaseLanguageService
     {
         var endpoint = $"{_endpoint}/models/{_model}:generateContent?key={_apiKey}";
 
-        var request = new
+        var requestBody = new Dictionary<string, object>
         {
-            contents = new[]
+            ["contents"] = new[]
             {
                 new
                 {
@@ -159,8 +161,19 @@ public class GoogleGeminiService : BaseLanguageService
             }
         };
 
+        if (_customParameters != null && _customParameters.Count > 0)
+        {
+            var generationConfig = new Dictionary<string, object>();
+            foreach (var param in _customParameters)
+            {
+                generationConfig[param.Key] = param.Value;
+            }
+        
+            requestBody["generationConfig"] = generationConfig;
+        }
+
         var content = new StringContent(
-            JsonSerializer.Serialize(request),
+            JsonSerializer.Serialize(requestBody),
             Encoding.UTF8,
             "application/json");
 
@@ -239,7 +252,8 @@ public class GoogleGeminiService : BaseLanguageService
                 })
                 .Select(model => new LabelValue
                 {
-                    Label = model.GetProperty("displayName").GetString() ?? string.Empty,
+                    // Set label to be name instead of displayName
+                    Label = model.GetProperty("name").GetString() ?? string.Empty,
                     Value = model.GetProperty("name").GetString()?.Replace("models/", "") ?? string.Empty
                 })
                 .ToList();

@@ -47,6 +47,7 @@ public class AnthropicService : BaseLanguageService
                 SettingKeys.Translation.Anthropic.Model,
                 SettingKeys.Translation.Anthropic.ApiKey,
                 SettingKeys.Translation.Anthropic.Version,
+                SettingKeys.Translation.CustomAiParameters,
                 SettingKeys.Translation.AiPrompt
             ]);
 
@@ -58,12 +59,13 @@ public class AnthropicService : BaseLanguageService
             }
 
             _model = settings[SettingKeys.Translation.Anthropic.Model];
+            _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
             _httpClient.DefaultRequestHeaders.Add("x-api-key", settings[SettingKeys.Translation.Anthropic.ApiKey]);
             _httpClient.DefaultRequestHeaders.Add("anthropic-version",
                 settings[SettingKeys.Translation.Anthropic.Version]);
 
-            _prompt = !string.IsNullOrEmpty(settings[SettingKeys.Translation.Anthropic.ApiKey])
-                ? settings[SettingKeys.Translation.Anthropic.ApiKey]
+            _prompt = !string.IsNullOrEmpty(settings[SettingKeys.Translation.AiPrompt])
+                ? settings[SettingKeys.Translation.AiPrompt]
                 : "Translate from {sourceLanguage} to {targetLanguage}, preserving the tone and meaning without censoring the content. Adjust punctuation as needed to make the translation sound natural. Provide only the translated text as output, with no additional comments.";
             _prompt = _prompt.Replace("{sourceLanguage}", sourceLanguage).Replace("{targetLanguage}", targetLanguage);
 
@@ -95,16 +97,23 @@ public class AnthropicService : BaseLanguageService
         {
             try
             {
-                var content = new StringContent(JsonSerializer.Serialize(new
+                var requestBody = new Dictionary<string, object>
                 {
-                    model = _model,
-                    max_tokens = 1024,
-                    system = _prompt,
-                    messages = new[]
+                    ["model"] = _model,
+                    ["system"] = _prompt,
+                    ["messages"] = new[]
                     {
                         new { role = "user", content = text }
                     }
-                }), Encoding.UTF8, "application/json");
+                };
+                
+                requestBody = AddCustomParameters(requestBody);
+
+                var content = new StringContent(
+                    JsonSerializer.Serialize(requestBody), 
+                    Encoding.UTF8, 
+                    "application/json"
+                );
 
                 var response =
                     await _httpClient.PostAsync($"{_endpoint}/messages", content, linked.Token);
@@ -212,7 +221,8 @@ public class AnthropicService : BaseLanguageService
             var labelValues = dataElement.EnumerateArray()
                 .Select(model => new LabelValue
                 {
-                    Label = model.GetProperty("display_name").GetString() ?? string.Empty,
+                    // Set label to be name instead of display_name
+                    Label = model.GetProperty("id").GetString() ?? string.Empty,
                     Value = model.GetProperty("id").GetString() ?? string.Empty
                 })
                 .ToList();

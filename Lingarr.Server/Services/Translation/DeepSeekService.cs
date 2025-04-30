@@ -48,6 +48,7 @@ public class DeepSeekService : BaseLanguageService
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.DeepSeek.Model,
                 SettingKeys.Translation.DeepSeek.ApiKey,
+                SettingKeys.Translation.CustomAiParameters,
                 SettingKeys.Translation.AiPrompt
             ]);
 
@@ -63,6 +64,7 @@ public class DeepSeekService : BaseLanguageService
             }
 
             _model = settings[SettingKeys.Translation.DeepSeek.Model];
+            _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
 
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -106,12 +108,14 @@ public class DeepSeekService : BaseLanguageService
             new { role = "user", content = text }
         };
 
-        var requestBody = new
+        var requestBody = new Dictionary<string, object>
         {
-            model = _model,
-            messages,
-            stream = false
+            ["model"] = _model,
+            ["messages"] = messages,
+            ["stream"] = false
         };
+
+        requestBody = AddCustomParameters(requestBody);
 
         var content = new StringContent(
             JsonSerializer.Serialize(requestBody),

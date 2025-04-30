@@ -2,7 +2,18 @@
     <div
         class="grid grid-flow-row auto-rows-max grid-cols-1 gap-4 p-4 xl:grid-cols-2 2xl:grid-cols-3">
         <ServicesSettings />
-        <LocalAiSettings v-if="serviceType == SERVICE_TYPE.LOCALAI" />
+        <LocalAiSettings
+            v-if="
+                [
+                    SERVICE_TYPE.ANTHROPIC,
+                    SERVICE_TYPE.DEEPSEEK,
+                    SERVICE_TYPE.GEMINI,
+                    SERVICE_TYPE.LOCALAI,
+                    SERVICE_TYPE.OPENAI
+                ].includes(
+                    serviceType as 'openai' | 'anthropic' | 'localai' | 'gemini' | 'deepseek'
+                )
+            " />
         <TranslationSettings v-if="serviceType" :service-type="serviceType" />
         <ValidationSettings />
     </div>
@@ -19,5 +30,5 @@ import LocalAiSettings from '@/components/features/settings/LocalAiSettings.vue'
 
 const settingsStore = useSettingStore()
 
-const serviceType = computed(() => settingsStore.getSetting(SETTINGS.SERVICE_TYPE) as string)
+const serviceType = computed(() => settingsStore.getSetting(SETTINGS.SERVICE_TYPE))
 </script>

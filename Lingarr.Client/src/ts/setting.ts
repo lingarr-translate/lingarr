@@ -37,7 +37,7 @@ export const SETTINGS = {
     SHOW_AGE_THRESHOLD: 'show_age_threshold',
     FIX_OVERLAPPING_SUBTITLES: 'fix_overlapping_subtitles',
     STRIP_SUBTITLE_FORMATTING: 'strip_subtitle_formatting',
-    LOCAL_AI_PARAMETERS: 'local_ai_parameters',
+    CUSTOM_AI_PARAMETERS: 'custom_ai_parameters',
     SUBTITLE_VALIDATION_ENABLED: 'subtitle_validation_enabled',
     SUBTITLE_VALIDATION_MAXDURATIONSECS: 'subtitle_validation_maxdurationsecs',
     SUBTITLE_VALIDATION_MINDURATIONMS: 'subtitle_validation_mindurationms',
@@ -82,7 +82,7 @@ export interface ISettings {
     strip_subtitle_formatting: string
     theme: ITheme
     locale: ILocale
-    local_ai_parameters: string | ILocalAiParams[]
+    custom_ai_parameters: string | ICustomAiParams[]
     subtitle_validation_enabled: string
     subtitle_validation_maxfilesizebytes: string
     subtitle_validation_minsubtitlelength: string
@@ -91,7 +91,7 @@ export interface ISettings {
     subtitle_validation_maxdurationsecs: string
 }
 
-export interface ILocalAiParams {
+export interface ICustomAiParams {
     key: string
     value: string
 }

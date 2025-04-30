@@ -16,7 +16,7 @@ export const useSettingStore = defineStore({
                 ...state.settings,
                 source_languages: JSON.parse(state.settings.source_languages as string),
                 target_languages: JSON.parse(state.settings.target_languages as string),
-                local_ai_parameters: JSON.parse(state.settings.local_ai_parameters as string)
+                custom_ai_parameters: JSON.parse(state.settings.custom_ai_parameters as string)
             }
         },
         getSetting: (state: IUseSettingStore) => (key: keyof ISettings) => state.settings[key]
@@ -65,7 +65,7 @@ export const useSettingStore = defineStore({
                 ...settings,
                 source_languages: JSON.parse(settings.source_languages as string),
                 target_languages: JSON.parse(settings.target_languages as string),
-                local_ai_parameters: JSON.parse(settings.local_ai_parameters as string)
+                custom_ai_parameters: JSON.parse(settings.custom_ai_parameters as string)
             }
 
             instanceStore.storeTheme(settings.theme)
