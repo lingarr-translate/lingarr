@@ -59,6 +59,7 @@
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="maxDurationSecs"
+                    type="number"
                     validation-type="number"
                     :label="translate('settings.validation.maxDurationSecs')"
                     @update:validation="(val) => (isValid.maxDurationSecs = val)" />
@@ -66,6 +67,7 @@
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="minSubtitleLength"
+                    type="number"
                     validation-type="number"
                     :label="translate('settings.validation.minSubtitleLength')"
                     @update:validation="(val) => (isValid.minSubtitleLength = val)" />
@@ -73,6 +75,7 @@
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="maxSubtitleLength"
+                    type="number"
                     validation-type="number"
                     :label="translate('settings.validation.maxSubtitleLength')"
                     @update:validation="(val) => (isValid.maxSubtitleLength = val)" />
@@ -80,6 +83,7 @@
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="maxFileSizeBytes"
+                    type="number"
                     validation-type="number"
                     :label="translate('settings.validation.maxFileSizeBytes')"
                     @update:validation="(val) => (isValid.maxFileSizeBytes = val)">

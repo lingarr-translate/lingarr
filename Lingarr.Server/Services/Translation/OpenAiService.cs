@@ -13,6 +13,7 @@ namespace Lingarr.Server.Services.Translation;
 
 public class OpenAiService : BaseLanguageService
 {
+    private readonly string? _endpoint = "https://api.openai.com/v1/";
     private string? _prompt;
     private string? _model;
     private string? _apiKey;
@@ -20,7 +21,6 @@ public class OpenAiService : BaseLanguageService
     private readonly JsonSerializerOptions _jsonOptions;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
-    private const string OpenAiApiBaseUrl = "https://api.openai.com/v1/";
 
     public OpenAiService(
         ISettingService settings,
@@ -106,15 +106,23 @@ public class OpenAiService : BaseLanguageService
         {
             try
             {
-                var requestUrl = $"{OpenAiApiBaseUrl}chat/completions";
+                var requestUrl = $"{_endpoint}chat/completions";
 
                 var requestBody = new Dictionary<string, object>
                 {
-                    ["model"] = _model,
+                    ["model"] = _model!,
                     ["messages"] = new[]
                     {
-                        new { role = "system", content = _prompt },
-                        new { role = "user", content = text }
+                        new Dictionary<string, string>
+                        {
+                            ["role"] = "system",
+                            ["content"] = _prompt!
+                        },
+                        new Dictionary<string, string>
+                        {
+                            ["role"] = "user",
+                            ["content"] = text
+                        }
                     }
                 };
 
@@ -201,7 +209,7 @@ public class OpenAiService : BaseLanguageService
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            var requestUrl = $"{OpenAiApiBaseUrl}models";
+            var requestUrl = $"{_endpoint}models";
             var response = await client.GetAsync(requestUrl);
 
             if (!response.IsSuccessStatusCode)

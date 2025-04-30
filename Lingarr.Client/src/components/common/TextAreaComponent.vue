@@ -3,16 +3,6 @@
         <label v-if="label.length" :for="id" class="mb-1 block text-sm">
             {{ label }}
         </label>
-        <div class="mb-3 flex flex-wrap gap-3">
-            <PlaceholderButton
-                v-for="(item, index) in placeholders"
-                :key="index"
-                :placeholder="item.placeholder"
-                :placeholder-text="item.placeholderText"
-                :title="item.title"
-                :description="item.description"
-                @insert="insertPlaceholder" />
-        </div>
         <div class="relative">
             <textarea
                 :id="id"
@@ -31,6 +21,16 @@
             {{ translate('settings.prompt.missingPlaceholders') }}
             {{ missingPlaceholders.join(' and ') }}
         </p>
+        <div class="flex flex-wrap gap-3">
+            <PlaceholderButton
+                v-for="(item, index) in placeholders"
+                :key="index"
+                :placeholder="item.placeholder"
+                :placeholder-text="item.placeholderText"
+                :title="item.title"
+                :description="item.description"
+                @insert="insertPlaceholder" />
+        </div>
     </div>
 </template>
 

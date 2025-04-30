@@ -3,7 +3,6 @@
         v-model="aiPrompt"
         :rows="10"
         :min-height="100"
-        :label="translate('settings.services.aIPromptLabel')"
         :placeholders="[
             {
                 placeholder: '{sourceLanguage}',
@@ -22,40 +21,10 @@
                 title: translate('settings.prompt.placeholders.targetLanguage.title'),
                 description: translate('settings.prompt.placeholders.targetLanguage.description'),
                 required: true
-            },
-            {
-                placeholder: '{lineToTranslate}',
-                placeholderText: translate('settings.prompt.insertPlaceholder').format({
-                    placeholder: '{lineToTranslate}'
-                }),
-                title: translate('settings.prompt.placeholders.lineToTranslate.title'),
-                description: translate('settings.prompt.placeholders.lineToTranslate.description'),
-                required: false
-            },
-            {
-                placeholder: '{contextBefore}',
-                placeholderText: translate('settings.prompt.insertPlaceholder').format({
-                    placeholder: '{contextBefore}'
-                }),
-                title: translate('settings.prompt.placeholders.contextBefore.title'),
-                description: translate('settings.prompt.placeholders.contextBefore.description'),
-                required: false
-            },
-            {
-                placeholder: '{contextAfter}',
-                placeholderText: translate('settings.prompt.insertPlaceholder').format({
-                    placeholder: '{contextAfter}'
-                }),
-                title: translate('settings.prompt.placeholders.contextAfter.title'),
-                description: translate('settings.prompt.placeholders.contextAfter.description'),
-                required: false
             }
         ]"
         :required-placeholders="['{sourceLanguage}', '{targetLanguage}']"
         @update:validation="(val) => (isValid = val)" />
-    <p class="text-xs">
-        {{ translate('settings.services.aIPromptDescription') }}
-    </p>
 </template>
 
 <script setup lang="ts">

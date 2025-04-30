@@ -30,7 +30,6 @@
                         class="flex h-5 w-5 cursor-pointer"
                         :title="translate('settings.custom.remove')"
                         @click="removeParameter(index)" />
-                    <!--                <TimesIcon" />-->
                 </div>
 
                 <div class="flex justify-end">
@@ -50,7 +49,6 @@ import { useSettingStore } from '@/store/setting'
 import { ICustomAiParams, SETTINGS } from '@/ts'
 import InputComponent from '@/components/common/InputComponent.vue'
 import CardComponent from '@/components/common/CardComponent.vue'
-import TimesIcon from '@/components/icons/TimesIcon.vue'
 import TrashIcon from '@/components/icons/TrashIcon.vue'
 
 const settingsStore = useSettingStore()

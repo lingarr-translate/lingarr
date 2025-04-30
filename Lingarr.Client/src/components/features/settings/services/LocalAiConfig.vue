@@ -34,8 +34,6 @@
             :label="translate('settings.services.apiKey')"
             @update:validation="(val) => (isValid.apiKey = val)" />
         <p class="text-xs">{{ translate('settings.services.localAiNotification') }}</p>
-
-        <AiPromptConfig @save="emit('save')" />
     </div>
 </template>
 
@@ -44,7 +42,6 @@ import { computed, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import { SETTINGS } from '@/ts'
 import InputComponent from '@/components/common/InputComponent.vue'
-import AiPromptConfig from '@/components/features/settings/services/AiPromptConfig.vue'
 
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])

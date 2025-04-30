@@ -86,8 +86,8 @@
     "statusCancelled": "Geannuleerd",
     "updateAvailable": "Update {version} is beschikbaar",
     "currentVersion": "Versie: {version} beta",
-    "enabled": "Ingeschakeld",
-    "disabled": "Uitgeschakeld",
+    "enabled": "Actief",
+    "disabled": "Inactief",
     "saved": "opgeslagen"
   },
   "settings": {
@@ -110,8 +110,6 @@
       "title": "Diensten",
       "description": "Configureer de vertaalservice voor ondertitelingslokalisatie.",
       "serviceSelect": "Selecteer vertaalservice:",
-      "aIPromptLabel": "Prompt",
-      "aIPromptDescription": "De prompt wordt gebruikt om een vertaling te starten met een AI-model. Houd er rekening mee dat uitgebreide prompts duurder zijn, terwijl eenvoudige prompts meer hallucinaties kunnen veroorzaken.",
       "serviceEnabled": "Ingeschakeld",
       "serviceDisabled": "Uitgeschakeld",
       "aiWarningIntro": "Automatisering is:",
@@ -192,7 +190,7 @@
     "validation": {
       "title": "Ondertitel Validatie",
       "description": "Configureer validatieregels voor ondertitels. Deze regels worden toegepast bij het verwerken van ondertitelbestanden. Als een validatie faalt, wordt de vertaling geannuleerd.",
-      "enabled": "Validatie inschakelen:",
+      "enabled": "Validatie activeren:",
       "maxDurationSecs": "De maximale tijdsduur in seconden dat een ondertitel mag worden weergegeven:",
       "minDurationMs": "De minimale tijdsduur in milliseconden dat een ondertitel moet worden weergegeven:",
       "minSubtitleLength": "Het minimale aantal tekens dat een ondertitel moet bevatten:",
@@ -200,7 +198,15 @@
       "maxFileSizeBytes": "De maximale grootte van een ondertitelbestand in bytes:"
     },
     "prompt": {
-      "enterYourPromptHere": "Voer hier je prompt in",
+      "title": "Systeem- en Contextprompts",
+      "description": "Definieer aangepaste instructies (systeemprompt) en een optionele contextprompt om de AI responslogica te sturen.",
+      "promptTitle": "Systeemprompt",
+      "promptDescription": "Bepaal het gedrag en de toon van de AI door globale instructies in te stellen.",
+      "contextPromptToggle": "Context prompt activeren:",
+      "contextPromptTitle": "Contextprompt",
+      "contextPromptDescription": "Geef de omliggende context, inclusief de regels voor en na de huidige ondertitel, om de AI te helpen een nauwkeurigere vertaling te genereren.",
+      "contextBefore": "Regels context om toe te voegen voor de ondertitelregel:",
+      "contextAfter": "Regels context om toe te voegen na de ondertitelregel:",     "enterYourPromptHere": "Voer hier je prompt in",
       "missingPlaceholders": "Vereiste placeholders ontbreken:",
       "insertPlaceholder": "{placeholder} toevoegen",
       "placeholders": {
