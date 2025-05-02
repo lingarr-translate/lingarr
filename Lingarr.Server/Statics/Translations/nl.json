@@ -88,7 +88,9 @@
     "currentVersion": "Versie: {version} beta",
     "enabled": "Actief",
     "disabled": "Inactief",
-    "saved": "opgeslagen"
+    "saved": "opgeslagen",
+    "loading": "Laden...",
+    "retry": "Opnieuw proberen"
   },
   "settings": {
     "integrations": {
@@ -144,7 +146,9 @@
       "fixOverlappingSubtitles": "Overlappende ondertitels verbeteren:",
       "fixOverlappingSubtitlesDescription": "Verbetert automatisch overlappende ondertitels door de timing aan te passen van de vorige, huidige en volgende ondertitel op basis van tekstlengte.",
       "stripSubtitleFormatting": "Verwijder ondertitelopmaak:",
-      "stripSubtitleFormattingDescription": "Schakel deze optie in om alle opmaak-tags (bijv. cursief, vet, kleur, positie) uit (SRT) ondertitels te verwijderen, wat resulteert in platte tekst ondertitels."
+      "stripSubtitleFormattingDescription": "Schakel deze optie in om alle opmaak-tags (bijv. cursief, vet, kleur, positie) uit (SRT) ondertitels te verwijderen, wat resulteert in platte tekst ondertitels.",
+      "languageLoadErrorTitle": "Fout bij het ophalen van talen",
+      "languageLoadErrorDescription": "Er is een onbekende fout opgetreden bij het ophalen van talen. Zorg ervoor dat de API-sleutel correct is ingesteld."
     },
     "indexing": {
       "title": "Indexering",

@@ -88,7 +88,9 @@
     "currentVersion": "Version: {version} beta",
     "enabled": "Enabled",
     "disabled": "Disabled",
-    "saved": "saved"
+    "saved": "saved",
+    "loading": "Loading...",
+    "retry": "Retry"
   },
   "settings": {
     "integrations": {
@@ -144,7 +146,9 @@
       "fixOverlappingSubtitles": "Fix overlapping subtitles:",
       "fixOverlappingSubtitlesDescription": "Automatically resolves overlapping subtitles by adjusting the timing of the previous, current and next subtitle based on text length.",
       "stripSubtitleFormatting": "Strip subtitle formatting:",
-      "stripSubtitleFormattingDescription": "Enable this option to remove all formatting tags (e.g., italics, bold, color, position) from (SRT) subtitles, resulting in plain text subtitles."
+      "stripSubtitleFormattingDescription": "Enable this option to remove all formatting tags (e.g., italics, bold, color, position) from (SRT) subtitles, resulting in plain text subtitles.",
+      "languageLoadErrorTitle": "Error retrieving languages",
+      "languageLoadErrorDescription": "Unknown error occurred while retrieving languages, make sure the api key is set correctly."
     },
     "indexing": {
       "title": "Indexing",
