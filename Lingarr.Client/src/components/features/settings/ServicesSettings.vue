@@ -15,6 +15,7 @@
                     v-if="serviceConfigComponent"
                     @save="saveNotification?.show()" />
             </div>
+            <SourceAndTarget @save="saveNotification?.show()" />
         </template>
     </CardComponent>
 </template>
@@ -34,6 +35,7 @@ import OpenAiConfig from '@/components/features/settings/services/OpenAiConfig.v
 import LocalAiConfig from '@/components/features/settings/services/LocalAiConfig.vue'
 import GeminiConfig from '@/components/features/settings/services/GeminiConfig.vue'
 import DeepSeekConfig from '@/components/features/settings/services/DeepSeekConfig.vue'
+import SourceAndTarget from '@/components/features/settings/SourceAndTarget.vue'
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()

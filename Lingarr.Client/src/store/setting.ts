@@ -1,5 +1,5 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { IUseSettingStore, ISettings, SETTINGS } from '@/ts'
+import { IUseSettingStore, ISettings, SETTINGS, ILanguage } from '@/ts'
 import services from '@/services'
 import { useTranslateStore } from '@/store/translate'
 import { useInstanceStore } from '@/store/instance'
@@ -41,12 +41,50 @@ export const useSettingStore = defineStore({
                     await this.saveSetting(key, value as string)
                 }
                 if (key === SETTINGS.SERVICE_TYPE) {
-                    const emptyLanguages = JSON.stringify([])
-                    this.storeSetting(SETTINGS.SOURCE_LANGUAGES, [])
-                    this.storeSetting(SETTINGS.TARGET_LANGUAGES, [])
-                    await this.saveSetting(SETTINGS.SOURCE_LANGUAGES, emptyLanguages)
-                    await this.saveSetting(SETTINGS.TARGET_LANGUAGES, emptyLanguages)
-                    await useTranslateStore().setLanguages()
+                    const currentSourceLanguages = [
+                        ...((this.settings[SETTINGS.SOURCE_LANGUAGES] as ILanguage[]) || [])
+                    ]
+                    const currentTargetLanguages = [
+                        ...((this.settings[SETTINGS.TARGET_LANGUAGES] as ILanguage[]) || [])
+                    ]
+
+                    const translateStore = useTranslateStore()
+                    await translateStore.setLanguages()
+                    const newLanguages = translateStore.getLanguages
+
+                    // Filter source languages that still exist in the new languages
+                    const validSourceLanguages = currentSourceLanguages.filter((currentLang) =>
+                        newLanguages.some(
+                            (newLang) =>
+                                newLang.code === currentLang.code &&
+                                newLang.name === currentLang.name
+                        )
+                    )
+
+                    // Filter target languages that still exist in the new languages and in a source language's targets
+                    const validTargetLanguages = currentTargetLanguages.filter((currentTarget) => {
+                        const matchingNewLang = newLanguages.find(
+                            (newLang) =>
+                                newLang.code === currentTarget.code &&
+                                newLang.name === currentTarget.name
+                        )
+
+                        if (!matchingNewLang) return false
+                        return newLanguages.some((newLang) =>
+                            newLang.targets?.includes(currentTarget.code)
+                        )
+                    })
+
+                    this.storeSetting(SETTINGS.SOURCE_LANGUAGES, validSourceLanguages)
+                    this.storeSetting(SETTINGS.TARGET_LANGUAGES, validTargetLanguages)
+                    await this.saveSetting(
+                        SETTINGS.SOURCE_LANGUAGES,
+                        JSON.stringify(validSourceLanguages)
+                    )
+                    await this.saveSetting(
+                        SETTINGS.TARGET_LANGUAGES,
+                        JSON.stringify(validTargetLanguages)
+                    )
                 }
             }
         },
