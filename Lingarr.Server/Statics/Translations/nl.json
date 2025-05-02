@@ -7,6 +7,7 @@
     "settings": "Instellingen",
     "integrations": "Integraties",
     "services": "Diensten",
+    "subtitle": "Ondertiteling",
     "automation": "Automatisering",
     "tasks": "Taken"
   },
@@ -131,7 +132,9 @@
       "addressUrlError": "Voer een geldige URL in (bijv. http://localhost:3000 of https://api.example.com)",
       "versionLabel": "Versie",
       "versionError": "Versie mag niet leeg zijn",
-      "freeServiceLimits": "Gratis vertaaldiensten hebben tarieflimieten die storingen kunnen veroorzaken."
+      "freeServiceLimits": "Gratis vertaaldiensten hebben tarieflimieten die storingen kunnen veroorzaken.",
+      "localAiPlaceholder": "http://ollama:11434/v1/chat/completions",
+      "localAiModelPlaceholder": "aya-expanse"
     },
     "translate": {
       "title": "Vertaling",
@@ -143,12 +146,16 @@
       "selectOrSearchLanguagePlaceholder": "Selecteer of zoek taal",
       "languageSelectPlaceholder": "Selecteer taal...",
       "languageSelectTargetNotification": "Selecteer eerst een brontaal.",
+      "languageLoadErrorTitle": "Fout bij het ophalen van talen",
+      "languageLoadErrorDescription": "Er is een onbekende fout opgetreden bij het ophalen van talen. Zorg ervoor dat de API-sleutel correct is ingesteld."
+    },
+    "subtitle": {
+      "title": "Ondertiteling",
+      "description": "Configureer hoe ondertitels worden opgeschoond en getimed om overlappingen te voorkomen en ongewenste opmaak te verwijderen.",
       "fixOverlappingSubtitles": "Overlappende ondertitels verbeteren:",
       "fixOverlappingSubtitlesDescription": "Verbetert automatisch overlappende ondertitels door de timing aan te passen van de vorige, huidige en volgende ondertitel op basis van tekstlengte.",
       "stripSubtitleFormatting": "Verwijder ondertitelopmaak:",
-      "stripSubtitleFormattingDescription": "Schakel deze optie in om alle opmaak-tags (bijv. cursief, vet, kleur, positie) uit (SRT) ondertitels te verwijderen, wat resulteert in platte tekst ondertitels.",
-      "languageLoadErrorTitle": "Fout bij het ophalen van talen",
-      "languageLoadErrorDescription": "Er is een onbekende fout opgetreden bij het ophalen van talen. Zorg ervoor dat de API-sleutel correct is ingesteld."
+      "stripSubtitleFormattingDescription": "Schakel deze optie in om alle opmaak-tags (bijv. cursief, vet, kleur, positie) uit (SRT) ondertitels te verwijderen, wat resulteert in platte tekst ondertitels."
     },
     "indexing": {
       "title": "Indexering",
@@ -210,7 +217,8 @@
       "contextPromptTitle": "Contextprompt",
       "contextPromptDescription": "Geef de omliggende context, inclusief de regels voor en na de huidige ondertitel, om de AI te helpen een nauwkeurigere vertaling te genereren.",
       "contextBefore": "Regels context om toe te voegen voor de ondertitelregel:",
-      "contextAfter": "Regels context om toe te voegen na de ondertitelregel:",     "enterYourPromptHere": "Voer hier je prompt in",
+      "contextAfter": "Regels context om toe te voegen na de ondertitelregel:",
+      "enterYourPromptHere": "Voer hier je prompt in",
       "missingPlaceholders": "Vereiste placeholders ontbreken:",
       "insertPlaceholder": "{placeholder} toevoegen",
       "placeholders": {

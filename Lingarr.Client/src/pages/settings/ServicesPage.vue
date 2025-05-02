@@ -26,8 +26,6 @@
                     serviceType as 'openai' | 'anthropic' | 'localai' | 'gemini' | 'deepseek'
                 )
             " />
-        <TranslationSettings v-if="serviceType" :service-type="serviceType" />
-        <ValidationSettings />
     </div>
 </template>
 
@@ -36,8 +34,6 @@ import { computed } from 'vue'
 import { SETTINGS, SERVICE_TYPE } from '@/ts'
 import { useSettingStore } from '@/store/setting'
 import ServicesSettings from '@/components/features/settings/ServicesSettings.vue'
-import TranslationSettings from '@/components/features/settings/TranslationSettings.vue'
-import ValidationSettings from '@/components/features/settings/ValidationSettings.vue'
 import CustomAiParameters from '@/components/features/settings/CustomAiParameters.vue'
 import PromptSettings from '@/components/features/settings/PromptSettings.vue'
 
