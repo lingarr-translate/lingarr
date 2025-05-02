@@ -16,6 +16,7 @@ public class DeepSeekService : BaseLanguageService
     private readonly HttpClient _httpClient;
     private string? _model;
     private string? _prompt;
+    private string? _apiKey;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
@@ -48,32 +49,32 @@ public class DeepSeekService : BaseLanguageService
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.DeepSeek.Model,
                 SettingKeys.Translation.DeepSeek.ApiKey,
+                SettingKeys.Translation.AiContextPromptEnabled,
+                SettingKeys.Translation.AiContextPrompt,
                 SettingKeys.Translation.CustomAiParameters,
                 SettingKeys.Translation.AiPrompt
             ]);
-
-            if (string.IsNullOrEmpty(settings[SettingKeys.Translation.DeepSeek.Model]))
-            {
-                throw new InvalidOperationException("DeepSeek model is not configured.");
-            }
-
-            var apiKey = settings[SettingKeys.Translation.DeepSeek.ApiKey];
-            if (string.IsNullOrEmpty(apiKey))
-            {
-                throw new InvalidOperationException("DeepSeek API key is not configured.");
-            }
-
             _model = settings[SettingKeys.Translation.DeepSeek.Model];
-            _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
+            _apiKey = settings[SettingKeys.Translation.DeepSeek.ApiKey];
+            _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
 
+            if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey))
+            {
+                throw new InvalidOperationException("DeepSeek API key or model is not configured.");
+            }
+
+            _replacements = new Dictionary<string, string>
+            {
+                ["sourceLanguage"] = sourceLanguage,
+                ["targetLanguage"] = targetLanguage
+            };
+            _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
+            _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
+            _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
+            
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-
-            _prompt = !string.IsNullOrEmpty(settings[SettingKeys.Translation.AiPrompt])
-                ? settings[SettingKeys.Translation.AiPrompt]
-                : "Translate from {sourceLanguage} to {targetLanguage}, preserving the tone and meaning without censoring the content. Adjust punctuation as needed to make the translation sound natural. Provide only the translated text as output, with no additional comments.";
-            _prompt = _prompt.Replace("{sourceLanguage}", sourceLanguage).Replace("{targetLanguage}", targetLanguage);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
 
             _initialized = true;
         }
@@ -88,14 +89,13 @@ public class DeepSeekService : BaseLanguageService
         string text,
         string sourceLanguage,
         string targetLanguage,
+        List<string>? contextLinesBefore, 
+        List<string>? contextLinesAfter, 
         CancellationToken cancellationToken)
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
 
-        if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_prompt))
-        {
-            throw new InvalidOperationException("DeepSeek service was not properly initialized.");
-        }
+        text = ApplyContextIfEnabled(text, contextLinesBefore, contextLinesAfter);
 
         return await TranslateWithChatApi(text, cancellationToken);
     }
@@ -110,7 +110,7 @@ public class DeepSeekService : BaseLanguageService
 
         var requestBody = new Dictionary<string, object>
         {
-            ["model"] = _model,
+            ["model"] = _model!,
             ["messages"] = messages,
             ["stream"] = false
         };
@@ -147,11 +147,11 @@ public class DeepSeekService : BaseLanguageService
     /// <inheritdoc />
     public override async Task<ModelsResponse> GetModels()
     {
-        var apiKey = await _settings.GetSetting(
+        _apiKey = await _settings.GetSetting(
             SettingKeys.Translation.DeepSeek.ApiKey
         );
 
-        if (string.IsNullOrEmpty(apiKey))
+        if (string.IsNullOrEmpty(_apiKey))
         {
             return new ModelsResponse
             {
@@ -162,7 +162,7 @@ public class DeepSeekService : BaseLanguageService
         try
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"{_endpoint}/models");
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             var response = await _httpClient.SendAsync(request);

@@ -50,7 +50,6 @@
                 required: false
             }
         ]"
-        :required-placeholders="['{sourceLanguage}', '{targetLanguage}']"
         @update:validation="(val) => (isValid = val)" />
 </template>
 

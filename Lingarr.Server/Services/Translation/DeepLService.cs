@@ -43,7 +43,7 @@ public class DeepLService : BaseTranslationService
             var authKey = await _settings.GetSetting(SettingKeys.Translation.DeepL.DeeplApiKey);
             if (string.IsNullOrWhiteSpace(authKey))
             {
-                throw new InvalidOperationException("Translation using DeepL failed, please validate the API key.");
+                throw new InvalidOperationException("DeepL failed, please validate the API key.");
             }
 
             _translator = new Translator(authKey, new TranslatorOptions
@@ -102,6 +102,8 @@ public class DeepLService : BaseTranslationService
         string text,
         string sourceLanguage,
         string targetLanguage, 
+        List<string>? contextLinesBefore, 
+        List<string>? contextLinesAfter, 
         CancellationToken cancellationToken)
     {
         await InitializeAsync();

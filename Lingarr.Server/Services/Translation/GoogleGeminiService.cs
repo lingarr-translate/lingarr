@@ -51,25 +51,30 @@ public class GoogleGeminiService : BaseLanguageService
                 SettingKeys.Translation.Gemini.Model,
                 SettingKeys.Translation.Gemini.ApiKey,
                 SettingKeys.Translation.AiPrompt,
+                SettingKeys.Translation.AiContextPrompt,
+                SettingKeys.Translation.AiContextPromptEnabled,
                 SettingKeys.Translation.CustomAiParameters
             ]);
-
-            if (string.IsNullOrEmpty(settings[SettingKeys.Translation.Gemini.ApiKey]))
-            {
-                throw new InvalidOperationException("Gemini API key is not configured.");
-            }
-
             _apiKey = settings[SettingKeys.Translation.Gemini.ApiKey];
             _model = settings[SettingKeys.Translation.Gemini.Model];
+            _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
+
+            if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey))
+            {
+                throw new InvalidOperationException("Gemini API key or model is not configured.");
+            }
+
+            _replacements = new Dictionary<string, string>
+            {
+                ["sourceLanguage"] = sourceLanguage,
+                ["targetLanguage"] = targetLanguage
+            };
+            _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
+            _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
             _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
 
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-
-            _prompt = !string.IsNullOrEmpty(settings[SettingKeys.Translation.AiPrompt])
-                ? settings[SettingKeys.Translation.AiPrompt]
-                : "Translate from {sourceLanguage} to {targetLanguage}, preserving the tone and meaning without censoring the content. Adjust punctuation as needed to make the translation sound natural. Provide only the translated text as output, with no additional comments.";
-            _prompt = _prompt.Replace("{sourceLanguage}", sourceLanguage).Replace("{targetLanguage}", targetLanguage);
 
             _initialized = true;
         }
@@ -81,18 +86,16 @@ public class GoogleGeminiService : BaseLanguageService
 
     /// <inheritdoc />
     public override async Task<string> TranslateAsync(
-        string message,
+        string text,
         string sourceLanguage,
         string targetLanguage,
+        List<string>? contextLinesBefore, 
+        List<string>? contextLinesAfter, 
         CancellationToken cancellationToken)
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
-
-        if (string.IsNullOrEmpty(_apiKey) || string.IsNullOrEmpty(_model))
-        {
-            throw new InvalidOperationException("Gemini service was not properly initialized.");
-        }
-
+        
+        text = ApplyContextIfEnabled(text, contextLinesBefore, contextLinesAfter);
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
 
@@ -104,13 +107,13 @@ public class GoogleGeminiService : BaseLanguageService
         {
             try
             {
-                return await TranslateWithGeminiApi(message, linked.Token);
+                return await TranslateWithGeminiApi(text, linked.Token);
             }
             catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
             {
                 if (attempt == maxRetries)
                 {
-                    _logger.LogError(ex, "Too many requests. Max retries exhausted for text: {Text}", message);
+                    _logger.LogError(ex, "Too many requests. Max retries exhausted for text: {Text}", text);
                     throw new TranslationException("Too many requests. Retry limit reached.", ex);
                 }
 

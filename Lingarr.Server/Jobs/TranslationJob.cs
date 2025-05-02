@@ -80,11 +80,30 @@ public class TranslationJob
                 SettingKeys.SubtitleValidation.MaxSubtitleLength,
                 SettingKeys.SubtitleValidation.MinSubtitleLength,
                 SettingKeys.SubtitleValidation.MinDurationMs,
-                SettingKeys.SubtitleValidation.MaxDurationSecs
+                SettingKeys.SubtitleValidation.MaxDurationSecs,
+                
+                SettingKeys.Translation.AiContextPromptEnabled,
+                SettingKeys.Translation.AiContextBefore,
+                SettingKeys.Translation.AiContextBefore,
+                SettingKeys.Translation.AiContextAfter
             ]);
             var serviceType = settings[SettingKeys.Translation.ServiceType];
             var stripSubtitleFormatting =  settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
             var validateSubtitles = settings[SettingKeys.SubtitleValidation.ValidateSubtitles] != "false";
+
+            var contextBefore = 0;
+            var contextAfter = 0;
+            if (settings[SettingKeys.Translation.AiContextPromptEnabled] == "true")
+            {
+                contextBefore = int.TryParse(settings[SettingKeys.Translation.AiContextBefore],
+                    out var linesBefore)
+                    ? linesBefore
+                    : 0;
+                contextAfter = int.TryParse(settings[SettingKeys.Translation.AiContextAfter],
+                    out var linesAfter)
+                    ? linesAfter
+                    : 0;
+            }
 
             // validate subtitles
             if (validateSubtitles)
@@ -149,6 +168,8 @@ public class TranslationJob
                 subtitles, 
                 request, 
                 stripSubtitleFormatting,
+                contextBefore,
+                contextAfter,
                 cancellationToken
             );
             

@@ -23,8 +23,8 @@ namespace Lingarr.Migrations.SQLite.Migrations
                     { "subtitle_validation_minsubtitlelength", "2" },
                     { "subtitle_validation_mindurationms", "500" },
                     { "subtitle_validation_maxdurationsecs", "10" },
-                    { "ai_context_prompt", "Translate the TARGET line from {sourceLanguage} to {targetLanguage}, preserving tone, intent, and cultural meaning. Do not censor content. Adjust punctuation naturally. Use the CONTEXT below to ensure the translation fits conversationally. Return only the translated TARGET line, no comments, no labels.\n\nContext:\n{contextBefore}\n[TARGET] {lineToTranslate}\n{contextAfter}\n" },
                     { "ai_context_prompt_enabled", "false" },
+                    { "ai_context_prompt", "Use the CONTEXT to translate the TARGET line.\n\n[TARGET] {lineToTranslate}\n\n[CONTEXT]\n{contextBefore}\n{lineToTranslate}\n{contextAfter}\n[/CONTEXT]" },
                     { "ai_context_before", "2" },
                     { "ai_context_after", "2" }
                 });
