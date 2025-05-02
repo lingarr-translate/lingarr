@@ -5,6 +5,22 @@
             <div class="bg-tertiary flex flex-wrap items-center justify-between gap-2 p-4">
                 <SearchComponent v-model="filter" />
                 <div class="flex w-full justify-between space-x-2 md:w-fit">
+                    <button
+                        v-if="isSelectMode"
+                        class="border-accent text-primary-content hover:text-primary-content/50 cursor-pointer rounded-md border px-2 py-1 transition-colors"
+                        @click="handleDelete">
+                        {{ translate('translations.delete') }}
+                        ({{ translationRequestStore.selectedRequests.length }})
+                    </button>
+                    <button
+                        class="border-accent text-primary-content hover:text-primary-content/50 cursor-pointer rounded-md border px-2 py-1 transition-colors"
+                        @click="toggleSelectMode">
+                        {{
+                            isSelectMode
+                                ? translate('translations.cancel')
+                                : translate('translations.select')
+                        }}
+                    </button>
                     <SortControls
                         v-model="filter"
                         :options="[
@@ -26,16 +42,27 @@
 
             <div class="w-full px-4">
                 <div class="border-accent hidden border-b font-bold md:grid md:grid-cols-12">
-                    <div class="col-span-4 px-4 py-2">{{ translate('translations.title') }}</div>
+                    <div class="col-span-4 px-4 py-2">
+                        {{ translate('translations.title') }}
+                    </div>
                     <div class="col-span-1 px-4 py-2">{{ translate('translations.source') }}</div>
                     <div class="col-span-1 px-4 py-2">{{ translate('translations.target') }}</div>
                     <div class="col-span-1 px-4 py-2">{{ translate('translations.status') }}</div>
-                    <div class="col-span-3 px-4 py-2">{{ translate('translations.progress') }}</div>
+                    <div class="px-4 py-2" :class="isSelectMode ? 'col-span-2' : 'col-span-3'">
+                        {{ translate('translations.progress') }}
+                    </div>
                     <div class="col-span-1 px-4 py-2">
                         {{ translate('translations.completed') }}
                     </div>
                     <div class="col-span-1 flex justify-end px-4 py-2">
                         <ReloadComponent @toggle:update="translationRequestStore.fetch()" />
+                    </div>
+                    <div
+                        v-if="isSelectMode"
+                        class="col-span-1 flex items-center justify-center px-4 py-2">
+                        <CheckboxComponent
+                            :model-value="translationRequestStore.selectAll"
+                            @change="translationRequestStore.toggleSelectAll()" />
                     </div>
                 </div>
                 <div
@@ -84,7 +111,9 @@
                         </span>
                         <TranslationStatus :translation-status="item.status" />
                     </div>
-                    <div class="mb-2 flex items-center md:col-span-3 md:mb-0 md:px-4 md:py-2">
+                    <div
+                        class="mb-2 flex max-w-6 items-center md:mb-0 md:px-4 md:py-2"
+                        :class="isSelectMode ? 'md:col-span-2' : 'md:col-span-3'">
                         <div
                             v-if="item.status === TRANSLATION_STATUS.INPROGRESS && item.progress"
                             class="w-full">
@@ -109,6 +138,17 @@
                                 :status="item.status"
                                 @toggle:action="(action) => handleAction(item, action)" />
                         </div>
+                    </div>
+                    <div
+                        v-if="isSelectMode"
+                        class="col-span-1 flex items-center justify-end py-2 md:justify-center md:px-4">
+                        <CheckboxComponent
+                            :model-value="
+                                translationRequestStore.selectedRequests.some(
+                                    (request) => request.id === item.id
+                                )
+                            "
+                            @change="translationRequestStore.toggleSelect(item)" />
                     </div>
                 </div>
             </div>
@@ -144,6 +184,7 @@ import TranslationAction from '@/components/common/TranslationAction.vue'
 import TranslationCompletedAt from '@/components/common/TranslationCompletedAt.vue'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
 import PageLayout from '@/components/layout/PageLayout.vue'
+import CheckboxComponent from '@/components/common/CheckboxComponent.vue'
 
 const signalR = useSignalR()
 const hubConnection = ref<Hub>()
@@ -182,4 +223,21 @@ onMounted(async () => {
 onUnmounted(async () => {
     hubConnection.value?.off('RequestProgress', translationRequestStore.updateProgress)
 })
+
+const isSelectMode = ref(false)
+
+const toggleSelectMode = () => {
+    isSelectMode.value = !isSelectMode.value
+    if (!isSelectMode.value) {
+        translationRequestStore.clearSelection()
+    }
+}
+
+const handleDelete = async () => {
+    for (const request of translationRequestStore.getSelectedRequests) {
+        await translationRequestStore.remove(request)
+    }
+    translationRequestStore.clearSelection()
+    translationRequestStore.fetch()
+}
 </script>
