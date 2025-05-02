@@ -24,6 +24,8 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
         string text, 
         string sourceLanguage, 
         string targetLanguage,
+        List<string>? contextLinesBefore, 
+        List<string>? contextLinesAfter, 
         CancellationToken cancellationToken)
     {
         using var retry = new CancellationTokenSource();

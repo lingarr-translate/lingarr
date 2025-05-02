@@ -7,8 +7,11 @@ namespace Lingarr.Server.Services.Translation.Base;
 
 public abstract class BaseLanguageService : BaseTranslationService
 {
-    protected List<KeyValuePair<string, object>>? _customParameters;
     private readonly string _languageFilePath;
+    protected string? _contextPrompt;
+    protected string? _contextPromptEnabled;
+    protected Dictionary<string, string> _replacements;
+    protected List<KeyValuePair<string, object>>? _customParameters;
 
     protected BaseLanguageService(
         ISettingService settings,
@@ -74,6 +77,37 @@ public abstract class BaseLanguageService : BaseTranslationService
     
         return value;
     }
+
+    protected string ReplacePlaceholders(string promptTemplate, Dictionary<string, string> replacements)
+    {
+        if (string.IsNullOrEmpty(promptTemplate))
+            return promptTemplate;
+
+        var result = promptTemplate;
+        foreach (var replacement in replacements)
+        {
+            result = result.Replace($"{{{replacement.Key}}}", replacement.Value);
+        }
+
+        return result;
+    }
+
+    protected string ApplyContextIfEnabled(
+        string text, 
+        List<string>? contextLinesBefore, 
+        List<string>? contextLinesAfter)
+    {
+        if (_contextPromptEnabled != "true" || string.IsNullOrEmpty(_contextPrompt))
+        {
+            return text;
+        }
+
+        _replacements["contextBefore"] = string.Join("\n", contextLinesBefore ?? []);
+        _replacements["lineToTranslate"] = text;
+        _replacements["contextAfter"] = string.Join("\n", contextLinesAfter ?? []);
+        return ReplacePlaceholders(_contextPrompt, _replacements);
+    }
+
     
     /// <summary>
     /// Adds custom parameters to the request data if they exist.

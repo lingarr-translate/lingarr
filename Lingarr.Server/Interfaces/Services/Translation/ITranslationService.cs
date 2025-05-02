@@ -12,6 +12,8 @@ public interface ITranslationService
     /// <param name="text">The text to be translated.</param>
     /// <param name="sourceLanguage">The language code of the source text.</param>
     /// <param name="targetLanguage">The language code of the desired translation.</param>
+    /// <param name="contextLinesBefore">List of subtitle lines after the subtitle line</param>
+    /// <param name="contextLinesAfter">List of subtitle lines after the subtitle line</param>
     /// <param name="cancellationToken">Token to cancel the translation operation</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the translated text.</returns>
     /// <exception cref="ArgumentException">Thrown when the input parameters are invalid or empty.</exception>
@@ -20,6 +22,8 @@ public interface ITranslationService
         string text, 
         string sourceLanguage, 
         string targetLanguage, 
+        List<string>? contextLinesBefore, 
+        List<string>? contextLinesAfter, 
         CancellationToken cancellationToken);
     
     /// <summary>

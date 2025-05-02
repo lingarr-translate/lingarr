@@ -20,6 +20,8 @@ public abstract class BaseTranslationService : ITranslationService
         string text, 
         string sourceLanguage, 
         string targetLanguage,
+        List<string>? contextLinesBefore, 
+        List<string>? contextLinesAfter, 
         CancellationToken cancellationToken);
 
     /// <inheritdoc />

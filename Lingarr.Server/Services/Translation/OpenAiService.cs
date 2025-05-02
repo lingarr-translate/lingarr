@@ -58,21 +58,27 @@ public class OpenAiService : BaseLanguageService
                 SettingKeys.Translation.OpenAi.Model,
                 SettingKeys.Translation.OpenAi.ApiKey,
                 SettingKeys.Translation.AiPrompt,
+                SettingKeys.Translation.AiContextPrompt,
+                SettingKeys.Translation.AiContextPromptEnabled,
                 SettingKeys.Translation.CustomAiParameters
             ]);
 
             _model = settings[SettingKeys.Translation.OpenAi.Model];
             _apiKey = settings[SettingKeys.Translation.OpenAi.ApiKey];
+            _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey))
             {
                 throw new InvalidOperationException("OpenAI API key or model is not configured.");
             }
 
-            _prompt = !string.IsNullOrEmpty(settings[SettingKeys.Translation.AiPrompt])
-                ? settings[SettingKeys.Translation.AiPrompt]
-                : "Translate from {sourceLanguage} to {targetLanguage}, preserving the tone and meaning without censoring the content. Adjust punctuation as needed to make the translation sound natural. Provide only the translated text as output, with no additional comments.";
-            _prompt = _prompt.Replace("{sourceLanguage}", sourceLanguage).Replace("{targetLanguage}", targetLanguage);
+            _replacements = new Dictionary<string, string>
+            {
+                ["sourceLanguage"] = sourceLanguage,
+                ["targetLanguage"] = targetLanguage
+            };
+            _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
+            _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
             _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
 
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
@@ -91,10 +97,13 @@ public class OpenAiService : BaseLanguageService
         string text,
         string sourceLanguage,
         string targetLanguage,
+        List<string>? contextLinesBefore, 
+        List<string>? contextLinesAfter, 
         CancellationToken cancellationToken)
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
 
+        text = ApplyContextIfEnabled(text, contextLinesBefore, contextLinesAfter);
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
 

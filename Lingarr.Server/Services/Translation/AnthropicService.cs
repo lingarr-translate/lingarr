@@ -15,6 +15,8 @@ public class AnthropicService : BaseLanguageService
     private readonly HttpClient _httpClient;
     private string? _model;
     private string? _prompt;
+    private string? _apiKey;
+    private string? _version;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
@@ -47,27 +49,34 @@ public class AnthropicService : BaseLanguageService
                 SettingKeys.Translation.Anthropic.Model,
                 SettingKeys.Translation.Anthropic.ApiKey,
                 SettingKeys.Translation.Anthropic.Version,
+                SettingKeys.Translation.AiPrompt,
+                SettingKeys.Translation.AiContextPrompt,
+                SettingKeys.Translation.AiContextPromptEnabled,
                 SettingKeys.Translation.CustomAiParameters,
-                SettingKeys.Translation.AiPrompt
             ]);
+            _model = settings[SettingKeys.Translation.Anthropic.Model];
+            _apiKey = settings[SettingKeys.Translation.Anthropic.ApiKey];
+            _version = settings[SettingKeys.Translation.Anthropic.Version];
+            _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
 
-            if (string.IsNullOrEmpty(settings[SettingKeys.Translation.Anthropic.Model]) ||
-                string.IsNullOrEmpty(settings[SettingKeys.Translation.Anthropic.ApiKey]) ||
-                string.IsNullOrEmpty(settings[SettingKeys.Translation.Anthropic.Version]))
+
+            if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey) || string.IsNullOrEmpty(_version))
             {
-                throw new InvalidOperationException("Anthropic API key or model is not configured.");
+                throw new InvalidOperationException("Anthropic API key, model or version is not configured.");
             }
 
-            _model = settings[SettingKeys.Translation.Anthropic.Model];
+            _replacements = new Dictionary<string, string>
+            {
+                ["sourceLanguage"] = sourceLanguage,
+                ["targetLanguage"] = targetLanguage
+            };
+            _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
+            _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
             _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
+            
             _httpClient.DefaultRequestHeaders.Add("x-api-key", settings[SettingKeys.Translation.Anthropic.ApiKey]);
             _httpClient.DefaultRequestHeaders.Add("anthropic-version",
                 settings[SettingKeys.Translation.Anthropic.Version]);
-
-            _prompt = !string.IsNullOrEmpty(settings[SettingKeys.Translation.AiPrompt])
-                ? settings[SettingKeys.Translation.AiPrompt]
-                : "Translate from {sourceLanguage} to {targetLanguage}, preserving the tone and meaning without censoring the content. Adjust punctuation as needed to make the translation sound natural. Provide only the translated text as output, with no additional comments.";
-            _prompt = _prompt.Replace("{sourceLanguage}", sourceLanguage).Replace("{targetLanguage}", targetLanguage);
 
             _initialized = true;
         }
@@ -79,13 +88,16 @@ public class AnthropicService : BaseLanguageService
 
     /// <inheritdoc />
     public override async Task<string> TranslateAsync(
-        string? text,
+        string text,
         string sourceLanguage,
         string targetLanguage,
+        List<string>? contextLinesBefore, 
+        List<string>? contextLinesAfter, 
         CancellationToken cancellationToken)
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
 
+        text = ApplyContextIfEnabled(text, contextLinesBefore, contextLinesAfter);
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
 
@@ -99,8 +111,8 @@ public class AnthropicService : BaseLanguageService
             {
                 var requestBody = new Dictionary<string, object>
                 {
-                    ["model"] = _model,
-                    ["system"] = _prompt,
+                    ["model"] = _model!,
+                    ["system"] = _prompt!,
                     ["messages"] = new[]
                     {
                         new { role = "user", content = text }
@@ -132,8 +144,8 @@ public class AnthropicService : BaseLanguageService
 
                 var responseBody = await response.Content.ReadAsStringAsync(linked.Token);
                 var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
-                return jsonResponse.GetProperty("content")[0].GetProperty("text").GetString() ??
-                       throw new InvalidOperationException();
+                var subtitleLine = jsonResponse.GetProperty("content")[0].GetProperty("text").GetString();
+                return subtitleLine ?? throw new InvalidOperationException();
             }
             catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
             {
