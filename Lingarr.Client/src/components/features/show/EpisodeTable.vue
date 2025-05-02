@@ -67,7 +67,12 @@ const showStore = useShowStore()
 const getSubtitle = (fileName: string | null) => {
     if (!fileName) return null
     return props.subtitles
-        .filter((subtitle: ISubtitle) => subtitle.fileName.includes(fileName))
+        .filter(
+            (subtitle: ISubtitle) =>
+                subtitle.fileName.includes(fileName) &&
+                subtitle.language &&
+                subtitle.language.trim() !== ''
+        )
         .slice()
         .sort((a, b) => a.language.localeCompare(b.language))
 }
