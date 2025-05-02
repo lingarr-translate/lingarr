@@ -19,6 +19,7 @@ public abstract class BaseLanguageService : BaseTranslationService
         string languageFilePath) : base(settings, logger)
     {
         _languageFilePath = languageFilePath;
+        _replacements = new Dictionary<string, string>();
     }
     
     /// <summary>
@@ -167,5 +168,29 @@ public abstract class BaseLanguageService : BaseTranslationService
     public override async Task<ModelsResponse> GetModels()
     {
         return await Task.FromResult(new ModelsResponse());
+    }
+    
+    /// <summary>
+    /// Converts a two-letter ISO language code to a full language name.
+    /// </summary>
+    /// <param name="twoLetterIsoLanguageName">The two-letter ISO language code to convert.</param>
+    /// <returns>The full language name or the original code if no match is found.</returns>
+    protected static string GetFullLanguageName(string twoLetterIsoLanguageName)
+    {
+        if (string.IsNullOrWhiteSpace(twoLetterIsoLanguageName))
+            return twoLetterIsoLanguageName;
+            
+        try
+        {
+            var culture = CultureInfo.GetCultures(CultureTypes.AllCultures)
+                .FirstOrDefault(c => string.Equals(c.TwoLetterISOLanguageName, 
+                    twoLetterIsoLanguageName, StringComparison.OrdinalIgnoreCase));
+                
+            return culture?.DisplayName ?? twoLetterIsoLanguageName;
+        }
+        catch
+        {
+            return twoLetterIsoLanguageName;
+        }
     }
 }
