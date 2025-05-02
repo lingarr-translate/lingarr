@@ -1,5 +1,12 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { IUseSettingStore, ISettings, SETTINGS, ILanguage } from '@/ts'
+import {
+    IUseSettingStore,
+    ISettings,
+    SETTINGS,
+    ILanguage,
+    SERVICE_TYPE,
+    ICustomAiParams
+} from '@/ts'
 import services from '@/services'
 import { useTranslateStore } from '@/store/translate'
 import { useInstanceStore } from '@/store/instance'
@@ -40,7 +47,24 @@ export const useSettingStore = defineStore({
                 } else {
                     await this.saveSetting(key, value as string)
                 }
+                // When Anthropic is selected the max_tokens parameter is required
+                if (key === SETTINGS.SERVICE_TYPE && value === SERVICE_TYPE.ANTHROPIC) {
+                    const maxTokensExists = this.settings.custom_ai_parameters as ICustomAiParams[]
+
+                    if (!maxTokensExists.some((param) => param.key === 'max_tokens')) {
+                        const updatedParams = [
+                            ...this.settings.custom_ai_parameters,
+                            { key: 'max_tokens', value: '1024' }
+                        ]
+                        this.storeSetting(SETTINGS.CUSTOM_AI_PARAMETERS, updatedParams)
+                        await this.saveSetting(
+                            SETTINGS.CUSTOM_AI_PARAMETERS,
+                            JSON.stringify(updatedParams)
+                        )
+                    }
+                }
                 if (key === SETTINGS.SERVICE_TYPE) {
+                    // When a new service is selected we check if all selected languages is still valid
                     const currentSourceLanguages = [
                         ...((this.settings[SETTINGS.SOURCE_LANGUAGES] as ILanguage[]) || [])
                     ]
