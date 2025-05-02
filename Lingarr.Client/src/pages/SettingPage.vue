@@ -42,6 +42,7 @@ import SettingIcon from '@/components/icons/SettingIcon.vue'
 import AutomationIcon from '@/components/icons/AutomationIcon.vue'
 import TaskIcon from '@/components/icons/TaskIcon.vue'
 import { MenuItem } from '@/ts'
+import LanguageIcon from '@/components/icons/LanguageIcon.vue'
 
 const { translate } = useI18n()
 
@@ -56,6 +57,12 @@ const menuItems: MenuItem[] = [
         label: translate('navigation.services'),
         icon: SettingIcon,
         route: 'services-settings',
+        children: []
+    },
+    {
+        label: translate('navigation.subtitle'),
+        icon: LanguageIcon,
+        route: 'subtitle-settings',
         children: []
     },
     {

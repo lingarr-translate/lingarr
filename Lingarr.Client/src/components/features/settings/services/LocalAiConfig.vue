@@ -18,6 +18,7 @@
         <InputComponent
             v-model="address"
             validation-type="url"
+            :placeholder="translate('settings.services.localAiPlaceholder')"
             :label="translate('settings.services.serviceAddress')"
             @update:validation="(val) => (isValid.address = val)" />
 
@@ -25,6 +26,7 @@
             v-model="aiModel"
             validation-type="string"
             :label="translate('settings.services.aiModel')"
+            :placeholder="translate('settings.services.localAiModelPlaceholder')"
             @update:validation="(val) => (isValid.model = val)" />
 
         <InputComponent
