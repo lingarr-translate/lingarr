@@ -12,7 +12,6 @@ RUN npm run build
 # Step 2: Prepare the base image for the server
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
-EXPOSE 8080
 
 # Step 3: Build the server
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
