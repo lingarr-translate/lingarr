@@ -12,7 +12,9 @@
             <div class="p-4">
                 <div class="flex items-start">
                     <div class="shrink-0">
-                        <CheckMarkIcon v-if="type === 'success'" class="h-6 w-6 text-green-400" />
+                        <CheckMarkCicleIcon
+                            v-if="type === 'success'"
+                            class="h-6 w-6 text-green-400" />
                         <TimesCircleIcon
                             v-else-if="type === 'error'"
                             class="h-6 w-6 text-red-400" />
@@ -48,7 +50,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import CheckMarkIcon from '@/components/icons/CheckMarkIcon.vue'
+import CheckMarkCicleIcon from '@/components/icons/CheckMarkCicleIcon.vue'
 import TimesCircleIcon from '@/components/icons/TimesCircleIcon.vue'
 import ExclamationIcon from '@/components/icons/ExclamationIcon.vue'
 import TimesIcon from '@/components/icons/TimesIcon.vue'
