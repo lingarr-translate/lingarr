@@ -8,13 +8,13 @@ https://github.com/user-attachments/assets/be753d77-ca53-4867-adea-363145613d2b
 ### 🌟 Multiple Translation Service Support
 Lingarr now offers multiple services for automated translation:
 
-- **[LibreTranslate](https://libretranslate.com)** 
+- **[LibreTranslate](https://libretranslate.com)**
+- **Local AI (with Ollama, or any other OpenAPI compatible model/router)**
 - **[DeepL](https://www.deepl.com/)**
 - **[Anthropic](https://www.anthropic.com/)**
 - **[OpenAI](https://openai.com/)**
 - **[DeepSeek](https://deepseek.com)**
 - **[Gemini](https://gemini.google.com/)**
-- **[Local AI](https://localai.io/)** 
 - **[Google](https://translate.google.com/)** 
 - **[Bing](https://www.bing.com/translator)**
 - **[Yandex](https://translate.yandex.com/)**
