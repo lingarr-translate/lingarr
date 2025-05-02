@@ -66,8 +66,8 @@ public class GoogleGeminiService : BaseLanguageService
 
             _replacements = new Dictionary<string, string>
             {
-                ["sourceLanguage"] = sourceLanguage,
-                ["targetLanguage"] = targetLanguage
+                ["sourceLanguage"] = GetFullLanguageName(sourceLanguage),
+                ["targetLanguage"] = GetFullLanguageName(targetLanguage)
             };
             _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
             _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
