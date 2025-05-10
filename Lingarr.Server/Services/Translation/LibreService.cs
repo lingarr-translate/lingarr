@@ -14,13 +14,14 @@ public class LibreService : BaseLanguageService
 {
     private readonly HttpClient _httpClient;
     private string? _apiUrl;
+    private string? _apiKey;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
     public LibreService(
         HttpClient httpClient,
         ISettingService settings,
-        ILogger<LibreService> logger) 
+        ILogger<LibreService> logger)
         : base(settings, logger, "/app/Statics/libre_translate_languages.json")
     {
         _httpClient = httpClient;
@@ -40,7 +41,12 @@ public class LibreService : BaseLanguageService
             await _initLock.WaitAsync();
             if (_initialized) return;
 
-            _apiUrl = await _settings.GetSetting(SettingKeys.Translation.LibreTranslateUrl) ?? "http://libretranslate:5000";
+            var settings = await _settings.GetSettings([
+                SettingKeys.Translation.LibreTranslate.Url,
+                SettingKeys.Translation.LibreTranslate.ApiKey
+            ]);
+            _apiUrl = settings[SettingKeys.Translation.LibreTranslate.Url] ?? "http://libretranslate:5000";
+            settings.TryGetValue(SettingKeys.Translation.LibreTranslate.ApiKey, out _apiKey);
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             _initialized = true;
@@ -50,7 +56,7 @@ public class LibreService : BaseLanguageService
             _initLock.Release();
         }
     }
-    
+
     /// <inheritdoc />
     public override async Task<List<SourceLanguage>> GetLanguages()
     {
@@ -75,7 +81,7 @@ public class LibreService : BaseLanguageService
             _logger.LogError(ex, "An unexpected error occurred while retrieving or processing LibreTranslate languages.");
             return [];
         }
-        
+
         var languageCodes = libreLanguages.Select(l => l.Code).ToHashSet();
         return libreLanguages
             .Select(lang => new SourceLanguage
@@ -93,9 +99,9 @@ public class LibreService : BaseLanguageService
     public override async Task<string> TranslateAsync(
         string text,
         string sourceLanguage,
-        string targetLanguage, 
-        List<string>? contextLinesBefore, 
-        List<string>? contextLinesAfter, 
+        string targetLanguage,
+        List<string>? contextLinesBefore,
+        List<string>? contextLinesAfter,
         CancellationToken cancellationToken)
     {
         await InitializeAsync();
@@ -110,11 +116,12 @@ public class LibreService : BaseLanguageService
             q = text,
             source = sourceLanguage,
             target = targetLanguage,
-            format = "text"
+            format = "text",
+            api_key = _apiKey
         }), Encoding.UTF8, "application/json");
-        
+
         content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-        
+
         var response = await _httpClient.PostAsync($"{_apiUrl}/translate", content, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
@@ -122,7 +129,7 @@ public class LibreService : BaseLanguageService
             _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync(cancellationToken));
             throw new TranslationException("Translation using LibreTranslate failed.");
         }
-        
+
         var result = await response.Content.ReadFromJsonAsync<TranslationResponse>();
         return result?.TranslatedText ?? string.Empty;
     }

@@ -1,6 +1,6 @@
 ﻿namespace Lingarr.Core.Configuration;
 
-public static class SettingKeys 
+public static class SettingKeys
 {
     public static class Integration
     {
@@ -12,48 +12,53 @@ public static class SettingKeys
         public const string SonarrSettingsCompleted = "sonarr_settings_completed";
     }
 
-    public static class Translation 
+    public static class Translation
     {
         public const string ServiceType = "service_type";
-        
-        public static class OpenAi 
+
+        public static class OpenAi
         {
             public const string Model = "openai_model";
             public const string ApiKey = "openai_api_key";
         }
 
-        public static class Anthropic 
+        public static class Anthropic
         {
             public const string Model = "anthropic_model";
             public const string ApiKey = "anthropic_api_key";
             public const string Version = "anthropic_version";
         }
 
-        public static class LocalAi 
+        public static class LocalAi
         {
             public const string Model = "local_ai_model";
             public const string Endpoint = "local_ai_endpoint";
             public const string ApiKey = "local_ai_api_key";
         }
 
-        public static class DeepL 
+        public static class DeepL
         {
             public const string DeeplApiKey = "deepl_api_key";
         }
 
-        public static class Gemini 
+        public static class Gemini
         {
             public const string Model = "gemini_model";
             public const string ApiKey = "gemini_api_key";
         }
 
-        public static class DeepSeek 
+        public static class DeepSeek
         {
             public const string Model = "deepseek_model";
             public const string ApiKey = "deepseek_api_key";
         }
 
-        public const string LibreTranslateUrl = "libretranslate_url";
+        public static class LibreTranslate
+        {
+            public const string Url = "libretranslate_url";
+            public const string ApiKey = "libretranslate_api_key";
+        }
+
         public const string SourceLanguages = "source_languages";
         public const string TargetLanguages = "target_languages";
         public const string AiPrompt = "ai_prompt";
@@ -66,7 +71,7 @@ public static class SettingKeys
         public const string StripSubtitleFormatting = "strip_subtitle_formatting";
     }
 
-    public static class Automation 
+    public static class Automation
     {
         public const string AutomationEnabled = "automation_enabled";
         public const string TranslationSchedule = "translation_schedule";
@@ -77,7 +82,7 @@ public static class SettingKeys
         public const string MovieAgeThreshold = "movie_age_threshold";
         public const string ShowAgeThreshold = "show_age_threshold";
     }
-    
+
     public static class SubtitleValidation
     {
         public const string MaxFileSizeBytes = "subtitle_validation_maxfilesizebytes";
