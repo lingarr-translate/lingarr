@@ -15,7 +15,7 @@ public class StartupService : IHostedService
         _serviceProvider = serviceProvider;
         _logger = logger;
     }
-    
+
     /// <summary>
     /// Initializes the application by validating and updating integration settings for integration services.
     /// This method is part of the application startup process and ensures all required service
@@ -51,14 +51,14 @@ public class StartupService : IHostedService
         string completedKey = serviceName == "radarr"
             ? SettingKeys.Integration.RadarrSettingsCompleted
             : SettingKeys.Integration.SonarrSettingsCompleted;
-        
+
         var settings = await dbContext.Settings
             .Where(s => requiredKeys.Contains(s.Key))
             .ToDictionaryAsync(s => s.Key, s => s.Value);
 
         bool allRequiredKeysHaveValues = requiredKeys.All(key =>
             settings.TryGetValue(key, out var value) && !string.IsNullOrEmpty(value));
-        
+
         if (allRequiredKeysHaveValues)
         {
             var setting = await dbContext.Settings.FindAsync(completedKey);
@@ -86,22 +86,23 @@ public class StartupService : IHostedService
             { "SONARR_API_KEY", SettingKeys.Integration.SonarrApiKey },
             { "SOURCE_LANGUAGES", SettingKeys.Translation.SourceLanguages },
             { "TARGET_LANGUAGES", SettingKeys.Translation.TargetLanguages },
-            
+
             { "SERVICE_TYPE", SettingKeys.Translation.ServiceType },
-            { "LIBRE_TRANSLATE_URL", SettingKeys.Translation.LibreTranslateUrl },
+            { "LIBRE_TRANSLATE_URL", SettingKeys.Translation.LibreTranslate.Url },
+            { "LIBRE_TRANSLATE_API_KEY", SettingKeys.Translation.LibreTranslate.ApiKey },
             { "AI_PROMPT", SettingKeys.Translation.AiPrompt },
-            
+
             { "OPENAI_MODEL", SettingKeys.Translation.OpenAi.Model },
             { "OPENAI_API_KEY", SettingKeys.Translation.OpenAi.ApiKey },
-            
+
             { "ANTHROPIC_MODEL", SettingKeys.Translation.Anthropic.Model },
             { "ANTHROPIC_API_KEY", SettingKeys.Translation.Anthropic.ApiKey },
             { "ANTHROPIC_VERSION", SettingKeys.Translation.Anthropic.Version },
-            
+
             { "LOCAL_AI_MODEL", SettingKeys.Translation.LocalAi.Model },
             { "LOCAL_AI_API_KEY", SettingKeys.Translation.LocalAi.ApiKey },
             { "LOCAL_AI_ENDPOINT", SettingKeys.Translation.LocalAi.Endpoint },
-            
+
             { "GEMINI_MODEL", SettingKeys.Translation.Gemini.Model },
             { "GEMINI_API_KEY", SettingKeys.Translation.Gemini.ApiKey },
 
@@ -127,6 +128,6 @@ public class StartupService : IHostedService
             }
         }
     }
-    
+
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
