@@ -1,4 +1,4 @@
-﻿import { ILanguage } from '@/ts/language'
+import { ILanguage } from '@/ts/language'
 import { ILocale, ITheme } from '@/ts/store'
 
 export const SETTINGS = {
@@ -12,6 +12,7 @@ export const SETTINGS = {
     RADARR_SETTINGS_COMPLETED: 'radarr_settings_completed',
     SERVICE_TYPE: 'service_type',
     LIBRETRANSLATE_URL: 'libretranslate_url',
+    LIBRETRANSLATE_API_KEY: 'libretranslate_api_key',
     DEEPL_API_KEY: 'deepl_api_key',
     SHOW_SCHEDULE: 'show_schedule',
     MOVIE_SCHEDULE: 'movie_schedule',
@@ -57,6 +58,7 @@ export interface ISettings {
     sonarr_url: string
     service_type: string
     libretranslate_url: string
+    libretranslate_api_key: string
     deepl_api_key: string
     show_schedule: string
     movie_schedule: string
