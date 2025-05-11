@@ -40,9 +40,10 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 
 #### **LibreTranslate**
 
-| **Environment Variable** | **Description**                                                                 |
-|--------------------------|---------------------------------------------------------------------------------|
-| `LIBRE_TRANSLATE_URL`    | The base URL for the LibreTranslate API. Example: `https://libretranslate.com`. |
+| **Environment Variable**     | **Description**                                                                 |
+|------------------------------|---------------------------------------------------------------------------------|
+| `LIBRE_TRANSLATE_URL`        | The base URL for the LibreTranslate API. Example: `https://libretranslate.com`. |
+| `LIBRE_TRANSLATE_API_KEY`    | The API key to use for the LibreTranslate API. This is optional, and only needed if using an instance that requires one. |
 
 #### **OpenAI**
 
