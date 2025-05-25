@@ -70,16 +70,17 @@ docker run -d \
 ### Lingarr environment variables
 These variables can be used
 
-| **Environment Variable**        | **Description**                                                          |
-|---------------------------------|--------------------------------------------------------------------------|
-| `ASPNETCORE_URLS=http://+:9876` | The internal port that Lingarr will listen on inside the container.      |
-| `MAX_CONCURRENT_JOBS=1`         | Sets the amount of jobs that can run concurrently, defaults to 1.        |
-| `DB_CONNECTION=mysql`           | Specifies the database connection type. Options are `mysql` or `sqlite`. |
-| `DB_HOST=Lingarr.Mysql`         | The hostname for the MySQL database (required when using `mysql`).       |
-| `DB_PORT=3306`                  | The port for the MySQL database (required when using `mysql`).           |
-| `DB_DATABASE=LingarrMysql`      | The name of the database (required when using `mysql`).                  |
-| `DB_USERNAME=LingarrMysql`      | The username for the database (required when using `mysql`).             |
-| `DB_PASSWORD=LingarrMysql`      | The password for the database (required when using `mysql`).             |
+| **Environment Variable**                          | **Description**                                                                   |
+|---------------------------------------------------|-----------------------------------------------------------------------------------|
+| `ASPNETCORE_URLS=http://+:9876`                   | The internal port that Lingarr will listen on inside the container.               |
+| `MAX_CONCURRENT_JOBS=1`                           | Sets the amount of jobs that can run concurrently, defaults to 1.                 |
+| `DB_CONNECTION=mysql`                             | Specifies the database connection type. Options are `mysql` or `sqlite`.          |
+| `DB_HOST=Lingarr.Mysql`                           | The hostname for the MySQL database (required when using `mysql`).                |
+| `DB_PORT=3306`                                    | The port for the MySQL database (required when using `mysql`).                    |
+| `DB_DATABASE=LingarrMysql`                        | The name of the database (required when using `mysql`).                           |
+| `DB_USERNAME=LingarrMysql`                        | The username for the database (required when using `mysql`).                      |
+| `DB_PASSWORD=LingarrMysql`                        | The password for the database (required when using `mysql`).                      |
+| `DB_HANGFIRE_SQLITE_PATH=/app/config/Hangfire.db` | The path of the sqlite database file for Hangfire, when sqlite connection is used |
 
 Additional [settings](Settings.MD) can be found here that can be set as environment variables to persist settings for each reinstall
 
