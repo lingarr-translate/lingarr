@@ -185,10 +185,12 @@ public static class ServiceCollectionExtensions
             }
             else
             {
+                var sqliteDbPath = Environment.GetEnvironmentVariable("DB_HANGFIRE_SQLITE_PATH") ?? "/app/config/Hangfire.db";
+
                 configuration
                     .UseSimpleAssemblyNameTypeSerializer()
                     .UseRecommendedSerializerSettings()
-                    .UseSQLiteStorage();
+                    .UseSQLiteStorage(sqliteDbPath, new SQLiteStorageOptions());
             }
 
             configuration.UseFilter(new JobContextFilter());
