@@ -112,7 +112,7 @@
                         <TranslationStatus :translation-status="item.status" />
                     </div>
                     <div
-                        class="mb-2 flex max-w-6 items-center md:mb-0 md:px-4 md:py-2"
+                        class="mb-2 flex items-center md:mb-0 md:px-4 md:py-2"
                         :class="isSelectMode ? 'md:col-span-2' : 'md:col-span-3'">
                         <div
                             v-if="item.status === TRANSLATION_STATUS.INPROGRESS && item.progress"
