@@ -172,7 +172,7 @@
       "scheduleLimitLabel": "Limit the amount of translations per schedule",
       "defaultAgeThresholdLabel": "Default file age delay for translation:",
       "movieAgeThresholdLabel": "Movie file age delay in 'hours'",
-      "showAgeThresholdLabel": "Show file age delay in 'hours'"
+      "showAgeThresholdLabel": "TV Show file age delay in 'hours'"
     },
     "cronOptions": {
       "everyFifteenMinutes": "Every 15 minutes",
