@@ -19,6 +19,7 @@ export interface Services {
     mapping: IMappingService
     directory: IDirectoryService
     statistics: IStatisticsService
+    logs: ILogsService
 }
 
 export interface IMediaService {
@@ -97,4 +98,8 @@ export interface IDirectoryService {
 export interface IStatisticsService {
     getStatistics<T>(): Promise<T>
     getDailyStatistics<T>(days?: number): Promise<T>
+}
+
+export interface ILogsService {
+    getStream(): EventSource
 }

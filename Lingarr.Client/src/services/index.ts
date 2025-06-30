@@ -10,6 +10,7 @@ import { translationRequestService } from '@/services/translationRequestService'
 import { mappingService } from '@/services/mappingService'
 import { directoryService } from '@/services/directoryService'
 import { statisticsService } from '@/services/statisticsService'
+import { logsService } from '@/services/logsService'
 
 const services = (axios: AxiosStatic): Services => ({
     setting: settingService(axios),
@@ -21,7 +22,8 @@ const services = (axios: AxiosStatic): Services => ({
     schedule: scheduleService(axios),
     mapping: mappingService(axios),
     directory: directoryService(axios),
-    statistics: statisticsService(axios)
+    statistics: statisticsService(axios),
+    logs: logsService(axios)
 })
 
 export default services(axios)

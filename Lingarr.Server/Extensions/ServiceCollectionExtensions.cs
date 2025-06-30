@@ -1,4 +1,6 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using GTranslate.Translators;
 using Hangfire;
 using Hangfire.MySql;
@@ -32,8 +34,11 @@ public static class ServiceCollectionExtensions
     {
         builder.Services.AddControllers().AddJsonOptions(options =>
         {
-            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
             options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+            options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         });
 
         builder.Services.AddEndpointsApiExplorer();
@@ -65,6 +70,9 @@ public static class ServiceCollectionExtensions
                     Url = new Uri("https://github.com/lingarr-translate/lingarr/blob/main/LICENSE")
                 }
             });
+            
+            var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
         });
     }
 
@@ -72,6 +80,9 @@ public static class ServiceCollectionExtensions
     {
         builder.Logging.ClearProviders();
         builder.Logging.AddProvider(new CustomLogFormatter(Options.Create(new CustomLogFormatterOptions())));
+        #if !DEBUG
+        builder.Logging.AddProvider(new InMemoryLoggerProvider());
+        #endif
     }
 
     private static void ConfigureDatabase(this WebApplicationBuilder builder)
@@ -138,6 +149,7 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<ISeasonSync, SeasonSync>();
         builder.Services.AddScoped<IShowSync, ShowSync>();
         builder.Services.AddScoped<IImageSync, ImageSync>();
+        
     }
 
     private static void ConfigureSignalR(this WebApplicationBuilder builder)

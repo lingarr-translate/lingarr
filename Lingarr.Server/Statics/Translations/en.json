@@ -9,7 +9,8 @@
     "services": "Services",
     "subtitle": "Subtitle",
     "automation": "Automation",
-    "tasks": "Tasks"
+    "tasks": "Tasks",
+    "logs": "Logs"
   },
   "statistics": {
     "notAvailable": "No statistics available",
@@ -241,6 +242,26 @@
           "description": "Subtitle line to translate"
         }
       }
+    },
+    "logs": {
+      "systemLogs": "System Logs",
+      "allLevels": "All Levels",
+      "information": "Information",
+      "warning": "Warning",
+      "error": "Error",
+      "export": "Export",
+      "disableAutoScroll": "Disable Auto-scroll",
+      "enableAutoScroll": "Enable Auto-scroll",
+      "clear": "Clear",
+      "time": "Time",
+      "level": "Level",
+      "source": "Source",
+      "message": "Message",
+      "waitingForLogs": "Waiting for logs...",
+      "totalEntries": "Total entries",
+      "autoScroll": "Auto-scroll",
+      "enabled": "Enabled",
+      "disabled": "Disabled"
     }
   }
 }
