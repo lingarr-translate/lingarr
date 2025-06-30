@@ -121,3 +121,17 @@ export const SERVICE_TYPE = {
 } as const
 
 export type ServiceType = (typeof SERVICE_TYPE)[keyof typeof SERVICE_TYPE]
+
+export interface IFilterOptions {
+    logLevel: string
+}
+
+export interface ILogEntry {
+    logLevel: string
+    message: string
+    formattedTime: string
+    formattedDate: string
+    formattedSource: string
+    category: string
+    stackTrace?: string
+}

@@ -117,7 +117,8 @@ const menuItems: MenuItem[] = [
             'integration-settings',
             'services-settings',
             'automation-settings',
-            'tasks-settings'
+            'tasks-settings',
+            'logs-settings'
         ]
     }
 ]

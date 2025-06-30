@@ -18,7 +18,6 @@ public class OpenAiService : BaseLanguageService
     private string? _model;
     private string? _apiKey;
     private readonly HttpClient _httpClient;
-    private readonly JsonSerializerOptions _jsonOptions;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
@@ -29,12 +28,6 @@ public class OpenAiService : BaseLanguageService
         : base(settings, logger, "/app/Statics/ai_languages.json")
     {
         _httpClient = httpClient ?? new HttpClient();
-        _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-            PropertyNameCaseInsensitive = true
-        };
     }
 
     /// <summary>
@@ -138,7 +131,7 @@ public class OpenAiService : BaseLanguageService
                 requestBody = AddCustomParameters(requestBody);
 
                 var requestContent = new StringContent(
-                    JsonSerializer.Serialize(requestBody, _jsonOptions),
+                    JsonSerializer.Serialize(requestBody),
                     Encoding.UTF8,
                     "application/json");
 
@@ -159,7 +152,7 @@ public class OpenAiService : BaseLanguageService
                 }
 
                 var completionResponse =
-                    await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(_jsonOptions, linked.Token);
+                    await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(linked.Token);
 
                 if (completionResponse?.Choices == null || completionResponse.Choices.Count == 0)
                 {
@@ -230,7 +223,7 @@ public class OpenAiService : BaseLanguageService
                 };
             }
 
-            var modelsResponse = await response.Content.ReadFromJsonAsync<ModelsListResponse>(_jsonOptions);
+            var modelsResponse = await response.Content.ReadFromJsonAsync<ModelsListResponse>();
 
             if (modelsResponse?.Data == null)
             {

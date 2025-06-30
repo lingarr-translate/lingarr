@@ -9,7 +9,8 @@
     "services": "Diensten",
     "subtitle": "Ondertiteling",
     "automation": "Automatisering",
-    "tasks": "Taken"
+    "tasks": "Taken",
+    "logs": "Logs"
   },
   "statistics": {
     "notAvailable": "Geen statistieken beschikbaar",
@@ -243,6 +244,26 @@
           "description": "ndertitelregel om te vertalen"
         }
       }
+    },
+    "logs": {
+      "systemLogs": "Systeemlog",
+      "allLevels": "Alle Niveaus",
+      "information": "Informatie",
+      "warning": "Waarschuwing",
+      "error": "Fout",
+      "export": "Exporteren",
+      "disableAutoScroll": "Auto-scroll uitschakelen",
+      "enableAutoScroll": "Auto-scroll inschakelen",
+      "clear": "Wissen",
+      "time": "Tijd",
+      "level": "Niveau",
+      "source": "Bron",
+      "message": "Bericht",
+      "waitingForLogs": "Wachten op log...",
+      "totalEntries": "Totaal aantal vermeldingen",
+      "autoScroll": "Auto-scroll",
+      "enabled": "Ingeschakeld",
+      "disabled": "Uitgeschakeld"
     }
   }
 }

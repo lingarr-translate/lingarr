@@ -36,13 +36,14 @@
 
 <script setup lang="ts">
 import { useI18n } from '@/plugins/i18n'
+import { MenuItem } from '@/ts'
 import PageLayout from '@/components/layout/PageLayout.vue'
 import IntegrationIcon from '@/components/icons/IntegrationIcon.vue'
 import SettingIcon from '@/components/icons/SettingIcon.vue'
 import AutomationIcon from '@/components/icons/AutomationIcon.vue'
 import TaskIcon from '@/components/icons/TaskIcon.vue'
-import { MenuItem } from '@/ts'
 import LanguageIcon from '@/components/icons/LanguageIcon.vue'
+import LogIcon from '@/components/icons/LogIcon.vue'
 
 const { translate } = useI18n()
 
@@ -71,6 +72,7 @@ const menuItems: MenuItem[] = [
         route: 'automation-settings',
         children: []
     },
-    { label: translate('navigation.tasks'), icon: TaskIcon, route: 'tasks-settings', children: [] }
+    { label: translate('navigation.tasks'), icon: TaskIcon, route: 'tasks-settings', children: [] },
+    { label: translate('navigation.logs'), icon: LogIcon, route: 'logs-settings', children: [] }
 ]
 </script>
