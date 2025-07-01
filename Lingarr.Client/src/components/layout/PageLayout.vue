@@ -62,8 +62,6 @@ const isOpen: ComputedRef<boolean> = computed({
 })
 
 const setTheme = (theme: ITheme) => {
-    console.log(theme)
-
     instanceStore.storeTheme(theme)
     themeDropdown.value = false
 }
