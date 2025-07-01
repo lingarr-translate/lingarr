@@ -436,6 +436,10 @@ namespace Lingarr.Migrations.MySQL.Migrations
                         .HasColumnType("longtext")
                         .HasColumnName("job_id");
 
+                    b.Property<int?>("MediaId")
+                        .HasColumnType("int")
+                        .HasColumnName("media_id");
+
                     b.Property<int>("MediaType")
                         .HasColumnType("int")
                         .HasColumnName("media_type");

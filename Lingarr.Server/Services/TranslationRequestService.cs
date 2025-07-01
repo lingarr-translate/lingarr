@@ -33,9 +33,9 @@ public class TranslationRequestService : ITranslationRequestService
     public async Task<int> CreateRequest(TranslateAbleSubtitle translateAbleSubtitle)
     {
         var mediaTitle = await FormatMediaTitle(translateAbleSubtitle);
-
         var translationRequest = new TranslationRequest
         {
+            MediaId = translateAbleSubtitle.MediaId,
             Title = mediaTitle,
             SourceLanguage = translateAbleSubtitle.SourceLanguage,
             TargetLanguage = translateAbleSubtitle.TargetLanguage,
@@ -148,7 +148,6 @@ public class TranslationRequestService : ITranslationRequestService
         }
     }
     
-
     /// <inheritdoc />
     public async Task<PagedResult<TranslationRequest>> GetTranslationRequests(
         string? searchQuery,
@@ -195,6 +194,33 @@ public class TranslationRequestService : ITranslationRequestService
             PageNumber = pageNumber,
             PageSize = pageSize
         };
+    }
+    
+    /// <inheritdoc />
+    public async Task ClearMediaHash(TranslationRequest translationRequest)
+    {
+        if (translationRequest.MediaId.HasValue)
+        {
+            switch (translationRequest.MediaType)
+            {
+                case MediaType.Movie:
+                    var movie = await _dbContext.Movies.FirstOrDefaultAsync(m => m.Id == translationRequest.MediaId.Value);
+                    if (movie != null)
+                    {
+                        movie.MediaHash = string.Empty;
+                    }
+                    break;
+                
+                case MediaType.Episode:
+                    var episode = await _dbContext.Episodes.FirstOrDefaultAsync(e => e.Id == translationRequest.MediaId.Value);
+                    if (episode != null)
+                    {
+                        episode.MediaHash = string.Empty;
+                    }
+                    break;
+            }
+            await _dbContext.SaveChangesAsync();
+        }
     }
     
     /// <summary>

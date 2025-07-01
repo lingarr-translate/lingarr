@@ -107,14 +107,14 @@ public class SettingService : ISettingService
         var settingValue = await GetSetting(key);
         if (string.IsNullOrEmpty(settingValue))
         {
-            return new List<T>(); 
+            return []; 
         }
 
         try
         {
             var result = JsonSerializer.Deserialize<List<T>>(settingValue);
 
-            return result ?? new List<T>();
+            return result ?? [];
         }
         catch (JsonException ex)
         {

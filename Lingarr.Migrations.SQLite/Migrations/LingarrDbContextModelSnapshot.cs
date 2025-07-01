@@ -413,6 +413,10 @@ namespace Lingarr.Migrations.SQLite.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("job_id");
 
+                    b.Property<int?>("MediaId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("media_id");
+
                     b.Property<int>("MediaType")
                         .HasColumnType("INTEGER")
                         .HasColumnName("media_type");

@@ -20,6 +20,12 @@ namespace Lingarr.Migrations.MySQL.Migrations
                     { "use_subtitle_tagging", "false" },
                     { "subtitle_tag", "lingarr" }
                 });
+            
+            migrationBuilder.AddColumn<int>(
+                name: "media_id",
+                table: "translation_requests",
+                type: "int",
+                nullable: true);
         }
 
         /// <inheritdoc />
@@ -35,6 +41,10 @@ namespace Lingarr.Migrations.MySQL.Migrations
                     "use_subtitle_tagging",
                     "subtitle_tag"
                 });
+            
+            migrationBuilder.DropColumn(
+                name: "media_id",
+                table: "translation_requests");
         }
     }
 }

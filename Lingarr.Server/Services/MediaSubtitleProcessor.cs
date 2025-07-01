@@ -57,14 +57,13 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         _media = media;
         _mediaType = mediaType;
         _hash = CreateHash(matchingSubtitles);
-
-        if (string.IsNullOrEmpty(media.MediaHash) || media.MediaHash != _hash)
+        if (!string.IsNullOrEmpty(media.MediaHash) && media.MediaHash == _hash)
         {
-            _logger.LogInformation("Initiating subtitle processing.");
-            return await ProcessSubtitles(matchingSubtitles);
+            return false;
         }
-
-        return false;
+        
+        _logger.LogInformation("Initiating subtitle processing.");
+        return await ProcessSubtitles(matchingSubtitles);
     }
 
     /// <summary>
