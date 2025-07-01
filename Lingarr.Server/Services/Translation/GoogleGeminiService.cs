@@ -8,10 +8,13 @@ using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Integrations.Translation;
 using Lingarr.Server.Services.Translation.Base;
+using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Models.Batch;
+using Lingarr.Server.Models.Batch.Response;
 
 namespace Lingarr.Server.Services.Translation;
 
-public class GoogleGeminiService : BaseLanguageService
+public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBatchTranslationService
 {
     private readonly string? _endpoint = "https://generativelanguage.googleapis.com/v1beta";
     private readonly HttpClient _httpClient;
@@ -89,12 +92,12 @@ public class GoogleGeminiService : BaseLanguageService
         string text,
         string sourceLanguage,
         string targetLanguage,
-        List<string>? contextLinesBefore, 
-        List<string>? contextLinesAfter, 
+        List<string>? contextLinesBefore,
+        List<string>? contextLinesAfter,
         CancellationToken cancellationToken)
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
-        
+
         text = ApplyContextIfEnabled(text, contextLinesBefore, contextLinesAfter);
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
@@ -143,7 +146,7 @@ public class GoogleGeminiService : BaseLanguageService
         var endpoint = $"{_endpoint}/models/{_model}:generateContent?key={_apiKey}";
         var requestBody = new Dictionary<string, object>
         {
-            ["systemInstruction"] = new 
+            ["systemInstruction"] = new
             {
                 parts = new[]
                 {
@@ -175,7 +178,7 @@ public class GoogleGeminiService : BaseLanguageService
             {
                 generationConfig[param.Key] = param.Value;
             }
-        
+
             requestBody["generationConfig"] = generationConfig;
         }
 
@@ -204,7 +207,7 @@ public class GoogleGeminiService : BaseLanguageService
             throw new TranslationException("Invalid or empty response from Gemini API.");
         }
 
-        return geminiResponse.Candidates[0].Content?.Parts[0].Text ?? "";
+        return geminiResponse.Candidates[0].Content?.Parts[0].Text ?? string.Empty;
     }
 
     /// <inheritdoc />
@@ -277,6 +280,170 @@ public class GoogleGeminiService : BaseLanguageService
             {
                 Message = "Error fetching models from Gemini API: " + ex.Message
             };
+        }
+    }
+
+    /// <summary>
+    /// Translates a batch of subtitles in a single API call
+    /// </summary>
+    /// <param name="subtitleBatch">List of subtitles with position and content</param>
+    /// <param name="sourceLanguage">Source language code</param>
+    /// <param name="targetLanguage">Target language code</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Dictionary mapping position to translated content</returns>
+    public async Task<Dictionary<int, string>> TranslateBatchAsync(
+        List<BatchSubtitleItem> subtitleBatch,
+        string sourceLanguage,
+        string targetLanguage,
+        CancellationToken cancellationToken)
+    {
+        await InitializeAsync(sourceLanguage, targetLanguage);
+
+        const int maxRetries = 5;
+        var delay = TimeSpan.FromSeconds(1);
+        var maxDelay = TimeSpan.FromSeconds(32);
+
+        for (var attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                return await TranslateBatchWithGeminiApi(subtitleBatch, cancellationToken);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                if (attempt == maxRetries)
+                {
+                    _logger.LogError(ex, "Too many requests. Max retries exhausted for batch translation");
+                    throw new TranslationException("Too many requests. Retry limit reached.", ex);
+                }
+
+                _logger.LogWarning(
+                    "429 Too Many Requests. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    delay, attempt, maxRetries);
+
+                await Task.Delay(delay, cancellationToken);
+                delay = TimeSpan.FromTicks(Math.Min(delay.Ticks * 2, maxDelay.Ticks));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during batch translation attempt {Attempt}", attempt);
+                throw new TranslationException("Unexpected error occurred during batch translation.", ex);
+            }
+        }
+
+        throw new TranslationException("Batch translation failed after maximum retry attempts.");
+    }
+
+    private async Task<Dictionary<int, string>> TranslateBatchWithGeminiApi(
+        List<BatchSubtitleItem> subtitleBatch,
+        CancellationToken cancellationToken)
+    {
+        var endpoint = $"{_endpoint}/models/{_model}:generateContent?key={_apiKey}";
+        var requestBody = new Dictionary<string, object>
+        {
+            ["systemInstruction"] = new
+            {
+                parts = new[]
+                {
+                    new
+                    {
+                        text = _prompt
+                    }
+                }
+            },
+            ["contents"] = new[]
+            {
+                new
+                {
+                    parts = new[]
+                    {
+                        new
+                        {
+                            text = JsonSerializer.Serialize(subtitleBatch)
+                        }
+                    }
+                }
+            },
+            ["generationConfig"] = new Dictionary<string, object>
+            {
+                ["response_mime_type"] = "application/json",
+                ["response_schema"] = new
+                {
+                    type = "array",
+                    items = new
+                    {
+                        type = "object",
+                        properties = new
+                        {
+                            position = new
+                            {
+                                type = "integer"
+                            },
+                            line = new
+                            {
+                                type = "string"
+                            }
+                        },
+                        required = new[] { "position", "line" }
+                    }
+                }
+            }
+        };
+
+        if (_customParameters is { Count: > 0 })
+        {
+            var generationConfig = (Dictionary<string, object>)requestBody["generationConfig"];
+            foreach (var param in _customParameters)
+            {
+                if (param.Key != "response_mime_type" && param.Key != "response_schema")
+                {
+                    generationConfig[param.Key] = param.Value;
+                }
+            }
+        }
+
+        var content = new StringContent(
+            JsonSerializer.Serialize(requestBody),
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.PostAsync(endpoint, content, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
+            _logger.LogError("Response Content: {ResponseContent}",
+                await response.Content.ReadAsStringAsync(cancellationToken)
+            );
+            throw new TranslationException("Batch translation using Gemini API failed.");
+        }
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        var geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(responseBody);
+        if (geminiResponse?.Candidates == null || geminiResponse.Candidates.Count == 0 ||
+            geminiResponse.Candidates[0].Content?.Parts == null ||
+            geminiResponse.Candidates[0].Content?.Parts.Count == 0)
+        {
+            throw new TranslationException("Invalid or empty response from Gemini API.");
+        }
+
+        var translatedJson = geminiResponse.Candidates[0].Content?.Parts[0].Text ?? string.Empty;
+        try
+        {
+            var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translatedJson);
+            if (translatedItems == null)
+            {
+                throw new TranslationException("Failed to deserialize translated subtitles");
+            }
+
+            return translatedItems
+                .GroupBy(item => item.Position)
+                .ToDictionary(group => group.Key, group => group.First().Line);
+        }
+
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse translated JSON: {Json}", translatedJson);
+            throw new TranslationException("Failed to parse translated subtitles", ex);
         }
     }
 }

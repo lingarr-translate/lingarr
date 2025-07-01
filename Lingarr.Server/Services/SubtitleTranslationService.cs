@@ -1,7 +1,9 @@
 ﻿using Lingarr.Core.Entities;
 using Lingarr.Server.Exceptions;
+using Lingarr.Server.Extensions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Models.Batch;
 using Lingarr.Server.Models.FileSystem;
 
 namespace Lingarr.Server.Services;
@@ -74,34 +76,7 @@ public class SubtitleTranslationService
                 cancellationToken);
 
             // Rebuild lines based on max length
-            subtitle.TranslatedLines = translated.Split(' ')
-                // Start with a list containing one empty string - this will be our first line
-                .Aggregate(new List<string> { "" },
-
-                    // For each word, we look at our lines and the current word
-                    (lines, word) =>
-                    {
-                        // Get the last line we're currently building
-                        var currentLine = lines.Last();
-
-                        // Check if adding this word (plus a space if needed) would exceed MaxLineLength
-                        // We only add a space if the current line isn't empty
-                        if (currentLine.Length + word.Length + 1 <= MaxLineLength)
-                        {
-                            // If it fits, append it to the current line
-                            // If the line is empty, just use the word
-                            // If the line has content, add a space before the word
-                            lines[^1] = currentLine.Length == 0 ? word : $"{currentLine} {word}";
-                        }
-                        else
-                        {
-                            // If it doesn't fit, start a new line with this word
-                            lines.Add(word);
-                        }
-
-                        // Return the updated list of lines
-                        return lines;
-                    });
+            subtitle.TranslatedLines = translated.SplitIntoLines(MaxLineLength);
 
             iteration++;
             await EmitProgress(translationRequest, iteration, totalSubtitles);
@@ -143,6 +118,115 @@ public class SubtitleTranslationService
             throw new TranslationException("Translation failed for subtitle line", ex);
         }
     }
+    
+    /// <summary>
+    /// Translates subtitles in batch mode 
+    /// </summary>
+    /// <param name="subtitles">The list of subtitle items to translate.</param>
+    /// <param name="translationRequest">Contains the source and target language specifications.</param>
+    /// <param name="stripSubtitleFormatting">Boolean used for indicating that styles need to be stripped from the subtitle</param>
+    /// <param name="batchSize">Number of subtitles to process in each batch (0 for all)</param>
+    /// <param name="cancellationToken">Token to support cancellation of the translation operation.</param>
+    public async Task<List<SubtitleItem>> TranslateSubtitlesBatch(
+        List<SubtitleItem> subtitles,
+        TranslationRequest translationRequest,
+        bool stripSubtitleFormatting,
+        int batchSize = 0,
+        CancellationToken cancellationToken = default)
+    {
+        if (_progressService == null)
+        {
+            throw new TranslationException("Subtitle translator could not be initialized, progress service is null.");
+        }
+
+        if (_translationService is not IBatchTranslationService batchTranslationService)
+        {
+            throw new TranslationException("The configured translation service does not support batch translation.");
+        }
+        
+        // If batchSize is 0 or negative, we'll translate all subtitles at once
+        if (batchSize <= 0)
+        {
+            batchSize = subtitles.Count;
+        }
+
+        var totalBatches = (int)Math.Ceiling((double)subtitles.Count / batchSize);
+        var processedSubtitles = 0;
+
+        for (int batchIndex = 0; batchIndex < totalBatches; batchIndex++)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                _lastProgression = -1;
+                break;
+            }
+
+            var currentBatch = subtitles
+                .Skip(batchIndex * batchSize)
+                .Take(batchSize)
+                .ToList();
+            
+            await ProcessSubtitleBatch(currentBatch,
+                batchTranslationService,
+                translationRequest.SourceLanguage,
+                translationRequest.TargetLanguage,
+                stripSubtitleFormatting,
+                cancellationToken);
+
+            processedSubtitles += currentBatch.Count;
+            await EmitProgress(translationRequest, processedSubtitles, subtitles.Count);
+        }
+
+        _lastProgression = -1;
+        return subtitles;
+    }
+
+    /// <summary>
+    /// Processes a batch of subtitles by translating them and updating their TranslatedLines property.
+    /// </summary>
+    /// <param name="currentBatch">The batch of subtitles to process</param>
+    /// <param name="batchTranslationService">The batch translation service to use</param>
+    /// <param name="sourceLanguage"></param>
+    /// <param name="targetLanguage"></param>
+    /// <param name="stripSubtitleFormatting">Boolean used for indicating that styles need to be stripped from the subtitle</param>
+    /// <param name="cancellationToken">Token to support cancellation of the translation operation</param>
+    public async Task ProcessSubtitleBatch(
+        List<SubtitleItem> currentBatch,
+        IBatchTranslationService batchTranslationService,
+        string sourceLanguage,
+        string targetLanguage,
+        bool stripSubtitleFormatting,
+        CancellationToken cancellationToken)
+    {
+        var batchItems = currentBatch.Select(subtitle => new BatchSubtitleItem
+        {
+            Position = subtitle.Position,
+            Line = string.Join(" ", stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines)
+        }).ToList();
+
+        var batchResults = await batchTranslationService.TranslateBatchAsync(
+            batchItems,
+            sourceLanguage,
+            targetLanguage,
+            cancellationToken);
+        
+        foreach (var subtitle in currentBatch)
+        {
+            if (batchResults.TryGetValue(subtitle.Position, out var translated))
+            {
+                // Rebuild lines based on max length
+                subtitle.TranslatedLines = translated.SplitIntoLines(MaxLineLength);
+            }
+            else
+            {
+                _logger.LogWarning("Translation not found for subtitle at position {Position}", subtitle.Position);
+                subtitle.TranslatedLines = stripSubtitleFormatting ? 
+                    subtitle.PlaintextLines : 
+                    subtitle.Lines;
+            }
+        }
+    }
+    
     /// <summary>
     /// Builds a list of subtitle text strings as context around a given subtitle index.
     /// </summary>

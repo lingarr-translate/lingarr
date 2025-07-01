@@ -10,7 +10,7 @@ const service = (http: AxiosStatic, resource = '/api/translate'): ITranslateServ
         mediaType: MediaType
     ): Promise<T> {
         return new Promise((resolve, reject) => {
-            http.post(`${resource}/subtitle`, {
+            http.post(`${resource}/file`, {
                 mediaId: mediaId,
                 subtitlePath: subtitle.path,
                 subtitleFormat: subtitle.format,

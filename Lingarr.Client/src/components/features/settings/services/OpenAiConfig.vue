@@ -34,6 +34,13 @@
             :placeholder="translate('settings.services.selectModel')"
             :no-options="errorMessage || translate('settings.services.loadingModels')"
             @fetch-options="loadOptions" />
+
+        <p>
+            {{ translate('settings.services.batchSupportAvailable') }}
+            <a class="cursor-pointer underline" @click="router.push({ name: 'subtitle-settings' })">
+                {{ translate('settings.services.batchSupportLink') }}
+            </a>
+        </p>
     </div>
 </template>
 
@@ -45,9 +52,11 @@ import SelectComponent from '@/components/common/SelectComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 import { useI18n } from '@/plugins/i18n'
 import { useModelOptions } from '@/composables/useModelOptions'
+import { useRouter } from 'vue-router'
 
 const { translate } = useI18n()
 const { options, errorMessage, selectRef, loadOptions } = useModelOptions()
+const router = useRouter()
 
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])

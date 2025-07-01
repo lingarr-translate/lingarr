@@ -161,7 +161,7 @@ public class SubtitleService : ISubtitleService
 
         // Build new file name and path
         var newFileName = string.Join(".", newParts) + extension;
-        var directory = Path.GetDirectoryName(originalPath) ?? "";
+        var directory = Path.GetDirectoryName(originalPath) ?? string.Empty;
         return Path.Combine(directory, newFileName);
     }
 

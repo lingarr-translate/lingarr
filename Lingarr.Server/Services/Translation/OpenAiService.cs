@@ -2,16 +2,18 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 using Lingarr.Server.Services.Translation.Base;
+using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Models.Batch;
+using Lingarr.Server.Models.Batch.Response;
 
 namespace Lingarr.Server.Services.Translation;
 
-public class OpenAiService : BaseLanguageService
+public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTranslationService
 {
     private readonly string? _endpoint = "https://api.openai.com/v1/";
     private string? _prompt;
@@ -90,8 +92,8 @@ public class OpenAiService : BaseLanguageService
         string text,
         string sourceLanguage,
         string targetLanguage,
-        List<string>? contextLinesBefore, 
-        List<string>? contextLinesAfter, 
+        List<string>? contextLinesBefore,
+        List<string>? contextLinesAfter,
         CancellationToken cancellationToken)
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
@@ -109,7 +111,6 @@ public class OpenAiService : BaseLanguageService
             try
             {
                 var requestUrl = $"{_endpoint}chat/completions";
-
                 var requestBody = new Dictionary<string, object>
                 {
                     ["model"] = _model!,
@@ -129,14 +130,12 @@ public class OpenAiService : BaseLanguageService
                 };
 
                 requestBody = AddCustomParameters(requestBody);
-
                 var requestContent = new StringContent(
                     JsonSerializer.Serialize(requestBody),
                     Encoding.UTF8,
                     "application/json");
 
                 var response = await _httpClient.PostAsync(requestUrl, requestContent, linked.Token);
-
                 if (!response.IsSuccessStatusCode)
                 {
                     if (response.StatusCode == HttpStatusCode.TooManyRequests)
@@ -153,7 +152,6 @@ public class OpenAiService : BaseLanguageService
 
                 var completionResponse =
                     await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(linked.Token);
-
                 if (completionResponse?.Choices == null || completionResponse.Choices.Count == 0)
                 {
                     throw new TranslationException("No completion choices returned from OpenAI");
@@ -188,6 +186,180 @@ public class OpenAiService : BaseLanguageService
         }
 
         throw new TranslationException("Translation failed after maximum retry attempts.");
+    }
+
+    /// <summary>
+    /// Translates a batch of subtitles in a single API call using structured outputs
+    /// </summary>
+    /// <param name="subtitleBatch">List of subtitles with position and content</param>
+    /// <param name="sourceLanguage">Source language code</param>
+    /// <param name="targetLanguage">Target language code</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Dictionary mapping position to translated content</returns>
+    public async Task<Dictionary<int, string>> TranslateBatchAsync(
+        List<BatchSubtitleItem> subtitleBatch,
+        string sourceLanguage,
+        string targetLanguage,
+        CancellationToken cancellationToken)
+    {
+        await InitializeAsync(sourceLanguage, targetLanguage);
+
+        const int maxRetries = 5;
+        var delay = TimeSpan.FromSeconds(1);
+        var maxDelay = TimeSpan.FromSeconds(32);
+
+        for (var attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                return await TranslateBatchWithOpenAiApi(subtitleBatch, cancellationToken);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                if (attempt == maxRetries)
+                {
+                    _logger.LogError(ex, "Too many requests. Max retries exhausted for batch translation");
+                    throw new TranslationException("Too many requests. Retry limit reached.", ex);
+                }
+
+                _logger.LogWarning(
+                    "429 Too Many Requests. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    delay, attempt, maxRetries);
+
+                await Task.Delay(delay, cancellationToken);
+                delay = TimeSpan.FromTicks(Math.Min(delay.Ticks * 2, maxDelay.Ticks));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during batch translation attempt {Attempt}", attempt);
+                throw new TranslationException("Unexpected error occurred during batch translation.", ex);
+            }
+        }
+
+        throw new TranslationException("Batch translation failed after maximum retry attempts.");
+    }
+
+    private async Task<Dictionary<int, string>> TranslateBatchWithOpenAiApi(
+        List<BatchSubtitleItem> subtitleBatch,
+        CancellationToken cancellationToken)
+    {
+        var requestUrl = $"{_endpoint}chat/completions";
+        var responseFormat = new
+        {
+            type = "json_schema",
+            json_schema = new
+            {
+                name = "batch_translation_response",
+                schema = new
+                {
+                    type = "object",
+                    properties = new
+                    {
+                        translations = new
+                        {
+                            type = "array",
+                            items = new
+                            {
+                                type = "object",
+                                properties = new
+                                {
+                                    position = new
+                                    {
+                                        type = "integer"
+                                    },
+                                    line = new
+                                    {
+                                        type = "string"
+                                    }
+                                },
+                                required = new[] { "position", "line" },
+                                additionalProperties = false
+                            }
+                        }
+                    },
+                    required = new[] { "translations" },
+                    additionalProperties = false
+                }
+            }
+        };
+
+        var requestBody = new Dictionary<string, object>
+        {
+            ["model"] = _model!,
+            ["messages"] = new[]
+            {
+                new Dictionary<string, string>
+                {
+                    ["role"] = "system",
+                    ["content"] = _prompt!
+                },
+                new Dictionary<string, string>
+                {
+                    ["role"] = "user",
+                    ["content"] = JsonSerializer.Serialize(subtitleBatch)
+                }
+            },
+            ["response_format"] = responseFormat
+        };
+
+        // Add custom parameters but exclude response_format to avoid conflicts
+        if (_customParameters is { Count: > 0 })
+        {
+            foreach (var param in _customParameters)
+            {
+                if (param.Key != "response_format")
+                {
+                    requestBody[param.Key] = param.Value;
+                }
+            }
+        }
+
+        var requestContent = new StringContent(
+            JsonSerializer.Serialize(requestBody),
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.PostAsync(requestUrl, requestContent, cancellationToken);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
+            _logger.LogError("Response Content: {ResponseContent}",
+                await response.Content.ReadAsStringAsync(cancellationToken));
+            throw new TranslationException("Batch translation using OpenAI API failed.");
+        }
+
+        var completionResponse = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(cancellationToken);
+        if (completionResponse?.Choices == null || completionResponse.Choices.Count == 0)
+        {
+            throw new TranslationException("No completion choices returned from OpenAI");
+        }
+        
+        var translatedJson = completionResponse.Choices[0].Message.Content;
+        try
+        {
+            var responseWrapper = JsonSerializer.Deserialize<JsonElement>(translatedJson);
+            if (!responseWrapper.TryGetProperty("translations", out var translationsElement))
+            {
+                throw new TranslationException("Response does not contain 'translations' property");
+            }
+
+            var translatedItems =
+                JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translationsElement.GetRawText());
+            if (translatedItems == null)
+            {
+                throw new TranslationException("Failed to deserialize translated subtitles");
+            }
+
+            return translatedItems
+                .GroupBy(item => item.Position)
+                .ToDictionary(group => group.Key, group => group.First().Line);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse translated JSON: {Json}", translatedJson);
+            throw new TranslationException("Failed to parse translated subtitles", ex);
+        }
     }
 
     /// <inheritdoc />

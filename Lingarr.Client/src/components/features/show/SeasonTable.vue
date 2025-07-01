@@ -55,6 +55,7 @@
         </div>
     </div>
 </template>
+
 <script setup lang="ts">
 import { ref, Ref } from 'vue'
 import { ISeason, ISubtitle, MEDIA_TYPE } from '@/ts'

@@ -19,11 +19,11 @@ export default defineConfig(({ command, mode }) => {
         server: {
             proxy: {
                 '/api': {
-                    target: 'http://Lingarr.Server:8080',
+                    target: 'http://Lingarr.Server:9876',
                     changeOrigin: true
                 },
                 '/signalr': {
-                    target: 'http://Lingarr.Server:8080',
+                    target: 'http://Lingarr.Server:9876',
                     ws: true,
                     changeOrigin: true
                 }

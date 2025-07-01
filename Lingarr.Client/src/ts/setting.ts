@@ -48,7 +48,9 @@ export const SETTINGS = {
     AI_CONTEXT_PROMPT_ENABLED: 'ai_context_prompt_enabled',
     AI_CONTEXT_PROMPT: 'ai_context_prompt',
     AI_CONTEXT_BEFORE: 'ai_context_before',
-    AI_CONTEXT_AFTER: 'ai_context_after'
+    AI_CONTEXT_AFTER: 'ai_context_after',
+    USE_BATCH_TRANSLATION: 'use_batch_translation',
+    MAX_BATCH_SIZE: 'max_batch_size'
 } as const
 
 export interface ISettings {
@@ -99,6 +101,8 @@ export interface ISettings {
     ai_context_prompt: string
     ai_context_before: string
     ai_context_after: string
+    use_batch_translation: string
+    max_batch_size: string
 }
 
 export interface ICustomAiParams {
