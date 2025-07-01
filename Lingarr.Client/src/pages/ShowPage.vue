@@ -54,7 +54,7 @@
                         </div>
                         <div class="col-span-3 flex items-center px-4 py-2" @click.stop>
                             <InputComponent
-                                :model-value="item.translationAgeThreshold"
+                                :model-value="item.translationAgeThreshold ?? null"
                                 :placeholder="translate('tvShows.hours')"
                                 class="w-14"
                                 size="sm"
