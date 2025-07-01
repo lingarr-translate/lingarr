@@ -34,6 +34,13 @@
             :placeholder="translate('settings.services.selectModel')"
             :no-options="errorMessage || translate('settings.services.loadingModels')"
             @fetch-options="loadOptions" />
+
+        <p>
+            {{ translate('settings.services.batchSupportAvailable') }}
+            <a class="cursor-pointer underline" @click="router.push({ name: 'subtitle-settings' })">
+                {{ translate('settings.services.batchSupportLink') }}
+            </a>
+        </p>
     </div>
 </template>
 
@@ -43,6 +50,7 @@ import { useSettingStore } from '@/store/setting'
 import { SETTINGS } from '@/ts'
 import SelectComponent from '@/components/common/SelectComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from '@/plugins/i18n'
 import { useModelOptions } from '@/composables/useModelOptions'
 const { translate } = useI18n()
@@ -51,6 +59,7 @@ const { options, errorMessage, selectRef, loadOptions } = useModelOptions()
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])
 const apiKeyIsValid = ref(false)
+const router = useRouter()
 
 const automationEnabled = computed(() => settingsStore.getSetting(SETTINGS.AUTOMATION_ENABLED))
 

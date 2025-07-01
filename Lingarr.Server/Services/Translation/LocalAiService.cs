@@ -1,15 +1,19 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Models.Batch;
+using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.Integrations.Translation;
 using Lingarr.Server.Services.Translation.Base;
 
 namespace Lingarr.Server.Services.Translation;
 
-public class LocalAiService : BaseLanguageService
+public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTranslationService
 {
     private readonly HttpClient _httpClient;
     private string? _model;
@@ -63,7 +67,7 @@ public class LocalAiService : BaseLanguageService
             {
                 throw new InvalidOperationException("Local AI service requires both endpoint address and model name to be configured in settings.");
             }
-            
+
             _replacements = new Dictionary<string, string>
             {
                 ["sourceLanguage"] = GetFullLanguageName(sourceLanguage),
@@ -82,6 +86,7 @@ public class LocalAiService : BaseLanguageService
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
             }
+
             _initialized = true;
         }
         finally
@@ -89,7 +94,6 @@ public class LocalAiService : BaseLanguageService
             _initLock.Release();
         }
     }
-
 
     /// <inheritdoc />
     public override async Task<string> TranslateAsync(
@@ -101,7 +105,7 @@ public class LocalAiService : BaseLanguageService
         CancellationToken cancellationToken)
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
-        
+
         text = ApplyContextIfEnabled(text, contextLinesBefore, contextLinesAfter);
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
@@ -145,6 +149,356 @@ public class LocalAiService : BaseLanguageService
         }
 
         throw new TranslationException("Translation failed after maximum retry attempts.");
+    }
+
+    /// <summary>
+    /// Translates a batch of subtitles in a single API call using structured outputs fallback
+    /// Since LocalAI may not support structured outputs, we'll attempt structured format first,
+    /// then fall back to regular parsing if needed
+    /// </summary>
+    /// <param name="subtitleBatch">List of subtitles with position and content</param>
+    /// <param name="sourceLanguage">Source language code</param>
+    /// <param name="targetLanguage">Target language code</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Dictionary mapping position to translated content</returns>
+    public async Task<Dictionary<int, string>> TranslateBatchAsync(
+        List<BatchSubtitleItem> subtitleBatch,
+        string sourceLanguage,
+        string targetLanguage,
+        CancellationToken cancellationToken)
+    {
+        await InitializeAsync(sourceLanguage, targetLanguage);
+
+        const int maxRetries = 5;
+        var delay = TimeSpan.FromSeconds(1);
+        var maxDelay = TimeSpan.FromSeconds(32);
+
+        for (var attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                return await TranslateBatchWithLocalAiApi(subtitleBatch, cancellationToken);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                if (attempt == maxRetries)
+                {
+                    _logger.LogError(ex, "Too many requests. Max retries exhausted for batch translation");
+                    throw new TranslationException("Too many requests. Retry limit reached.", ex);
+                }
+
+                _logger.LogWarning(
+                    "429 Too Many Requests. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    delay, attempt, maxRetries);
+
+                await Task.Delay(delay, cancellationToken);
+                delay = TimeSpan.FromTicks(Math.Min(delay.Ticks * 2, maxDelay.Ticks));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during batch translation attempt {Attempt}", attempt);
+                throw new TranslationException("Unexpected error occurred during batch translation.", ex);
+            }
+        }
+
+        throw new TranslationException("Batch translation failed after maximum retry attempts.");
+    }
+
+    private async Task<Dictionary<int, string>> TranslateBatchWithLocalAiApi(
+        List<BatchSubtitleItem> subtitleBatch,
+        CancellationToken cancellationToken)
+    {
+        if (!_isChatEndpoint)
+        {
+            return await TranslateBatchWithGenerateApi(subtitleBatch, cancellationToken);
+        }
+
+        // Try structured output first (OpenAI-compatible format)
+        try
+        {
+            return await TranslateBatchWithStructuredOutput(subtitleBatch, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Structured output failed, falling back to JSON parsing");
+            return await TranslateBatchWithJsonParsing(subtitleBatch, cancellationToken);
+        }
+    }
+
+    private async Task<Dictionary<int, string>> TranslateBatchWithStructuredOutput(
+        List<BatchSubtitleItem> subtitleBatch,
+        CancellationToken cancellationToken)
+    {
+        var responseFormat = new
+        {
+            type = "json_schema",
+            json_schema = new
+            {
+                name = "batch_translation_response",
+                strict = true,
+                schema = new
+                {
+                    type = "object",
+                    properties = new
+                    {
+                        translations = new
+                        {
+                            type = "array",
+                            items = new
+                            {
+                                type = "object",
+                                properties = new
+                                {
+                                    position = new
+                                    {
+                                        type = "integer",
+                                        description = "Position number of the subtitle item"
+                                    },
+                                    line = new
+                                    {
+                                        type = "string",
+                                        description = "Translated subtitle text"
+                                    }
+                                },
+                                required = new[] { "position", "line" },
+                                additionalProperties = false
+                            }
+                        }
+                    },
+                    required = new[] { "translations" },
+                    additionalProperties = false
+                }
+            }
+        };
+
+        var messages = new[]
+        {
+            new Dictionary<string, string>
+            {
+                ["role"] = "system",
+                ["content"] = _prompt!
+            },
+            new Dictionary<string, string>
+            {
+                ["role"] = "user",
+                ["content"] = JsonSerializer.Serialize(subtitleBatch)
+            }
+        };
+
+        var requestBody = new Dictionary<string, object>
+        {
+            ["model"] = _model!,
+            ["messages"] = messages,
+            ["response_format"] = responseFormat
+        };
+
+        // Add custom parameters but exclude response_format to avoid conflicts
+        if (_customParameters is { Count: > 0 })
+        {
+            foreach (var param in _customParameters)
+            {
+                if (param.Key != "response_format")
+                {
+                    requestBody[param.Key] = param.Value;
+                }
+            }
+        }
+
+        var requestContent = new StringContent(
+            JsonSerializer.Serialize(requestBody),
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.PostAsync(_endpoint, requestContent, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
+            _logger.LogError("Response Content: {ResponseContent}",
+                await response.Content.ReadAsStringAsync(cancellationToken));
+            throw new TranslationException("Batch translation using LocalAI structured output failed.");
+        }
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        var chatResponse = JsonSerializer.Deserialize<ChatResponse>(responseBody);
+        if (chatResponse?.Choices == null || chatResponse.Choices.Count == 0)
+        {
+            throw new TranslationException("No completion choices returned from LocalAI");
+        }
+
+        var translatedJson = chatResponse.Choices[0].Message.Content;
+
+        try
+        {
+            // Parse the wrapper object first, extract the translations array
+            var responseWrapper = JsonSerializer.Deserialize<JsonElement>(translatedJson);
+            if (!responseWrapper.TryGetProperty("translations", out var translationsElement))
+            {
+                throw new TranslationException("Response does not contain 'translations' property");
+            }
+
+            var translatedItems =
+                JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translationsElement.GetRawText());
+
+            if (translatedItems == null)
+            {
+                throw new TranslationException("Failed to deserialize translated subtitles");
+            }
+
+            return translatedItems
+                .GroupBy(item => item.Position)
+                .ToDictionary(group => group.Key, group => group.First().Line);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse structured JSON response: {Json}", translatedJson);
+            throw new TranslationException("Failed to parse structured translated subtitles", ex);
+        }
+    }
+
+    private async Task<Dictionary<int, string>> TranslateBatchWithJsonParsing(
+        List<BatchSubtitleItem> subtitleBatch,
+        CancellationToken cancellationToken)
+    {
+        var messages = new[]
+        {
+            new Dictionary<string, string>
+            {
+                ["role"] = "system",
+                ["content"] = _prompt!
+            },
+            new Dictionary<string, string>
+            {
+                ["role"] = "user",
+                ["content"] = JsonSerializer.Serialize(subtitleBatch)
+            }
+        };
+
+        var requestBody = new Dictionary<string, object>
+        {
+            ["model"] = _model!,
+            ["messages"] = messages
+        };
+
+        requestBody = AddCustomParameters(requestBody);
+        var requestContent = new StringContent(
+            JsonSerializer.Serialize(requestBody),
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.PostAsync(_endpoint, requestContent, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
+            _logger.LogError("Response Content: {ResponseContent}",
+                await response.Content.ReadAsStringAsync(cancellationToken));
+            throw new TranslationException("Batch translation using LocalAI JSON parsing failed.");
+        }
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        var chatResponse = JsonSerializer.Deserialize<ChatResponse>(responseBody);
+
+        if (chatResponse?.Choices == null || chatResponse.Choices.Count == 0)
+        {
+            throw new TranslationException("No completion choices returned from LocalAI");
+        }
+
+        // Try to extract JSON
+        var translatedJson = chatResponse.Choices[0].Message.Content;
+        var jsonStart = translatedJson.IndexOf('[');
+        var jsonEnd = translatedJson.LastIndexOf(']');
+        if (jsonStart != -1 && jsonEnd != -1 && jsonEnd > jsonStart)
+        {
+            translatedJson = translatedJson.Substring(jsonStart, jsonEnd - jsonStart + 1);
+        }
+
+        try
+        {
+            var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translatedJson,
+                new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+            if (translatedItems == null)
+            {
+                throw new TranslationException("Failed to deserialize translated subtitles from JSON parsing");
+            }
+
+            return translatedItems
+                .GroupBy(item => item.Position)
+                .ToDictionary(group => group.Key, group => group.First().Line);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse JSON response: {Json}", translatedJson);
+            throw new TranslationException("Failed to parse JSON translated subtitles", ex);
+        }
+    }
+
+    private async Task<Dictionary<int, string>> TranslateBatchWithGenerateApi(
+        List<BatchSubtitleItem> subtitleBatch,
+        CancellationToken cancellationToken)
+    {
+        var batchPrompt = _prompt +
+                          "\n\nPlease return the response as a JSON array with objects containing 'position' and 'line' fields. Example: [{\"position\": 1, \"line\": \"translated text\"}]\n\n";
+
+        var requestData = new Dictionary<string, object>
+        {
+            ["model"] = _model!,
+            ["prompt"] = batchPrompt + JsonSerializer.Serialize(subtitleBatch),
+            ["stream"] = false
+        };
+        requestData = AddCustomParameters(requestData);
+
+        var content = new StringContent(JsonSerializer.Serialize(requestData),
+            Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.PostAsync(_endpoint, content, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
+            _logger.LogError("Response Content: {ResponseContent}",
+                await response.Content.ReadAsStringAsync(cancellationToken));
+            throw new TranslationException("Batch translation using Local AI generate API failed.");
+        }
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        var generateResponse = JsonSerializer.Deserialize<GenerateResponse>(responseBody);
+
+        if (generateResponse == null || string.IsNullOrEmpty(generateResponse.Response))
+        {
+            throw new TranslationException("Invalid or empty response from generate API.");
+        }
+
+        var translatedJson = generateResponse.Response;
+
+        // Try to extract JSON from the response
+        var jsonStart = translatedJson.IndexOf('[');
+        var jsonEnd = translatedJson.LastIndexOf(']');
+
+        if (jsonStart != -1 && jsonEnd != -1 && jsonEnd > jsonStart)
+        {
+            translatedJson = translatedJson.Substring(jsonStart, jsonEnd - jsonStart + 1);
+        }
+
+        try
+        {
+            var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translatedJson);
+
+            if (translatedItems == null)
+            {
+                throw new TranslationException("Failed to deserialize translated subtitles from generate API");
+            }
+
+            return translatedItems
+                .GroupBy(item => item.Position)
+                .ToDictionary(group => group.Key, group => group.First().Line);
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Failed to parse generate API JSON response: {Json}", translatedJson);
+            throw new TranslationException("Failed to parse generate API translated subtitles", ex);
+        }
     }
 
     private async Task<string> TranslateWithGenerateApi(string text, CancellationToken cancellationToken)

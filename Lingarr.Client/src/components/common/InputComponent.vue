@@ -27,7 +27,7 @@
             <button
                 v-if="type === 'password'"
                 type="button"
-                class="absolute inset-y-0 right-0 flex items-center pr-3"
+                class="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3"
                 @click="togglePassword">
                 <EyeOnIcon v-if="showPassword" class="h-5 w-5" />
                 <EyeOffIcon v-else class="h-5 w-5" />

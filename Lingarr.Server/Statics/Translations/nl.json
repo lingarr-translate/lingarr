@@ -135,7 +135,9 @@
       "versionError": "Versie mag niet leeg zijn",
       "freeServiceLimits": "Gratis vertaaldiensten hebben tarieflimieten die storingen kunnen veroorzaken.",
       "localAiPlaceholder": "http://ollama:11434/v1/chat/completions",
-      "localAiModelPlaceholder": "aya-expanse"
+      "localAiModelPlaceholder": "aya-expanse",
+      "batchSupportAvailable": "Batch vertaling is beschikbaar voor deze AI-service. Configureer batch instellingen",
+      "batchSupportLink": "hier"
     },
     "translate": {
       "title": "Vertaling",
@@ -156,7 +158,10 @@
       "fixOverlappingSubtitles": "Overlappende ondertitels verbeteren:",
       "fixOverlappingSubtitlesDescription": "Verbetert automatisch overlappende ondertitels door de timing aan te passen van de vorige, huidige en volgende ondertitel op basis van tekstlengte.",
       "stripSubtitleFormatting": "Verwijder ondertitelopmaak:",
-      "stripSubtitleFormattingDescription": "Schakel deze optie in om alle opmaak-tags (bijv. cursief, vet, kleur, positie) uit (SRT) ondertitels te verwijderen, wat resulteert in platte tekst ondertitels."
+      "stripSubtitleFormattingDescription": "Schakel deze optie in om alle opmaak-tags (bijv. cursief, vet, kleur, positie) uit (SRT) ondertitels te verwijderen, wat resulteert in platte tekst ondertitels.",
+      "useBatchTranslation": "Gebruik batch vertaling",
+      "useBatchTranslationDescription": "Verwerk meerdere ondertitelregels samen in batches om de vertalingsefficiëntie en contextbewustzijn te verbeteren.",
+      "maxBatchSize": "Maximale batch grootte"
     },
     "indexing": {
       "title": "Indexering",

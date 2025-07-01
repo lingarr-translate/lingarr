@@ -36,6 +36,13 @@
             :label="translate('settings.services.apiKey')"
             @update:validation="(val) => (isValid.apiKey = val)" />
         <p class="text-xs">{{ translate('settings.services.localAiNotification') }}</p>
+
+        <p>
+            {{ translate('settings.services.batchSupportAvailable') }}
+            <a class="cursor-pointer underline" @click="router.push({ name: 'subtitle-settings' })">
+                {{ translate('settings.services.batchSupportLink') }}
+            </a>
+        </p>
     </div>
 </template>
 
@@ -43,6 +50,7 @@
 import { computed, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import { SETTINGS } from '@/ts'
+import { useRouter } from 'vue-router'
 import InputComponent from '@/components/common/InputComponent.vue'
 
 const settingsStore = useSettingStore()
@@ -52,6 +60,7 @@ const isValid = reactive({
     model: false,
     apiKey: false
 })
+const router = useRouter()
 
 const aiModel = computed({
     get: () => settingsStore.getSetting(SETTINGS.LOCAL_AI_MODEL) as string,

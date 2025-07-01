@@ -135,7 +135,9 @@
       "versionError": "Version must not be empty",
       "freeServiceLimits": "Free translation services have rate limiting that may cause failures.",
       "localAiPlaceholder": "http://ollama:11434/v1/chat/completions",
-      "localAiModelPlaceholder": "aya-expanse"
+      "localAiModelPlaceholder": "aya-expanse",
+      "batchSupportAvailable": "Batch translation is available for this AI service. Configure batch settings",
+      "batchSupportLink": "here"
     },
     "translate": {
       "sourceAndTargetTitle": "Source and target translation",
@@ -154,7 +156,10 @@
       "fixOverlappingSubtitles": "Fix overlapping subtitles:",
       "fixOverlappingSubtitlesDescription": "Automatically resolves overlapping subtitles by adjusting the timing of the previous, current and next subtitle based on text length.",
       "stripSubtitleFormatting": "Strip subtitle formatting:",
-      "stripSubtitleFormattingDescription": "Enable this option to remove all formatting tags (e.g., italics, bold, color, position) from (SRT) subtitles, resulting in plain text subtitles."
+      "stripSubtitleFormattingDescription": "Enable this option to remove all formatting tags (e.g., italics, bold, color, position) from (SRT) subtitles, resulting in plain text subtitles.",
+      "useBatchTranslation": "Use batch translation",
+      "useBatchTranslationDescription": "Process multiple subtitle lines together in batches to improve translation efficiency and context awareness.",
+      "maxBatchSize": "Maximum batch size"
     },
     "indexing": {
       "title": "Indexing",

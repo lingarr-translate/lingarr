@@ -32,7 +32,7 @@ namespace Lingarr.Server.Providers
         public string FormattedDate => Timestamp.ToString("yyyy-MM-dd");
 
         [JsonPropertyName("formattedSource")]
-        public string FormattedSource => Category?.Split('.').LastOrDefault() ?? Category ?? "";
+        public string FormattedSource => Category?.Split('.').LastOrDefault() ?? Category ?? string.Empty;
     }
 
     public static class InMemoryLogSink

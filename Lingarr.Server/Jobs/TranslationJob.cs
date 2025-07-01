@@ -85,7 +85,9 @@ public class TranslationJob
                 SettingKeys.Translation.AiContextPromptEnabled,
                 SettingKeys.Translation.AiContextBefore,
                 SettingKeys.Translation.AiContextBefore,
-                SettingKeys.Translation.AiContextAfter
+                SettingKeys.Translation.AiContextAfter,
+                SettingKeys.Translation.UseBatchTranslation,
+                SettingKeys.Translation.MaxBatchSize
             ]);
             var serviceType = settings[SettingKeys.Translation.ServiceType];
             var stripSubtitleFormatting =  settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
@@ -164,15 +166,39 @@ public class TranslationJob
             var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
             var translator = new SubtitleTranslationService(translationService, _logger, _progressService);
             var subtitles = await _subtitleService.ReadSubtitles(request.SubtitleToTranslate);
-            var translatedSubtitles = await translator.TranslateSubtitles(
-                subtitles, 
-                request, 
-                stripSubtitleFormatting,
-                contextBefore,
-                contextAfter,
-                cancellationToken
-            );
-            
+            List<SubtitleItem> translatedSubtitles;
+            if (settings[SettingKeys.Translation.UseBatchTranslation] == "true")
+            {
+                var maxSize = int.TryParse(settings[SettingKeys.Translation.MaxBatchSize],
+                    out var batchSize)
+                    ? batchSize
+                    : 10000;
+
+                _logger.LogInformation("Using batch translation with max batch size: {maxBatchSize} for subtitle: {filePath}", 
+                    maxSize, translationRequest.SubtitleToTranslate);
+                
+                translatedSubtitles = await translator.TranslateSubtitlesBatch(
+                    subtitles,
+                    translationRequest,
+                    stripSubtitleFormatting,
+                    maxSize,
+                    cancellationToken);
+            }
+            else
+            {
+                _logger.LogInformation("Using individual translation with context (before: {contextBefore}, after: {contextAfter}) for subtitle: {filePath}", 
+                    contextBefore, contextAfter, translationRequest.SubtitleToTranslate);
+                    
+                translatedSubtitles = await translator.TranslateSubtitles(
+                    subtitles,
+                    request,
+                    stripSubtitleFormatting,
+                    contextBefore,
+                    contextAfter,
+                    cancellationToken
+                );
+            }
+
             if (settings[SettingKeys.Translation.FixOverlappingSubtitles] == "true")
             {
                 translatedSubtitles = _subtitleService.FixOverlappingSubtitles(translatedSubtitles);
@@ -201,6 +227,7 @@ public class TranslationJob
             await _translationRequestService.UpdateTranslationRequest(translationRequest, jobId,
                 TranslationStatus.Failed);
             await _scheduleService.UpdateJobState(jobName, JobStatus.Failed.GetDisplayName());
+            throw;
         }
     }
     

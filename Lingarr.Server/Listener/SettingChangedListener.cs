@@ -15,6 +15,10 @@ public class SettingChangedListener
     private readonly IServiceProvider _serviceProvider;
     private readonly IHubContext<SettingUpdatesHub> _hubContext;
     private readonly ILogger<SettingChangedListener> _logger;
+    private static readonly HashSet<string> BatchServiceTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "openai", "anthropic", "localai", "gemini"
+    };
 
     public SettingChangedListener(IServiceProvider serviceProvider,
         IHubContext<SettingUpdatesHub> hubContext,
@@ -49,7 +53,7 @@ public class SettingChangedListener
                 ])
             },
             {
-                "clearhash", ("Action", "ClearHash", [
+                "clearHash", ("Action", "ClearHash", [
                     SettingKeys.Translation.SourceLanguages
                 ])
             },
@@ -57,6 +61,11 @@ public class SettingChangedListener
                 "schedule", ("Action", "Schedule", [
                     SettingKeys.Automation.MovieSchedule,
                     SettingKeys.Automation.ShowSchedule
+                ])
+            },
+            {
+                "serviceType", ("Action", "ServiceType", [
+                    SettingKeys.Translation.ServiceType
                 ])
             }
         };
@@ -85,7 +94,7 @@ public class SettingChangedListener
     /// <summary>
     /// This method retrieves the required settings from the database. If all required settings have non-empty values,
     /// it enqueues the appropriate background job based on the <paramref name="jobName"/>:
-    /// /// </summary>
+    /// </summary>
     /// <param name="jobName">The name of the job to run.</param>
     /// <param name="requiredKeys">An array of setting keys that must have values in the database.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -112,11 +121,11 @@ public class SettingChangedListener
 
                     await _hubContext.Clients.Group("SettingUpdates").SendAsync("SettingUpdate", new
                     {
-                        Key = "radarr_settings_completed",
+                        Key = SettingKeys.Integration.RadarrSettingsCompleted,
                         Value = "true"
                     });
 
-                    await settingService.SetSetting("radarr_settings_completed", "true");
+                    await settingService.SetSetting(SettingKeys.Integration.RadarrSettingsCompleted, "true");
                     BackgroundJob.Schedule<SyncMovieJob>(job => job.Execute(), TimeSpan.FromMinutes(1));
                     break;
                 case "Sonarr":
@@ -125,11 +134,11 @@ public class SettingChangedListener
 
                     await _hubContext.Clients.Group("SettingUpdates").SendAsync("SettingUpdate", new
                     {
-                        Key = "sonarr_settings_completed",
+                        Key = SettingKeys.Integration.SonarrSettingsCompleted,
                         Value = "true"
                     });
 
-                    await settingService.SetSetting("sonarr_settings_completed", "true");
+                    await settingService.SetSetting(SettingKeys.Integration.SonarrSettingsCompleted, "true");
                     BackgroundJob.Schedule<SyncShowJob>(job => job.Execute(), TimeSpan.FromMinutes(1));
                     break;
                 case "Automation":
@@ -158,7 +167,7 @@ public class SettingChangedListener
     /// <summary>
     /// This method retrieves the required settings from the database. If all required settings have non-empty values,
     /// it performs an action based on the <paramref name="actionName"/>:
-    /// /// </summary>
+    /// </summary>
     /// <param name="actionName">The name of the action to run.</param>
     /// <param name="requiredKeys">An array of setting keys that must have values in the database.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
@@ -166,6 +175,7 @@ public class SettingChangedListener
     {
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
+        var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
 
         var settings = await dbContext.Settings
             .Where(s => requiredKeys.Contains(s.Key))
@@ -192,6 +202,14 @@ public class SettingChangedListener
                         "SyncShowJob",
                         job => job.Execute(),
                         settings[SettingKeys.Automation.ShowSchedule]);
+                    break;
+
+                case "ServiceType":
+                    var serviceType = await settingService.GetSetting(SettingKeys.Translation.ServiceType);
+                    if (serviceType != null && BatchServiceTypes.Contains(serviceType))
+                    {
+                        await settingService.SetSetting(SettingKeys.Translation.UseBatchTranslation, "false");
+                    }
                     break;
             }
         }

@@ -69,6 +69,8 @@ public static class SettingKeys
         public const string AiContextAfter = "ai_context_after";
         public const string FixOverlappingSubtitles = "fix_overlapping_subtitles";
         public const string StripSubtitleFormatting = "strip_subtitle_formatting";
+        public const string UseBatchTranslation = "use_batch_translation";
+        public const string MaxBatchSize = "max_batch_size";
     }
 
     public static class Automation
