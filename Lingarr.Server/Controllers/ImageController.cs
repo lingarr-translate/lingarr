@@ -36,7 +36,9 @@ public class ImageController : ControllerBase
         {
             return BadRequest("Sonarr settings are not configured correctly.");
         }
-        var url = $"{settings.Url}/api/v3/{path}?apikey={settings.ApiKey}";
+
+        var strippedPath = StripBeforeMediaCover(path);
+        var url = $"{settings.Url}/api/v3/{strippedPath}?apikey={settings.ApiKey}";
 
         return await _imageService.GetApiResponse(url);
     }
@@ -59,8 +61,28 @@ public class ImageController : ControllerBase
         {
             return BadRequest("Radarr settings are not configured correctly.");
         }
-        var url = $"{settings.Url}/api/v3/{path}?apikey={settings.ApiKey}";
+
+        var strippedPath = StripBeforeMediaCover(path);
+        var url = $"{settings.Url}/api/v3/{strippedPath}?apikey={settings.ApiKey}";
 
         return await _imageService.GetApiResponse(url);
+    }
+
+    /// <summary>
+    /// Strips everything before /MediaCover in the path
+    /// </summary>
+    /// <param name="path">The original path</param>
+    /// <returns>The path starting from MediaCover</returns>
+    private static string StripBeforeMediaCover(string path)
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            return path;
+        }
+
+        const string mediaCoverSegment = "MediaCover";
+        var index = path.IndexOf(mediaCoverSegment, StringComparison.OrdinalIgnoreCase);
+        
+        return index >= 0 ? path.Substring(index) : path;
     }
 }
