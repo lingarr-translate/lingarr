@@ -14,44 +14,49 @@
                 </div>
                 <AiSystemPrompt @save="saveNotification?.show()" />
 
-                <div class="flex flex-col space-x-2">
-                    <span class="font-semibold">
-                        {{ translate('settings.prompt.contextPromptToggle') }}
-                    </span>
-                </div>
-                <ToggleButton v-model="aiContextPromptEnabled">
-                    <span class="text-primary-content text-sm font-medium">
-                        {{
-                            aiContextPromptEnabled == 'true'
-                                ? translate('common.enabled')
-                                : translate('common.disabled')
-                        }}
-                    </span>
-                </ToggleButton>
-                <div v-if="aiContextPromptEnabled == 'true'" class="flex flex-col space-x-2">
-                    <span class="font-semibold">
-                        {{ translate('settings.prompt.contextPromptTitle') }}
-                    </span>
-                    {{ translate('settings.prompt.contextPromptDescription') }}
-                </div>
-                <AiContextPrompt
-                    v-if="aiContextPromptEnabled == 'true'"
-                    @save="saveNotification?.show()" />
+                <div v-if="useBatchTranslation == 'false'">
+                    <div class="flex flex-col space-x-2">
+                        <span class="font-semibold">
+                            {{ translate('settings.prompt.contextPromptToggle') }}
+                        </span>
+                    </div>
+                    <ToggleButton v-model="aiContextPromptEnabled">
+                        <span class="text-primary-content text-sm font-medium">
+                            {{
+                                aiContextPromptEnabled == 'true'
+                                    ? translate('common.enabled')
+                                    : translate('common.disabled')
+                            }}
+                        </span>
+                    </ToggleButton>
+                    <div v-if="aiContextPromptEnabled == 'true'" class="flex flex-col space-x-2">
+                        <span class="font-semibold">
+                            {{ translate('settings.prompt.contextPromptTitle') }}
+                        </span>
+                        {{ translate('settings.prompt.contextPromptDescription') }}
+                    </div>
+                    <AiContextPrompt
+                        v-if="aiContextPromptEnabled == 'true'"
+                        @save="saveNotification?.show()" />
 
-                <InputComponent
-                    v-if="aiContextPromptEnabled == 'true'"
-                    v-model="contextBefore"
-                    type="number"
-                    validation-type="number"
-                    :label="translate('settings.prompt.contextBefore')"
-                    @update:validation="(val) => (isValid.contextBefore = val)" />
-                <InputComponent
-                    v-if="aiContextPromptEnabled == 'true'"
-                    v-model="contextAfter"
-                    type="number"
-                    validation-type="number"
-                    :label="translate('settings.prompt.contextAfter')"
-                    @update:validation="(val) => (isValid.contextAfter = val)" />
+                    <InputComponent
+                        v-if="aiContextPromptEnabled == 'true'"
+                        v-model="contextBefore"
+                        type="number"
+                        validation-type="number"
+                        :label="translate('settings.prompt.contextBefore')"
+                        @update:validation="(val) => (isValid.contextBefore = val)" />
+                    <InputComponent
+                        v-if="aiContextPromptEnabled == 'true'"
+                        v-model="contextAfter"
+                        type="number"
+                        validation-type="number"
+                        :label="translate('settings.prompt.contextAfter')"
+                        @update:validation="(val) => (isValid.contextAfter = val)" />
+                </div>
+                <div v-else class="text-xs">
+                    {{ translate('settings.prompt.notSupported') }}
+                </div>
             </div>
         </template>
     </CardComponent>
@@ -73,6 +78,11 @@ const isValid = reactive({
     contextBefore: true,
     contextAfter: true
 })
+
+const useBatchTranslation = computed(
+    () => settingsStore.getSetting(SETTINGS.USE_BATCH_TRANSLATION) as string
+)
+
 const aiContextPromptEnabled = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.AI_CONTEXT_PROMPT_ENABLED) as string,
     set: (newValue: string): void => {
@@ -80,6 +90,7 @@ const aiContextPromptEnabled = computed({
         saveNotification.value?.show()
     }
 })
+
 const contextBefore = computed({
     get: () => settingsStore.getSetting(SETTINGS.AI_CONTEXT_BEFORE) as string,
     set: (newValue: string) => {

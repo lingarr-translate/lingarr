@@ -251,7 +251,8 @@
           "title": "Ondertitelregel",
           "description": "ndertitelregel om te vertalen"
         }
-      }
+      },
+      "notSupported": "Context prompt wordt niet ondersteund en is uitgeschakeld bij het verzenden van ondertitels in batch."
     },
     "logs": {
       "systemLogs": "Systeemlog",

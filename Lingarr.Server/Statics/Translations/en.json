@@ -249,7 +249,8 @@
           "title": "Subtitle line",
           "description": "Subtitle line to translate"
         }
-      }
+      },
+      "notSupported": "Context prompt is not supported and has been disabled when sending subtitles in batch."
     },
     "logs": {
       "systemLogs": "System Logs",
