@@ -10,5 +10,6 @@ public class SourceLanguage : ILanguage
     [JsonPropertyName("code")]
     public required string Code { get; set; }
     [JsonPropertyName("targets")]
-    public required List<string> Targets { get; set; }
+    public List<string> Targets { get; set; } = [];
+
 }
