@@ -50,7 +50,9 @@ export const SETTINGS = {
     AI_CONTEXT_BEFORE: 'ai_context_before',
     AI_CONTEXT_AFTER: 'ai_context_after',
     USE_BATCH_TRANSLATION: 'use_batch_translation',
-    MAX_BATCH_SIZE: 'max_batch_size'
+    MAX_BATCH_SIZE: 'max_batch_size',
+    USE_SUBTITLE_TAGGING: 'use_subtitle_tagging',
+    SUBTITLE_TAG: 'subtitle_tag'
 } as const
 
 export interface ISettings {
@@ -103,6 +105,8 @@ export interface ISettings {
     ai_context_after: string
     use_batch_translation: string
     max_batch_size: string
+    use_subtitle_tagging: string
+    subtitle_tag: string
 }
 
 export interface ICustomAiParams {
