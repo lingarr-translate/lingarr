@@ -23,7 +23,7 @@ const services = (axios: AxiosStatic): Services => ({
     mapping: mappingService(axios),
     directory: directoryService(axios),
     statistics: statisticsService(axios),
-    logs: logsService(axios)
+    logs: logsService()
 })
 
 export default services(axios)
