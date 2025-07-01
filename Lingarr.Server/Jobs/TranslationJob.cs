@@ -1,10 +1,8 @@
-﻿using System.Text;
-using Hangfire;
+﻿using Hangfire;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
-using Lingarr.Server.Exceptions;
 using Lingarr.Server.Filters;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
@@ -231,6 +229,7 @@ public class TranslationJob
         }
         catch (Exception)
         {
+            await _translationRequestService.ClearMediaHash(translationRequest);
             await _translationRequestService.UpdateTranslationRequest(translationRequest, jobId,
                 TranslationStatus.Failed);
             await _scheduleService.UpdateJobState(jobName, JobStatus.Failed.GetDisplayName());
@@ -243,7 +242,6 @@ public class TranslationJob
         List<SubtitleItem> translatedSubtitles, 
         bool stripSubtitleFormatting, 
         string subtitleTag)
-    
     {
         try
         {
@@ -271,6 +269,7 @@ public class TranslationJob
         translationRequest.CompletedAt = DateTime.UtcNow;
         translationRequest.Status = TranslationStatus.Completed;
         await _dbContext.SaveChangesAsync(cancellationToken);
+        
         await _progressService.Emit(translationRequest, 100);
         await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());
     }
@@ -286,8 +285,8 @@ public class TranslationJob
         {
             translationRequest.CompletedAt = DateTime.UtcNow;
             translationRequest.Status = TranslationStatus.Cancelled;
-            await _dbContext.SaveChangesAsync();
 
+            await _translationRequestService.ClearMediaHash(translationRequest);
             await _translationRequestService.UpdateActiveCount();
             await _progressService.Emit(translationRequest, 0);
             await _scheduleService.UpdateJobState(jobName, JobStatus.Cancelled.GetDisplayName());

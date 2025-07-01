@@ -72,6 +72,14 @@ public interface ITranslationRequestService
     Task<string?> CancelTranslationRequest(
         TranslationRequest cancelRequest
     );
+    
+    /// <summary>
+    /// Clears the MediaHash property for the associated media entity (Movie or Episode) 
+    /// when a translation job fails or is cancelled.
+    /// </summary>
+    /// <param name="translationRequest">The translation request containing media information</param>
+    /// <returns>A task representing the asynchronous operation</returns>
+    Task ClearMediaHash(TranslationRequest translationRequest);
 
     /// <summary>
     /// Updates the status and job ID of an existing translation request.

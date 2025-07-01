@@ -5,6 +5,7 @@ namespace Lingarr.Core.Entities;
 public class TranslationRequest : BaseEntity
 {
     public string? JobId  { get; set; }
+    public int? MediaId  { get; set; }
     public required string Title { get; set; }
     public required string SourceLanguage { get; set; }
     public required string TargetLanguage { get; set; }
