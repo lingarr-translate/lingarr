@@ -33,14 +33,15 @@ public interface ISubtitleService
     /// <param name="subtitles">The list of SubtitleItem objects to be written to the file.</param>
     /// <param name="stripSubtitleFormatting">Boolean used for indicating that styles need to be stripped from the subtitle</param>
     Task WriteSubtitles(string filePath, List<SubtitleItem> subtitles, bool stripSubtitleFormatting);
-    
+
     /// <summary>
     /// Creates a new file path for a subtitle file with a specified target language.
     /// </summary>
     /// <param name="originalPath">The original path of the subtitle file.</param>
     /// <param name="targetLanguage">The target language code to be added to the file name.</param>
+    /// <param name="subtitleTag">Subtitle tag to be added to the file path</param>
     /// <returns>A new file path with the target language code inserted before the .srt extension.</returns>
-    string CreateFilePath(string originalPath, string targetLanguage);
+    string CreateFilePath(string originalPath, string targetLanguage, string subtitleTag);
     
     /// <summary>
     /// Adjusts subtitle timings to prevent overlaps and ensure optimal duration based on content length.

@@ -116,7 +116,7 @@ public class SubtitleService : ISubtitleService
     }
 
     /// <inheritdoc />
-    public string CreateFilePath(string originalPath, string targetLanguage)
+    public string CreateFilePath(string originalPath, string targetLanguage, string subtitleTag)
     {
         var extension = Path.GetExtension(originalPath);
         var fileNameWithoutExtension = Path.GetFileNameWithoutExtension(originalPath);
@@ -148,6 +148,13 @@ public class SubtitleService : ISubtitleService
         // Reconstruct base parts
         var baseParts = reversedParts.AsEnumerable().Reverse().ToList();
         var newParts = new List<string>(baseParts);
+    
+        // Add tag if provided
+        if (!string.IsNullOrEmpty(subtitleTag))
+        {
+            newParts.Add(subtitleTag.ToLowerInvariant());
+        }
+    
         if (targetLanguageCode != null)
         {
             newParts.Add(targetLanguageCode.ToLowerInvariant());
@@ -361,7 +368,7 @@ public class SubtitleService : ISubtitleService
             var parser = new SrtParser();
             var subtitles = parser.ParseStream(subtitleStream, encoding);
 
-            if (subtitles == null || subtitles.Count < 2)
+            if (subtitles.Count < 2)
             {
                 _logger.LogWarning("Subtitle file contains less than 2 valid subtitles");
                 return false;
@@ -372,17 +379,10 @@ public class SubtitleService : ISubtitleService
 
             foreach (var item in subtitles)
             {
-                // Validate subtitle exists and has text
-                if (item == null)
-                {
-                    _logger.LogWarning("Found null subtitle item");
-                    return false;
-                }
-
                 // Choose the appropriate text content based on stripSubtitleFormatting
                 List<string> contentLines = options.StripSubtitleFormatting ? item.PlaintextLines : item.Lines;
 
-                if (contentLines == null || contentLines.Count == 0 || contentLines.All(string.IsNullOrWhiteSpace))
+                if (contentLines.Count == 0 || contentLines.All(string.IsNullOrWhiteSpace))
                 {
                     _logger.LogWarning("Subtitle at position {Position} has no content", item.Position);
                     return false;

@@ -87,7 +87,9 @@ public class TranslationJob
                 SettingKeys.Translation.AiContextBefore,
                 SettingKeys.Translation.AiContextAfter,
                 SettingKeys.Translation.UseBatchTranslation,
-                SettingKeys.Translation.MaxBatchSize
+                SettingKeys.Translation.MaxBatchSize,
+                SettingKeys.Translation.UseSubtitleTagging,
+                SettingKeys.Translation.SubtitleTag
             ]);
             var serviceType = settings[SettingKeys.Translation.ServiceType];
             var stripSubtitleFormatting =  settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
@@ -215,7 +217,12 @@ public class TranslationJob
             // statistics tracking
             await _statisticsService.UpdateTranslationStatistics(request, serviceType, subtitles, translatedSubtitles);
 
-            await WriteSubtitles(request, translatedSubtitles, stripSubtitleFormatting);
+            var subtitleTag = "";
+            if (settings[SettingKeys.Translation.UseSubtitleTagging] == "true")
+            {
+                subtitleTag = settings[SettingKeys.Translation.SubtitleTag];
+            }
+            await WriteSubtitles(request, translatedSubtitles, stripSubtitleFormatting, subtitleTag);
             await HandleCompletion(jobName, request, cancellationToken);
         }
         catch (TaskCanceledException)
@@ -234,14 +241,16 @@ public class TranslationJob
     private async Task WriteSubtitles( 
         TranslationRequest translationRequest, 
         List<SubtitleItem> translatedSubtitles, 
-        bool stripSubtitleFormatting)
+        bool stripSubtitleFormatting, 
+        string subtitleTag)
     
     {
         try
         {
             var outputPath = _subtitleService.CreateFilePath(
                 translationRequest.SubtitleToTranslate,
-                translationRequest.TargetLanguage);
+                translationRequest.TargetLanguage,
+                subtitleTag);
             await _subtitleService.WriteSubtitles(outputPath, translatedSubtitles, stripSubtitleFormatting);
             
             _logger.LogInformation("TranslateJob completed and created subtitle: |Green|{filePath}|/Green|",

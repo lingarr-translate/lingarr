@@ -71,6 +71,8 @@ public static class SettingKeys
         public const string StripSubtitleFormatting = "strip_subtitle_formatting";
         public const string UseBatchTranslation = "use_batch_translation";
         public const string MaxBatchSize = "max_batch_size";
+        public const string UseSubtitleTagging = "use_subtitle_tagging";
+        public const string SubtitleTag = "subtitle_tag";
     }
 
     public static class Automation
