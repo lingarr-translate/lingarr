@@ -67,6 +67,11 @@ public class SettingChangedListener
                 "serviceType", ("Action", "ServiceType", [
                     SettingKeys.Translation.ServiceType
                 ])
+            },
+            {
+                "batchTranslation", ("Action", "BatchTranslation", [
+                    SettingKeys.Translation.UseBatchTranslation
+                ])
             }
         };
 
@@ -209,6 +214,14 @@ public class SettingChangedListener
                     if (serviceType != null && BatchServiceTypes.Contains(serviceType))
                     {
                         await settingService.SetSetting(SettingKeys.Translation.UseBatchTranslation, "false");
+                    }
+                    break;
+
+                case "BatchTranslation":
+                    var useBatchTranslation = await settingService.GetSetting(SettingKeys.Translation.UseBatchTranslation);
+                    if (useBatchTranslation is "true")
+                    {
+                        await settingService.SetSetting(SettingKeys.Translation.AiContextPromptEnabled, "false");
                     }
                     break;
             }
