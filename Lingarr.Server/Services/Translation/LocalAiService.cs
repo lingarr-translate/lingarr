@@ -78,6 +78,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
             _isChatEndpoint = _endpoint.TrimEnd('/').EndsWith("completions", StringComparison.OrdinalIgnoreCase);
 
+            _httpClient.Timeout = TimeSpan.FromMinutes(5);
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
