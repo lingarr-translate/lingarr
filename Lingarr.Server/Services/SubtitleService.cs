@@ -148,13 +148,7 @@ public class SubtitleService : ISubtitleService
         // Reconstruct base parts
         var baseParts = reversedParts.AsEnumerable().Reverse().ToList();
         var newParts = new List<string>(baseParts);
-    
-        // Add tag if provided
-        if (!string.IsNullOrEmpty(subtitleTag))
-        {
-            newParts.Add(subtitleTag.ToLowerInvariant());
-        }
-    
+        
         if (targetLanguageCode != null)
         {
             newParts.Add(targetLanguageCode.ToLowerInvariant());
@@ -165,7 +159,13 @@ public class SubtitleService : ISubtitleService
         {
             newParts.Add(caption);
         }
-
+        
+        // Add tag if provided
+        if (!string.IsNullOrEmpty(subtitleTag))
+        {
+            newParts.Add(subtitleTag.ToLowerInvariant());
+        }
+        
         // Build new file name and path
         var newFileName = string.Join(".", newParts) + extension;
         var directory = Path.GetDirectoryName(originalPath) ?? string.Empty;
