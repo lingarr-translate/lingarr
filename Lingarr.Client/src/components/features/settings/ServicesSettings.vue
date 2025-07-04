@@ -15,13 +15,46 @@
                     v-if="serviceConfigComponent"
                     @save="saveNotification?.show()" />
             </div>
+            <div
+                v-if="
+                    [
+                        SERVICE_TYPE.ANTHROPIC,
+                        SERVICE_TYPE.GEMINI,
+                        SERVICE_TYPE.LOCALAI,
+                        SERVICE_TYPE.OPENAI
+                    ].includes(serviceType as 'openai' | 'anthropic' | 'localai' | 'gemini')
+                "
+                class="flex flex-col space-y-4">
+                <div class="flex flex-col space-x-2">
+                    <span class="font-semibold">
+                        {{ translate('settings.subtitle.useBatchTranslation') }}
+                    </span>
+                    {{ translate('settings.subtitle.useBatchTranslationDescription') }}
+                </div>
+                <ToggleButton v-model="useBatchTranslation">
+                    <span class="text-primary-content text-sm font-medium">
+                        {{
+                            useBatchTranslation == 'true'
+                                ? translate('common.enabled')
+                                : translate('common.disabled')
+                        }}
+                    </span>
+                </ToggleButton>
+                <InputComponent
+                    v-if="useBatchTranslation == 'true'"
+                    v-model="maxBatchSize"
+                    validation-type="number"
+                    :label="translate('settings.subtitle.maxBatchSize')"
+                    @update:validation="(val) => (isValid.maxBatchSize = val)" />
+            </div>
+
             <SourceAndTarget @save="saveNotification?.show()" />
         </template>
     </CardComponent>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import { SETTINGS, SERVICE_TYPE } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
@@ -36,9 +69,14 @@ import LocalAiConfig from '@/components/features/settings/services/LocalAiConfig
 import GeminiConfig from '@/components/features/settings/services/GeminiConfig.vue'
 import DeepSeekConfig from '@/components/features/settings/services/DeepSeekConfig.vue'
 import SourceAndTarget from '@/components/features/settings/SourceAndTarget.vue'
+import ToggleButton from '@/components/common/ToggleButton.vue'
+import InputComponent from '@/components/common/InputComponent.vue'
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
+const isValid = reactive({
+    maxBatchSize: true
+})
 
 const serviceType = computed({
     get: () => settingsStore.getSetting(SETTINGS.SERVICE_TYPE) as string,
@@ -85,6 +123,22 @@ const serviceConfigComponent = computed(() => {
             return FreeServiceConfig
         default:
             return null
+    }
+})
+
+const useBatchTranslation = computed({
+    get: (): string => settingsStore.getSetting(SETTINGS.USE_BATCH_TRANSLATION) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.USE_BATCH_TRANSLATION, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+
+const maxBatchSize = computed({
+    get: (): string => settingsStore.getSetting(SETTINGS.MAX_BATCH_SIZE) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.MAX_BATCH_SIZE, newValue, true)
+        saveNotification.value?.show()
     }
 })
 </script>
