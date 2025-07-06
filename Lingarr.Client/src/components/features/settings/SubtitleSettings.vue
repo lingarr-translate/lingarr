@@ -8,6 +8,22 @@
                 <SaveNotification ref="saveNotification" />
                 <div class="flex flex-col space-x-2">
                     <span class="font-semibold">
+                        {{ translate('settings.subtitle.ignoreCaptions') }}
+                    </span>
+                    {{ translate('settings.subtitle.ignoreCaptionsDescription') }}
+                </div>
+                <ToggleButton v-model="ignoreCaptions">
+                    <span class="text-primary-content text-sm font-medium">
+                        {{
+                            ignoreCaptions == 'true'
+                                ? translate('common.enabled')
+                                : translate('common.disabled')
+                        }}
+                    </span>
+                </ToggleButton>
+
+                <div class="flex flex-col space-x-2">
+                    <span class="font-semibold">
                         {{ translate('settings.subtitle.fixOverlappingSubtitles') }}
                     </span>
                     {{ translate('settings.subtitle.fixOverlappingSubtitlesDescription') }}
@@ -82,6 +98,14 @@ const isValid = reactive({
     subtitleTag: true
 })
 
+const ignoreCaptions = computed({
+    get: (): string => settingsStore.getSetting(SETTINGS.IGNORE_CAPTIONS) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.IGNORE_CAPTIONS, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+
 const fixOverlappingSubtitles = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.FIX_OVERLAPPING_SUBTITLES) as string,
     set: (newValue: string): void => {
@@ -109,7 +133,7 @@ const useSubtitleTagging = computed({
 const subtitleTag = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.SUBTITLE_TAG) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.SUBTITLE_TAG, newValue, true)
+        settingsStore.updateSetting(SETTINGS.SUBTITLE_TAG, newValue, isValid.subtitleTag)
         saveNotification.value?.show()
     }
 })
