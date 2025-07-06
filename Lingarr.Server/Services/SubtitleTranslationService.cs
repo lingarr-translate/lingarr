@@ -5,6 +5,7 @@ using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models.Batch;
 using Lingarr.Server.Models.FileSystem;
+using Lingarr.Server.Services.Subtitle;
 
 namespace Lingarr.Server.Services;
 
@@ -65,16 +66,19 @@ public class SubtitleTranslationService
             var contextLinesAfter = BuildContext(subtitles, index, contextAfter, stripSubtitleFormatting, false);
 
             var subtitleLine = string.Join(" ", stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines);
-            var translated = await TranslateSubtitleLine(new TranslateAbleSubtitleLine
-                {
-                    SubtitleLine = subtitleLine,
-                    SourceLanguage = translationRequest.SourceLanguage,
-                    TargetLanguage = translationRequest.TargetLanguage,
-                    ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
-                    ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
-                },
-                cancellationToken);
-
+            var translated = "";
+            if (subtitleLine != "")
+            {
+                translated = await TranslateSubtitleLine(new TranslateAbleSubtitleLine
+                    {
+                        SubtitleLine = subtitleLine,
+                        SourceLanguage = translationRequest.SourceLanguage,
+                        TargetLanguage = translationRequest.TargetLanguage,
+                        ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
+                        ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
+                    },
+                    cancellationToken);
+            }
             // Rebuild lines based on max length
             subtitle.TranslatedLines = translated.SplitIntoLines(MaxLineLength);
 
@@ -214,12 +218,17 @@ public class SubtitleTranslationService
         {
             if (batchResults.TryGetValue(subtitle.Position, out var translated))
             {
+                if (stripSubtitleFormatting)
+                {
+                    translated = SubtitleFormatterService.RemoveMarkup(translated);
+                }
+
                 // Rebuild lines based on max length
                 subtitle.TranslatedLines = translated.SplitIntoLines(MaxLineLength);
             }
             else
             {
-                _logger.LogWarning("Translation not found for subtitle at position {Position}", subtitle.Position);
+                _logger.LogWarning("Translation not found for subtitle at position {Position} using original line.", subtitle.Position);
                 subtitle.TranslatedLines = stripSubtitleFormatting ? 
                     subtitle.PlaintextLines : 
                     subtitle.Lines;
