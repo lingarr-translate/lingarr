@@ -137,18 +137,18 @@ public class DeepLService : BaseTranslationService
     /// <returns>An array of supported target languages, or null if the operation fails</returns>
     private async Task<DeepL.Model.TargetLanguage[]?> GetTargetLanguages(ITranslator translator)
     {
-        if (!Cache.TryGetValue(TargetLanguagesCacheKey, out DeepL.Model.TargetLanguage[]? targetLanguages))
+        if (Cache.TryGetValue(TargetLanguagesCacheKey, out DeepL.Model.TargetLanguage[]? targetLanguages))
         {
-            var languages = await translator.GetTargetLanguagesAsync();
-            
-            var cacheOptions = new MemoryCacheEntryOptions()
-                .SetAbsoluteExpiration(CacheDuration);
-            
-            Cache.Set(TargetLanguagesCacheKey, languages, cacheOptions);
-            return languages;
+            return targetLanguages;
         }
-        
-        return targetLanguages;
+
+        var languages = await translator.GetTargetLanguagesAsync();
+        var cacheOptions = new MemoryCacheEntryOptions()
+            .SetAbsoluteExpiration(CacheDuration);
+            
+        Cache.Set(TargetLanguagesCacheKey, languages, cacheOptions);
+        return languages;
+
     }
     
     /// <summary>
@@ -158,18 +158,18 @@ public class DeepLService : BaseTranslationService
     /// <returns>An array of supported source languages, or null if the operation fails</returns>
     private async Task<DeepL.Model.SourceLanguage[]?> GetSourceLanguages(ITranslator translator)
     {
-        if (!Cache.TryGetValue(SourceLanguagesCacheKey, out DeepL.Model.SourceLanguage[]? sourceLanguages))
+        if (Cache.TryGetValue(SourceLanguagesCacheKey, out DeepL.Model.SourceLanguage[]? sourceLanguages))
         {
-            var languages = await translator.GetSourceLanguagesAsync();
-            
-            var cacheOptions = new MemoryCacheEntryOptions()
-                .SetAbsoluteExpiration(CacheDuration);
-            
-            Cache.Set(SourceLanguagesCacheKey, languages, cacheOptions);
-            return languages;
+            return sourceLanguages;
         }
-        
-        return sourceLanguages;
+
+        var languages = await translator.GetSourceLanguagesAsync();
+        var cacheOptions = new MemoryCacheEntryOptions()
+            .SetAbsoluteExpiration(CacheDuration);
+            
+        Cache.Set(SourceLanguagesCacheKey, languages, cacheOptions);
+        return languages;
+
     }
     
     /// <inheritdoc />
