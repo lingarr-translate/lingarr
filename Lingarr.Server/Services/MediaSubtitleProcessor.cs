@@ -76,6 +76,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         var existingLanguages = ExtractLanguageCodes(subtitles);
         var sourceLanguages = await GetLanguagesSetting<SourceLanguage>(SettingKeys.Translation.SourceLanguages);
         var targetLanguages = await GetLanguagesSetting<TargetLanguage>(SettingKeys.Translation.TargetLanguages);
+        var ignoreCaptions = await _settingService.GetSetting(SettingKeys.Translation.IgnoreCaptions);
 
         if (sourceLanguages.Count == 0 || targetLanguages.Count == 0)
         {
@@ -92,7 +93,27 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             var sourceSubtitle = subtitles.FirstOrDefault(s => s.Language == sourceLanguage);
             if (sourceSubtitle != null)
             {
-                foreach (var targetLanguage in targetLanguages.Except(existingLanguages))
+                // Get languages that don't yet exist to validate whether captions in those languages are available
+                var languagesToTranslate = targetLanguages.Except(existingLanguages);
+                if (ignoreCaptions == "true")
+                {
+                    var targetLanguagesWithCaptions = subtitles
+                        .Where(s => targetLanguages.Contains(s.Language) && !string.IsNullOrEmpty(s.Caption))
+                        .Select(s => s.Language)
+                        .Distinct()
+                        .ToList();
+
+                    if (targetLanguagesWithCaptions.Any())
+                    {
+                        _logger.LogInformation(
+                            "Translation skipped because captions exist for target languages: |Green|{CaptionLanguages}|/Green| and ignoreCaptions is disabled",
+                            string.Join(", ", targetLanguagesWithCaptions));
+                        await UpdateHash();
+                        return false;
+                    }
+                }
+
+                foreach (var targetLanguage in languagesToTranslate)
                 {
                     await _translationRequestService.CreateRequest(new TranslateAbleSubtitle
                     {
@@ -116,7 +137,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
 
             _logger.LogWarning("No source subtitle file found for language: |Green|{SourceLanguage}|/Green|",
                 sourceLanguage);
-            
+
             await UpdateHash();
             return false;
         }
@@ -130,7 +151,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             string.Join(", ", existingLanguages),
             string.Join(", ", sourceLanguages),
             string.Join(", ", targetLanguages));
-        
+
         await UpdateHash();
         return false;
     }

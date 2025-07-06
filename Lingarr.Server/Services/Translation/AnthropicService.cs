@@ -23,6 +23,11 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
+    // retry settings
+    private int _maxRetries;
+    private TimeSpan _retryDelay;
+    private int _retryDelayMultiplier;
+
     public AnthropicService(ISettingService settings,
         HttpClient httpClient,
         ILogger<AnthropicService> logger)
@@ -56,12 +61,15 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 SettingKeys.Translation.AiContextPrompt,
                 SettingKeys.Translation.AiContextPromptEnabled,
                 SettingKeys.Translation.CustomAiParameters,
+                SettingKeys.Translation.RequestTimeout,
+                SettingKeys.Translation.MaxRetries,
+                SettingKeys.Translation.RetryDelay,
+                SettingKeys.Translation.RetryDelayMultiplier
             ]);
             _model = settings[SettingKeys.Translation.Anthropic.Model];
             _apiKey = settings[SettingKeys.Translation.Anthropic.ApiKey];
             _version = settings[SettingKeys.Translation.Anthropic.Version];
             _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
-
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey) || string.IsNullOrEmpty(_version))
             {
@@ -77,10 +85,25 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
             _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
             
-            _httpClient.Timeout = TimeSpan.FromMinutes(5);
+            var requestTimeout = int.TryParse(settings[SettingKeys.Translation.RequestTimeout],
+                out var timeOut)
+                ? timeOut
+                : 5;
+            _httpClient.Timeout = TimeSpan.FromMinutes(requestTimeout);
             _httpClient.DefaultRequestHeaders.Add("x-api-key", settings[SettingKeys.Translation.Anthropic.ApiKey]);
             _httpClient.DefaultRequestHeaders.Add("anthropic-version",
                 settings[SettingKeys.Translation.Anthropic.Version]);
+
+            _maxRetries = int.TryParse(settings[SettingKeys.Translation.MaxRetries], out var maxRetries) 
+                ? maxRetries 
+                : 5;
+            var retryDelaySeconds = int.TryParse(settings[SettingKeys.Translation.RetryDelay], out var delaySeconds) 
+                ? delaySeconds 
+                : 1;
+            _retryDelay = TimeSpan.FromSeconds(retryDelaySeconds);
+            _retryDelayMultiplier = int.TryParse(settings[SettingKeys.Translation.RetryDelayMultiplier], out var multiplier) 
+                ? multiplier 
+                : 2;
 
             _initialized = true;
         }
@@ -104,12 +127,9 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         text = ApplyContextIfEnabled(text, contextLinesBefore, contextLinesAfter);
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
-
-        const int maxRetries = 5;
-        var delay = TimeSpan.FromSeconds(1);
-        var maxDelay = TimeSpan.FromSeconds(32);
-
-        for (var attempt = 1; attempt <= maxRetries; attempt++)
+        
+        var delay = _retryDelay;
+        for (var attempt = 1; attempt <= _maxRetries; attempt++)
         {
             try
             {
@@ -124,7 +144,6 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 };
                 
                 requestBody = AddCustomParameters(requestBody);
-
                 var content = new StringContent(
                     JsonSerializer.Serialize(requestBody), 
                     Encoding.UTF8, 
@@ -153,18 +172,18 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             }
             catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
             {
-                if (attempt == maxRetries)
+                if (attempt == _maxRetries)
                 {
                     _logger.LogError(ex, "Too many requests. Max retries exhausted for text: {Text}", text);
                     throw new TranslationException("Too many requests. Retry limit reached.", ex);
                 }
 
+                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
+                delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
+                
                 _logger.LogWarning(
                     "Anthropic rate limit hit. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
-                    delay, attempt, maxRetries);
-
-                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
-                delay = TimeSpan.FromTicks(Math.Min(delay.Ticks * 2, maxDelay.Ticks));
+                    delay, attempt, _maxRetries);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -196,19 +215,19 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
 
-        const int maxRetries = 5;
-        var delay = TimeSpan.FromSeconds(1);
-        var maxDelay = TimeSpan.FromSeconds(32);
-
-        for (var attempt = 1; attempt <= maxRetries; attempt++)
+        using var retry = new CancellationTokenSource();
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
+        
+        var delay = _retryDelay;
+        for (var attempt = 1; attempt <= _maxRetries; attempt++)
         {
             try
             {
-                return await TranslateBatchWithAnthropicApi(subtitleBatch, cancellationToken);
+                return await TranslateBatchWithAnthropicApi(subtitleBatch, linked.Token);
             }
             catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
             {
-                if (attempt == maxRetries)
+                if (attempt == _maxRetries)
                 {
                     _logger.LogError(ex, "Too many requests. Max retries exhausted for batch translation");
                     throw new TranslationException("Too many requests. Retry limit reached.", ex);
@@ -216,10 +235,10 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
 
                 _logger.LogWarning(
                     "Anthropic rate limit hit. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
-                    delay, attempt, maxRetries);
+                    delay, attempt, _maxRetries);
 
-                await Task.Delay(delay, cancellationToken);
-                delay = TimeSpan.FromTicks(Math.Min(delay.Ticks * 2, maxDelay.Ticks));
+                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
+                delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
             }
             catch (Exception ex)
             {

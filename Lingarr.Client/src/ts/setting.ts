@@ -52,7 +52,11 @@ export const SETTINGS = {
     USE_BATCH_TRANSLATION: 'use_batch_translation',
     MAX_BATCH_SIZE: 'max_batch_size',
     USE_SUBTITLE_TAGGING: 'use_subtitle_tagging',
-    SUBTITLE_TAG: 'subtitle_tag'
+    SUBTITLE_TAG: 'subtitle_tag',
+    IGNORE_CAPTIONS: 'ignore_captions',
+    MAX_RETRIES: 'max_retries',
+    RETRY_DELAY: 'retry_delay',
+    RETRY_DELAY_MULTIPLIER: 'retry_delay_multiplier'
 } as const
 
 export interface ISettings {
@@ -107,6 +111,10 @@ export interface ISettings {
     max_batch_size: string
     use_subtitle_tagging: string
     subtitle_tag: string
+    ignore_captions: string
+    max_retries: string
+    retry_delay: string
+    retry_delay_multiplier: string
 }
 
 export interface ICustomAiParams {
