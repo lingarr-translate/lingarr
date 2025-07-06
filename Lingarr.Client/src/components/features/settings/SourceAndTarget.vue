@@ -96,13 +96,20 @@ const targetLanguages = computed({
     }
 })
 
+// Helper function that splits en-GB
+function normalizeLangCode(code: string | undefined): string | undefined {
+    return code?.toLowerCase().split('-')[0]
+}
+
 const selectedTargetLanguages = computed(() => {
     if (sourceLanguages.value.length === 0) {
         return []
     }
 
     const allTargets = sourceLanguages.value.flatMap((sourceLanguage) => {
-        const sourceTargetSet = languages.value.find((lang) => lang.code === sourceLanguage.code)
+        const sourceTargetSet = languages.value.find(
+            (lang) => normalizeLangCode(lang.code) === normalizeLangCode(sourceLanguage.code)
+        )
         if (!sourceTargetSet) {
             return []
         }
@@ -111,7 +118,9 @@ const selectedTargetLanguages = computed(() => {
 
     const uniqueTargets = [...new Set(allTargets)]
     return uniqueTargets.map((targetCode) => {
-        const languageInfo = languages.value.find((lang) => lang.code === targetCode)
+        const languageInfo = languages.value.find(
+            (lang) => normalizeLangCode(lang.code) === normalizeLangCode(targetCode)
+        )
         if (languageInfo) {
             return { ...languageInfo }
         }
