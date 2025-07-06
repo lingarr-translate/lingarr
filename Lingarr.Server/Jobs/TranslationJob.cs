@@ -167,7 +167,8 @@ public class TranslationJob
             var translator = new SubtitleTranslationService(translationService, _logger, _progressService);
             var subtitles = await _subtitleService.ReadSubtitles(request.SubtitleToTranslate);
             List<SubtitleItem> translatedSubtitles;
-            if (settings[SettingKeys.Translation.UseBatchTranslation] == "true")
+            if (settings[SettingKeys.Translation.UseBatchTranslation] == "true"
+                && translationService is IBatchTranslationService _)
             {
                 var maxSize = int.TryParse(settings[SettingKeys.Translation.MaxBatchSize],
                     out var batchSize)
