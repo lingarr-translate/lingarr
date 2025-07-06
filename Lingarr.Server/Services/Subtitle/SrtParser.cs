@@ -188,14 +188,16 @@ public class SrtParser : ISubtitleParser
     {
         foreach (var line in lines)
         {
-            var cleanedLine = line.Trim();
-            if (string.IsNullOrEmpty(cleanedLine))
+            var trimmedLine = line.Trim();
+            if (string.IsNullOrEmpty(trimmedLine))
             {
                 continue;
             }
             
-            subtitle.Lines.Add(cleanedLine);
-            subtitle.PlaintextLines.Add(RemoveMarkup(cleanedLine));
+            subtitle.Lines.Add(trimmedLine);
+            subtitle.PlaintextLines.Add(
+                SubtitleFormatterService.RemoveMarkup(trimmedLine)
+            );
         }
     }
 
@@ -206,7 +208,22 @@ public class SrtParser : ISubtitleParser
     /// <returns>The cleaned subtitle text without markup.</returns>
     private static string RemoveMarkup(string input)
     {
-        return Regex.Replace(input, @"\{.*?\}|<.*?>", string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
+
+        // Remove common markup tags: {...}, <...>
+        string cleaned = Regex.Replace(input, @"\{.*?\}|<.*?>", string.Empty);
+
+        // Replace escaped characters (like \n, \t) with space
+        cleaned = cleaned.Replace("\\n", " ")
+            .Replace("\\t", " ")
+            .Replace("\n", " ")
+            .Replace("\t", " ");
+
+        // remove multiple spaces
+        cleaned = Regex.Replace(cleaned, @"\s{2,}", " ");
+
+        return cleaned.Trim();
     }
 
     /// <summary>

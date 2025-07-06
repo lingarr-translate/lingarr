@@ -133,25 +133,6 @@ public class SsaParser : ISubtitleParser
         };
     }
 
-    /// <summary>
-    /// Removes markup tags from a subtitle line.
-    /// </summary>
-    /// <param name="input">The subtitle line with potential markup.</param>
-    /// <returns>The cleaned subtitle text without markup.</returns>
-    private static string RemoveMarkup(string input)
-    {
-        // Remove SSA style tags like {\an8}, {\i1}, etc.
-        var noSsaTags = Regex.Replace(input, @"\{.*?\}", string.Empty);
-
-        // Remove HTML-style tags
-        var noHtmlTags = Regex.Replace(noSsaTags, @"<.*?>", string.Empty);
-
-        // Replace SSA line breaks with spaces for plaintext
-        var noLineBreaks = noHtmlTags.Replace("\\N", " ").Replace("\\n", " ");
-
-        return noLineBreaks.Trim();
-    }
-
     private SubtitleItem? ParseDialogueLine(string line, Dictionary<string, int> columnIndexes, SsaFormat ssaFormat)
     {
         // Find the first 9 commas (corresponding to the format fields before Text)
@@ -204,7 +185,7 @@ public class SsaParser : ISubtitleParser
         }
 
         var textLines = SplitTextByWrapStyle(text, ssaFormat.WrapStyle);
-        var plaintextLines = textLines.Select(RemoveMarkup).ToList();
+        var plaintextLines = textLines.Select(SubtitleFormatterService.RemoveMarkup).ToList();
 
         // Create SsaDialogue info
         var ssaDialogue = new SsaDialogue

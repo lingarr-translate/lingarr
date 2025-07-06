@@ -66,6 +66,10 @@ public class TranslateController : ControllerBase
         var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
         var subtitleTranslator = new SubtitleTranslationService(translationService, _logger);
 
+        if (translateAbleSubtitleLine.SubtitleLine == "")
+        {
+            return translateAbleSubtitleLine.SubtitleLine;
+        }
         return await subtitleTranslator.TranslateSubtitleLine(translateAbleSubtitleLine, cancellationToken);
     }
 
