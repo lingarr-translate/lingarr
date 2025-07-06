@@ -99,7 +99,8 @@ public class AutomatedTranslationJob
         }
 
         var fileInfo = new FileInfo(media.Path);
-        var fileAge = DateTime.Now - fileInfo.CreationTime;
+        var fileAge = DateTime.UtcNow - fileInfo.LastWriteTime.ToUniversalTime();
+   
         var threshold = customAgeThreshold ??
                         (mediaType == MediaType.Movie ? _defaultMovieAgeThreshold : _defaultShowAgeThreshold);
 
@@ -115,7 +116,6 @@ public class AutomatedTranslationJob
             fileAgeHours.ToString("F2"),
             thresholdHours.ToString("F2"));
         return false;
-
     }
 
     private async Task<bool>  ProcessMovies()
