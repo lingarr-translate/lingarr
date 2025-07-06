@@ -24,9 +24,6 @@ public class SubtitleFormatterService : ISubtitleFormatterService
         // Replace tab characters (escaped or literal)
         cleaned = cleaned.Replace("\\t", " ").Replace("\t", " ");
 
-        // Optional: remove other control-like tags, e.g. [note], (custom formats)
-        cleaned = Regex.Replace(cleaned, @"\[[^\]]*]", string.Empty);
-
         // Collapse multiple whitespace into a single space
         cleaned = Regex.Replace(cleaned, @"\s{2,}", " ");
 
