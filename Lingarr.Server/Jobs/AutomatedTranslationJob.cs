@@ -67,7 +67,7 @@ public class AutomatedTranslationJob
 
         var translationCycle = settings[SettingKeys.Automation.TranslationCycle] == "true" ? "movies" : "shows";
         _logger.LogInformation($"Starting translation cycle for |Green|{translationCycle}|/Green|");
-        
+
         switch (translationCycle)
         {
             case "movies":
@@ -100,7 +100,7 @@ public class AutomatedTranslationJob
 
         var fileInfo = new FileInfo(media.Path);
         var fileAge = DateTime.UtcNow - fileInfo.LastWriteTime.ToUniversalTime();
-   
+
         var threshold = customAgeThreshold ??
                         (mediaType == MediaType.Movie ? _defaultMovieAgeThreshold : _defaultShowAgeThreshold);
 
@@ -110,6 +110,7 @@ public class AutomatedTranslationJob
         {
             return true;
         }
+
         _logger.LogInformation(
             "Media {FileName} does not meet age threshold. Age: {Age} hours, Required: {Threshold} hours",
             media.FileName,
@@ -118,12 +119,13 @@ public class AutomatedTranslationJob
         return false;
     }
 
-    private async Task<bool>  ProcessMovies()
+    private async Task<bool> ProcessMovies()
     {
         _logger.LogInformation("Movie Translation job initiated");
 
         var movies = await _dbContext.Movies
             .Where(movie => !movie.ExcludeFromTranslation)
+            .OrderBy(movie => movie.UpdatedAt)
             .ToListAsync();
 
         if (!movies.Any())
@@ -132,8 +134,13 @@ public class AutomatedTranslationJob
             return false;
         }
 
-        int translationsInitiated = 0;
-        foreach (var movie in movies)
+        // We take a subset so that the latest updated at aren't included yet.
+        var candidates = movies.Take(_maxTranslationsPerRun * 4).ToList();
+        var random = new Random();
+        var randomSelection = candidates.OrderBy(x => random.Next()).Take(_maxTranslationsPerRun).ToList();
+
+        var translationsInitiated = 0;
+        foreach (var movie in randomSelection)
         {
             try
             {
@@ -173,7 +180,7 @@ public class AutomatedTranslationJob
         return true;
     }
 
-    private async Task<bool>  ProcessShows()
+    private async Task<bool> ProcessShows()
     {
         _logger.LogInformation("Show Translation job initiated");
 
@@ -188,6 +195,7 @@ public class AutomatedTranslationJob
         var episodes = await _dbContext.Episodes
             .Where(episode =>
                 seasons.Select(s => s.Id).Contains(episode.SeasonId) && !episode.ExcludeFromTranslation)
+            .OrderBy(e => e.UpdatedAt)
             .ToListAsync();
 
         if (!episodes.Any())
@@ -196,8 +204,13 @@ public class AutomatedTranslationJob
             return false;
         }
 
-        int translationsInitiated = 0;
-        foreach (var episode in episodes)
+        // We take a subset so that the latest updated at aren't included yet.
+        var candidates = episodes.Take(_maxTranslationsPerRun * 4).ToList();
+        var random = new Random();
+        var randomSelection = candidates.OrderBy(x => random.Next()).Take(_maxTranslationsPerRun).ToList();
+
+        var translationsInitiated = 0;
+        foreach (var episode in randomSelection)
         {
             if (translationsInitiated >= _maxTranslationsPerRun)
             {
