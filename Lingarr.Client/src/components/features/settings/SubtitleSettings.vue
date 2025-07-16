@@ -73,7 +73,7 @@
                     <InputComponent
                         v-if="useSubtitleTagging == 'true'"
                         v-model="subtitleTag"
-                        validation-type="number"
+                        validation-type="string"
                         :label="translate('settings.subtitle.subtitleTag')"
                         @update:validation="(val) => (isValid.subtitleTag = val)" />
                 </div>
