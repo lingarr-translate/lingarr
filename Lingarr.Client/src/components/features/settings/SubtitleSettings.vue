@@ -54,22 +54,6 @@
                     </span>
                 </ToggleButton>
 
-                <div class="flex flex-col space-x-2">
-                    <span class="font-semibold">
-                        {{ translate('settings.subtitle.addTranslatorInfo') }}
-                    </span>
-                    {{ translate('settings.subtitle.addTranslatorInfoDescription') }}
-                </div>
-                <ToggleButton v-model="addTranslatorInfo">
-                    <span class="text-primary-content text-sm font-medium">
-                        {{
-                            addTranslatorInfo == 'true'
-                                ? translate('common.enabled')
-                                : translate('common.disabled')
-                        }}
-                    </span>
-                </ToggleButton>
-
                 <div class="flex flex-col space-y-4">
                     <div class="flex flex-col space-x-2">
                         <span class="font-semibold">
@@ -134,14 +118,6 @@ const stripSubtitleFormatting = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.STRIP_SUBTITLE_FORMATTING) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.STRIP_SUBTITLE_FORMATTING, newValue, true)
-        saveNotification.value?.show()
-    }
-})
-
-const addTranslatorInfo = computed({
-    get: (): string => settingsStore.getSetting(SETTINGS.ADD_TRANSLATOR_INFO) as string,
-    set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.ADD_TRANSLATOR_INFO, newValue, true)
         saveNotification.value?.show()
     }
 })

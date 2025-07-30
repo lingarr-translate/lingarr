@@ -174,8 +174,6 @@
       "stripSubtitleFormatting": "Verwijder ondertitelopmaak:",
       "stripSubtitleFormattingDescription": "Schakel deze optie in om alle opmaak-tags (bijv. cursief, vet, kleur, positie) uit (SRT) ondertitels te verwijderen, wat resulteert in platte tekst ondertitels.",
       "maxBatchSize": "Maximale batch grootte",
-      "addTranslatorInfo": "Vertalerinformatie toevoegen",
-      "addTranslatorInfoDescription": "Voeg vertalerinformatie toe aan het begin van de ondertitels.",
       "useSubtitleTagging": "Gebruik ondertitel tagging",
       "useSubtitleTaggingDescription": "Voeg een aangepaste tag of tekst toe aan het ondertitelbestand om het te identificeren als vertaald door Lingarr.",
       "subtitleTag": "Ondertitel tag"

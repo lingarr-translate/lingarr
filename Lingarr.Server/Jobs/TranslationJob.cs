@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Hangfire;
+﻿using Hangfire;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
@@ -57,7 +56,7 @@ public class TranslationJob
     {
         var jobName = JobContextFilter.GetCurrentJobTypeName();
         var jobId = JobContextFilter.GetCurrentJobId();
-
+        
         try
         {
             await _scheduleService.UpdateJobState(jobName, JobStatus.Processing.GetDisplayName());
@@ -73,15 +72,14 @@ public class TranslationJob
                 SettingKeys.Translation.ServiceType,
                 SettingKeys.Translation.FixOverlappingSubtitles,
                 SettingKeys.Translation.StripSubtitleFormatting,
-                SettingKeys.Translation.AddTranslatorInfo,
-
+                
                 SettingKeys.SubtitleValidation.ValidateSubtitles,
                 SettingKeys.SubtitleValidation.MaxFileSizeBytes,
                 SettingKeys.SubtitleValidation.MaxSubtitleLength,
                 SettingKeys.SubtitleValidation.MinSubtitleLength,
                 SettingKeys.SubtitleValidation.MinDurationMs,
                 SettingKeys.SubtitleValidation.MaxDurationSecs,
-
+                
                 SettingKeys.Translation.AiContextPromptEnabled,
                 SettingKeys.Translation.AiContextBefore,
                 SettingKeys.Translation.AiContextBefore,
@@ -92,8 +90,7 @@ public class TranslationJob
                 SettingKeys.Translation.SubtitleTag
             ]);
             var serviceType = settings[SettingKeys.Translation.ServiceType];
-            var stripSubtitleFormatting = settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
-            var addTranslatorInfo = settings[SettingKeys.Translation.AddTranslatorInfo] == "true";
+            var stripSubtitleFormatting =  settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
             var validateSubtitles = settings[SettingKeys.SubtitleValidation.ValidateSubtitles] != "false";
 
             var contextBefore = 0;
@@ -154,18 +151,17 @@ public class TranslationJob
                     _logger.LogWarning("Subtitle is not valid according to configured preferences.");
                     throw new TaskCanceledException("Subtitle is not valid according to configured preferences.");
                 }
-
                 var isValid = _subtitleService.ValidateSubtitle(
                     request.SubtitleToTranslate,
                     validationOptions);
-
+        
                 if (!isValid)
                 {
                     _logger.LogWarning("Subtitle is not valid according to configured preferences.");
                     throw new TaskCanceledException("Subtitle is not valid according to configured preferences.");
                 }
             }
-
+            
             // translate subtitles
             var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
             var translator = new SubtitleTranslationService(translationService, _logger, _progressService);
@@ -179,10 +175,9 @@ public class TranslationJob
                     ? batchSize
                     : 10000;
 
-                _logger.LogInformation(
-                    "Using batch translation with max batch size: {maxBatchSize} for subtitle: {filePath}",
+                _logger.LogInformation("Using batch translation with max batch size: {maxBatchSize} for subtitle: {filePath}", 
                     maxSize, translationRequest.SubtitleToTranslate);
-
+                
                 translatedSubtitles = await translator.TranslateSubtitlesBatch(
                     subtitles,
                     translationRequest,
@@ -192,10 +187,9 @@ public class TranslationJob
             }
             else
             {
-                _logger.LogInformation(
-                    "Using individual translation with context (before: {contextBefore}, after: {contextAfter}) for subtitle: {filePath}",
+                _logger.LogInformation("Using individual translation with context (before: {contextBefore}, after: {contextAfter}) for subtitle: {filePath}", 
                     contextBefore, contextAfter, translationRequest.SubtitleToTranslate);
-
+                    
                 translatedSubtitles = await translator.TranslateSubtitles(
                     subtitles,
                     request,
@@ -210,12 +204,6 @@ public class TranslationJob
             {
                 translatedSubtitles = _subtitleService.FixOverlappingSubtitles(translatedSubtitles);
             }
-
-            if (addTranslatorInfo)
-            {
-                AddTranslatorInfo(serviceType, translatedSubtitles, translationService);
-            }
-
             if (stripSubtitleFormatting)
             {
                 var format = translatedSubtitles[0].SsaFormat;
@@ -233,7 +221,6 @@ public class TranslationJob
             {
                 subtitleTag = settings[SettingKeys.Translation.SubtitleTag];
             }
-
             await WriteSubtitles(request, translatedSubtitles, stripSubtitleFormatting, subtitleTag);
             await HandleCompletion(jobName, request, cancellationToken);
         }
@@ -250,61 +237,11 @@ public class TranslationJob
             throw;
         }
     }
-
-    private void AddTranslatorInfo(string serviceType, List<SubtitleItem> translatedSubtitles,
-        ITranslationService translationService)
-    {
-        // Check if the service has a ModelName property
-        var serviceName = char.ToUpper(serviceType[0]) + serviceType[1..];
-
-        var modelField = translationService.GetType().GetField("_model", 
-            BindingFlags.NonPublic | BindingFlags.Instance);
-
-        if (modelField != null)
-        {
-            var modelName = modelField.GetValue(translationService)?.ToString();
-            if (!string.IsNullOrEmpty(modelName))
-            {
-                serviceName += " - " + modelName;
-            }
-        }
-
-        var introText = $"# Translated with Lingarr using {serviceName} translator #";
-        var introDuration = 5.0; // Default duration in seconds
-
-        // Check if there are existing subtitles and if the first one starts before our intro ends
-        if (translatedSubtitles.Count > 0)
-        {
-            var firstSubtitle = translatedSubtitles[0];
-            var firstSubtitleStartTimeSeconds = firstSubtitle.StartTime / 1000.0;
-
-            // If the first subtitle starts before our intro would end, adjust the intro duration
-            if (firstSubtitleStartTimeSeconds < introDuration)
-            {
-                // Leave a small gap (e.g., 0.5 seconds) between intro and first subtitle
-                introDuration = Math.Max(0.5, firstSubtitleStartTimeSeconds - 0.5);
-                _logger.LogInformation(
-                    "Adjusted intro duration to {introDuration} seconds to avoid overlap with first subtitle at {firstStart} seconds",
-                    introDuration, firstSubtitleStartTimeSeconds);
-            }
-        }
-
-        var introSubtitle = new SubtitleItem
-        {
-            StartTime = 0,
-            EndTime = (int)(introDuration * 1000),
-            Lines = [introText],
-            PlaintextLines = [introText],
-            TranslatedLines = [introText]
-        };
-
-        translatedSubtitles.Insert(0, introSubtitle);
-    }
-
-    private async Task WriteSubtitles(
-        TranslationRequest translationRequest,
-        List<SubtitleItem> translatedSubtitles,
-        bool stripSubtitleFormatting,
+    
+    private async Task WriteSubtitles( 
+        TranslationRequest translationRequest, 
+        List<SubtitleItem> translatedSubtitles, 
+        bool stripSubtitleFormatting, 
         string subtitleTag)
     {
         try
@@ -314,7 +251,7 @@ public class TranslationJob
                 translationRequest.TargetLanguage,
                 subtitleTag);
             await _subtitleService.WriteSubtitles(outputPath, translatedSubtitles, stripSubtitleFormatting);
-
+            
             _logger.LogInformation("TranslateJob completed and created subtitle: |Green|{filePath}|/Green|",
                 outputPath);
         }
@@ -326,25 +263,24 @@ public class TranslationJob
     }
 
     private async Task HandleCompletion(
-        string jobName,
-        TranslationRequest translationRequest,
+        string jobName, 
+        TranslationRequest translationRequest, 
         CancellationToken cancellationToken)
     {
         translationRequest.CompletedAt = DateTime.UtcNow;
         translationRequest.Status = TranslationStatus.Completed;
         await _dbContext.SaveChangesAsync(cancellationToken);
-
+        
         await _progressService.Emit(translationRequest, 100);
         await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());
     }
-
+    
     private async Task HandleCancellation(string jobName, TranslationRequest request)
     {
         _logger.LogInformation("Translation cancelled for subtitle: |Orange|{subtitlePath}|/Orange|",
             request.SubtitleToTranslate);
-        var translationRequest =
-            await _dbContext.TranslationRequests.FirstOrDefaultAsync(translationRequest =>
-                translationRequest.Id == request.Id);
+        var translationRequest = await _dbContext.TranslationRequests.FirstOrDefaultAsync(
+            translationRequest => translationRequest.Id == request.Id);
 
         if (translationRequest != null)
         {
