@@ -57,6 +57,7 @@ public class TranslationJob
     {
         var jobName = JobContextFilter.GetCurrentJobTypeName();
         var jobId = JobContextFilter.GetCurrentJobId();
+
         try
         {
             await _scheduleService.UpdateJobState(jobName, JobStatus.Processing.GetDisplayName());
@@ -73,12 +74,14 @@ public class TranslationJob
                 SettingKeys.Translation.FixOverlappingSubtitles,
                 SettingKeys.Translation.StripSubtitleFormatting,
                 SettingKeys.Translation.AddTranslatorInfo,
+
                 SettingKeys.SubtitleValidation.ValidateSubtitles,
                 SettingKeys.SubtitleValidation.MaxFileSizeBytes,
                 SettingKeys.SubtitleValidation.MaxSubtitleLength,
                 SettingKeys.SubtitleValidation.MinSubtitleLength,
                 SettingKeys.SubtitleValidation.MinDurationMs,
                 SettingKeys.SubtitleValidation.MaxDurationSecs,
+
                 SettingKeys.Translation.AiContextPromptEnabled,
                 SettingKeys.Translation.AiContextBefore,
                 SettingKeys.Translation.AiContextBefore,
