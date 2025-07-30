@@ -248,7 +248,7 @@ public class TranslationJob
 
     private void AddTranslatorInfo(string serviceType, List<SubtitleItem> translatedSubtitles)
     {
-        var introText = $"# Translated with {serviceType}";
+        var introText = $"# Translated with Lingarr using {serviceType} translator#";
         var introDuration = 5.0; // Default duration in seconds
     
         // Check if there are existing subtitles and if the first one starts before our intro ends
