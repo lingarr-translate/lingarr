@@ -72,6 +72,7 @@ public static class SettingKeys
         public const string UseBatchTranslation = "use_batch_translation";
         public const string MaxBatchSize = "max_batch_size";
         public const string UseSubtitleTagging = "use_subtitle_tagging";
+        public const string RemoveLanguageTag = "remove_language_tag";
         public const string SubtitleTag = "subtitle_tag";
         public const string IgnoreCaptions = "ignore_captions";
         public const string RequestTimeout = "request_timeout";

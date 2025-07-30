@@ -86,12 +86,14 @@ public class TranslationJob
                 SettingKeys.Translation.AiContextAfter,
                 SettingKeys.Translation.UseBatchTranslation,
                 SettingKeys.Translation.MaxBatchSize,
+                SettingKeys.Translation.RemoveLanguageTag,
                 SettingKeys.Translation.UseSubtitleTagging,
                 SettingKeys.Translation.SubtitleTag
             ]);
             var serviceType = settings[SettingKeys.Translation.ServiceType];
             var stripSubtitleFormatting =  settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
             var validateSubtitles = settings[SettingKeys.SubtitleValidation.ValidateSubtitles] != "false";
+            var removeLanguageTag = settings[SettingKeys.Translation.RemoveLanguageTag] != "false";
 
             var contextBefore = 0;
             var contextAfter = 0;
@@ -221,7 +223,7 @@ public class TranslationJob
             {
                 subtitleTag = settings[SettingKeys.Translation.SubtitleTag];
             }
-            await WriteSubtitles(request, translatedSubtitles, stripSubtitleFormatting, subtitleTag);
+            await WriteSubtitles(request, translatedSubtitles, stripSubtitleFormatting, subtitleTag, removeLanguageTag);
             await HandleCompletion(jobName, request, cancellationToken);
         }
         catch (TaskCanceledException)
@@ -238,20 +240,32 @@ public class TranslationJob
         }
     }
     
-    private async Task WriteSubtitles( 
-        TranslationRequest translationRequest, 
-        List<SubtitleItem> translatedSubtitles, 
-        bool stripSubtitleFormatting, 
-        string subtitleTag)
+    private async Task WriteSubtitles(TranslationRequest translationRequest,
+        List<SubtitleItem> translatedSubtitles,
+        bool stripSubtitleFormatting,
+        string subtitleTag, bool removeLanguageTag)
     {
         try
         {
-            var outputPath = _subtitleService.CreateFilePath(
-                translationRequest.SubtitleToTranslate,
-                translationRequest.TargetLanguage,
-                subtitleTag);
+            string outputPath;
+        
+            if (removeLanguageTag)
+            {
+                outputPath = _subtitleService.CreateFilePath(
+                    translationRequest.SubtitleToTranslate,
+                    subtitleTag,
+                    "");
+            }
+            else
+            {
+                outputPath = _subtitleService.CreateFilePath(
+                    translationRequest.SubtitleToTranslate,
+                    translationRequest.TargetLanguage,
+                    subtitleTag);
+            }
+        
             await _subtitleService.WriteSubtitles(outputPath, translatedSubtitles, stripSubtitleFormatting);
-            
+        
             _logger.LogInformation("TranslateJob completed and created subtitle: |Green|{filePath}|/Green|",
                 outputPath);
         }
