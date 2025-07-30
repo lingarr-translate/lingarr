@@ -72,6 +72,7 @@ public class TranslationJob
                 SettingKeys.Translation.ServiceType,
                 SettingKeys.Translation.FixOverlappingSubtitles,
                 SettingKeys.Translation.StripSubtitleFormatting,
+                SettingKeys.Translation.AddTranslatorInfo,
                 
                 SettingKeys.SubtitleValidation.ValidateSubtitles,
                 SettingKeys.SubtitleValidation.MaxFileSizeBytes,
@@ -91,6 +92,7 @@ public class TranslationJob
             ]);
             var serviceType = settings[SettingKeys.Translation.ServiceType];
             var stripSubtitleFormatting =  settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
+            var addTranslatorInfo =  settings[SettingKeys.Translation.AddTranslatorInfo] == "true";
             var validateSubtitles = settings[SettingKeys.SubtitleValidation.ValidateSubtitles] != "false";
 
             var contextBefore = 0;
@@ -204,6 +206,12 @@ public class TranslationJob
             {
                 translatedSubtitles = _subtitleService.FixOverlappingSubtitles(translatedSubtitles);
             }
+
+            if (addTranslatorInfo)
+            {
+                AddTranslatorInfo(serviceType, translatedSubtitles);
+            }
+            
             if (stripSubtitleFormatting)
             {
                 var format = translatedSubtitles[0].SsaFormat;
@@ -237,7 +245,40 @@ public class TranslationJob
             throw;
         }
     }
+
+    private void AddTranslatorInfo(string serviceType, List<SubtitleItem> translatedSubtitles)
+    {
+        var introText = $"# Translated with {serviceType}";
+        var introDuration = 5.0; // Default duration in seconds
     
+        // Check if there are existing subtitles and if the first one starts before our intro ends
+        if (translatedSubtitles.Count > 0)
+        {
+            var firstSubtitle = translatedSubtitles[0];
+            var firstSubtitleStartTimeSeconds = firstSubtitle.StartTime / 1000.0;
+        
+            // If the first subtitle starts before our intro would end, adjust the intro duration
+            if (firstSubtitleStartTimeSeconds < introDuration)
+            {
+                // Leave a small gap (e.g., 0.5 seconds) between intro and first subtitle
+                introDuration = Math.Max(0.5, firstSubtitleStartTimeSeconds - 0.5);
+                _logger.LogInformation("Adjusted intro duration to {introDuration} seconds to avoid overlap with first subtitle at {firstStart} seconds", 
+                    introDuration, firstSubtitleStartTimeSeconds);
+            }
+        }
+
+        var introSubtitle = new SubtitleItem
+        {
+            StartTime = 0,
+            EndTime = (int)(introDuration * 1000),
+            Lines = [introText],
+            PlaintextLines = [introText],
+            TranslatedLines = [introText]
+        };
+
+        translatedSubtitles.Insert(0, introSubtitle);
+    }
+
     private async Task WriteSubtitles( 
         TranslationRequest translationRequest, 
         List<SubtitleItem> translatedSubtitles, 
