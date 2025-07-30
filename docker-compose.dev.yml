@@ -111,7 +111,7 @@ services:
       - "9878:80"
     networks:
       - lingarr
-  
+        
   radarr:
     image: ghcr.io/hotio/radarr:nightly
     container_name: radarr
@@ -124,7 +124,7 @@ services:
       - 7878:7878
     networks:
       - lingarr
-  
+        
   sonarr:
     image: ghcr.io/hotio/sonarr:nightly
     container_name: sonarr
@@ -138,7 +138,7 @@ services:
       - 8989:8989
     networks:
       - lingarr
-
+        
 #  localai:
 #    container_name: localai
 #    image: localai/localai:latest-aio-cpu
