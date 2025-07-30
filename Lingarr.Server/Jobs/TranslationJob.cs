@@ -57,7 +57,6 @@ public class TranslationJob
     {
         var jobName = JobContextFilter.GetCurrentJobTypeName();
         var jobId = JobContextFilter.GetCurrentJobId();
-
         try
         {
             await _scheduleService.UpdateJobState(jobName, JobStatus.Processing.GetDisplayName());
@@ -74,14 +73,12 @@ public class TranslationJob
                 SettingKeys.Translation.FixOverlappingSubtitles,
                 SettingKeys.Translation.StripSubtitleFormatting,
                 SettingKeys.Translation.AddTranslatorInfo,
-
                 SettingKeys.SubtitleValidation.ValidateSubtitles,
                 SettingKeys.SubtitleValidation.MaxFileSizeBytes,
                 SettingKeys.SubtitleValidation.MaxSubtitleLength,
                 SettingKeys.SubtitleValidation.MinSubtitleLength,
                 SettingKeys.SubtitleValidation.MinDurationMs,
                 SettingKeys.SubtitleValidation.MaxDurationSecs,
-
                 SettingKeys.Translation.AiContextPromptEnabled,
                 SettingKeys.Translation.AiContextBefore,
                 SettingKeys.Translation.AiContextBefore,
@@ -257,7 +254,7 @@ public class TranslationJob
         // Check if the service has a ModelName property
         var serviceName = char.ToUpper(serviceType[0]) + serviceType[1..];
 
-        var modelField = translationService.GetType().GetField("_model", 
+        var modelField = translationService.GetType().GetField("_model",
             BindingFlags.NonPublic | BindingFlags.Instance);
 
         if (modelField != null)
