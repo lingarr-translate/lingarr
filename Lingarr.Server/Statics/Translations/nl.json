@@ -173,6 +173,8 @@
       "fixOverlappingSubtitlesDescription": "Verbetert automatisch overlappende ondertitels door de timing aan te passen van de vorige, huidige en volgende ondertitel op basis van tekstlengte.",
       "stripSubtitleFormatting": "Verwijder ondertitelopmaak:",
       "stripSubtitleFormattingDescription": "Schakel deze optie in om alle opmaak-tags (bijv. cursief, vet, kleur, positie) uit (SRT) ondertitels te verwijderen, wat resulteert in platte tekst ondertitels.",
+      "removeLanguageTag": "Taalcode verwijderen",
+      "removeLanguageTagDescription": "Verwijder de taalcode (zoals \".nl.\") uit de bestandsnaam.",
       "maxBatchSize": "Maximale batch grootte",
       "useSubtitleTagging": "Gebruik ondertitel tagging",
       "useSubtitleTaggingDescription": "Voeg een aangepaste tag of tekst toe aan het ondertitelbestand om het te identificeren als vertaald door Lingarr.",
