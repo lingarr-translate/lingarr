@@ -5,7 +5,7 @@
 networks:
   lingarr:
     
-    external: true
+#    external: true
 
 services:
   Lingarr.Server:
