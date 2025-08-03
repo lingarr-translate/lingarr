@@ -138,18 +138,18 @@ const ignoreCaptions = computed({
     }
 })
 
-const addTranslatorInfo = computed({
-    get: (): string => settingsStore.getSetting(SETTINGS.ADD_TRANSLATOR_INFO) as string,
-    set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.ADD_TRANSLATOR_INFO, newValue, true)
-        saveNotification.value?.show()
-    }
-})
-
 const fixOverlappingSubtitles = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.FIX_OVERLAPPING_SUBTITLES) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.FIX_OVERLAPPING_SUBTITLES, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+
+const addTranslatorInfo = computed({
+    get: (): string => settingsStore.getSetting(SETTINGS.ADD_TRANSLATOR_INFO) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.ADD_TRANSLATOR_INFO, newValue, true)
         saveNotification.value?.show()
     }
 })
