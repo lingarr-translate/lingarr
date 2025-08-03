@@ -56,6 +56,22 @@
 
                 <div class="flex flex-col space-x-2">
                     <span class="font-semibold">
+                        {{ translate('settings.subtitle.addTranslatorInfo') }}
+                    </span>
+                    {{ translate('settings.subtitle.addTranslatorInfoDescription') }}
+                </div>
+                <ToggleButton v-model="addTranslatorInfo">
+                    <span class="text-primary-content text-sm font-medium">
+                        {{
+                            addTranslatorInfo == 'true'
+                                ? translate('common.enabled')
+                                : translate('common.disabled')
+                        }}
+                    </span>
+                </ToggleButton>
+
+                <div class="flex flex-col space-x-2">
+                    <span class="font-semibold">
                         {{ translate('settings.subtitle.removeLanguageTag') }}
                     </span>
                     {{ translate('settings.subtitle.removeLanguageTagDescription') }}
@@ -118,6 +134,14 @@ const ignoreCaptions = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.IGNORE_CAPTIONS) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.IGNORE_CAPTIONS, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+
+const addTranslatorInfo = computed({
+    get: (): string => settingsStore.getSetting(SETTINGS.ADD_TRANSLATOR_INFO) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.ADD_TRANSLATOR_INFO, newValue, true)
         saveNotification.value?.show()
     }
 })
