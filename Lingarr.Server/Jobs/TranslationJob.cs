@@ -213,7 +213,7 @@ public class TranslationJob
 
             if (addTranslatorInfo)
             {
-                AddTranslatorInfo(serviceType, translatedSubtitles, translationService);
+                _subtitleService.AddTranslatorInfo(serviceType, translatedSubtitles, translationService);
             }
 
             if (stripSubtitleFormatting)
@@ -249,56 +249,6 @@ public class TranslationJob
             await _scheduleService.UpdateJobState(jobName, JobStatus.Failed.GetDisplayName());
             throw;
         }
-    }
-
-    private void AddTranslatorInfo(string serviceType, List<SubtitleItem> translatedSubtitles,
-        ITranslationService translationService)
-    {
-        // Check if the service has a ModelName property
-        var serviceName = char.ToUpper(serviceType[0]) + serviceType[1..];
-
-        var modelField = translationService.GetType().GetField("_model",
-            BindingFlags.NonPublic | BindingFlags.Instance);
-
-        if (modelField != null)
-        {
-            var modelName = modelField.GetValue(translationService)?.ToString();
-            if (!string.IsNullOrEmpty(modelName))
-            {
-                serviceName += " - " + modelName;
-            }
-        }
-
-        var introText = $"# Translated with Lingarr using {serviceName} translator #";
-        var introDuration = 5.0; // Default duration in seconds
-
-        // Check if there are existing subtitles and if the first one starts before our intro ends
-        if (translatedSubtitles.Count > 0)
-        {
-            var firstSubtitle = translatedSubtitles[0];
-            var firstSubtitleStartTimeSeconds = firstSubtitle.StartTime / 1000.0;
-
-            // If the first subtitle starts before our intro would end, adjust the intro duration
-            if (firstSubtitleStartTimeSeconds < introDuration)
-            {
-                // Leave a small gap (e.g., 0.5 seconds) between intro and first subtitle
-                introDuration = Math.Max(0.5, firstSubtitleStartTimeSeconds - 0.5);
-                _logger.LogInformation(
-                    "Adjusted intro duration to {introDuration} seconds to avoid overlap with first subtitle at {firstStart} seconds",
-                    introDuration, firstSubtitleStartTimeSeconds);
-            }
-        }
-
-        var introSubtitle = new SubtitleItem
-        {
-            StartTime = 0,
-            EndTime = (int)(introDuration * 1000),
-            Lines = [introText],
-            PlaintextLines = [introText],
-            TranslatedLines = [introText]
-        };
-
-        translatedSubtitles.Insert(0, introSubtitle);
     }
 
     private async Task WriteSubtitles(
