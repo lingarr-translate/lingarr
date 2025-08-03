@@ -92,6 +92,7 @@ public class TranslationJob
             ]);
             var serviceType = settings[SettingKeys.Translation.ServiceType];
             var stripSubtitleFormatting =  settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
+            var addTranslatorInfo = settings[SettingKeys.Translation.AddTranslatorInfo] == "true";
             var validateSubtitles = settings[SettingKeys.SubtitleValidation.ValidateSubtitles] != "false";
             var removeLanguageTag = settings[SettingKeys.Translation.RemoveLanguageTag] != "false";
 
