@@ -1,8 +1,10 @@
 using System.Globalization;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Subtitle;
+using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Services.Subtitle;
 using SubtitleValidationOptions = Lingarr.Server.Models.SubtitleValidationOptions;
@@ -466,6 +468,63 @@ public class SubtitleService : ISubtitleService
             _logger.LogError(ex, "Subtitle validation failed");
             return false;
         }
+    }
+    
+    /// <summary>
+    /// Adds an introductory subtitle at the beginning that identifies the translation service used.
+    /// The intro duration is automatically adjusted to avoid overlapping with existing subtitles.
+    /// </summary>
+    /// <param name="serviceType">The translation service type (e.g., "openai", "google").</param>
+    /// <param name="translatedSubtitles">The subtitle list to prepend the intro to.</param>
+    /// <param name="translationService">The service instance used to extract model name if available.</param>
+    public void AddTranslatorInfo(string serviceType, List<SubtitleItem> translatedSubtitles,
+        ITranslationService translationService)
+    {
+        // Check if the service has a ModelName property
+        var serviceName = char.ToUpper(serviceType[0]) + serviceType[1..];
+
+        var modelField = translationService.GetType().GetField("_model",
+            BindingFlags.NonPublic | BindingFlags.Instance);
+
+        if (modelField != null)
+        {
+            var modelName = modelField.GetValue(translationService)?.ToString();
+            if (!string.IsNullOrEmpty(modelName))
+            {
+                serviceName += " - " + modelName;
+            }
+        }
+
+        var introText = $"# Translated with Lingarr using {serviceName} translator #";
+        var introDuration = 5.0; // Default duration in seconds
+
+        // Check if there are existing subtitles and if the first one starts before our intro ends
+        if (translatedSubtitles.Count > 0)
+        {
+            var firstSubtitle = translatedSubtitles[0];
+            var firstSubtitleStartTimeSeconds = firstSubtitle.StartTime / 1000.0;
+
+            // If the first subtitle starts before our intro would end, adjust the intro duration
+            if (firstSubtitleStartTimeSeconds < introDuration)
+            {
+                // Leave a small gap (e.g., 0.5 seconds) between intro and first subtitle
+                introDuration = Math.Max(0.5, firstSubtitleStartTimeSeconds - 0.5);
+                _logger.LogInformation(
+                    "Adjusted intro duration to {introDuration} seconds to avoid overlap with first subtitle at {firstStart} seconds",
+                    introDuration, firstSubtitleStartTimeSeconds);
+            }
+        }
+
+        var introSubtitle = new SubtitleItem
+        {
+            StartTime = 0,
+            EndTime = (int)(introDuration * 1000),
+            Lines = [introText],
+            PlaintextLines = [introText],
+            TranslatedLines = [introText]
+        };
+
+        translatedSubtitles.Insert(0, introSubtitle);
     }
 
     /// <summary>
