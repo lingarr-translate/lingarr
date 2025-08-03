@@ -72,6 +72,7 @@ public class TranslationJob
                 SettingKeys.Translation.ServiceType,
                 SettingKeys.Translation.FixOverlappingSubtitles,
                 SettingKeys.Translation.StripSubtitleFormatting,
+                SettingKeys.Translation.AddTranslatorInfo,
                 
                 SettingKeys.SubtitleValidation.ValidateSubtitles,
                 SettingKeys.SubtitleValidation.MaxFileSizeBytes,
