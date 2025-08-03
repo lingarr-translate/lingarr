@@ -243,29 +243,20 @@ public class TranslationJob
     private async Task WriteSubtitles(TranslationRequest translationRequest,
         List<SubtitleItem> translatedSubtitles,
         bool stripSubtitleFormatting,
-        string subtitleTag, bool removeLanguageTag)
+        string subtitleTag, 
+        bool removeLanguageTag)
     {
         try
         {
-            string outputPath;
+            var targetLanguage = removeLanguageTag ? "" : translationRequest.TargetLanguage;
         
-            if (removeLanguageTag)
-            {
-                outputPath = _subtitleService.CreateFilePath(
-                    translationRequest.SubtitleToTranslate,
-                    subtitleTag,
-                    "");
-            }
-            else
-            {
-                outputPath = _subtitleService.CreateFilePath(
-                    translationRequest.SubtitleToTranslate,
-                    translationRequest.TargetLanguage,
-                    subtitleTag);
-            }
-        
+            var outputPath = _subtitleService.CreateFilePath(
+                translationRequest.SubtitleToTranslate,
+                targetLanguage,
+                subtitleTag);
+    
             await _subtitleService.WriteSubtitles(outputPath, translatedSubtitles, stripSubtitleFormatting);
-        
+    
             _logger.LogInformation("TranslateJob completed and created subtitle: |Green|{filePath}|/Green|",
                 outputPath);
         }
