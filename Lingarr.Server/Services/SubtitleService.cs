@@ -140,7 +140,9 @@ public class SubtitleService : ISubtitleService
         }
 
         // Resolve target language code
-        if (!TryGetLanguageByPart(targetLanguage, out var targetLanguageCode))
+        string? targetLanguageCode = null;
+        if (!string.IsNullOrEmpty(targetLanguage)
+            && !TryGetLanguageByPart(targetLanguage, out targetLanguageCode))
         {
             targetLanguageCode = targetLanguage;
         }
