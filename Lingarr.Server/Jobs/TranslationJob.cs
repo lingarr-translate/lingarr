@@ -206,6 +206,7 @@ public class TranslationJob
             {
                 translatedSubtitles = _subtitleService.FixOverlappingSubtitles(translatedSubtitles);
             }
+
             if (stripSubtitleFormatting)
             {
                 var format = translatedSubtitles[0].SsaFormat;
@@ -239,8 +240,9 @@ public class TranslationJob
             throw;
         }
     }
-    
-    private async Task WriteSubtitles(TranslationRequest translationRequest,
+
+    private async Task WriteSubtitles(
+        TranslationRequest translationRequest,
         List<SubtitleItem> translatedSubtitles,
         bool stripSubtitleFormatting,
         string subtitleTag, 
