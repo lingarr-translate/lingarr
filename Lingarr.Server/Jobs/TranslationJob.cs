@@ -206,6 +206,12 @@ public class TranslationJob
             {
                 translatedSubtitles = _subtitleService.FixOverlappingSubtitles(translatedSubtitles);
             }
+
+            if (addTranslatorInfo)
+            {
+                _subtitleService.AddTranslatorInfo(serviceType, translatedSubtitles, translationService);
+            }
+
             if (stripSubtitleFormatting)
             {
                 var format = translatedSubtitles[0].SsaFormat;
