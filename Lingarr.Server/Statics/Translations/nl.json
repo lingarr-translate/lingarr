@@ -178,6 +178,8 @@
       "maxBatchSize": "Maximale batch grootte",
       "useSubtitleTagging": "Gebruik ondertitel tagging",
       "useSubtitleTaggingDescription": "Voeg een aangepaste tag of tekst toe aan het ondertitelbestand om het te identificeren als vertaald door Lingarr.",
+      "addTranslatorInfo": "Vertalerinformatie toevoegen",
+      "addTranslatorInfoDescription": "Voeg vertalerinformatie toe aan het begin van de ondertitels.",
       "subtitleTag": "Ondertitel tag"
     },
     "indexing": {
