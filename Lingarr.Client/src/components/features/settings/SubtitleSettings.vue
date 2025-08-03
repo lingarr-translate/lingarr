@@ -146,18 +146,18 @@ const fixOverlappingSubtitles = computed({
     }
 })
 
-const addTranslatorInfo = computed({
-    get: (): string => settingsStore.getSetting(SETTINGS.ADD_TRANSLATOR_INFO) as string,
-    set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.ADD_TRANSLATOR_INFO, newValue, true)
-        saveNotification.value?.show()
-    }
-})
-
 const stripSubtitleFormatting = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.STRIP_SUBTITLE_FORMATTING) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.STRIP_SUBTITLE_FORMATTING, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+
+const addTranslatorInfo = computed({
+    get: (): string => settingsStore.getSetting(SETTINGS.ADD_TRANSLATOR_INFO) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.ADD_TRANSLATOR_INFO, newValue, true)
         saveNotification.value?.show()
     }
 })
