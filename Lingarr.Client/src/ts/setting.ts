@@ -53,6 +53,7 @@ export const SETTINGS = {
     USE_BATCH_TRANSLATION: 'use_batch_translation',
     MAX_BATCH_SIZE: 'max_batch_size',
     USE_SUBTITLE_TAGGING: 'use_subtitle_tagging',
+    REMOVE_LANGUAGE_TAG: 'remove_language_tag',
     SUBTITLE_TAG: 'subtitle_tag',
     IGNORE_CAPTIONS: 'ignore_captions',
     MAX_RETRIES: 'max_retries',
@@ -112,6 +113,7 @@ export interface ISettings {
     use_batch_translation: string
     max_batch_size: string
     use_subtitle_tagging: string
+    remove_language_tag: string
     subtitle_tag: string
     ignore_captions: string
     max_retries: string

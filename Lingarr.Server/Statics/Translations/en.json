@@ -171,6 +171,8 @@
       "fixOverlappingSubtitlesDescription": "Automatically resolves overlapping subtitles by adjusting the timing of the previous, current and next subtitle based on text length.",
       "stripSubtitleFormatting": "Strip subtitle formatting:",
       "stripSubtitleFormattingDescription": "Enable this option to remove all formatting tags (e.g., italics, bold, color, position) from (SRT) subtitles, resulting in plain text subtitles.",
+      "removeLanguageTag": "Remove language tag",
+      "removeLanguageTagDescription": "Remove language tags (e.g., \".en.\") from file names.",
       "maxBatchSize": "Maximum batch size",
       "useSubtitleTagging": "Use subtitle tagging",
       "useSubtitleTaggingDescription": "Add a custom tag or text to the subtitle file to identify it as translated by Lingarr.",
