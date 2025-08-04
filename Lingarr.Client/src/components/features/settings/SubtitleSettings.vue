@@ -70,6 +70,22 @@
                     </span>
                 </ToggleButton>
 
+                <div class="flex flex-col space-x-2">
+                    <span class="font-semibold">
+                        {{ translate('settings.subtitle.removeLanguageTag') }}
+                    </span>
+                    {{ translate('settings.subtitle.removeLanguageTagDescription') }}
+                </div>
+                <ToggleButton v-model="removeLanguageTag">
+                    <span class="text-primary-content text-sm font-medium">
+                        {{
+                            removeLanguageTag == 'true'
+                                ? translate('common.enabled')
+                                : translate('common.disabled')
+                        }}
+                    </span>
+                </ToggleButton>
+
                 <div class="flex flex-col space-y-4">
                     <div class="flex flex-col space-x-2">
                         <span class="font-semibold">
@@ -142,6 +158,14 @@ const addTranslatorInfo = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.ADD_TRANSLATOR_INFO) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.ADD_TRANSLATOR_INFO, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+
+const removeLanguageTag = computed({
+    get: (): string => settingsStore.getSetting(SETTINGS.REMOVE_LANGUAGE_TAG) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.REMOVE_LANGUAGE_TAG, newValue, true)
         saveNotification.value?.show()
     }
 })
