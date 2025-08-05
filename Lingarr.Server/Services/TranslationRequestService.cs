@@ -3,10 +3,13 @@ using Hangfire;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
+using Lingarr.Core.Configuration;
 using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Jobs;
 using Lingarr.Server.Models;
+using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -18,15 +21,24 @@ public class TranslationRequestService : ITranslationRequestService
     private readonly LingarrDbContext _dbContext;
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IHubContext<TranslationRequestsHub> _hubContext;
+    private readonly ITranslationServiceFactory _translationServiceFactory;
+    private readonly ISettingService _settingService;
+    private readonly ILogger<TranslationRequestService> _logger;
 
     public TranslationRequestService(
         LingarrDbContext dbContext,
         IBackgroundJobClient backgroundJobClient,
-        IHubContext<TranslationRequestsHub> hubContext)
+        IHubContext<TranslationRequestsHub> hubContext,
+        ITranslationServiceFactory translationServiceFactory,
+        ISettingService settingService,
+        ILogger<TranslationRequestService> logger)
     {
         _dbContext = dbContext;
         _hubContext = hubContext;
         _backgroundJobClient = backgroundJobClient;
+        _translationServiceFactory = translationServiceFactory;
+        _settingService = settingService;
+        _logger = logger;
     }
 
     /// <inheritdoc />
@@ -50,7 +62,7 @@ public class TranslationRequestService : ITranslationRequestService
         var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
             job.Execute(translationRequest, CancellationToken.None)
         );
-        await UpdateTranslationRequest(translationRequest, jobId, TranslationStatus.Pending);
+        await UpdateTranslationRequest(translationRequest, TranslationStatus.Pending, jobId);
 
         var count = await GetActiveCount();
         await _hubContext.Clients.Group("TranslationRequests").SendAsync("RequestActive", new
@@ -115,16 +127,19 @@ public class TranslationRequestService : ITranslationRequestService
     }
     
     /// <inheritdoc />
-    public async Task<TranslationRequest> UpdateTranslationRequest(TranslationRequest translationRequest, string jobId,
-        TranslationStatus status)
+    public async Task<TranslationRequest> UpdateTranslationRequest(TranslationRequest translationRequest,
+        TranslationStatus status, string? jobId = null)
     {
         var request = await _dbContext.TranslationRequests.FindAsync(translationRequest.Id);
         if (request == null)
         {
             throw new NotFoundException($"TranslationRequest with ID {translationRequest.Id} not found.");
         }
-        
-        request.JobId = jobId;
+
+        if (jobId != null)
+        {
+            request.JobId = jobId;
+        }
         request.Status = status;
         await _dbContext.SaveChangesAsync(); 
 
@@ -144,7 +159,7 @@ public class TranslationRequestService : ITranslationRequestService
             var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
                 job.Execute(request, CancellationToken.None)
             );
-            await UpdateTranslationRequest(request, jobId, TranslationStatus.Pending);
+            await UpdateTranslationRequest(request, TranslationStatus.Pending, jobId);
         }
     }
     
@@ -221,6 +236,228 @@ public class TranslationRequestService : ITranslationRequestService
             }
             await _dbContext.SaveChangesAsync();
         }
+    }
+
+    /// <inheritdoc />
+    public async Task<BatchTranslatedLine[]> TranslateContentAsync(
+        TranslateAbleSubtitleContent translateAbleContent,
+        CancellationToken cancellationToken)
+    {
+        // Prepare TranslationRequest Object
+        var translationRequest = new TranslationRequest
+        {
+            MediaId = translateAbleContent.ArrMediaId, // TODO: change this
+            Title = translateAbleContent.Title,
+            SourceLanguage = translateAbleContent.SourceLanguage,
+            TargetLanguage = translateAbleContent.TargetLanguage,
+            MediaType = translateAbleContent.MediaType,
+            Status = TranslationStatus.InProgress
+        };
+
+        try
+        {
+            BatchTranslatedLine[]? results = null;
+            // Get Translation Settings
+            var settings = await _settingService.GetSettings([
+                SettingKeys.Translation.UseBatchTranslation,
+                SettingKeys.Translation.ServiceType,
+                SettingKeys.Translation.MaxBatchSize,
+                SettingKeys.Translation.StripSubtitleFormatting
+            ]);
+            var translationService = _translationServiceFactory.CreateTranslationService(
+                settings[SettingKeys.Translation.ServiceType]
+            );
+
+            // Add TranslationRequest
+            _dbContext.TranslationRequests.Add(translationRequest);
+            await _dbContext.SaveChangesAsync();
+
+            // Process Translation
+            if (settings[SettingKeys.Translation.UseBatchTranslation] == "true"
+                && translateAbleContent.Lines.Count > 1
+                && translationService is IBatchTranslationService batchService)
+            {
+                _logger.LogInformation("Processing batch translation request with {lineCount} lines from {sourceLanguage} to {targetLanguage}",
+                    translateAbleContent.Lines.Count, translateAbleContent.SourceLanguage, translateAbleContent.TargetLanguage);
+
+                var subtitleTranslator = new SubtitleTranslationService(translationService, _logger);
+                var totalSize = translateAbleContent.Lines.Count;
+                var maxBatchSize = settings[SettingKeys.Translation.MaxBatchSize];
+                var stripSubtitleFormatting = settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
+                var maxSize = int.TryParse(maxBatchSize,
+                    out var batchSize)
+                    ? batchSize
+                    : 10000;
+
+                _logger.LogDebug("Batch translation configuration: maxSize={maxSize}, stripFormatting={stripFormatting}, totalLines={totalLines}",
+                    maxSize, stripSubtitleFormatting, totalSize);
+
+                if (maxSize != 0 && totalSize > maxSize)
+                {
+                    _logger.LogWarning(
+                        "Batch size ({Size}) exceeds configured maximum ({Max}). Processing in smaller batches.",
+                        totalSize, maxSize);
+                    return await ChunkLargeBatch(
+                        translateAbleContent,
+                        translationService,
+                        batchService,
+                        maxSize,
+                        stripSubtitleFormatting,
+                        cancellationToken);
+                }
+
+                _logger.LogInformation("Processing batch translation within size limits. Converting {lineCount} lines to subtitle items",
+                    translateAbleContent.Lines.Count);
+
+                // Convert translateAbleContent items to SubtitleItems for ProcessSubtitleBatch
+                var subtitleItems = translateAbleContent.Lines.Select(item => new SubtitleItem
+                {
+                    Position = item.Position,
+                    Lines = new List<string> { item.Line },
+                    PlaintextLines = new List<string> { item.Line }
+                }).ToList();
+
+                _logger.LogDebug("Starting batch subtitle processing with {itemCount} subtitle items", subtitleItems.Count);
+
+                await subtitleTranslator.ProcessSubtitleBatch(
+                    subtitleItems,
+                    batchService,
+                    translateAbleContent.SourceLanguage,
+                    translateAbleContent.TargetLanguage,
+                    stripSubtitleFormatting,
+                    cancellationToken);
+
+                results = subtitleItems.Select(subtitle => new BatchTranslatedLine
+                {
+                    Position = subtitle.Position,
+                    Line = string.Join(" ", subtitle.TranslatedLines)
+                }).ToArray();
+
+                _logger.LogInformation("Batch translation completed successfully. Processed {resultCount} translated lines", results.Length);
+            }
+            else
+            {
+                _logger.LogInformation("Using individual line translation for {lineCount} lines from {sourceLanguage} to {targetLanguage}",
+                    translateAbleContent.Lines.Count,
+                    translateAbleContent.SourceLanguage,
+                    translateAbleContent.TargetLanguage);
+
+                var subtitleTranslator = new SubtitleTranslationService(translationService, _logger);
+                var tempResults = new List<BatchTranslatedLine>();
+
+                foreach (var item in translateAbleContent.Lines)
+                {
+                    var translateLine = new TranslateAbleSubtitleLine
+                    {
+                        SubtitleLine = item.Line,
+                        SourceLanguage = translateAbleContent.SourceLanguage,
+                        TargetLanguage = translateAbleContent.TargetLanguage
+                    };
+
+                    var translatedText = await subtitleTranslator.TranslateSubtitleLine(
+                        translateLine,
+                        cancellationToken);
+
+                    tempResults.Add(new BatchTranslatedLine
+                    {
+                        Position = item.Position,
+                        Line = translatedText
+                    });
+                }
+
+                _logger.LogInformation("Individual line translation completed. Processed {resultCount} lines", tempResults.Count);
+                results = tempResults.ToArray();
+            }
+
+            // Finished Translating Subtitle
+            translationRequest.CompletedAt = DateTime.UtcNow;
+            translationRequest.Status = TranslationStatus.Completed;
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            return results;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error translating subtitle content");
+            await UpdateTranslationRequest(translationRequest, TranslationStatus.Failed);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Processes a large batch by breaking it into smaller batches
+    /// </summary>
+    private async Task<BatchTranslatedLine[]> ChunkLargeBatch(
+        TranslateAbleSubtitleContent translateAbleSubtitleContent,
+        ITranslationService translationService,
+        IBatchTranslationService batchService,
+        int maxBatchSize,
+        bool stripSubtitleFormatting,
+        CancellationToken cancellationToken)
+    {
+        var results = new List<BatchTranslatedLine>();
+        var currentBatch = new List<SubtitleItem>();
+        var subtitleTranslator = new SubtitleTranslationService(translationService, _logger);
+
+        foreach (var item in translateAbleSubtitleContent.Lines)
+        {
+            if (currentBatch.Count >= maxBatchSize)
+            {
+                await ProcessBatch(currentBatch, subtitleTranslator, batchService,
+                    translateAbleSubtitleContent.SourceLanguage, translateAbleSubtitleContent.TargetLanguage,
+                    stripSubtitleFormatting, results, cancellationToken);
+                currentBatch.Clear();
+            }
+
+            currentBatch.Add(new SubtitleItem
+            {
+                Position = item.Position,
+                Lines =
+                [
+                    item.Line
+                ],
+                PlaintextLines =
+                [
+                    item.Line
+                ]
+            });
+        }
+
+        if (currentBatch.Count > 0)
+        {
+            await ProcessBatch(currentBatch, subtitleTranslator, batchService,
+                translateAbleSubtitleContent.SourceLanguage, translateAbleSubtitleContent.TargetLanguage,
+                stripSubtitleFormatting, results, cancellationToken);
+        }
+
+        return results.ToArray();
+    }
+
+    /// <summary>
+    /// Processes a single batch and adds results to the results collection
+    /// </summary>
+    private async Task ProcessBatch(
+        List<SubtitleItem> batch,
+        SubtitleTranslationService subtitleTranslator,
+        IBatchTranslationService batchService,
+        string sourceLanguage,
+        string targetLanguage,
+        bool stripSubtitleFormatting,
+        List<BatchTranslatedLine> results,
+        CancellationToken cancellationToken)
+    {
+        await subtitleTranslator.ProcessSubtitleBatch(
+            batch,
+            batchService,
+            sourceLanguage,
+            targetLanguage,
+            stripSubtitleFormatting,
+            cancellationToken);
+
+        results.AddRange(batch.Select(subtitle => new BatchTranslatedLine
+        {
+            Position = subtitle.Position,
+            Line = string.Join(" ", subtitle.TranslatedLines ?? subtitle.Lines)
+        }));
     }
     
     /// <summary>
