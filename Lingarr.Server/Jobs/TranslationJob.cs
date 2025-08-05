@@ -63,8 +63,8 @@ public class TranslationJob
             cancellationToken.ThrowIfCancellationRequested();
 
             var request = await _translationRequestService.UpdateTranslationRequest(translationRequest,
-                jobId,
-                TranslationStatus.InProgress);
+                TranslationStatus.InProgress,
+                jobId);
 
             _logger.LogInformation("TranslateJob started for subtitle: |Green|{filePath}|/Green|",
                 translationRequest.SubtitleToTranslate);
@@ -245,8 +245,8 @@ public class TranslationJob
         catch (Exception)
         {
             await _translationRequestService.ClearMediaHash(translationRequest);
-            await _translationRequestService.UpdateTranslationRequest(translationRequest, jobId,
-                TranslationStatus.Failed);
+            await _translationRequestService.UpdateTranslationRequest(translationRequest, TranslationStatus.Failed,
+                jobId);
             await _scheduleService.UpdateJobState(jobName, JobStatus.Failed.GetDisplayName());
             throw;
         }
