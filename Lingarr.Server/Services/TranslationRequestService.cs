@@ -425,7 +425,7 @@ public class TranslationRequestService : ITranslationRequestService
         {
             translationRequest.CompletedAt = DateTime.UtcNow;
             translationRequest.Status = TranslationStatus.Cancelled;
-            await _dbContext.SaveChangesAsync(cancellationToken);
+            await _dbContext.SaveChangesAsync();
             await UpdateActiveCount();
             await _progressService.Emit(translationRequest, 0);
             throw;
