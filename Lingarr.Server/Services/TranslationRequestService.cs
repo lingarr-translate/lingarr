@@ -83,7 +83,8 @@ public class TranslationRequestService : ITranslationRequestService
         return await _dbContext.TranslationRequests.CountAsync(translation =>
             translation.Status != TranslationStatus.Cancelled &&
             translation.Status != TranslationStatus.Failed &&
-            translation.Status != TranslationStatus.Completed);
+            translation.Status != TranslationStatus.Completed &&
+            translation.Status != TranslationStatus.Interrupted);
 
     }
 
