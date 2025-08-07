@@ -26,7 +26,8 @@ const removable = computed(() => {
     return (
         props.status == TRANSLATION_STATUS.COMPLETED ||
         props.status == TRANSLATION_STATUS.CANCELLED ||
-        props.status == TRANSLATION_STATUS.FAILED
+        props.status == TRANSLATION_STATUS.FAILED ||
+        props.status == TRANSLATION_STATUS.INTERRUPTED
     )
 })
 
