@@ -456,9 +456,12 @@ public class TranslationRequestService : ITranslationRequestService
         {
             case MediaType.Episode:
                 return await _mediaService.GetEpisodeIdOrSyncFromSonarrEpisodeId(arrMediaId);
+            case MediaType.Movie:
+                return await _mediaService.GetMovieIdOrSyncFromRadarrMovieId(arrMediaId);
+            default:
+                _logger.LogWarning("Unsupported media type: {MediaType} for translate content async", mediaType);
+                return 0;
         }
-
-        return 0;
     }
 
     /// <summary>

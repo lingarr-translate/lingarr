@@ -25,4 +25,16 @@ public class RadarrService : IRadarrService
                 ApiKey = "radarr_api_key"
             });
     }
+
+    /// <inheritdoc />
+    public async Task<RadarrMovie?> GetMovie(int moveId)
+    {
+        return await _integrationService.GetApiResponse<RadarrMovie>(
+            $"/api/v3/movie/{moveId}",
+            new IntegrationSettingKeys
+            {
+                Url = "radarr_url",
+                ApiKey = "radarr_api_key"
+            });
+    }
 }
