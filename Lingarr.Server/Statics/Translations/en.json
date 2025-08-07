@@ -86,6 +86,7 @@
     "statusCompleted": "Completed",
     "statusFailed": "Failed",
     "statusCancelled": "Cancelled",
+    "statusInterrupted": "Interrupted",
     "updateAvailable": "Update {version} is available",
     "currentVersion": "Version: {version} beta",
     "enabled": "Enabled",
