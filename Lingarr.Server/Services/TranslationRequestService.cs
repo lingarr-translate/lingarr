@@ -22,6 +22,7 @@ public class TranslationRequestService : ITranslationRequestService
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IHubContext<TranslationRequestsHub> _hubContext;
     private readonly ITranslationServiceFactory _translationServiceFactory;
+    private readonly IProgressService _progressService;
     private readonly ISettingService _settingService;
     private readonly ILogger<TranslationRequestService> _logger;
 
@@ -30,6 +31,7 @@ public class TranslationRequestService : ITranslationRequestService
         IBackgroundJobClient backgroundJobClient,
         IHubContext<TranslationRequestsHub> hubContext,
         ITranslationServiceFactory translationServiceFactory,
+        IProgressService progressService,
         ISettingService settingService,
         ILogger<TranslationRequestService> logger)
     {
@@ -37,6 +39,7 @@ public class TranslationRequestService : ITranslationRequestService
         _hubContext = hubContext;
         _backgroundJobClient = backgroundJobClient;
         _translationServiceFactory = translationServiceFactory;
+        _progressService = progressService;
         _settingService = settingService;
         _logger = logger;
     }
@@ -246,7 +249,7 @@ public class TranslationRequestService : ITranslationRequestService
         // Prepare TranslationRequest Object
         var translationRequest = new TranslationRequest
         {
-            MediaId = translateAbleContent.ArrMediaId, // TODO: change this
+            MediaId = translateAbleContent.ArrMediaId, // TODO: change this to use Media Id from lingarr
             Title = translateAbleContent.Title,
             SourceLanguage = translateAbleContent.SourceLanguage,
             TargetLanguage = translateAbleContent.TargetLanguage,
@@ -271,6 +274,7 @@ public class TranslationRequestService : ITranslationRequestService
             // Add TranslationRequest
             _dbContext.TranslationRequests.Add(translationRequest);
             await _dbContext.SaveChangesAsync();
+            await UpdateActiveCount();
 
             // Process Translation
             if (settings[SettingKeys.Translation.UseBatchTranslation] == "true"
@@ -301,6 +305,7 @@ public class TranslationRequestService : ITranslationRequestService
                         translateAbleContent,
                         translationService,
                         batchService,
+                        translationRequest,
                         maxSize,
                         stripSubtitleFormatting,
                         cancellationToken);
@@ -345,6 +350,8 @@ public class TranslationRequestService : ITranslationRequestService
                 var subtitleTranslator = new SubtitleTranslationService(translationService, _logger);
                 var tempResults = new List<BatchTranslatedLine>();
 
+                int iteration = 1;
+                int total = translateAbleContent.Lines.Count();
                 foreach (var item in translateAbleContent.Lines)
                 {
                     var translateLine = new TranslateAbleSubtitleLine
@@ -363,22 +370,29 @@ public class TranslationRequestService : ITranslationRequestService
                         Position = item.Position,
                         Line = translatedText
                     });
+
+                    int progress = (int)Math.Round((double)iteration * 100 / total);
+                    await _progressService.Emit(translationRequest, progress);
+                    iteration++;
                 }
 
                 _logger.LogInformation("Individual line translation completed. Processed {resultCount} lines", tempResults.Count);
                 results = tempResults.ToArray();
             }
 
-            // Finished Translating Subtitle
             translationRequest.CompletedAt = DateTime.UtcNow;
             translationRequest.Status = TranslationStatus.Completed;
             await _dbContext.SaveChangesAsync(cancellationToken);
+            await UpdateActiveCount();
+            await _progressService.Emit(translationRequest, 100); // Tells the frontend to update translation request to a finished state
             return results;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error translating subtitle content");
             await UpdateTranslationRequest(translationRequest, TranslationStatus.Failed);
+            await UpdateActiveCount();
+            await _progressService.Emit(translationRequest, 0);
             throw;
         }
     }
@@ -390,6 +404,7 @@ public class TranslationRequestService : ITranslationRequestService
         TranslateAbleSubtitleContent translateAbleSubtitleContent,
         ITranslationService translationService,
         IBatchTranslationService batchService,
+        TranslationRequest translationRequest,
         int maxBatchSize,
         bool stripSubtitleFormatting,
         CancellationToken cancellationToken)
@@ -397,6 +412,10 @@ public class TranslationRequestService : ITranslationRequestService
         var results = new List<BatchTranslatedLine>();
         var currentBatch = new List<SubtitleItem>();
         var subtitleTranslator = new SubtitleTranslationService(translationService, _logger);
+
+        var totalLines = translateAbleSubtitleContent.Lines.Count;
+        var totalBatches = (int)Math.Ceiling((double)totalLines / maxBatchSize);
+        var processedBatches = 1;
 
         foreach (var item in translateAbleSubtitleContent.Lines)
         {
@@ -406,6 +425,12 @@ public class TranslationRequestService : ITranslationRequestService
                     translateAbleSubtitleContent.SourceLanguage, translateAbleSubtitleContent.TargetLanguage,
                     stripSubtitleFormatting, results, cancellationToken);
                 currentBatch.Clear();
+
+                // Report progress
+                // await _progressService.Emit(tra)
+                processedBatches++;
+                int progress = (int)Math.Round((double)processedBatches * 100 / totalBatches);
+                await _progressService.Emit(translationRequest, progress);
             }
 
             currentBatch.Add(new SubtitleItem
@@ -429,6 +454,12 @@ public class TranslationRequestService : ITranslationRequestService
                 stripSubtitleFormatting, results, cancellationToken);
         }
 
+        // Indicate to the frontend that it's done translating
+        translationRequest.CompletedAt = DateTime.UtcNow;
+        translationRequest.Status = TranslationStatus.Completed;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        await UpdateActiveCount();
+        await _progressService.Emit(translationRequest, 100); // Tells the frontend to update translation request to a finished state
         return results.ToArray();
     }
 
