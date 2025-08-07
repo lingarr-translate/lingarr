@@ -332,15 +332,18 @@ public class TranslationRequestService : ITranslationRequestService
                     _logger.LogWarning(
                         "Batch size ({Size}) exceeds configured maximum ({Max}). Processing in smaller batches.",
                         totalSize, maxSize);
-                    return await ChunkLargeBatch(
+                    results = await ChunkLargeBatch(
                         translateAbleContent,
                         translationService,
                         batchService,
                         translationRequest,
                         maxSize,
                         stripSubtitleFormatting,
-                        serviceType,
                         cancellationToken);
+
+                    // Handle completion now since we early exit here
+                    await HandleAsyncTranslationCompletion(translationRequest, serviceType, results, cancellationToken);
+                    return results; 
                 }
 
                 _logger.LogInformation("Processing batch translation within size limits. Converting {lineCount} lines to subtitle items",
@@ -412,13 +415,7 @@ public class TranslationRequestService : ITranslationRequestService
                 results = tempResults.ToArray();
             }
 
-            await _statisticsService.UpdateTranslationStatisticsFromLines(translationRequest, serviceType, results);
-
-            translationRequest.CompletedAt = DateTime.UtcNow;
-            translationRequest.Status = TranslationStatus.Completed;
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            await UpdateActiveCount();
-            await _progressService.Emit(translationRequest, 100); // Tells the frontend to update translation request to a finished state
+            await HandleAsyncTranslationCompletion(translationRequest, serviceType, results, cancellationToken);
             return results;
         }
         catch (TaskCanceledException)
@@ -448,6 +445,24 @@ public class TranslationRequestService : ITranslationRequestService
     }
 
     /// <summary>
+    /// Handles a successful async translation job
+    /// </summary>
+    private async Task HandleAsyncTranslationCompletion(
+        TranslationRequest translationRequest,
+        string serviceType,
+        BatchTranslatedLine[] results,
+        CancellationToken cancellationToken)
+    {
+         await _statisticsService.UpdateTranslationStatisticsFromLines(translationRequest, serviceType, results);
+
+        translationRequest.CompletedAt = DateTime.UtcNow;
+        translationRequest.Status = TranslationStatus.Completed;
+        await _dbContext.SaveChangesAsync(cancellationToken);
+        await UpdateActiveCount();
+        await _progressService.Emit(translationRequest, 100); // Tells the frontend to update translation request to a finished state
+    }
+
+    /// <summary>
     /// Processes a large batch by breaking it into smaller batches
     /// </summary>
     private async Task<BatchTranslatedLine[]> ChunkLargeBatch(
@@ -457,7 +472,6 @@ public class TranslationRequestService : ITranslationRequestService
         TranslationRequest translationRequest,
         int maxBatchSize,
         bool stripSubtitleFormatting,
-        string serviceType,
         CancellationToken cancellationToken)
     {
         var results = new List<BatchTranslatedLine>();
@@ -505,16 +519,7 @@ public class TranslationRequestService : ITranslationRequestService
                 stripSubtitleFormatting, results, cancellationToken);
         }
 
-        var arrayResults = results.ToArray();
-        await _statisticsService.UpdateTranslationStatisticsFromLines(translationRequest, serviceType, arrayResults);
-
-        // Indicate to the frontend that it's done translating
-        translationRequest.CompletedAt = DateTime.UtcNow;
-        translationRequest.Status = TranslationStatus.Completed;
-        await _dbContext.SaveChangesAsync(cancellationToken);
-        await UpdateActiveCount();
-        await _progressService.Emit(translationRequest, 100); // Tells the frontend to update translation request to a finished state
-        return arrayResults;
+        return results.ToArray();
     }
 
     /// <summary>
