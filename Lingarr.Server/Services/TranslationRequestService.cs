@@ -25,6 +25,7 @@ public class TranslationRequestService : ITranslationRequestService
     private readonly IProgressService _progressService;
     private readonly ISettingService _settingService;
     private readonly ILogger<TranslationRequestService> _logger;
+    static private Dictionary<int, CancellationTokenSource> _asyncTranslationJobs = new Dictionary<int, CancellationTokenSource>();
 
     public TranslationRequestService(
         LingarrDbContext dbContext,
@@ -108,7 +109,15 @@ public class TranslationRequestService : ITranslationRequestService
             return null;
         }
 
-        _backgroundJobClient.Delete(translationRequest.JobId);
+        if (translationRequest.JobId != null)
+        {
+            _backgroundJobClient.Delete(translationRequest.JobId);
+        }
+        else if (_asyncTranslationJobs.ContainsKey(translationRequest.Id))
+        {
+            // Maybe an async translation job
+            await _asyncTranslationJobs[translationRequest.Id].CancelAsync();
+        }
 
         return $"Translation request with id {cancelRequest.Id} has been cancelled";
     }
@@ -244,7 +253,7 @@ public class TranslationRequestService : ITranslationRequestService
     /// <inheritdoc />
     public async Task<BatchTranslatedLine[]> TranslateContentAsync(
         TranslateAbleSubtitleContent translateAbleContent,
-        CancellationToken cancellationToken)
+        CancellationToken parentCancellationToken)
     {
         // Prepare TranslationRequest Object
         var translationRequest = new TranslationRequest
@@ -256,6 +265,11 @@ public class TranslationRequestService : ITranslationRequestService
             MediaType = translateAbleContent.MediaType,
             Status = TranslationStatus.InProgress
         };
+
+        // Link cancel token with new source to be able to cancel the async translation
+        var asyncTranslationCancellationTokenSource = new CancellationTokenSource();
+        var cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(parentCancellationToken, asyncTranslationCancellationTokenSource.Token);
+        var cancellationToken = cancellationTokenSource.Token;
 
         try
         {
@@ -275,6 +289,10 @@ public class TranslationRequestService : ITranslationRequestService
             _dbContext.TranslationRequests.Add(translationRequest);
             await _dbContext.SaveChangesAsync();
             await UpdateActiveCount();
+
+            // Add translation as a async translation request with cancellation source
+            _asyncTranslationJobs.Add(translationRequest.Id, cancellationTokenSource);
+
 
             // Process Translation
             if (settings[SettingKeys.Translation.UseBatchTranslation] == "true"
@@ -387,13 +405,29 @@ public class TranslationRequestService : ITranslationRequestService
             await _progressService.Emit(translationRequest, 100); // Tells the frontend to update translation request to a finished state
             return results;
         }
-        catch (Exception ex)
+        catch (TaskCanceledException)
         {
-            _logger.LogError(ex, "Error translating subtitle content");
-            await UpdateTranslationRequest(translationRequest, TranslationStatus.Failed);
+            translationRequest.CompletedAt = DateTime.UtcNow;
+            translationRequest.Status = TranslationStatus.Cancelled;
+            await _dbContext.SaveChangesAsync();
             await UpdateActiveCount();
             await _progressService.Emit(translationRequest, 0);
             throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error translating subtitle content");
+            translationRequest.CompletedAt = DateTime.UtcNow;
+            translationRequest.Status = TranslationStatus.Failed;
+            await _dbContext.SaveChangesAsync();
+            await UpdateActiveCount();
+            await _progressService.Emit(translationRequest, 0);
+            throw;
+        }
+        finally
+        {
+            // Remove async translation from async translation jobs
+            _asyncTranslationJobs.Remove(translationRequest.Id);
         }
     }
 
