@@ -16,18 +16,24 @@ public class MediaService : IMediaService
     private readonly ISubtitleService _subtitleService;
     private readonly ISonarrService _sonarrService;
     private readonly IShowSyncService _showSyncService;
+    private readonly IRadarrService _radarrService;
+    private readonly IMovieSyncService _movieSyncService;
     private readonly ILogger<MediaService> _logger;
 
     public MediaService(LingarrDbContext dbContext, 
         ISubtitleService subtitleService,
         ISonarrService sonarrService,
         IShowSyncService showSyncService,
+        IRadarrService radarrService,
+        IMovieSyncService movieSyncService,
         ILogger<MediaService> logger)
     {
         _dbContext = dbContext;
         _subtitleService = subtitleService;
         _sonarrService = sonarrService;
         _showSyncService = showSyncService;
+        _radarrService = radarrService;
+        _movieSyncService = movieSyncService;
         _logger = logger;
     }
     
@@ -95,6 +101,34 @@ public class MediaService : IMediaService
             PageNumber = pageNumber,
             PageSize = pageSize
         };
+    }
+
+    /// <inheritdoc />
+    public async Task<int> GetMovieIdOrSyncFromRadarrMovieId(int movieId)
+    {
+        var movie = await _dbContext.Movies.Where(s => s.RadarrId == movieId).FirstOrDefaultAsync();
+        if (movie != null)
+        {
+            return movie.Id;
+        }
+
+        // Movie not found, maybe out of sync.
+        // Sync the movie
+        var movieFetched = await _radarrService.GetMovie(movieId);
+        if (movieFetched == null)
+        {
+            // Unkown movie
+            return 0;
+        }
+
+        var movieEnity = await _movieSyncService.SyncMovie(movieFetched);
+        if (movieEnity == null)
+        {
+            // Movie had not file
+            return 0;
+        }
+        
+        return movieEnity.Id;
     }
 
     /// <inheritdoc />
