@@ -5,7 +5,8 @@ using Lingarr.Server.Models;
 using Microsoft.EntityFrameworkCore;
 using Lingarr.Server.Models.Api;
 using Lingarr.Server.Interfaces.Services;
-using Lingarr.Server.Models.FileSystem;
+using Lingarr.Server.Interfaces.Services.Sync;
+using Lingarr.Server.Interfaces.Services.Integration;
 
 namespace Lingarr.Server.Services;
 
@@ -13,14 +14,20 @@ public class MediaService : IMediaService
 {
     private readonly LingarrDbContext _dbContext;
     private readonly ISubtitleService _subtitleService;
+    private readonly ISonarrService _sonarrService;
+    private readonly IShowSyncService _showSyncService;
     private readonly ILogger<MediaService> _logger;
 
     public MediaService(LingarrDbContext dbContext, 
         ISubtitleService subtitleService,
+        ISonarrService sonarrService,
+        IShowSyncService showSyncService,
         ILogger<MediaService> logger)
     {
         _dbContext = dbContext;
         _subtitleService = subtitleService;
+        _sonarrService = sonarrService;
+        _showSyncService = showSyncService;
         _logger = logger;
     }
     
@@ -89,7 +96,38 @@ public class MediaService : IMediaService
             PageSize = pageSize
         };
     }
-    
+
+    /// <inheritdoc />
+    public async Task<int> GetEpisodeIdOrSyncFromSonarrEpisodeId(int episodeNumber)
+    {
+        var episode = await _dbContext.Episodes.Where(s => s.SonarrId == episodeNumber).FirstOrDefaultAsync();
+        if (episode != null)
+        {
+            return episode.Id;
+        }
+
+        // Episode not found, maybe out of sync.
+        // Sync the show
+        var episodeFetched = await _sonarrService.GetEpisode(episodeNumber);
+        if (episodeFetched == null)
+        {
+            // Unkown episode
+            return 0;
+        }
+
+        if (episodeFetched.Show == null)
+        {
+            // Show not found with episode
+            return 0;
+        }
+
+        var show = await _showSyncService.SyncShow(episodeFetched.Show);
+        // Find the epsiode id or return 0 if not found
+        return show.Seasons
+            .SelectMany(s => s.Episodes)
+            .FirstOrDefault(e => e.SonarrId == episodeNumber)?.Id ?? 0;
+    }
+
     /// <inheritdoc />
     public async Task<PagedResult<Show>> GetShows(
         string? searchQuery,
