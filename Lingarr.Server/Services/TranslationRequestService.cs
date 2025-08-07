@@ -169,6 +169,14 @@ public class TranslationRequestService : ITranslationRequestService
 
         foreach (var request in requests)
         {
+            if (request.JobId == null)
+            {
+                // Async translation job. Set as Interrupted and don't run
+                // Those cannot be resumed
+                await UpdateTranslationRequest(request, TranslationStatus.Interrupted);
+                continue;
+            }
+
             var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
                 job.Execute(request, CancellationToken.None)
             );
@@ -410,7 +418,7 @@ public class TranslationRequestService : ITranslationRequestService
         {
             translationRequest.CompletedAt = DateTime.UtcNow;
             translationRequest.Status = TranslationStatus.Cancelled;
-            await _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync(cancellationToken);
             await UpdateActiveCount();
             await _progressService.Emit(translationRequest, 0);
             throw;
