@@ -23,6 +23,7 @@ public class TranslationRequestService : ITranslationRequestService
     private readonly IHubContext<TranslationRequestsHub> _hubContext;
     private readonly ITranslationServiceFactory _translationServiceFactory;
     private readonly IProgressService _progressService;
+    private readonly IStatisticsService _statisticsService;
     private readonly ISettingService _settingService;
     private readonly ILogger<TranslationRequestService> _logger;
     static private Dictionary<int, CancellationTokenSource> _asyncTranslationJobs = new Dictionary<int, CancellationTokenSource>();
@@ -33,6 +34,7 @@ public class TranslationRequestService : ITranslationRequestService
         IHubContext<TranslationRequestsHub> hubContext,
         ITranslationServiceFactory translationServiceFactory,
         IProgressService progressService,
+        IStatisticsService statisticsService,
         ISettingService settingService,
         ILogger<TranslationRequestService> logger)
     {
@@ -41,6 +43,7 @@ public class TranslationRequestService : ITranslationRequestService
         _backgroundJobClient = backgroundJobClient;
         _translationServiceFactory = translationServiceFactory;
         _progressService = progressService;
+        _statisticsService = statisticsService;
         _settingService = settingService;
         _logger = logger;
     }
@@ -290,8 +293,9 @@ public class TranslationRequestService : ITranslationRequestService
                 SettingKeys.Translation.MaxBatchSize,
                 SettingKeys.Translation.StripSubtitleFormatting
             ]);
+            var serviceType = settings[SettingKeys.Translation.ServiceType];
             var translationService = _translationServiceFactory.CreateTranslationService(
-                settings[SettingKeys.Translation.ServiceType]
+                serviceType
             );
 
             // Add TranslationRequest
@@ -335,6 +339,7 @@ public class TranslationRequestService : ITranslationRequestService
                         translationRequest,
                         maxSize,
                         stripSubtitleFormatting,
+                        serviceType,
                         cancellationToken);
                 }
 
@@ -407,6 +412,8 @@ public class TranslationRequestService : ITranslationRequestService
                 results = tempResults.ToArray();
             }
 
+            await _statisticsService.UpdateTranslationStatisticsFromLines(translationRequest, serviceType, results);
+
             translationRequest.CompletedAt = DateTime.UtcNow;
             translationRequest.Status = TranslationStatus.Completed;
             await _dbContext.SaveChangesAsync(cancellationToken);
@@ -450,6 +457,7 @@ public class TranslationRequestService : ITranslationRequestService
         TranslationRequest translationRequest,
         int maxBatchSize,
         bool stripSubtitleFormatting,
+        string serviceType,
         CancellationToken cancellationToken)
     {
         var results = new List<BatchTranslatedLine>();
@@ -497,13 +505,16 @@ public class TranslationRequestService : ITranslationRequestService
                 stripSubtitleFormatting, results, cancellationToken);
         }
 
+        var arrayResults = results.ToArray();
+        await _statisticsService.UpdateTranslationStatisticsFromLines(translationRequest, serviceType, arrayResults);
+
         // Indicate to the frontend that it's done translating
         translationRequest.CompletedAt = DateTime.UtcNow;
         translationRequest.Status = TranslationStatus.Completed;
         await _dbContext.SaveChangesAsync(cancellationToken);
         await UpdateActiveCount();
         await _progressService.Emit(translationRequest, 100); // Tells the frontend to update translation request to a finished state
-        return results.ToArray();
+        return arrayResults;
     }
 
     /// <summary>
