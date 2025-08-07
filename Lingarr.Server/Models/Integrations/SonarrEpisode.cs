@@ -13,5 +13,7 @@ public class SonarrEpisode
     [JsonPropertyName("seasonNumber")]
     public required int SeasonNumber { get; set; }
     [JsonPropertyName("hasFile")]
-    public required bool HasFile { get; set; } 
+    public required bool HasFile { get; set; }
+    [JsonPropertyName("series")]
+    public SonarrShow? Show { get; set; }
 }

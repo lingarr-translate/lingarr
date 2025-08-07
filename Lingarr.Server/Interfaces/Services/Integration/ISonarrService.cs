@@ -28,6 +28,16 @@ public interface ISonarrService
     Task<List<SonarrEpisode>?> GetEpisodes(int seriesNumber, int seasonNumber);
 
     /// <summary>
+    /// Asynchronously retrieves an episode for a speicified episode id from the Sonarr API.
+    /// </summary>
+    /// <param name="episodeNumber">The ID of the episode for which the data are to be retrieved.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a <see cref="SonarrEpisode"/>
+    /// object or <c>null</c> if the API call fails.
+    /// </returns>
+    Task<SonarrEpisode?> GetEpisode(int episodeNumber);
+
+    /// <summary>
     /// Asynchronously retrieves the path information for a specified episode from the Sonarr API.
     /// </summary>
     /// <param name="episodeNumber">The ID of the episode for which the path information is to be retrieved.</param>

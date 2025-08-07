@@ -24,6 +24,7 @@ public class TranslationRequestService : ITranslationRequestService
     private readonly ITranslationServiceFactory _translationServiceFactory;
     private readonly IProgressService _progressService;
     private readonly IStatisticsService _statisticsService;
+    private readonly IMediaService _mediaService;
     private readonly ISettingService _settingService;
     private readonly ILogger<TranslationRequestService> _logger;
     static private Dictionary<int, CancellationTokenSource> _asyncTranslationJobs = new Dictionary<int, CancellationTokenSource>();
@@ -35,6 +36,7 @@ public class TranslationRequestService : ITranslationRequestService
         ITranslationServiceFactory translationServiceFactory,
         IProgressService progressService,
         IStatisticsService statisticsService,
+        IMediaService mediaService,
         ISettingService settingService,
         ILogger<TranslationRequestService> logger)
     {
@@ -44,6 +46,7 @@ public class TranslationRequestService : ITranslationRequestService
         _translationServiceFactory = translationServiceFactory;
         _progressService = progressService;
         _statisticsService = statisticsService;
+        _mediaService = mediaService;
         _settingService = settingService;
         _logger = logger;
     }
@@ -270,7 +273,7 @@ public class TranslationRequestService : ITranslationRequestService
         // Prepare TranslationRequest Object
         var translationRequest = new TranslationRequest
         {
-            MediaId = translateAbleContent.ArrMediaId, // TODO: change this to use Media Id from lingarr
+            MediaId = await GetMediaId(translateAbleContent.ArrMediaId, translateAbleContent.MediaType),
             Title = translateAbleContent.Title,
             SourceLanguage = translateAbleContent.SourceLanguage,
             TargetLanguage = translateAbleContent.TargetLanguage,
@@ -445,6 +448,20 @@ public class TranslationRequestService : ITranslationRequestService
     }
 
     /// <summary>
+    /// Get the Lingarr's media id for the Episode or the Show
+    /// </summary>
+    private async Task<int> GetMediaId(int arrMediaId, MediaType mediaType)
+    {
+        switch (mediaType)
+        {
+            case MediaType.Episode:
+                return await _mediaService.GetEpisodeIdOrSyncFromSonarrEpisodeId(arrMediaId);
+        }
+
+        return 0;
+    }
+
+    /// <summary>
     /// Handles a successful async translation job
     /// </summary>
     private async Task HandleAsyncTranslationCompletion(
@@ -453,7 +470,7 @@ public class TranslationRequestService : ITranslationRequestService
         BatchTranslatedLine[] results,
         CancellationToken cancellationToken)
     {
-         await _statisticsService.UpdateTranslationStatisticsFromLines(translationRequest, serviceType, results);
+        await _statisticsService.UpdateTranslationStatisticsFromLines(translationRequest, serviceType, results);
 
         translationRequest.CompletedAt = DateTime.UtcNow;
         translationRequest.Status = TranslationStatus.Completed;
