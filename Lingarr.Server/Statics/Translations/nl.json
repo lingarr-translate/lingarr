@@ -86,6 +86,7 @@
     "statusCompleted": "Voltooid",
     "statusFailed": "Mislukt",
     "statusCancelled": "Geannuleerd",
+    "statusInterrupted": "Onderbroken",
     "updateAvailable": "Update {version} is beschikbaar",
     "currentVersion": "Versie: {version} beta",
     "enabled": "Actief",
