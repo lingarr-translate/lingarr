@@ -1,4 +1,5 @@
 ﻿using Lingarr.Core.Data;
+using Lingarr.Core.Entities;
 using Lingarr.Server.Interfaces.Services.Sync;
 using Lingarr.Server.Models.Integrations;
 using Microsoft.EntityFrameworkCore;
@@ -45,6 +46,20 @@ public class MovieSyncService : IMovieSyncService
     }
 
     /// <inheritdoc />
+    public async Task<Movie?> SyncMovie(RadarrMovie movie)
+    {
+        var movieEntity = await _movieSync.SyncMovie(movie);
+        await _dbContext.SaveChangesAsync();
+
+        if (movieEntity != null)
+        {
+            _logger.LogInformation("Synced a single movie");
+        }
+
+        return movieEntity;
+    }
+
+    /// <inheritdoc />
     public async Task RemoveNonExistentMovies(IEnumerable<int> existingRadarrIds)
     {
         var moviesToRemove = await _dbContext.Movies
@@ -55,12 +70,12 @@ public class MovieSyncService : IMovieSyncService
         if (moviesToRemove.Any())
         {
             _logger.LogInformation("Removing {Count} movies that no longer exist in Radarr", moviesToRemove.Count);
-            
+
             // Bulk remove all images and movies
             var imagesToRemove = moviesToRemove.SelectMany(m => m.Images).ToList();
             _dbContext.Images.RemoveRange(imagesToRemove);
             _dbContext.Movies.RemoveRange(moviesToRemove);
-            
+
             await _dbContext.SaveChangesAsync();
         }
     }

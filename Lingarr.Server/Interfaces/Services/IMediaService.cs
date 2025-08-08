@@ -49,6 +49,28 @@ public interface IMediaService
         int pageSize);
 
     /// <summary>
+    /// Retrieves a movie id (lingarr's id) from the database with a Radarr movie id.
+    /// If it is not in the database, it will try to sync the Movie with Radarr
+    /// If the Movie is not found in Rdarr either, 0 will be returned
+    /// </summary>
+    /// <param name="movieId">The Sonarr episode id to search with</param>
+    /// <returns>
+    /// A task result containing the lingarr's episode id
+    /// </returns>
+    Task<int> GetMovieIdOrSyncFromRadarrMovieId(int movieId);
+
+    /// <summary>
+    /// Retrieves an episode id (lingarr's id) from the database with a Sonarr episode id.
+    /// If it is not in the database, it will try to sync the Show with Sonarr
+    /// If the Show is not found in Sonarr either, 0 will be returned
+    /// </summary>
+    /// <param name="episodeNumber">The Sonarr episode id to search with</param>
+    /// <returns>
+    /// A task result containing the lingarr's episode id
+    /// </returns>
+    Task<int> GetEpisodeIdOrSyncFromSonarrEpisodeId(int episodeNumber);
+
+    /// <summary>
     /// Toggles the exclusion status of a media item from translation.
     /// </summary>
     /// <param name="mediaType">The type of media (Movie, Show, Season, or Episode).</param>

@@ -12,27 +12,18 @@ public class ProgressService : IProgressService
 {
     private readonly IHubContext<TranslationRequestsHub> _hubContext;
     private readonly LingarrDbContext _dbContext;
-    private readonly ITranslationRequestService _translationRequestService;
 
     public ProgressService(
         IHubContext<TranslationRequestsHub> hubContext, 
-        LingarrDbContext dbContext,
-        ITranslationRequestService translationRequestService)
+        LingarrDbContext dbContext)
     {
         _hubContext = hubContext;
         _dbContext = dbContext;
-        _translationRequestService = translationRequestService;
     }
 
     /// <inheritdoc />
     public async Task Emit(TranslationRequest translationRequest, int progress)
     {
-        if (translationRequest.Status == TranslationStatus.Cancelled || 
-            translationRequest.Status == TranslationStatus.Completed)
-        {
-            await _translationRequestService.UpdateActiveCount();
-        }
-        
         await _hubContext.Clients.Group("TranslationRequests").SendAsync("RequestProgress", new
         {
             Id = translationRequest.Id,

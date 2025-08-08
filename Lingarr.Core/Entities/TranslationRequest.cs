@@ -9,7 +9,7 @@ public class TranslationRequest : BaseEntity
     public required string Title { get; set; }
     public required string SourceLanguage { get; set; }
     public required string TargetLanguage { get; set; }
-    public required string SubtitleToTranslate { get; set; }
+    public string? SubtitleToTranslate { get; set; }
     public string? TranslatedSubtitle { get; set; }
     public required MediaType MediaType { get; set; }
     public required TranslationStatus Status { get; set; }

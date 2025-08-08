@@ -1,6 +1,7 @@
 ﻿using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
 using Microsoft.EntityFrameworkCore;
 
@@ -59,19 +60,43 @@ public class StatisticsService : IStatisticsService
 
         return dailyStats;
     }
-    
-    public async Task<int> UpdateTranslationStatistics(
-        TranslationRequest request, 
-        string serviceType, 
-        List<SubtitleItem> subtitles, 
+
+    public async Task<int> UpdateTranslationStatisticsFromSubtitles(
+        TranslationRequest request,
+        string serviceType,
         List<SubtitleItem> translatedSubtitles)
+    {
+        int lineCount = translatedSubtitles.Sum(s => s.Lines.Count);
+        int charCount = translatedSubtitles.Sum(s => s.Lines.Sum(l => l.Length));
+
+        return await UpdateTranslationStatisticsInternal(
+            request, serviceType, lineCount, charCount);
+    }
+
+    public async Task<int> UpdateTranslationStatisticsFromLines(
+        TranslationRequest request,
+        string serviceType,
+        BatchTranslatedLine[] translatedLines)
+    {
+        int lineCount = translatedLines.Length;
+        int charCount = translatedLines.Sum(s => s.Line.Length);
+
+        return await UpdateTranslationStatisticsInternal(
+            request, serviceType, lineCount, charCount);
+    }
+
+    private async Task<int> UpdateTranslationStatisticsInternal(
+        TranslationRequest request,
+        string serviceType,
+        int totalLines,
+        int totalCharacters)
     {
         var stats = await GetOrCreateStatistics();
         var today = DateTime.UtcNow.Date;
 
         // Update total counts
-        stats.TotalLinesTranslated += translatedSubtitles.Sum(s => s.Lines.Count);
-        stats.TotalCharactersTranslated += translatedSubtitles.Sum(s => s.Lines.Sum(l => l.Length));
+        stats.TotalLinesTranslated += totalLines;
+        stats.TotalCharactersTranslated += totalCharacters;
         stats.TotalFilesTranslated++;
 
         // Update media type statistics
@@ -91,7 +116,7 @@ public class StatisticsService : IStatisticsService
         stats.SubtitlesByLanguage = languageStats;
 
         // Update daily statistics
-        var dailyStats =  await GetOrCreateDailyStatistics(today);
+        var dailyStats = await GetOrCreateDailyStatistics(today);
         dailyStats.TranslationCount++;
 
         return await _dbContext.SaveChangesAsync();

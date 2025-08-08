@@ -2,6 +2,7 @@
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
 using Lingarr.Server.Models;
+using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
 
 namespace Lingarr.Server.Interfaces.Services;
@@ -14,25 +15,25 @@ public interface ITranslationRequestService
     /// <param name="translateAbleSubtitle">Details of the subtitle to be translated, including source and target languages</param>
     /// <returns>The ID of the created translation request</returns>
     Task<int> CreateRequest(TranslateAbleSubtitle translateAbleSubtitle);
-    
+
     /// <summary>
     /// Retrieves the count of active translation requests.
     /// </summary>
     /// <returns>Number of translation requests that are neither Cancelled nor Completed</returns>
     Task<int> GetActiveCount();
-    
+
     /// <summary>
     /// Updates the active count and notifies connected clients via SignalR.
     /// </summary>
     /// <returns>The current count of active translation requests</returns>
     Task<int> UpdateActiveCount();
-    
+
     /// <summary>
     /// Resumes all pending and in-progress translation requests by re-enqueueing them in the job queue.
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task ResumeTranslationRequests();
-    
+
     /// <summary>
     /// Retrieves a paginated list of translation requests with optional filtering and sorting.
     /// </summary>
@@ -72,7 +73,7 @@ public interface ITranslationRequestService
     Task<string?> CancelTranslationRequest(
         TranslationRequest cancelRequest
     );
-    
+
     /// <summary>
     /// Clears the MediaHash property for the associated media entity (Movie or Episode) 
     /// when a translation job fails or is cancelled.
@@ -91,6 +92,16 @@ public interface ITranslationRequestService
     /// <exception cref="NotFoundException">Thrown when the specified translation request is not found</exception>
     Task<TranslationRequest> UpdateTranslationRequest(
         TranslationRequest translationRequest,
-        string jobId,
-        TranslationStatus status);
+        TranslationStatus status,
+        string? jobId = null);
+
+    /// <summary>
+    /// Translate subtitle content without using jobs, Used for other Apps API Intergration (ex. Bazarr).
+    /// </summary>
+    /// <param name="translateAbleContent">The translation to translate</param>
+    /// <param name="parentCancellationToken">Token to cancel the translation operation</param>
+    /// <returns>The translated lines</returns>
+    Task<BatchTranslatedLine[]> TranslateContentAsync(
+        TranslateAbleSubtitleContent translateAbleContent,
+        CancellationToken parentCancellationToken);
 }

@@ -63,8 +63,8 @@ public class TranslationJob
             cancellationToken.ThrowIfCancellationRequested();
 
             var request = await _translationRequestService.UpdateTranslationRequest(translationRequest,
-                jobId,
-                TranslationStatus.InProgress);
+                TranslationStatus.InProgress,
+                jobId);
 
             _logger.LogInformation("TranslateJob started for subtitle: |Green|{filePath}|/Green|",
                 translationRequest.SubtitleToTranslate);
@@ -227,7 +227,7 @@ public class TranslationJob
             }
 
             // statistics tracking
-            await _statisticsService.UpdateTranslationStatistics(request, serviceType, subtitles, translatedSubtitles);
+            await _statisticsService.UpdateTranslationStatisticsFromSubtitles(request, serviceType, translatedSubtitles);
 
             var subtitleTag = "";
             if (settings[SettingKeys.Translation.UseSubtitleTagging] == "true")
@@ -245,8 +245,8 @@ public class TranslationJob
         catch (Exception)
         {
             await _translationRequestService.ClearMediaHash(translationRequest);
-            await _translationRequestService.UpdateTranslationRequest(translationRequest, jobId,
-                TranslationStatus.Failed);
+            await _translationRequestService.UpdateTranslationRequest(translationRequest, TranslationStatus.Failed,
+                jobId);
             await _scheduleService.UpdateJobState(jobName, JobStatus.Failed.GetDisplayName());
             throw;
         }
@@ -287,7 +287,7 @@ public class TranslationJob
         translationRequest.CompletedAt = DateTime.UtcNow;
         translationRequest.Status = TranslationStatus.Completed;
         await _dbContext.SaveChangesAsync(cancellationToken);
-
+        await _translationRequestService.UpdateActiveCount();
         await _progressService.Emit(translationRequest, 100);
         await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());
     }
