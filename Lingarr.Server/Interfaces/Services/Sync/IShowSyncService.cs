@@ -1,4 +1,5 @@
-﻿using Lingarr.Server.Models.Integrations;
+﻿using Lingarr.Core.Entities;
+using Lingarr.Server.Models.Integrations;
 
 namespace Lingarr.Server.Interfaces.Services.Sync;
 
@@ -10,6 +11,13 @@ public interface IShowSyncService
     /// <param name="shows">The list of Sonarr shows to sync</param>
     /// <returns>A task representing the asynchronous operation</returns>
     Task SyncShows(List<SonarrShow> shows);
+
+    /// <summary>
+    /// Synchronizes a single show from Sonarr
+    /// </summary>
+    /// <param name="show">The show to sync</param>
+    /// <returns>A task representing the asynchronous operation</returns>
+    Task<Show> SyncShow(SonarrShow show);
 
     /// <summary>
     /// Removes shows that no longer exist in Sonarr

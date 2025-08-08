@@ -431,7 +431,6 @@ namespace Lingarr.Migrations.SQLite.Migrations
                         .HasColumnName("status");
 
                     b.Property<string>("SubtitleToTranslate")
-                        .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("subtitle_to_translate");
 

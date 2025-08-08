@@ -1,4 +1,5 @@
 ﻿using Lingarr.Core.Data;
+using Lingarr.Core.Entities;
 using Lingarr.Server.Interfaces.Services.Sync;
 using Lingarr.Server.Models.Integrations;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +60,23 @@ public class ShowSyncService : IShowSyncService
     }
 
     /// <inheritdoc />
+    public async Task<Show> SyncShow(SonarrShow show)
+    {
+        var showEntity = await _showSync.SyncShow(show);
+
+        foreach (var season in show.Seasons)
+        {
+            var seasonEntity = await _seasonSync.SyncSeason(showEntity, show, season);
+            await _episodeSync.SyncEpisodes(show, seasonEntity);
+        }
+
+        await _dbContext.SaveChangesAsync();
+        _logger.LogInformation("Synced a single show");
+
+        return showEntity;
+    }
+
+    /// <inheritdoc />
     public async Task RemoveNonExistentShows(HashSet<int> existingSonarrIds)
     {
         var showsToDelete = await _dbContext.Shows
@@ -71,7 +89,7 @@ public class ShowSyncService : IShowSyncService
         if (showsToDelete.Any())
         {
             _logger.LogInformation("Removing {Count} shows that no longer exist in Sonarr", showsToDelete.Count);
-            
+
             var episodes = showsToDelete.SelectMany(s => s.Seasons.SelectMany(season => season.Episodes)).ToList();
             var seasons = showsToDelete.SelectMany(s => s.Seasons).ToList();
             var images = showsToDelete.SelectMany(s => s.Images).ToList();
@@ -80,7 +98,7 @@ public class ShowSyncService : IShowSyncService
             _dbContext.Seasons.RemoveRange(seasons);
             _dbContext.Images.RemoveRange(images);
             _dbContext.Shows.RemoveRange(showsToDelete);
-            
+
             await _dbContext.SaveChangesAsync();
         }
     }
