@@ -16,7 +16,9 @@ namespace Lingarr.Migrations.SQLite.Migrations
                 values: new object[,]
                 {
                     { "add_translator_info", "false" },
-                    { "remove_language_tag", "false" }
+                    { "remove_language_tag", "false" },
+                    { "api_key_enabled", "false" },
+                    { "api_key", "" }
                 });
             
             migrationBuilder.AlterColumn<string>(
@@ -37,7 +39,9 @@ namespace Lingarr.Migrations.SQLite.Migrations
                 keyValues: new object[]
                 {
                     "add_translator_info",
-                    "remove_language_tag"
+                    "remove_language_tag",
+                    "api_key_enabled",
+                    "api_key"
                 });
             
             migrationBuilder.AlterColumn<string>(
