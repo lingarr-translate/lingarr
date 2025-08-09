@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Lingarr.Migrations.SQLite.Migrations
 {
     [DbContext(typeof(LingarrDbContext))]
-    [Migration("20250807003732_UpdateTranslationRequestSchema")]
-    partial class UpdateTranslationRequestSchema
+    [Migration("20250808132232_AddTranslatorInfoAndRemoveLanguageTag")]
+    partial class AddTranslatorInfoAndRemoveLanguageTag
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
