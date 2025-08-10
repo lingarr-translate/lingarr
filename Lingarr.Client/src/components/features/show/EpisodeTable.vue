@@ -69,7 +69,7 @@ const getSubtitle = (fileName: string | null) => {
     return props.subtitles
         .filter(
             (subtitle: ISubtitle) =>
-                subtitle.fileName.includes(fileName) &&
+                subtitle.fileName.toLocaleLowerCase().includes(fileName.toLocaleLowerCase()) &&
                 subtitle.language &&
                 subtitle.language.trim() !== ''
         )
