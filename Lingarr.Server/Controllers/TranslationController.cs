@@ -29,7 +29,8 @@ public class TranslationController : ControllerBase
             var languages = new[]
             {
                 new { code = "en", name = "English" },
-                new { code = "nl", name = "Dutch" }
+                new { code = "nl", name = "Dutch" },
+                new { code = "ru", name = "Russian" }
             };
 
             return Ok(languages);
