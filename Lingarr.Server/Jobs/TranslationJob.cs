@@ -245,9 +245,11 @@ public class TranslationJob
         catch (Exception)
         {
             await _translationRequestService.ClearMediaHash(translationRequest);
-            await _translationRequestService.UpdateTranslationRequest(translationRequest, TranslationStatus.Failed,
+            translationRequest = await _translationRequestService.UpdateTranslationRequest(translationRequest, TranslationStatus.Failed,
                 jobId);
             await _scheduleService.UpdateJobState(jobName, JobStatus.Failed.GetDisplayName());
+            await _translationRequestService.UpdateActiveCount();
+            await _progressService.Emit(translationRequest, 0);
             throw;
         }
     }
