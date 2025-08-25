@@ -1,10 +1,12 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import * as path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ command, mode }) => {
     const isProduction = mode === 'production'
+    const env = loadEnv(mode, process.cwd(), "VITE_");
+    const baseServerURL = env.VITE_BASE_SERVER_URL || "Lingarr.Server:9876";
 
     return {
         esbuild: {
@@ -19,11 +21,11 @@ export default defineConfig(({ command, mode }) => {
         server: {
             proxy: {
                 '/api': {
-                    target: 'http://Lingarr.Server:9876',
+                    target: `http://${baseServerURL}`,
                     changeOrigin: true
                 },
                 '/signalr': {
-                    target: 'http://Lingarr.Server:9876',
+                    target: `http://${baseServerURL}`,
                     ws: true,
                     changeOrigin: true
                 }
@@ -33,7 +35,7 @@ export default defineConfig(({ command, mode }) => {
             },
             host: '0.0.0.0',
             strictPort: true,
-            port: 9876
+            port: env.VITE_PORT || 9876
         }
     }
 })
