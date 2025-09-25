@@ -165,6 +165,11 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                         throw new HttpRequestException("Rate limit exceeded", null, HttpStatusCode.TooManyRequests);
                     }
 
+                    if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
+                    {
+                        throw new HttpRequestException("OpenAI temporary unavailable", null, HttpStatusCode.ServiceUnavailable);
+                    }
+
                     _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
                     _logger.LogError("Response Content: {ResponseContent}",
                         await response.Content.ReadAsStringAsync(cancellationToken: linked.Token));
@@ -194,6 +199,21 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
 
                 _logger.LogWarning(
                     "OpenAI rate limit hit. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    delay, attempt, _maxRetries);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.ServiceUnavailable)
+            {
+                if (attempt == _maxRetries)
+                {
+                    _logger.LogError(ex, "OpenAI server error, it might be down. Max retries exhausted for text: {Text}", text);
+                    throw new TranslationException("OpenAI is temporarily unavailable, usually due to high load or maintenance. Retry limit reached.", ex);
+                }
+
+                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
+                delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
+
+                _logger.LogWarning(
+                    "OpenAI service unavailable. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
                     delay, attempt, _maxRetries);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
