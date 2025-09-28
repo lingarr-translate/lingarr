@@ -76,6 +76,7 @@ export interface ITranslationRequestService {
     ): Promise<T>
     cancel<T>(translationRequest: ITranslationRequest): Promise<T>
     remove<T>(translationRequest: ITranslationRequest): Promise<T>
+    retry<T>(translationRequest: ITranslationRequest): Promise<T>
 }
 
 export interface IScheduleService {

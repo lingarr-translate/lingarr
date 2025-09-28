@@ -1,20 +1,25 @@
 ﻿<template>
-    <button :disabled="loading" @click="remove">
+    <button :disabled="loading">
         <LoaderCircleIcon v-if="loading" class="h-5 w-5 animate-spin" />
-        <TimesIcon v-else-if="inProgress" class="h-5 w-5 cursor-pointer" />
-        <TrashIcon v-else-if="removable" class="h-5 w-5 cursor-pointer" />
+        <TimesIcon v-else-if="inProgress" @click="executeAction(TRANSLATION_ACTIONS.CANCEL)" class="h-5 w-5 cursor-pointer" />
+        <div v-else-if="removable" class="flex space-x-2">
+            <ReloadIcon @click="executeAction(TRANSLATION_ACTIONS.RETRY)" class="h-5 w-5 cursor-pointer" />
+            <TrashIcon @click="executeAction(TRANSLATION_ACTIONS.REMOVE)" class="h-5 w-5 cursor-pointer" />
+        </div>
     </button>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
-import { TRANSLATION_STATUS, TranslationStatus } from '@/ts'
+import { TRANSLATION_ACTIONS, TRANSLATION_STATUS, TranslationStatus } from '@/ts'
 import TimesIcon from '@/components/icons/TimesIcon.vue'
 import LoaderCircleIcon from '@/components/icons/LoaderCircleIcon.vue'
 import TrashIcon from '@/components/icons/TrashIcon.vue'
+import ReloadIcon from '@/components/icons/ReloadIcon.vue'
 
 const props = defineProps<{
-    status: TranslationStatus
+    status: TranslationStatus,
+    onAction: (action: TRANSLATION_ACTIONS) => Promise<void>,
 }>()
 
 const emit = defineEmits(['toggle:action'])
@@ -31,11 +36,15 @@ const removable = computed(() => {
     )
 })
 
-const action = computed(() => (inProgress.value ? 'cancel' : removable.value ? 'remove' : ''))
-
-const remove = async () => {
+const executeAction = async (action: TRANSLATION_ACTIONS) => {
     loading.value = true
-    emit('toggle:action', action.value)
+    await props.onAction(action);
+
+    if (action == TRANSLATION_ACTIONS.RETRY) {
+        // Special case to set loading to false when onAction is done
+        // Retry is the only case that does not change props.status
+        loading.value = false;
+    }
 }
 
 watch(
