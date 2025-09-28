@@ -66,13 +66,31 @@ public class TranslationRequestService : ITranslationRequestService
             Status = TranslationStatus.Pending
         };
 
-        _dbContext.TranslationRequests.Add(translationRequest);
+        return await CreateRequest(translationRequest);
+    }
+
+    /// <inheritdoc />
+    public async Task<int> CreateRequest(TranslationRequest translationRequest)
+    {
+        // Create a new TranslationRequest to not keep ID and JobID
+        var translationRequestCopy = new TranslationRequest
+        {
+            MediaId = translationRequest.MediaId,
+            Title = translationRequest.Title,
+            SourceLanguage = translationRequest.SourceLanguage,
+            TargetLanguage = translationRequest.TargetLanguage,
+            SubtitleToTranslate = translationRequest.SubtitleToTranslate,
+            MediaType = translationRequest.MediaType,
+            Status = TranslationStatus.Pending
+        };
+
+        _dbContext.TranslationRequests.Add(translationRequestCopy);
         await _dbContext.SaveChangesAsync();
 
         var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
-            job.Execute(translationRequest, CancellationToken.None)
+            job.Execute(translationRequestCopy, CancellationToken.None)
         );
-        await UpdateTranslationRequest(translationRequest, TranslationStatus.Pending, jobId);
+        await UpdateTranslationRequest(translationRequestCopy, TranslationStatus.Pending, jobId);
 
         var count = await GetActiveCount();
         await _hubContext.Clients.Group("TranslationRequests").SendAsync("RequestActive", new
@@ -80,7 +98,7 @@ public class TranslationRequestService : ITranslationRequestService
             count
         });
 
-        return translationRequest.Id;
+        return translationRequestCopy.Id;
     }
     
     /// <inheritdoc />
@@ -144,6 +162,21 @@ public class TranslationRequestService : ITranslationRequestService
         
         return $"Translation request with id {cancelRequest.Id} has been removed";
     }
+
+    /// <inheritdoc />
+    public async Task<string?> RetryTranslationRequest(TranslationRequest retryRequest)
+    {
+        var translationRequest = await _dbContext.TranslationRequests.FirstOrDefaultAsync(
+            translationRequest => translationRequest.Id == retryRequest.Id);
+        if (translationRequest == null)
+        {
+            return null;
+        }
+
+
+        int newTranslationRequestId = await CreateRequest(translationRequest);
+        return $"Translation request with id {retryRequest.Id} has been restarted, new job id {newTranslationRequestId}";
+    }
     
     /// <inheritdoc />
     public async Task<TranslationRequest> UpdateTranslationRequest(TranslationRequest translationRequest,
@@ -160,7 +193,7 @@ public class TranslationRequestService : ITranslationRequestService
             request.JobId = jobId;
         }
         request.Status = status;
-        await _dbContext.SaveChangesAsync(); 
+        await _dbContext.SaveChangesAsync();
 
         return request;
     }
