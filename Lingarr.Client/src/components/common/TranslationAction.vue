@@ -22,7 +22,6 @@ const props = defineProps<{
     onAction: (action: TRANSLATION_ACTIONS) => Promise<void>,
 }>()
 
-const emit = defineEmits(['toggle:action'])
 const loading = ref(false)
 
 const inProgress = computed(() => props.status === TRANSLATION_STATUS.INPROGRESS)
