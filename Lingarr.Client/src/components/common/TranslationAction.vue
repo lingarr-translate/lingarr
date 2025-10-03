@@ -1,10 +1,17 @@
 ﻿<template>
     <button :disabled="loading">
         <LoaderCircleIcon v-if="loading" class="h-5 w-5 animate-spin" />
-        <TimesIcon v-else-if="inProgress" @click="executeAction(TRANSLATION_ACTIONS.CANCEL)" class="h-5 w-5 cursor-pointer" />
+        <TimesIcon
+            v-else-if="inProgress"
+            class="h-5 w-5 cursor-pointer"
+            @click="executeAction(TRANSLATION_ACTIONS.CANCEL)" />
         <div v-else-if="removable" class="flex space-x-2">
-            <ReloadIcon @click="executeAction(TRANSLATION_ACTIONS.RETRY)" class="h-5 w-5 cursor-pointer" />
-            <TrashIcon @click="executeAction(TRANSLATION_ACTIONS.REMOVE)" class="h-5 w-5 cursor-pointer" />
+            <RetryIcon
+                class="h-5 w-5 cursor-pointer"
+                @click="executeAction(TRANSLATION_ACTIONS.RETRY)" />
+            <TrashIcon
+                class="h-5 w-5 cursor-pointer"
+                @click="executeAction(TRANSLATION_ACTIONS.REMOVE)" />
         </div>
     </button>
 </template>
@@ -15,11 +22,11 @@ import { TRANSLATION_ACTIONS, TRANSLATION_STATUS, TranslationStatus } from '@/ts
 import TimesIcon from '@/components/icons/TimesIcon.vue'
 import LoaderCircleIcon from '@/components/icons/LoaderCircleIcon.vue'
 import TrashIcon from '@/components/icons/TrashIcon.vue'
-import ReloadIcon from '@/components/icons/ReloadIcon.vue'
+import RetryIcon from '@/components/icons/RetryIcon.vue'
 
 const props = defineProps<{
-    status: TranslationStatus,
-    onAction: (action: TRANSLATION_ACTIONS) => Promise<void>,
+    status: TranslationStatus
+    onAction: (action: TRANSLATION_ACTIONS) => Promise<void>
 }>()
 
 const loading = ref(false)
@@ -37,12 +44,12 @@ const removable = computed(() => {
 
 const executeAction = async (action: TRANSLATION_ACTIONS) => {
     loading.value = true
-    await props.onAction(action);
+    await props.onAction(action)
 
     if (action == TRANSLATION_ACTIONS.RETRY) {
         // Special case to set loading to false when onAction is done
         // Retry is the only case that does not change props.status
-        loading.value = false;
+        loading.value = false
     }
 }
 
