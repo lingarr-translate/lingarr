@@ -17,6 +17,13 @@ public interface ITranslationRequestService
     Task<int> CreateRequest(TranslateAbleSubtitle translateAbleSubtitle);
 
     /// <summary>
+    /// Creates a new translation request from a translationRequest, creating a new one with the same exact settings.
+    /// </summary>
+    /// <param name="translationRequest">Translation request to copie</param>
+    /// <returns>The ID of the created translation request</returns>
+    Task<int> CreateRequest(TranslationRequest translationRequest);
+
+    /// <summary>
     /// Retrieves the count of active translation requests.
     /// </summary>
     /// <returns>Number of translation requests that are neither Cancelled nor Completed</returns>
@@ -61,6 +68,17 @@ public interface ITranslationRequestService
     /// </returns>
     Task<string?> RemoveTranslationRequest(
         TranslationRequest cancelRequest
+    );
+
+    /// <summary>
+    /// Retries an existing translation request
+    /// </summary>
+    /// <param name="retryRequest">The translation request to retry</param>
+    /// <returns>
+    /// A message indicating the result of the new transaltion request, or null if the request wasn't found
+    /// </returns>
+    Task<string?> RetryTranslationRequest(
+        TranslationRequest retryRequest
     );
 
     /// <summary>

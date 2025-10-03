@@ -108,3 +108,9 @@ export const TRANSLATION_STATUS = {
 } as const
 
 export type TranslationStatus = (typeof TRANSLATION_STATUS)[keyof typeof TRANSLATION_STATUS]
+
+export enum TRANSLATION_ACTIONS {
+    CANCEL,
+    REMOVE,
+    RETRY,
+}
