@@ -72,7 +72,7 @@
                     <div class="deletable float-right h-5 w-5 md:hidden">
                         <TranslationAction
                             :status="item.status"
-                            @toggle:action="(action) => handleAction(item, action)" />
+                            :onAction="(action) => handleAction(item, action)" />
                     </div>
                     <div class="mb-2 md:col-span-4 md:mb-0 md:px-4 md:py-2">
                         <span :id="`deletable-${item.id}`" class="font-bold md:hidden">
@@ -136,7 +136,7 @@
                         <div class="flex h-5 w-5 items-center justify-center">
                             <TranslationAction
                                 :status="item.status"
-                                @toggle:action="(action) => handleAction(item, action)" />
+                                :onAction="(action) => handleAction(item, action)" />
                         </div>
                     </div>
                     <div
@@ -169,6 +169,7 @@ import {
     IPagedResult,
     ITranslationRequest,
     MEDIA_TYPE,
+    TRANSLATION_ACTIONS,
     TRANSLATION_STATUS
 } from '@/ts'
 import { useTranslationRequestStore } from '@/store/translationRequest'
@@ -201,12 +202,17 @@ const filter: ComputedRef<IFilter> = computed({
     }, 300)
 })
 
-function handleAction(translationRequest: ITranslationRequest, action: string) {
-    if (!action) return
-    if (action === 'cancel') {
-        return translationRequestStore.cancel(translationRequest)
+async function handleAction(translationRequest: ITranslationRequest, action: TRANSLATION_ACTIONS) {
+    switch (action) {
+        case TRANSLATION_ACTIONS.CANCEL:
+            return await translationRequestStore.cancel(translationRequest)
+        case TRANSLATION_ACTIONS.REMOVE:
+            return await translationRequestStore.remove(translationRequest)
+        case TRANSLATION_ACTIONS.RETRY:
+            return await translationRequestStore.retry(translationRequest)
+        default:
+            console.error("unknown translation request action: " + action);
     }
-    return translationRequestStore.remove(translationRequest)
 }
 
 onMounted(async () => {

@@ -70,6 +70,9 @@ export const useTranslationRequestStore = defineStore({
                 )
             })
         },
+        async retry(translationRequest: ITranslationRequest) {
+            await services.translationRequest.retry<string>(translationRequest)
+        },
         async updateProgress(requestProgress: IRequestProgress) {
             this.translationRequests.items = this.translationRequests.items.map(
                 (request: ITranslationRequest) => {

@@ -16,7 +16,7 @@ public class TranslationRequestController : ControllerBase
     {
         _translationRequestService = translationRequestService;
     }
-    
+
     /// <summary>
     /// Gets the count of active translation requests
     /// </summary>
@@ -29,7 +29,7 @@ public class TranslationRequestController : ControllerBase
         var activeCount = await _translationRequestService.GetActiveCount();
         return Ok(activeCount);
     }
-    
+
     /// <summary>
     /// Retrieves a paginated list of translation requests with optional filtering and sorting
     /// </summary>
@@ -49,16 +49,16 @@ public class TranslationRequestController : ControllerBase
         int pageSize = 20,
         int pageNumber = 1)
     {
-            var value = await _translationRequestService.GetTranslationRequests(
-                searchQuery,
-                orderBy,
-                ascending,
-                pageNumber,
-                pageSize);
+        var value = await _translationRequestService.GetTranslationRequests(
+            searchQuery,
+            orderBy,
+            ascending,
+            pageNumber,
+            pageSize);
 
-            return Ok(value);
+        return Ok(value);
     }
-    
+
     /// <summary>
     /// Cancels an existing translation request
     /// </summary>
@@ -78,7 +78,7 @@ public class TranslationRequestController : ControllerBase
 
         return NotFound(translationRequest);
     }
-    
+
     /// <summary>
     /// Removes an existing translation request
     /// </summary>
@@ -97,5 +97,27 @@ public class TranslationRequestController : ControllerBase
         }
 
         return NotFound(translationRequest);
+    }
+
+    /// <summary>
+    /// Retries an existing translation request
+    /// Does not delete the current one, just reques
+    /// The request with the same information
+    /// </summary>
+    /// <param name="retryRequest">The translation request to retry</param>
+    /// <response code="200">Returns the new translation request</response>
+    /// <response code="404">If the translation request was not found</response>
+    /// <response code="500">If there was an error checking for updates</response>
+    /// <returns>ActionResult containing the new translation request if found, or NotFound if the request doesn't exist</returns>
+    [HttpPost("retry")]
+    public async Task<ActionResult<string>> RetryTranslationRequest([FromBody] TranslationRequest retryRequest)
+    {
+        var newTranslationRequest = await _translationRequestService.RetryTranslationRequest(retryRequest);
+        if (newTranslationRequest != null)
+        {
+            return Ok(newTranslationRequest);
+        }
+
+        return NotFound(newTranslationRequest);
     }
 }
