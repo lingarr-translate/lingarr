@@ -1,19 +1,29 @@
 ﻿<template>
-    <button :disabled="loading">
-        <LoaderCircleIcon v-if="loading" class="h-5 w-5 animate-spin" />
-        <TimesIcon
-            v-else-if="inProgress"
-            class="h-5 w-5 cursor-pointer"
-            @click="executeAction(TRANSLATION_ACTIONS.CANCEL)" />
-        <div v-else-if="removable" class="flex space-x-2">
-            <RetryIcon
-                class="h-5 w-5 cursor-pointer"
-                @click="executeAction(TRANSLATION_ACTIONS.RETRY)" />
-            <TrashIcon
-                class="h-5 w-5 cursor-pointer"
-                @click="executeAction(TRANSLATION_ACTIONS.REMOVE)" />
-        </div>
-    </button>
+    <div v-if="loading" class="md:px-4">
+        <LoaderCircleIcon class="h-5 w-5 animate-spin" />
+    </div>
+    <div v-else-if="inProgress">
+        <button 
+            :disabled="loading" 
+            class="md:px-4"
+            @click="executeAction(TRANSLATION_ACTIONS.CANCEL)">
+            <TimesIcon class="h-5 w-5 cursor-pointer" />
+        </button>
+    </div>
+    <div v-else-if="removable" class="md:space-x-2">
+        <button 
+            :disabled="loading" 
+            class="cursor-pointer"
+            @click="executeAction(TRANSLATION_ACTIONS.RETRY)">
+                <RetryIcon class="h-5 w-5" />
+                </button>
+        <button 
+            :disabled="loading" 
+            class="cursor-pointer"
+            @click="executeAction(TRANSLATION_ACTIONS.REMOVE)">
+            <TrashIcon class="h-5 w-5" />
+        </button>
+    </div>
 </template>
 
 <script setup lang="ts">
