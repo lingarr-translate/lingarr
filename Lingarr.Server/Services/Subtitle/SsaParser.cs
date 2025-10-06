@@ -192,12 +192,16 @@ public class SsaParser : ISubtitleParser
         {
             Marked = dialogueParts[0].Trim(),
             Style = dialogueParts[columnIndexes["Style"]].Trim(),
-            Name = dialogueParts[columnIndexes["Name"]].Trim(),
             MarginL = dialogueParts[columnIndexes["MarginL"]].Trim(),
             MarginR = dialogueParts[columnIndexes["MarginR"]].Trim(),
             MarginV = dialogueParts[columnIndexes["MarginV"]].Trim(),
             Effect = dialogueParts[columnIndexes["Effect"]].Trim()
         };
+        
+
+        if (columnIndexes.ContainsKey("Name")) {
+            ssaDialogue.Name = dialogueParts[columnIndexes["Name"]].Trim();
+        }
 
         return new SubtitleItem
         {
