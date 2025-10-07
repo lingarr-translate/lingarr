@@ -81,7 +81,7 @@
                         <span
                             v-if="item.mediaType === MEDIA_TYPE.EPISODE"
                             v-show-title
-                            class="cursor-help"
+                            class="cursor-help block"
                             :title="item.title">
                             {{ item.title }}
                         </span>
