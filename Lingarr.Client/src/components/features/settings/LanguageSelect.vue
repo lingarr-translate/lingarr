@@ -11,6 +11,7 @@
                 <span
                     v-for="(item, index) in selectedItems"
                     :key="`${item.code}-${index}`"
+                    :data-key="`${item.code}-${index}`"
                     class="bg-accent text-secondary-content flex cursor-pointer items-center rounded-md px-3 py-1 text-sm font-medium"
                     @click.stop="removeItem(item)">
                     <span class="text-accent-content mr-2">{{ item.name }}</span>
@@ -47,6 +48,7 @@
             <li
                 v-for="(language, index) in filteredLanguages"
                 :key="`${language.code}-${index}`"
+                :data-key="`${language.code}-${index}`"
                 class="cursor-pointer px-4 py-2"
                 :class="{ 'bg-accent/20': isSelected(language) }"
                 @click="selectItem(language)">
