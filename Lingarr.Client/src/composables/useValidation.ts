@@ -1,7 +1,8 @@
 ﻿import { ref, computed } from 'vue'
+import { isValidCron } from 'cron-validator'
 
 type ValidationProps = {
-    validationType: 'number' | 'string' | 'url'
+    validationType: 'number' | 'string' | 'url' | 'cron'
     minLength?: number
     maxLength?: number
     errorMessage?: string
@@ -34,6 +35,17 @@ export default function useValidation(props: ValidationProps) {
                 const urlPattern = /^(http:\/\/|https:\/\/)[\w\-]+(\.[\w\-]+)*(:\d+)?(\/.*)?$/
                 isValid.value = urlPattern.test(value)
                 error.value = isValid.value ? '' : props.errorMessage || 'Invalid URL'
+                break
+            case 'cron':
+                isValid.value = isValidCron(value.trim(), {
+                    seconds: false,
+                    alias: true,
+                    allowBlankDay: true
+                })
+                error.value = isValid.value
+                    ? ''
+                    : props.errorMessage ||
+                      'Invalid cron expression, use <a href="https://crontab.guru/" target="_blank">https://crontab.guru<a> or other tools to generate a valid expression'
                 break
             default:
                 isValid.value = true

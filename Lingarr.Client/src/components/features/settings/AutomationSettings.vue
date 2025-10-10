@@ -7,16 +7,23 @@
             <SaveNotification ref="saveNotification" />
             <div class="flex flex-col space-y-2 pb-4">
                 <span class="font-semibold">
-                    {{ translate('settings.indexing.indexingHeader') }}
+                    {{ translate('settings.indexing.indexingMoviesLabel') }}
                 </span>
-                <SelectComponent
-                    v-model:selected="movieSchedule"
-                    :label="translate('settings.indexing.indexingMoviesLabel')"
-                    :options="cronOptions" />
-                <SelectComponent
-                    v-model:selected="showSchedule"
-                    :label="translate('settings.indexing.indexingTvShowLabel')"
-                    :options="cronOptions" />
+                <InputComponent
+                    v-model="movieSchedule"
+                    label="Cron format: minute hour day month weekday (e.g., '0 * * * *' for hourly)"
+                    :placeholder="'0 * * * *'"
+                    validation-type="cron"
+                    @update:validation="(val) => (movieScheduleIsValid = val)" />
+                <span class="font-semibold">
+                    {{ translate('settings.indexing.indexingMoviesLabel') }}
+                </span>
+                <InputComponent
+                    v-model="showSchedule"
+                    label="Cron format: minute hour day month weekday (e.g., '0 * * * *' for hourly)"
+                    :placeholder="'0 * * * *'"
+                    validation-type="cron"
+                    @update:validation="(val) => (showScheduleIsValid = val)" />
             </div>
         </template>
     </CardComponent>
@@ -45,10 +52,15 @@
                     </ToggleButton>
                 </div>
 
-                <SelectComponent
-                    v-model:selected="translationSchedule"
-                    :label="translate('settings.automation.translationScheduleLabel')"
-                    :options="cronOptions" />
+                <span class="font-semibold">
+                    {{ translate('settings.automation.translationScheduleLabel') }}
+                </span>
+                <InputComponent
+                    v-model="translationSchedule"
+                    label="Cron format: minute hour day month weekday (e.g., '0 * * * *' for hourly)"
+                    :placeholder="'0 * * * *'"
+                    validation-type="cron"
+                    @update:validation="(val) => (translationScheduleIsValid = val)" />
 
                 <span class="font-semibold">
                     {{ translate('settings.automation.limitsHeader') }}
@@ -90,7 +102,6 @@ import { useRouter } from 'vue-router'
 import { SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
-import SelectComponent from '@/components/common/SelectComponent.vue'
 import ToggleButton from '@/components/common/ToggleButton.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 import { useI18n } from '@/plugins/i18n'
@@ -99,6 +110,9 @@ const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const maxTranslationsPerRunIsValid = ref(false)
 const movieAgeThresholdIsValid = ref(false)
 const showAgeThresholdIsValid = ref(false)
+const movieScheduleIsValid = ref(false)
+const showScheduleIsValid = ref(false)
+const translationScheduleIsValid = ref(false)
 const settingsStore = useSettingStore()
 const router = useRouter()
 const { translate } = useI18n()
@@ -113,22 +127,28 @@ const automationEnabled = computed({
 const movieSchedule = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.MOVIE_SCHEDULE) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.MOVIE_SCHEDULE, newValue, true)
-        saveNotification.value?.show()
+        if (movieScheduleIsValid.value) {
+            settingsStore.updateSetting(SETTINGS.MOVIE_SCHEDULE, newValue, true)
+            saveNotification.value?.show()
+        }
     }
 })
 const showSchedule = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.SHOW_SCHEDULE) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.SHOW_SCHEDULE, newValue, true)
-        saveNotification.value?.show()
+        if (showScheduleIsValid.value) {
+            settingsStore.updateSetting(SETTINGS.SHOW_SCHEDULE, newValue, true)
+            saveNotification.value?.show()
+        }
     }
 })
 const translationSchedule = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.TRANSLATION_SCHEDULE) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.TRANSLATION_SCHEDULE, newValue, true)
-        saveNotification.value?.show()
+        if (translationScheduleIsValid.value) {
+            settingsStore.updateSetting(SETTINGS.TRANSLATION_SCHEDULE, newValue, true)
+            saveNotification.value?.show()
+        }
     }
 })
 const maxTranslationsPerRun = computed({
@@ -154,47 +174,4 @@ const showAgeThreshold = computed({
         saveNotification.value?.show()
     }
 })
-
-const cronOptions = [
-    {
-        value: '*/15 * * * *',
-        label: translate('settings.cronOptions.everyFifteenMinutes')
-    },
-    {
-        value: '*/30 * * * *',
-        label: translate('settings.cronOptions.everyThirtyMinutes')
-    },
-    {
-        value: '0 * * * *',
-        label: translate('settings.cronOptions.hourly')
-    },
-    {
-        value: '0 */2 * * *',
-        label: translate('settings.cronOptions.everyTwoHours')
-    },
-    {
-        value: '0 */4 * * *',
-        label: translate('settings.cronOptions.everyFourHours')
-    },
-    {
-        value: '0 */6 * * *',
-        label: translate('settings.cronOptions.everySixHours')
-    },
-    {
-        value: '0 */12 * * *',
-        label: translate('settings.cronOptions.twiceADay')
-    },
-    {
-        value: '0 0 * * *',
-        label: translate('settings.cronOptions.dailyAtMidnight')
-    },
-    {
-        value: '0 4 * * *',
-        label: translate('settings.cronOptions.dailyAtFour')
-    },
-    {
-        value: '0 0 * * SUN',
-        label: translate('settings.cronOptions.weeklyOnSundayAtMidnight')
-    }
-]
 </script>
