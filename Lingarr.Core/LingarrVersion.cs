@@ -6,7 +6,7 @@ namespace Lingarr.Core;
 
 public static class LingarrVersion
 {
-    public const string Number = "1.0.2";
+    public const string Number = "1.0.3";
 
     private static readonly HttpClient HttpClient = new()
     {
