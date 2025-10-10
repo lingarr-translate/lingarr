@@ -321,7 +321,7 @@ public class TranslationRequestService : ITranslationRequestService
 
         try
         {
-            BatchTranslatedLine[]? results = null;
+            BatchTranslatedLine[]? results;
             // Get Translation Settings
             var settings = await _settingService.GetSettings([
                 SettingKeys.Translation.UseBatchTranslation,

@@ -114,21 +114,35 @@ public class MediaService : IMediaService
 
         // Movie not found, maybe out of sync.
         // Sync the movie
-        var movieFetched = await _radarrService.GetMovie(movieId);
-        if (movieFetched == null)
+        try
         {
-            // Unkown movie
-            return 0;
-        }
+            var movieFetched = await _radarrService.GetMovie(movieId);
+            if (movieFetched == null)
+            {
+                // Unknown movie
+                return 0;
+            }
 
-        var movieEnity = await _movieSyncService.SyncMovie(movieFetched);
-        if (movieEnity == null)
+            var movieEntity = await _movieSyncService.SyncMovie(movieFetched);
+            if (movieEntity == null)
+            {
+                // Movie had no file
+                return 0;
+            }
+            
+            return movieEntity.Id;
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
-            // Movie had not file
+            // Movie doesn't exist in Radarr
+            _logger.LogWarning("Movie with Radarr ID {MovieId} not found in Radarr (404)", movieId);
             return 0;
         }
-        
-        return movieEnity.Id;
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to fetch or sync movie with Radarr ID {MovieId}", movieId);
+            return 0;
+        }
     }
 
     /// <inheritdoc />
@@ -142,24 +156,38 @@ public class MediaService : IMediaService
 
         // Episode not found, maybe out of sync.
         // Sync the show
-        var episodeFetched = await _sonarrService.GetEpisode(episodeNumber);
-        if (episodeFetched == null)
+        try
         {
-            // Unkown episode
+            var episodeFetched = await _sonarrService.GetEpisode(episodeNumber);
+            if (episodeFetched == null)
+            {
+                // Unknown episode
+                return 0;
+            }
+
+            if (episodeFetched.Show == null)
+            {
+                // Show not found with episode
+                return 0;
+            }
+
+            var show = await _showSyncService.SyncShow(episodeFetched.Show);
+            // Find the episode id or return 0 if not found
+            return show.Seasons
+                .SelectMany(s => s.Episodes)
+                .FirstOrDefault(e => e.SonarrId == episodeNumber)?.Id ?? 0;
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            // Episode doesn't exist in Sonarr
+            _logger.LogWarning("Episode with Sonarr ID {EpisodeId} not found in Sonarr (404)", episodeNumber);
             return 0;
         }
-
-        if (episodeFetched.Show == null)
+        catch (Exception ex)
         {
-            // Show not found with episode
+            _logger.LogError(ex, "Failed to fetch or sync episode with Sonarr ID {EpisodeId}", episodeNumber);
             return 0;
         }
-
-        var show = await _showSyncService.SyncShow(episodeFetched.Show);
-        // Find the epsiode id or return 0 if not found
-        return show.Seasons
-            .SelectMany(s => s.Episodes)
-            .FirstOrDefault(e => e.SonarrId == episodeNumber)?.Id ?? 0;
     }
 
     /// <inheritdoc />
