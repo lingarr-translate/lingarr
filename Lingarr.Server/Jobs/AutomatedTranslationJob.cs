@@ -6,6 +6,7 @@ using Lingarr.Core.Interfaces;
 using Lingarr.Server.Filters;
 using Lingarr.Server.Interfaces.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.OpenApi.Extensions;
 
 namespace Lingarr.Server.Jobs;
@@ -17,6 +18,7 @@ public class AutomatedTranslationJob
     private readonly IMediaSubtitleProcessor _mediaSubtitleProcessor;
     private readonly ISettingService _settingService;
     private readonly IScheduleService _scheduleService;
+    private readonly IMemoryCache _memoryCache;
     private int _maxTranslationsPerRun = 10;
     private TimeSpan _defaultMovieAgeThreshold;
     private TimeSpan _defaultShowAgeThreshold;
@@ -29,13 +31,15 @@ public class AutomatedTranslationJob
         ILogger<AutomatedTranslationJob> logger,
         IMediaSubtitleProcessor mediaSubtitleProcessor,
         IScheduleService scheduleService,
-        ISettingService settingService)
+        ISettingService settingService,
+        IMemoryCache memoryCache)
     {
         _dbContext = dbContext;
         _logger = logger;
         _settingService = settingService;
         _scheduleService = scheduleService;
         _mediaSubtitleProcessor = mediaSubtitleProcessor;
+        _memoryCache = memoryCache;
     }
 
     [DisableConcurrentExecution(timeoutInSeconds: 10 * 60)]
@@ -128,7 +132,7 @@ public class AutomatedTranslationJob
 
         var movies = await _dbContext.Movies
             .Where(movie => !movie.ExcludeFromTranslation)
-            .OrderBy(movie => movie.Id) // Changed to ID for consistent ordering
+            .OrderBy(movie => movie.Id)
             .ToListAsync();
 
         if (!movies.Any())
@@ -139,16 +143,7 @@ public class AutomatedTranslationJob
         
         // Instead of a random selection based on updatedAt, we will use a cycle so that all shows are processed.
         // Hopefully, this will prevent some shows from not being processed at all.
-        var indexSettings = await _settingService.GetSettings([MovieProcessingIndexKey]);
-        var currentIndex = 0;
-        if (indexSettings.TryGetValue(MovieProcessingIndexKey, out var indexValue))
-        {
-            if (!int.TryParse(indexValue, out currentIndex))
-            {
-                currentIndex = 0;
-                _logger.LogWarning("Invalid movie processing index value, resetting to 0");
-            }
-        }
+        var currentIndex = GetProcessingIndex(MovieProcessingIndexKey);
         if (currentIndex >= movies.Count)
         {
             currentIndex = 0;
@@ -206,7 +201,7 @@ public class AutomatedTranslationJob
         }
 
         var newIndex = currentIndex + moviesProcessed;
-        await _settingService.SetSetting(MovieProcessingIndexKey, newIndex.ToString());
+        SetProcessingIndex(MovieProcessingIndexKey, newIndex);
 
         return true;
     }
@@ -226,7 +221,7 @@ public class AutomatedTranslationJob
         var episodes = await _dbContext.Episodes
             .Where(episode =>
                 seasons.Select(s => s.Id).Contains(episode.SeasonId) && !episode.ExcludeFromTranslation)
-            .OrderBy(e => e.Id) // Changed to ID for consistent ordering
+            .OrderBy(e => e.Id)
             .ToListAsync();
 
         if (!episodes.Any())
@@ -237,16 +232,7 @@ public class AutomatedTranslationJob
 
         // Instead of a random selection based on updatedAt, we will use a cycle so that all shows are processed.
         // Hopefully, this will prevent some shows from not being processed at all.
-        var indexSettings = await _settingService.GetSettings([ShowProcessingIndexKey]);
-        var currentIndex = 0;
-        if (indexSettings.TryGetValue(MovieProcessingIndexKey, out var indexValue))
-        {
-            if (!int.TryParse(indexValue, out currentIndex))
-            {
-                currentIndex = 0;
-                _logger.LogWarning("Invalid show processing index value, resetting to 0");
-            }
-        }
+        var currentIndex = GetProcessingIndex(ShowProcessingIndexKey);
         if (currentIndex >= episodes.Count)
         {
             currentIndex = 0;
@@ -310,8 +296,27 @@ public class AutomatedTranslationJob
         }
 
         var newIndex = currentIndex + episodesProcessed;
-        await _settingService.SetSetting(ShowProcessingIndexKey, newIndex.ToString());
+        SetProcessingIndex(ShowProcessingIndexKey, newIndex);
 
         return true;
+    }
+
+    private int GetProcessingIndex(string key)
+    {
+        if (!_memoryCache.TryGetValue(key, out int currentIndex))
+        {
+            currentIndex = 0;
+        }
+        return currentIndex;
+    }
+    
+    private void SetProcessingIndex(string key, int value)
+    {
+        var cacheOptions = new MemoryCacheEntryOptions
+        {
+            Priority = CacheItemPriority.NeverRemove
+        };
+        
+        _memoryCache.Set(key, value, cacheOptions);
     }
 }
