@@ -69,7 +69,7 @@
                     v-for="item in translationRequests.items"
                     :key="item.id"
                     class="md:border-accent rounded-lg py-4 shadow-sm md:grid md:grid-cols-12 md:rounded-none md:border-b md:bg-transparent md:p-0 md:shadow-none">
-                    <div class="deletable float-right h-5 w-5 md:hidden">
+                    <div class="deletable float-right w-5 md:hidden">
                         <TranslationAction
                             :status="item.status"
                             :onAction="(action) => handleAction(item, action)" />
@@ -81,7 +81,7 @@
                         <span
                             v-if="item.mediaType === MEDIA_TYPE.EPISODE"
                             v-show-title
-                            class="cursor-help"
+                            class="cursor-help block"
                             :title="item.title">
                             {{ item.title }}
                         </span>
@@ -132,8 +132,8 @@
                             :completed-at="item.completedAt" />
                     </div>
                     <div
-                        class="hidden items-center justify-between md:col-span-1 md:flex md:justify-end md:px-4 md:py-2">
-                        <div class="flex h-5 w-5 items-center justify-center">
+                        class="hidden items-center justify-between md:col-span-1 md:flex md:justify-end md:py-2">
+                        <div class="flex items-center justify-center">
                             <TranslationAction
                                 :status="item.status"
                                 :onAction="(action) => handleAction(item, action)" />
