@@ -33,9 +33,7 @@
                 <EyeOffIcon v-else class="h-5 w-5" />
             </button>
         </div>
-        <p v-if="isInvalid" class="mt-1 text-sm text-red-600">
-            {{ error }}
-        </p>
+        <p v-if="isInvalid" class="mt-1 text-sm text-red-600" v-html="error" />
     </form>
 </template>
 
@@ -58,7 +56,7 @@ const props = withDefaults(
         placeholder?: string
         errorMessage?: string
         size?: 'sm' | 'md' | 'lg'
-        validationType: 'number' | 'string' | 'url'
+        validationType: 'number' | 'string' | 'url' | 'cron'
     }>(),
     {
         size: 'md'
