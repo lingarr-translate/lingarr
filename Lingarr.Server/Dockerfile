@@ -1,6 +1,6 @@
 # Set default build configuration
 ARG BUILD_CONFIGURATION=Debug
-FROM node:20.10.0-slim AS client
+FROM node:24-slim AS client
 
 # Prepare Client
 COPY ./Lingarr.Client/ /Client
