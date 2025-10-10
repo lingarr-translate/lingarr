@@ -21,6 +21,9 @@ public class AutomatedTranslationJob
     private TimeSpan _defaultMovieAgeThreshold;
     private TimeSpan _defaultShowAgeThreshold;
 
+    private const string MovieProcessingIndexKey = "Automation:MovieProcessingIndex";
+    private const string ShowProcessingIndexKey = "Automation:ShowProcessingIndex";
+
     public AutomatedTranslationJob(
         LingarrDbContext dbContext,
         ILogger<AutomatedTranslationJob> logger,
@@ -125,7 +128,7 @@ public class AutomatedTranslationJob
 
         var movies = await _dbContext.Movies
             .Where(movie => !movie.ExcludeFromTranslation)
-            .OrderBy(movie => movie.UpdatedAt)
+            .OrderBy(movie => movie.Id) // Changed to ID for consistent ordering
             .ToListAsync();
 
         if (!movies.Any())
@@ -133,14 +136,36 @@ public class AutomatedTranslationJob
             _logger.LogInformation("No translatable movies found, starting show translation.");
             return false;
         }
-
-        // We take a subset so that the latest updated at aren't included yet.
-        var candidates = movies.Take(_maxTranslationsPerRun * 4).ToList();
-        var random = new Random();
-        var randomSelection = candidates.OrderBy(x => random.Next()).Take(_maxTranslationsPerRun).ToList();
+        
+        // Instead of a random selection based on updatedAt, we will use a cycle so that all shows are processed.
+        // Hopefully, this will prevent some shows from not being processed at all.
+        var indexSettings = await _settingService.GetSettings([MovieProcessingIndexKey]);
+        var currentIndex = 0;
+        if (indexSettings.TryGetValue(MovieProcessingIndexKey, out var indexValue))
+        {
+            if (!int.TryParse(indexValue, out currentIndex))
+            {
+                currentIndex = 0;
+                _logger.LogWarning("Invalid movie processing index value, resetting to 0");
+            }
+        }
+        if (currentIndex >= movies.Count)
+        {
+            currentIndex = 0;
+            _logger.LogInformation("Movie processing cycle completed. Starting new cycle from the beginning.");
+        }
+        var moviesToProcess = movies.Skip(currentIndex).Take(_maxTranslationsPerRun).ToList();
+        
+        _logger.LogInformation(
+            "Processing movies {StartIndex} to {EndIndex} of {TotalCount}",
+            currentIndex,
+            currentIndex + moviesToProcess.Count - 1,
+            movies.Count);
 
         var translationsInitiated = 0;
-        foreach (var movie in randomSelection)
+        var moviesProcessed = 0;
+        
+        foreach (var movie in moviesToProcess)
         {
             try
             {
@@ -164,18 +189,24 @@ public class AutomatedTranslationJob
                 {
                     translationsInitiated++;
                 }
+                moviesProcessed++;
             }
             catch (DirectoryNotFoundException)
             {
                 _logger.LogWarning("Directory not found at path: |Red|{Path}|/Red|, skipping subtitle", movie.Path);
+                moviesProcessed++;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
                     "Error processing subtitles for movie at path: |Red|{Path}|/Red|, skipping subtitle",
                     movie.Path);
+                moviesProcessed++;
             }
         }
+
+        var newIndex = currentIndex + moviesProcessed;
+        await _settingService.SetSetting(MovieProcessingIndexKey, newIndex.ToString());
 
         return true;
     }
@@ -195,7 +226,7 @@ public class AutomatedTranslationJob
         var episodes = await _dbContext.Episodes
             .Where(episode =>
                 seasons.Select(s => s.Id).Contains(episode.SeasonId) && !episode.ExcludeFromTranslation)
-            .OrderBy(e => e.UpdatedAt)
+            .OrderBy(e => e.Id) // Changed to ID for consistent ordering
             .ToListAsync();
 
         if (!episodes.Any())
@@ -204,13 +235,35 @@ public class AutomatedTranslationJob
             return false;
         }
 
-        // We take a subset so that the latest updated at aren't included yet.
-        var candidates = episodes.Take(_maxTranslationsPerRun * 4).ToList();
-        var random = new Random();
-        var randomSelection = candidates.OrderBy(x => random.Next()).Take(_maxTranslationsPerRun).ToList();
+        // Instead of a random selection based on updatedAt, we will use a cycle so that all shows are processed.
+        // Hopefully, this will prevent some shows from not being processed at all.
+        var indexSettings = await _settingService.GetSettings([ShowProcessingIndexKey]);
+        var currentIndex = 0;
+        if (indexSettings.TryGetValue(MovieProcessingIndexKey, out var indexValue))
+        {
+            if (!int.TryParse(indexValue, out currentIndex))
+            {
+                currentIndex = 0;
+                _logger.LogWarning("Invalid show processing index value, resetting to 0");
+            }
+        }
+        if (currentIndex >= episodes.Count)
+        {
+            currentIndex = 0;
+            _logger.LogInformation("Show processing cycle completed. Starting new cycle from the beginning.");
+        }
+        var episodesToProcess = episodes.Skip(currentIndex).Take(_maxTranslationsPerRun).ToList();
+        
+        _logger.LogInformation(
+            "Processing episodes {StartIndex} to {EndIndex} of {TotalCount}",
+            currentIndex,
+            currentIndex + episodesToProcess.Count - 1,
+            episodes.Count);
 
         var translationsInitiated = 0;
-        foreach (var episode in randomSelection)
+        var episodesProcessed = 0;
+        
+        foreach (var episode in episodesToProcess)
         {
             if (translationsInitiated >= _maxTranslationsPerRun)
             {
@@ -239,19 +292,25 @@ public class AutomatedTranslationJob
                 {
                     translationsInitiated++;
                 }
+                episodesProcessed++;
             }
             catch (DirectoryNotFoundException)
             {
                 _logger.LogWarning("Directory not found for show at path: |Red|{Path}|/Red|, skipping episode",
                     episode.Path);
+                episodesProcessed++;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
                     "Error processing subtitles for episode at path: |Red|{Path}|/Red|, skipping episode",
                     episode.Path);
+                episodesProcessed++;
             }
         }
+
+        var newIndex = currentIndex + episodesProcessed;
+        await _settingService.SetSetting(ShowProcessingIndexKey, newIndex.ToString());
 
         return true;
     }
