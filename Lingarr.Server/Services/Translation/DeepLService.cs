@@ -14,6 +14,7 @@ public class DeepLService : BaseTranslationService
     private const string SourceLanguagesCacheKey = "DeepL_SourceLanguages";
     private const string TargetLanguagesCacheKey = "DeepL_TargetLanguages";
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(24);
+    private const string FilteredLanguageCode = "pt";
 
     private ITranslator? _translator;
     private bool _initialized;
@@ -87,9 +88,15 @@ public class DeepLService : BaseTranslationService
         {
             throw new InvalidOperationException("Failed to retrieve source languages from DeepL");
         }
-        var targetLanguagesList = targetLanguages.Select(lang => lang.Code).ToList();
         
-        return sourceLanguages.Select(lang => new SourceLanguage
+        var targetLanguagesList = targetLanguages
+            .Where(lang => lang.Code != FilteredLanguageCode)
+            .Select(lang => lang.Code)
+            .ToList();
+        
+        return sourceLanguages
+            .Where(lang => lang.Code != FilteredLanguageCode)
+            .Select(lang => new SourceLanguage
         {
             Code = lang.Code,
             Name = lang.Name,
@@ -148,7 +155,6 @@ public class DeepLService : BaseTranslationService
             
         Cache.Set(TargetLanguagesCacheKey, languages, cacheOptions);
         return languages;
-
     }
     
     /// <summary>
@@ -169,7 +175,6 @@ public class DeepLService : BaseTranslationService
             
         Cache.Set(SourceLanguagesCacheKey, languages, cacheOptions);
         return languages;
-
     }
     
     /// <inheritdoc />
