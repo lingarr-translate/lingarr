@@ -3,7 +3,8 @@
         <div v-if="settingsCompleted === 'true'" class="w-full">
             <div class="bg-tertiary flex flex-wrap items-center justify-between gap-2 p-4">
                 <SearchComponent v-model="filter" />
-                <div class="flex w-full justify-between space-x-2 md:w-fit">
+                <div
+                    class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:justify-between md:space-x-2">
                     <SortControls
                         v-model="filter"
                         :options="[
