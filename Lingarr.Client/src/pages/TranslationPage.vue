@@ -4,7 +4,8 @@
             <!-- Search and Filters -->
             <div class="bg-tertiary flex flex-wrap items-center justify-between gap-2 p-4">
                 <SearchComponent v-model="filter" />
-                <div class="flex w-full justify-between space-x-2 md:w-fit">
+                <div
+                    class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:justify-between md:space-x-2">
                     <button
                         v-if="isSelectMode"
                         class="border-accent text-primary-content hover:text-primary-content/50 cursor-pointer rounded-md border px-2 py-1 transition-colors"
@@ -72,7 +73,7 @@
                     <div class="deletable float-right w-5 md:hidden">
                         <TranslationAction
                             :status="item.status"
-                            :onAction="(action) => handleAction(item, action)" />
+                            :on-action="(action) => handleAction(item, action)" />
                     </div>
                     <div class="mb-2 md:col-span-4 md:mb-0 md:px-4 md:py-2">
                         <span :id="`deletable-${item.id}`" class="font-bold md:hidden">
@@ -81,7 +82,7 @@
                         <span
                             v-if="item.mediaType === MEDIA_TYPE.EPISODE"
                             v-show-title
-                            class="cursor-help block"
+                            class="block cursor-help"
                             :title="item.title">
                             {{ item.title }}
                         </span>
@@ -136,7 +137,7 @@
                         <div class="flex items-center justify-center">
                             <TranslationAction
                                 :status="item.status"
-                                :onAction="(action) => handleAction(item, action)" />
+                                :on-action="(action) => handleAction(item, action)" />
                         </div>
                     </div>
                     <div
@@ -211,7 +212,7 @@ async function handleAction(translationRequest: ITranslationRequest, action: TRA
         case TRANSLATION_ACTIONS.RETRY:
             return await translationRequestStore.retry(translationRequest)
         default:
-            console.error("unknown translation request action: " + action);
+            console.error('unknown translation request action: ' + action)
     }
 }
 
