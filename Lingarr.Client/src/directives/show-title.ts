@@ -12,12 +12,12 @@
         const [showName, episodeNumber, episodeTitle] = parts
 
         el.innerHTML = `
-            <div class="${originalClasses} inline-flex items-center gap-1.5 overflow-hidden min-w-0 " >
+            <div class="${originalClasses} inline-flex items-center gap-1.5 overflow-hidden min-w-0 w-full " >
                 <span class="shrink-0">${showName}</span>
                 <span>-</span>
                 <span>${episodeNumber}</span>
                 <span>-</span>
-                <span class="text-primary-content/50  truncate block">${episodeTitle}</span>
+                <span class="text-primary-content/50 truncate block">${episodeTitle}</span>
             </div>
         `
     }
