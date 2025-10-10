@@ -10,7 +10,7 @@ Lingarr now offers multiple services for automated translation:
 
 - **[LibreTranslate](https://libretranslate.com)**
 - **Local AI (with Ollama, or any other OpenAPI compatible model/router)**
-- **[DeepL](https://www.deepl.com/)**
+- **[DeepL](https://www.deepl.com/)**  (without pt-BR)
 - **[Anthropic](https://www.anthropic.com/)**
 - **[OpenAI](https://openai.com/)**
 - **[DeepSeek](https://deepseek.com)**
