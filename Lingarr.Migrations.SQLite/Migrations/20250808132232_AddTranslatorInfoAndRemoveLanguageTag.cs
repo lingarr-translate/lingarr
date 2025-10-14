@@ -21,6 +21,7 @@ namespace Lingarr.Migrations.SQLite.Migrations
                     { "api_key", "" }
                 });
             
+            migrationBuilder.Sql("PRAGMA foreign_keys = 0;", suppressTransaction: true);
             migrationBuilder.AlterColumn<string>(
                 name: "subtitle_to_translate",
                 table: "translation_requests",
@@ -28,6 +29,7 @@ namespace Lingarr.Migrations.SQLite.Migrations
                 nullable: true,
                 oldClrType: typeof(string),
                 oldType: "TEXT");
+            migrationBuilder.Sql("PRAGMA foreign_keys = 1;", suppressTransaction: true);
         }
 
         /// <inheritdoc />
@@ -44,6 +46,7 @@ namespace Lingarr.Migrations.SQLite.Migrations
                     "api_key"
                 });
             
+            migrationBuilder.Sql("PRAGMA foreign_keys = 0;", suppressTransaction: true);
             migrationBuilder.AlterColumn<string>(
                 name: "subtitle_to_translate",
                 table: "translation_requests",
@@ -53,6 +56,7 @@ namespace Lingarr.Migrations.SQLite.Migrations
                 oldClrType: typeof(string),
                 oldType: "TEXT",
                 oldNullable: true);
+            migrationBuilder.Sql("PRAGMA foreign_keys = 1;", suppressTransaction: true);
         }
     }
 }
