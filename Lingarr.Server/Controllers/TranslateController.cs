@@ -6,7 +6,6 @@ using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
-using Lingarr.Server.Models.Batch.Request;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Services;
 
