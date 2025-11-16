@@ -1,95 +1,91 @@
 ﻿<template>
-    <PageLayout>
-        <div v-if="settingsCompleted === 'true'" class="w-full">
-            <div class="bg-tertiary flex flex-wrap items-center justify-between gap-2 p-4">
-                <SearchComponent v-model="filter" />
-                <div
-                    class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:justify-between md:space-x-2">
-                    <SortControls
-                        v-model="filter"
-                        :options="[
-                            {
-                                label: translate('common.sortByTitle'),
-                                value: 'Title'
-                            },
-                            {
-                                label: translate('common.sortByAdded'),
-                                value: 'DateAdded'
-                            }
-                        ]" />
-                </div>
+    <div v-if="settingsCompleted === 'true'" class="w-full">
+        <div class="bg-tertiary flex flex-wrap items-center justify-between gap-2 p-4">
+            <SearchComponent v-model="filter" />
+            <div
+                class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:justify-between md:space-x-2">
+                <SortControls
+                    v-model="filter"
+                    :options="[
+                        {
+                            label: translate('common.sortByTitle'),
+                            value: 'Title'
+                        },
+                        {
+                            label: translate('common.sortByAdded'),
+                            value: 'DateAdded'
+                        }
+                    ]" />
             </div>
-
-            <div class="w-full px-4">
-                <div class="border-accent grid grid-cols-12 border-b font-bold">
-                    <div class="col-span-5 px-4 py-2">{{ translate('movies.title') }}</div>
-                    <div class="col-span-4 px-4 py-2">{{ translate('movies.subtitles') }}</div>
-                    <div class="col-span-1 px-4 py-2">
-                        {{ translate('movies.exclude') }}
-                    </div>
-                    <div class="col-span-1 px-4 py-2">
-                        {{ translate('movies.ageThreshold') }}
-                    </div>
-                    <div class="col-span-1 flex justify-end px-4 py-2">
-                        <ReloadComponent @toggle:update="movieStore.fetch()" />
-                    </div>
-                </div>
-                <div v-for="item in movies.items" :key="item.id">
-                    <div class="border-accent grid grid-cols-12 border-b">
-                        <div class="col-span-5 px-4 py-2">
-                            {{ item.title }}
-                        </div>
-                        <div class="col-span-4 flex flex-wrap items-center gap-2 px-4 py-2">
-                            <ContextMenu
-                                v-for="(subtitle, index) in item.subtitles"
-                                :key="`${index}-${subtitle.fileName}`"
-                                :subtitle="subtitle"
-                                :media="item"
-                                :media-type="MEDIA_TYPE.MOVIE"
-                                @update:toggle="toggleMovie(item)">
-                                <BadgeComponent>
-                                    {{ subtitle.language.toUpperCase() }}
-                                    <span v-if="subtitle.caption" class="text-primary-content/50">
-                                        - {{ subtitle.caption.toUpperCase() }}
-                                    </span>
-                                </BadgeComponent>
-                            </ContextMenu>
-                        </div>
-                        <div class="col-span-1 flex flex-wrap items-center gap-2 px-4 py-2">
-                            <ToggleButton
-                                v-model="item.excludeFromTranslation"
-                                size="small"
-                                @toggle:update="
-                                    () => movieStore.exclude(MEDIA_TYPE.MOVIE, item.id)
-                                " />
-                        </div>
-                        <div class="col-span-2 flex items-center px-4 py-2" @click.stop>
-                            <InputComponent
-                                :model-value="item?.translationAgeThreshold"
-                                :placeholder="translate('movies.hours')"
-                                class="w-14"
-                                size="sm"
-                                type="number"
-                                validation-type="number"
-                                @update:value="
-                                    (value) => {
-                                        item.translationAgeThreshold = value
-                                        movieStore.updateThreshold(MEDIA_TYPE.MOVIE, item.id, value)
-                                    }
-                                " />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <PaginationComponent
-                v-if="movies.totalCount"
-                v-model="filter"
-                :total-count="movies.totalCount"
-                :page-size="movies.pageSize" />
         </div>
-        <NoMediaNotification v-else />
-    </PageLayout>
+
+        <div class="w-full px-4">
+            <div class="border-accent grid grid-cols-12 border-b font-bold">
+                <div class="col-span-5 px-4 py-2">{{ translate('movies.title') }}</div>
+                <div class="col-span-4 px-4 py-2">{{ translate('movies.subtitles') }}</div>
+                <div class="col-span-1 px-4 py-2">
+                    {{ translate('movies.exclude') }}
+                </div>
+                <div class="col-span-1 px-4 py-2">
+                    {{ translate('movies.ageThreshold') }}
+                </div>
+                <div class="col-span-1 flex justify-end px-4 py-2">
+                    <ReloadComponent @toggle:update="movieStore.fetch()" />
+                </div>
+            </div>
+            <div v-for="item in movies.items" :key="item.id">
+                <div class="border-accent grid grid-cols-12 border-b">
+                    <div class="col-span-5 px-4 py-2">
+                        {{ item.title }}
+                    </div>
+                    <div class="col-span-4 flex flex-wrap items-center gap-2 px-4 py-2">
+                        <ContextMenu
+                            v-for="(subtitle, index) in item.subtitles"
+                            :key="`${index}-${subtitle.fileName}`"
+                            :subtitle="subtitle"
+                            :media="item"
+                            :media-type="MEDIA_TYPE.MOVIE"
+                            @update:toggle="toggleMovie(item)">
+                            <BadgeComponent>
+                                {{ subtitle.language.toUpperCase() }}
+                                <span v-if="subtitle.caption" class="text-primary-content/50">
+                                    - {{ subtitle.caption.toUpperCase() }}
+                                </span>
+                            </BadgeComponent>
+                        </ContextMenu>
+                    </div>
+                    <div class="col-span-1 flex flex-wrap items-center gap-2 px-4 py-2">
+                        <ToggleButton
+                            v-model="item.excludeFromTranslation"
+                            size="small"
+                            @toggle:update="() => movieStore.exclude(MEDIA_TYPE.MOVIE, item.id)" />
+                    </div>
+                    <div class="col-span-2 flex items-center px-4 py-2" @click.stop>
+                        <InputComponent
+                            :model-value="item?.translationAgeThreshold"
+                            :placeholder="translate('movies.hours')"
+                            class="w-14"
+                            size="sm"
+                            type="number"
+                            validation-type="number"
+                            @update:value="
+                                (value) => {
+                                    item.translationAgeThreshold = value
+                                    movieStore.updateThreshold(MEDIA_TYPE.MOVIE, item.id, value)
+                                }
+                            " />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <PaginationComponent
+            v-if="movies.totalCount"
+            v-model="filter"
+            :total-count="movies.totalCount"
+            :page-size="movies.pageSize" />
+    </div>
+    <NoMediaNotification v-else />
 </template>
 
 <script setup lang="ts">
@@ -100,7 +96,6 @@ import { useMovieStore } from '@/store/movie'
 import { useSettingStore } from '@/store/setting'
 import { useInstanceStore } from '@/store/instance'
 import PaginationComponent from '@/components/common/PaginationComponent.vue'
-import PageLayout from '@/components/layout/PageLayout.vue'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
 import SortControls from '@/components/common/SortControls.vue'
 import SearchComponent from '@/components/common/SearchComponent.vue'

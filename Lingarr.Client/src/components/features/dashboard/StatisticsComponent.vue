@@ -74,12 +74,15 @@
             </template>
         </CardComponent>
 
-        <CardComponent :title="translate('statistics.languageStatistics')">
+        <CardComponent title="Language Statistics">
             <template #content>
                 <div class="h-80">
                     <LanguageChart v-if="dailyStats?.length" :daily-stats="dailyStats" />
-                    <div v-else class="flex h-full w-full items-center justify-center">
+                    <div v-else-if="loading" class="flex h-full w-full items-center justify-center">
                         <LoaderCircleIcon class="h-8 w-8 animate-spin" />
+                    </div>
+                    <div v-else class="flex h-full w-full items-center justify-center text-xs">
+                        No statistics available.
                     </div>
                 </div>
 
