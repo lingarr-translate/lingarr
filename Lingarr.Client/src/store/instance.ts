@@ -15,7 +15,8 @@ export const useInstanceStore = defineStore({
         },
         isOpen: false,
         theme: THEMES.LINGARR,
-        poster: ''
+        poster: '',
+        authenticated: false
     }),
     getters: {
         getVersion: (state: IUseInstanceStore): IVersion => state.version,
@@ -26,6 +27,20 @@ export const useInstanceStore = defineStore({
     actions: {
         setIsOpen(isOpen: boolean): void {
             this.isOpen = isOpen
+        },
+        async ensureAuthenticated(): Promise<boolean> {
+            if (this.authenticated) {
+                return true
+            }
+
+            try {
+                await services.auth.authenticated()
+                this.authenticated = true
+                return true
+            } catch (error: unknown) {
+                console.log(error)
+                return false
+            }
         },
         setPoster({ content, type }: { content: IMovie | IShow; type: string }): void {
             if (!content || !Array.isArray(content.images)) {
