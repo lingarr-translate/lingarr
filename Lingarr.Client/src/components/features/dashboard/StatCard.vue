@@ -43,6 +43,8 @@ const formatNumber = (num: number): string => {
 }
 
 const calculatePercentage = (value: number, total: number): number => {
-    return (value / total) * 100
+    if (total === 0) return 0
+    const percentage = (value / total) * 100
+    return Math.min(percentage, 100)
 }
 </script>
