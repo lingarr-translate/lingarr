@@ -181,6 +181,26 @@ public class MediaService : IMediaService
         {
             // Episode doesn't exist in Sonarr
             _logger.LogWarning("Episode with Sonarr ID {EpisodeId} not found in Sonarr (404)", episodeNumber);
+            try
+            {
+                // Attempt a more comprehensive resync of all shows in case the Sonarr ID is stale
+                _logger.LogInformation("Sonarr episode {EpisodeId} returned 404 — attempting full show resync as a fallback.", episodeNumber);
+                var shows = await _sonarrService.GetShows();
+                if (shows != null && shows.Any())
+                {
+                    await _showSyncService.SyncShows(shows);
+                    // Try to find the episode again after resync
+                    var matchedEpisode = await _dbContext.Episodes.Where(s => s.SonarrId == episodeNumber).FirstOrDefaultAsync();
+                    if (matchedEpisode != null)
+                    {
+                        return matchedEpisode.Id;
+                    }
+                }
+            }
+            catch (Exception syncEx)
+            {
+                _logger.LogWarning(syncEx, "Resync attempt after Sonarr 404 failed for episode {EpisodeId}", episodeNumber);
+            }
             return 0;
         }
         catch (Exception ex)

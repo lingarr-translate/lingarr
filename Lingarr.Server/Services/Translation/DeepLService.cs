@@ -120,20 +120,40 @@ public class DeepLService : BaseTranslationService
             throw new TranslationException("DeepL translator was not properly initialized.");
         }
 
-        try
+        int retryCount = 0;
+        int maxRetries = 3;
+        int delayMs = 1000;
+        while (true)
         {
-            var result = await _translator.TranslateTextAsync(
-                text,
-                sourceLanguage,
-                targetLanguage, 
-                cancellationToken: cancellationToken);
+            try
+            {
+                var result = await _translator.TranslateTextAsync(
+                    text,
+                    sourceLanguage,
+                    targetLanguage,
+                    cancellationToken: cancellationToken);
 
-            return result.Text;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "DeepL translation failed");
-            throw new TranslationException("Translation using DeepL failed.");
+                return result.Text;
+            }
+            catch (DeepL.TooManyRequestsException tmrEx)
+            {
+                // Transient error; retry with exponential backoff
+                retryCount++;
+                _logger.LogWarning(tmrEx, "DeepL TooManyRequests; retry {RetryCount}/{MaxRetries} in {Delay}ms", retryCount, maxRetries, delayMs);
+                if (retryCount > maxRetries)
+                {
+                    _logger.LogError(tmrEx, "DeepL translation failed after retries");
+                    throw new TranslationException("Translation using DeepL failed due to rate limiting.");
+                }
+                await Task.Delay(delayMs, cancellationToken);
+                delayMs *= 2;
+                continue;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "DeepL translation failed");
+                throw new TranslationException("Translation using DeepL failed.");
+            }
         }
     }
 
