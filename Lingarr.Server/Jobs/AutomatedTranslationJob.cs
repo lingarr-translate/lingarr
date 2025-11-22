@@ -159,11 +159,10 @@ public class AutomatedTranslationJob
             movies.Count);
 
         var translationsInitiated = 0;
-        var moviesProcessed = 0;
-        var scanned = 0;
+        var scannedMovies = 0;
         var index = currentIndex;
 
-        while (translationsInitiated < _maxTranslationsPerRun && scanned < movies.Count)
+        while (translationsInitiated < _maxTranslationsPerRun && scannedMovies < movies.Count)
         {
             var movie = movies[index % movies.Count];
             try
@@ -188,24 +187,21 @@ public class AutomatedTranslationJob
                 {
                     translationsInitiated++;
                 }
-                moviesProcessed++;
             }
             catch (DirectoryNotFoundException)
             {
                 _logger.LogWarning("Directory not found at path: |Red|{Path}|/Red|, skipping subtitle", movie.Path);
-                moviesProcessed++;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
                     "Error processing subtitles for movie at path: |Red|{Path}|/Red|, skipping subtitle",
                     movie.Path);
-                moviesProcessed++;
             }
             finally
             {
                 index++;
-                scanned++;
+                scannedMovies++;
             }
         }
 
@@ -254,7 +250,6 @@ public class AutomatedTranslationJob
             episodes.Count);
 
         var translationsInitiated = 0;
-        var episodesProcessed = 0;
         var scannedEpisodes = 0;
         var episodeIndex = currentIndex;
 
@@ -283,20 +278,17 @@ public class AutomatedTranslationJob
                 {
                     translationsInitiated++;
                 }
-                episodesProcessed++;
             }
             catch (DirectoryNotFoundException)
             {
                 _logger.LogWarning("Directory not found for show at path: |Red|{Path}|/Red|, skipping episode",
                     episode.Path);
-                episodesProcessed++;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
                     "Error processing subtitles for episode at path: |Red|{Path}|/Red|, skipping episode",
                     episode.Path);
-                episodesProcessed++;
             }
             finally
             {
