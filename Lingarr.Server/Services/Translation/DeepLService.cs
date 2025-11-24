@@ -20,6 +20,11 @@ public class DeepLService : BaseTranslationService
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
     
+    // retry settings
+    private int _maxRetries;
+    private TimeSpan _retryDelay;
+    private int _retryDelayMultiplier;
+    
     public DeepLService(
         ISettingService settings,
         ILogger<DeepLService> logger) : base(settings, logger)
@@ -41,11 +46,31 @@ public class DeepLService : BaseTranslationService
             await _initLock.WaitAsync();
             if (_initialized) return;
 
-            var authKey = await _settings.GetSetting(SettingKeys.Translation.DeepL.DeeplApiKey);
+            var settings = await _settings.GetSettings([
+                SettingKeys.Translation.DeepL.DeeplApiKey,
+                SettingKeys.Translation.MaxRetries,
+                SettingKeys.Translation.RetryDelay,
+                SettingKeys.Translation.RetryDelayMultiplier
+            ]);
+
+            var authKey = settings[SettingKeys.Translation.DeepL.DeeplApiKey];
             if (string.IsNullOrWhiteSpace(authKey))
             {
                 throw new InvalidOperationException("DeepL failed, please validate the API key.");
             }
+
+            _maxRetries = int.TryParse(settings[SettingKeys.Translation.MaxRetries], out var maxRetries) 
+                ? maxRetries 
+                : 3;
+            
+            var retryDelaySeconds = int.TryParse(settings[SettingKeys.Translation.RetryDelay], out var delaySeconds) 
+                ? delaySeconds 
+                : 2;
+            _retryDelay = TimeSpan.FromSeconds(retryDelaySeconds);
+
+            _retryDelayMultiplier = int.TryParse(settings[SettingKeys.Translation.RetryDelayMultiplier], out var multiplier) 
+                ? multiplier 
+                : 2;
 
             _translator = new Translator(authKey, new TranslatorOptions
             {
@@ -121,8 +146,8 @@ public class DeepLService : BaseTranslationService
         }
 
         int retryCount = 0;
-        int maxRetries = 3;
-        int delayMs = 1000;
+        var currentDelay = _retryDelay;
+
         while (true)
         {
             try
@@ -139,14 +164,14 @@ public class DeepLService : BaseTranslationService
             {
                 // Transient error; retry with exponential backoff
                 retryCount++;
-                _logger.LogWarning(tmrEx, "DeepL TooManyRequests; retry {RetryCount}/{MaxRetries} in {Delay}ms", retryCount, maxRetries, delayMs);
-                if (retryCount > maxRetries)
+                _logger.LogWarning(tmrEx, "DeepL TooManyRequests; retry {RetryCount}/{MaxRetries} in {Delay}ms", retryCount, _maxRetries, currentDelay.TotalMilliseconds);
+                if (retryCount > _maxRetries)
                 {
                     _logger.LogError(tmrEx, "DeepL translation failed after retries");
                     throw new TranslationException("Translation using DeepL failed due to rate limiting.");
                 }
-                await Task.Delay(delayMs, cancellationToken);
-                delayMs *= 2;
+                await Task.Delay(currentDelay, cancellationToken);
+                currentDelay *= _retryDelayMultiplier;
                 continue;
             }
             catch (Exception ex)
