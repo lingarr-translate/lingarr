@@ -105,8 +105,16 @@ public class AutomatedTranslationJob
             return false;
         }
 
-        var fileInfo = new FileInfo(media.Path);
-        var fileAge = DateTime.UtcNow - fileInfo.LastWriteTime.ToUniversalTime();
+        TimeSpan fileAge;
+        if (media.DateAdded.HasValue)
+        {
+            fileAge = DateTime.UtcNow - media.DateAdded.Value.ToUniversalTime();
+        }
+        else
+        {
+            var fileInfo = new FileInfo(media.Path);
+            fileAge = DateTime.UtcNow - fileInfo.LastWriteTime.ToUniversalTime();
+        }
 
         var threshold = customAgeThreshold ??
                         (mediaType == MediaType.Movie ? _defaultMovieAgeThreshold : _defaultShowAgeThreshold);

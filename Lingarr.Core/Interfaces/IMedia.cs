@@ -7,4 +7,5 @@ public interface IMedia
     string? FileName { get; set; }
     string? Path { get; set; }
     string? MediaHash { get; set; }
+    DateTime? DateAdded { get; set; }
 }

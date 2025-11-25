@@ -44,3 +44,5 @@ msbuild.wrn
 
 # local
 /SQL
+ansible_env/
+deployment/
