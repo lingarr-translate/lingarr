@@ -11,6 +11,7 @@ public class Episode : BaseEntity, IMedia
     public string? FileName { get; set; } = string.Empty;
     public string? Path { get; set; } = string.Empty;
     public string? MediaHash { get; set; } = string.Empty;
+    public DateTime? DateAdded { get; set; }
 
     public int SeasonId { get; set; }
     [ForeignKey(nameof(SeasonId))]
