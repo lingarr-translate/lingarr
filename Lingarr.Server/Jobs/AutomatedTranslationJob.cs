@@ -105,8 +105,16 @@ public class AutomatedTranslationJob
             return false;
         }
 
-        var fileInfo = new FileInfo(media.Path);
-        var fileAge = DateTime.UtcNow - fileInfo.LastWriteTime.ToUniversalTime();
+        TimeSpan fileAge;
+        if (media.DateAdded.HasValue)
+        {
+            fileAge = DateTime.UtcNow - media.DateAdded.Value.ToUniversalTime();
+        }
+        else
+        {
+            var fileInfo = new FileInfo(media.Path);
+            fileAge = DateTime.UtcNow - fileInfo.LastWriteTime.ToUniversalTime();
+        }
 
         var threshold = customAgeThreshold ??
                         (mediaType == MediaType.Movie ? _defaultMovieAgeThreshold : _defaultShowAgeThreshold);
@@ -149,19 +157,22 @@ public class AutomatedTranslationJob
             currentIndex = 0;
             _logger.LogInformation("Movie processing cycle completed. Starting new cycle from the beginning.");
         }
-        var moviesToProcess = movies.Skip(currentIndex).Take(_maxTranslationsPerRun).ToList();
-        
+        // Scan movies starting from `currentIndex` until we reach the maximum
+        // number of translations or we processed all movies once; this ensures
+        // we evaluate past the initial window when few items are eligible.
         _logger.LogInformation(
-            "Processing movies {StartIndex} to {EndIndex} of {TotalCount}",
+            "Processing up to {MaxTranslations} movies starting at {StartIndex} out of {TotalCount}",
+            _maxTranslationsPerRun,
             currentIndex,
-            currentIndex + moviesToProcess.Count - 1,
             movies.Count);
 
         var translationsInitiated = 0;
-        var moviesProcessed = 0;
-        
-        foreach (var movie in moviesToProcess)
+        var scannedMovies = 0;
+        var index = currentIndex;
+
+        while (translationsInitiated < _maxTranslationsPerRun && scannedMovies < movies.Count)
         {
+            var movie = movies[index % movies.Count];
             try
             {
                 if (translationsInitiated >= _maxTranslationsPerRun)
@@ -184,23 +195,25 @@ public class AutomatedTranslationJob
                 {
                     translationsInitiated++;
                 }
-                moviesProcessed++;
             }
             catch (DirectoryNotFoundException)
             {
                 _logger.LogWarning("Directory not found at path: |Red|{Path}|/Red|, skipping subtitle", movie.Path);
-                moviesProcessed++;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
                     "Error processing subtitles for movie at path: |Red|{Path}|/Red|, skipping subtitle",
                     movie.Path);
-                moviesProcessed++;
+            }
+            finally
+            {
+                index++;
+                scannedMovies++;
             }
         }
 
-        var newIndex = currentIndex + moviesProcessed;
+        var newIndex = index % movies.Count;
         SetProcessingIndex(MovieProcessingIndexKey, newIndex);
 
         return true;
@@ -238,24 +251,19 @@ public class AutomatedTranslationJob
             currentIndex = 0;
             _logger.LogInformation("Show processing cycle completed. Starting new cycle from the beginning.");
         }
-        var episodesToProcess = episodes.Skip(currentIndex).Take(_maxTranslationsPerRun).ToList();
-        
         _logger.LogInformation(
-            "Processing episodes {StartIndex} to {EndIndex} of {TotalCount}",
+            "Processing up to {MaxTranslations} episodes starting at {StartIndex} out of {TotalCount}",
+            _maxTranslationsPerRun,
             currentIndex,
-            currentIndex + episodesToProcess.Count - 1,
             episodes.Count);
 
         var translationsInitiated = 0;
-        var episodesProcessed = 0;
-        
-        foreach (var episode in episodesToProcess)
+        var scannedEpisodes = 0;
+        var episodeIndex = currentIndex;
+
+        while (translationsInitiated < _maxTranslationsPerRun && scannedEpisodes < episodes.Count)
         {
-            if (translationsInitiated >= _maxTranslationsPerRun)
-            {
-                _logger.LogInformation("Max translations per run reached. Stopping translation process.");
-                break;
-            }
+            var episode = episodes[episodeIndex % episodes.Count];
 
             try
             {
@@ -278,24 +286,26 @@ public class AutomatedTranslationJob
                 {
                     translationsInitiated++;
                 }
-                episodesProcessed++;
             }
             catch (DirectoryNotFoundException)
             {
                 _logger.LogWarning("Directory not found for show at path: |Red|{Path}|/Red|, skipping episode",
                     episode.Path);
-                episodesProcessed++;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex,
                     "Error processing subtitles for episode at path: |Red|{Path}|/Red|, skipping episode",
                     episode.Path);
-                episodesProcessed++;
+            }
+            finally
+            {
+                episodeIndex++;
+                scannedEpisodes++;
             }
         }
 
-        var newIndex = currentIndex + episodesProcessed;
+        var newIndex = episodeIndex % episodes.Count;
         SetProcessingIndex(ShowProcessingIndexKey, newIndex);
 
         return true;
