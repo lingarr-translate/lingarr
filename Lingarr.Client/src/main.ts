@@ -1,9 +1,5 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-
-import { useTranslationRequestStore } from '@/store/translationRequest'
-import { useInstanceStore } from '@/store/instance'
-import { useSettingStore } from '@/store/setting'
 import { createI18nPlugin } from '@/plugins/i18n'
 
 import router from '@/router'
@@ -31,11 +27,6 @@ new Promise((resolve) => resolve(true))
     .then(() => {
         app.use(pinia)
         app.use(router)
-    })
-    .then(async () => {
-        await useSettingStore().applySettingsOnLoad()
-        await useInstanceStore().applyVersionOnLoad()
-        await useTranslationRequestStore().getActiveCount()
     })
     .finally(() => {
         app.mount('#app')

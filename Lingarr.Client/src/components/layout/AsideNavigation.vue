@@ -52,14 +52,14 @@
                         v-if="instanceStore.getVersion.newVersion"
                         classes="text-white border-green-200 bg-green-500/50">
                         {{
-                            translate('common.updateAvailable').format({
+                            'Update {version} is available'.format({
                                 version: instanceStore.getVersion.latestVersion
                             })
                         }}
                     </BadgeComponent>
                     <BadgeComponent v-else>
                         {{
-                            translate('common.currentVersion').format({
+                            'Version: {version} beta'.format({
                                 version: instanceStore.getVersion.currentVersion
                             })
                         }}
@@ -73,7 +73,6 @@
 <script setup lang="ts">
 import { computed, ComputedRef } from 'vue'
 import { useRoute } from 'vue-router'
-import { useI18n } from '@/plugins/i18n'
 import { useInstanceStore } from '@/store/instance'
 import { useTranslationRequestStore } from '@/store/translationRequest'
 import { MenuItem } from '@/ts'
@@ -88,7 +87,6 @@ import LanguageIcon from '@/components/icons/LanguageIcon.vue'
 const translationRequestStore = useTranslationRequestStore()
 const instanceStore = useInstanceStore()
 const route = useRoute()
-const { translate } = useI18n()
 
 const activeRequests: ComputedRef<number> = computed(
     () => translationRequestStore.getActiveTranslationRequests
@@ -100,17 +98,17 @@ const isOpen = computed({
 })
 
 const menuItems: MenuItem[] = [
-    { label: translate('navigation.dashboard'), icon: HomeIcon, route: 'dashboard', children: [] },
-    { label: translate('navigation.movies'), icon: MovieIcon, route: 'movies', children: [] },
-    { label: translate('navigation.tvShows'), icon: ShowIcon, route: 'shows', children: [] },
+    { label: 'Dashboard', icon: HomeIcon, route: 'dashboard', children: [] },
+    { label: 'Movies', icon: MovieIcon, route: 'movies', children: [] },
+    { label: 'TV Shows', icon: ShowIcon, route: 'shows', children: [] },
     {
-        label: translate('navigation.translations'),
+        label: 'Translations',
         icon: LanguageIcon,
         route: 'translations',
         children: []
     },
     {
-        label: translate('navigation.settings'),
+        label: 'Settings',
         icon: SettingIcon,
         route: 'integration-settings',
         children: [
@@ -123,7 +121,7 @@ const menuItems: MenuItem[] = [
     }
 ]
 
-function isActive(item: MenuItem) {
+const isActive = (item: MenuItem) => {
     if (item.route == route.name) return true
 
     if (item.children?.length) {

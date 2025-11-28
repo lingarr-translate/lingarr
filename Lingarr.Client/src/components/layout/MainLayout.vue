@@ -37,32 +37,73 @@
             </header>
             <!-- Main Content -->
             <main class="flex-1">
-                <slot></slot>
+                <router-view v-slot="{ Component }">
+                    <transition name="fade" mode="out-in">
+                        <component :is="Component" />
+                    </transition>
+                </router-view>
             </main>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, computed, ComputedRef } from 'vue'
-import { ITheme, THEMES } from '@/ts'
+import { ref, onMounted, computed, onUnmounted } from 'vue'
+import { useSignalR } from '@/composables/useSignalR'
+import { Hub, ISettings, ITheme, THEMES } from '@/ts'
+import { useSettingStore } from '@/store/setting'
 import { useInstanceStore } from '@/store/instance'
+import { useTranslationRequestStore } from '@/store/translationRequest'
+
 import AsideNavigation from '@/components/layout/AsideNavigation.vue'
 import DropdownComponent from '@/components/common/DropdownComponent.vue'
 import ThemeIcon from '@/components/icons/ThemeIcon.vue'
 import MenuIcon from '@/components/icons/MenuIcon.vue'
-// import LanguageSelect from '@/components/common/LanguageSelect.vue'
 
+const settingStore = useSettingStore()
 const instanceStore = useInstanceStore()
-const themeDropdown: Ref = ref(false)
-
-const isOpen: ComputedRef<boolean> = computed({
-    get: () => instanceStore.getIsOpen,
-    set: (value: boolean) => instanceStore.setIsOpen(value)
-})
+const translationRequestStore = useTranslationRequestStore()
+const signalR = useSignalR()
+const themeDropdown = ref(false)
+const settingHubConnection = ref<Hub>()
+const requestHubConnection = ref<Hub>()
 
 const setTheme = (theme: ITheme) => {
     instanceStore.storeTheme(theme)
     themeDropdown.value = false
 }
+
+const isOpen = computed({
+    get: () => instanceStore.getIsOpen,
+    set: (value: boolean) => instanceStore.setIsOpen(value)
+})
+
+onMounted(async () => {
+    await settingStore.applySettingsOnLoad()
+    await instanceStore.applyVersionOnLoad()
+    await translationRequestStore.getActiveCount()
+
+    settingHubConnection.value = await signalR.connect('SettingUpdates', '/signalr/SettingUpdates')
+    await settingHubConnection.value.joinGroup({ group: 'SettingUpdates' })
+    settingHubConnection.value.on(
+        'SettingUpdate',
+        (setting: { key: keyof ISettings; value: string }) => {
+            settingStore.storeSetting(setting.key, setting.value)
+        }
+    )
+
+    requestHubConnection.value = await signalR.connect(
+        'TranslationRequests',
+        '/signalr/TranslationRequests'
+    )
+    await requestHubConnection.value.joinGroup({ group: 'TranslationRequests' })
+    requestHubConnection.value.on('RequestActive', (request: { count: number }) => {
+        translationRequestStore.setActiveCount(request.count)
+    })
+})
+
+onUnmounted(async () => {
+    settingHubConnection.value?.off('SettingUpdate', () => {})
+    requestHubConnection.value?.off('RequestActive', () => {})
+})
 </script>
