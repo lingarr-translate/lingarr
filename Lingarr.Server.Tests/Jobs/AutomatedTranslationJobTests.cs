@@ -83,7 +83,7 @@ public class AutomatedTranslationJobTests
             Title = title,
             FileName = fileName,
             Path = filePath,
-            DateAdded = DateTime.UtcNow,
+            DateAdded = DateTime.UtcNow - age,
             ExcludeFromTranslation = false
         };
     }

@@ -133,22 +133,23 @@ public class DeepLService : BaseTranslationService
     public override async Task<string> TranslateAsync(
         string text,
         string sourceLanguage,
-        string targetLanguage, 
-        List<string>? contextLinesBefore, 
-        List<string>? contextLinesAfter, 
+        string targetLanguage,
+        List<string>? contextLinesBefore,
+        List<string>? contextLinesAfter,
         CancellationToken cancellationToken)
     {
         await InitializeAsync();
-        
+
         if (_translator == null)
         {
             throw new TranslationException("DeepL translator was not properly initialized.");
         }
 
-        int retryCount = 0;
-        var currentDelay = _retryDelay;
+        using var retry = new CancellationTokenSource();
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
 
-        while (true)
+        var delay = _retryDelay;
+        for (var attempt = 1; attempt <= _maxRetries; attempt++)
         {
             try
             {
@@ -156,30 +157,37 @@ public class DeepLService : BaseTranslationService
                     text,
                     sourceLanguage,
                     targetLanguage,
-                    cancellationToken: cancellationToken);
+                    cancellationToken: linked.Token);
 
                 return result.Text;
             }
             catch (DeepL.TooManyRequestsException tmrEx)
             {
-                // Transient error; retry with exponential backoff
-                retryCount++;
-                _logger.LogWarning(tmrEx, "DeepL TooManyRequests; retry {RetryCount}/{MaxRetries} in {Delay}ms", retryCount, _maxRetries, currentDelay.TotalMilliseconds);
-                if (retryCount > _maxRetries)
+                if (attempt == _maxRetries)
                 {
-                    _logger.LogError(tmrEx, "DeepL translation failed after retries");
-                    throw new TranslationException("Translation using DeepL failed due to rate limiting.");
+                    _logger.LogError(tmrEx, "Too many requests. Max retries exhausted for text: {Text}", text);
+                    throw new TranslationException("Too many requests. Retry limit reached.", tmrEx);
                 }
-                await Task.Delay(currentDelay, cancellationToken);
-                currentDelay *= _retryDelayMultiplier;
-                continue;
+
+                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
+                delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
+
+                _logger.LogWarning(
+                    "429 Too Many Requests. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    delay, attempt, _maxRetries);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DeepL translation failed");
-                throw new TranslationException("Translation using DeepL failed.");
+                _logger.LogError(ex, "Unexpected error during translation attempt {Attempt}", attempt);
+                throw new TranslationException("Unexpected error occurred during translation.", ex);
             }
         }
+
+        throw new TranslationException("Translation failed after maximum retry attempts.");
     }
 
     /// <summary>
