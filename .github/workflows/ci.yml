@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop, fix/**, feat/** ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Test
+      run: dotnet test --no-build --configuration Release --verbosity normal
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'npm'
+        cache-dependency-path: Lingarr.Client/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./Lingarr.Client
+      run: npm ci
+    
+    - name: Build
+      working-directory: ./Lingarr.Client
+      run: npm run build
+    
+    - name: Check TypeScript
+      working-directory: ./Lingarr.Client
+      run: npx vue-tsc --noEmit
+
+  lint-frontend:
+    name: Lint Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'npm'
+        cache-dependency-path: Lingarr.Client/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./Lingarr.Client
+      run: npm ci
+    
+    - name: Run ESLint
+      working-directory: ./Lingarr.Client
+      run: npx eslint . --ext .ts,.vue --max-warnings 0

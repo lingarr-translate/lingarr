@@ -15,11 +15,13 @@ body:
       label: Describe the problem
       description: "Provide a detailed description of the issue, steps to reproduce, and expected vs actual behavior"
       placeholder: "Describe the issue here..."
+    validations:
+      required: true
       
   - type: textarea
     id: context
     attributes:
       label: Screenshots or Additional Context
-      description: Provide any additional context and screenshots, docker compose conffigurations here to help us solve this issue.
+      description: Provide any additional context and screenshots, docker compose configurations here to help us solve this issue.
     validations:
       required: false
