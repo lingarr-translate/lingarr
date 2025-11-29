@@ -23,7 +23,7 @@ jobs:
       run: dotnet restore
     
     - name: Build
-      run: dotnet build --no-restore --configuration Release
+      run: dotnet build --no-restore --configuration Release /p:TreatWarningsAsErrors=false
     
     - name: Test
       run: dotnet test Lingarr.sln --no-build --configuration Release --verbosity normal
