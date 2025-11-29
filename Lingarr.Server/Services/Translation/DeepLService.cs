@@ -133,23 +133,21 @@ public class DeepLService : BaseTranslationService
     public override async Task<string> TranslateAsync(
         string text,
         string sourceLanguage,
-        string targetLanguage,
-        List<string>? contextLinesBefore,
-        List<string>? contextLinesAfter,
+        string targetLanguage, 
+        List<string>? contextLinesBefore, 
+        List<string>? contextLinesAfter, 
         CancellationToken cancellationToken)
     {
         await InitializeAsync();
-
+        
         if (_translator == null)
         {
             throw new TranslationException("DeepL translator was not properly initialized.");
         }
 
-        using var retry = new CancellationTokenSource();
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
-
         var delay = _retryDelay;
-        for (var attempt = 1; attempt <= _maxRetries; attempt++)
+        // Run for 1 initial attempt + _maxRetries
+        for (var attempt = 1; attempt <= _maxRetries + 1; attempt++)
         {
             try
             {
@@ -157,24 +155,25 @@ public class DeepLService : BaseTranslationService
                     text,
                     sourceLanguage,
                     targetLanguage,
-                    cancellationToken: linked.Token);
+                    cancellationToken: cancellationToken);
 
                 return result.Text;
             }
             catch (DeepL.TooManyRequestsException tmrEx)
             {
-                if (attempt == _maxRetries)
+                // If this was the last attempt, throw
+                if (attempt > _maxRetries)
                 {
                     _logger.LogError(tmrEx, "Too many requests. Max retries exhausted for text: {Text}", text);
                     throw new TranslationException("Too many requests. Retry limit reached.", tmrEx);
                 }
 
-                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
-                delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
-
                 _logger.LogWarning(
                     "429 Too Many Requests. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
                     delay, attempt, _maxRetries);
+
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {

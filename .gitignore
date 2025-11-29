@@ -44,5 +44,16 @@ msbuild.wrn
 
 # local
 /SQL
-ansible_env/
 deployment/
+
+# Logs
+nas_logs.txt
+nas_logs_window.txt
+*.log
+
+# Local DB
+local_nas.db
+*.db
+
+# Ansible
+ansible_env/

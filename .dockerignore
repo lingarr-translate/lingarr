@@ -23,6 +23,63 @@
 **/values.dev.yaml
 LICENSE
 README.md
+Readme.MD
+CONTRIBUTING.md
+Settings.MD
+CHANGELOG.md
+SECURITY.md
+CODE_OF_CONDUCT.md
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vscode/
+.idea/
+.fleet/
+.cr/
+*.swp
+*.*~
+
+# Build artifacts
+**/bin/
+**/obj/
+**/out/
+**/dist/
+**/dist-ssr/
+
+# Logs and databases
+*.log
+*.db
+nas_logs.txt
+nas_logs_window.txt
+local_nas.db
+
+# Testing
+**/*Tests/
+
+# Ansible and deployment
+ansible_env/
+deployment/
+
+# Development
+docker-compose.dev.yml
+launchSettings.json
+
+# Documentation
+.github/
+docs/
+
+# Package manager
+**/node_modules/
+**/package-lock.json
+
+# Environment
+.env
+.env.local
+.env.*.local
 !**/.gitignore
 !.git/HEAD
 !.git/config

@@ -1,9 +1,14 @@
 ﻿# Lingarr: Subtitle Translation Made Easy
 
-Lingarr is an application that leverages translation technologies to automatically translate subtitle files to your desired target language. 
-With support for both LibreTranslate, DeepL and AI Lingarr offers a flexible solution for all your subtitle translation needs.
+[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/lingarr-translate/lingarr/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/lingarr/lingarr.svg)](https://hub.docker.com/r/lingarr/lingarr)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)](LICENSE)
+[![Discord](https://img.shields.io/discord/1234567890?label=discord&logo=discord)](https://discord.gg/HkubmH2rcR)
 
-https://github.com/user-attachments/assets/be753d77-ca53-4867-adea-363145613d2b
+Lingarr is an application that leverages translation technologies to automatically translate subtitle files to your desired target language. 
+With support for multiple translation services including LibreTranslate, DeepL, and various AI providers, Lingarr offers a flexible solution for all your subtitle translation needs.
+
+![Lingarr Demo](https://github.com/user-attachments/assets/be753d77-ca53-4867-adea-363145613d2b)
 
 ### 🌟 Multiple Translation Service Support
 Lingarr now offers multiple services for automated translation:
@@ -25,8 +30,8 @@ Choose the service that best fits your needs.
 ## Usage
 To run Lingarr using Docker Compose, add the following configuration to your `docker-compose.yml` file,
 
-**Note:** _As of this version, Lingarr uses a dynamic mapper, which may encounter issues with deeper media directories.   
-If your mapping involves more than a single directory, please consult the [wiki](https://github.com/lingarr-translate/lingarr/wiki), create an [issue](https://github.com/lingarr-translate/lingarr/issues), or contact me on [Discord](https://discord.gg/HkubmH2rcR)_
+**Note:** _As of version 1.0.3, Lingarr uses a dynamic path mapper, which may encounter issues with deeper media directories.   
+If your mapping involves more than a single directory, please consult the [wiki](https://github.com/lingarr-translate/lingarr/wiki), create an [issue](https://github.com/lingarr-translate/lingarr/issues), or contact us on [Discord](https://discord.gg/HkubmH2rcR)_
 
 ## Setting up Lingarr
 ```yaml

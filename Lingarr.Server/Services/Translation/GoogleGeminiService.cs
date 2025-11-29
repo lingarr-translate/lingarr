@@ -389,6 +389,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             ["generationConfig"] = new Dictionary<string, object>
             {
                 ["response_mime_type"] = "application/json",
+                ["maxOutputTokens"] = 8192,
                 ["response_schema"] = new
                 {
                     type = "array",
@@ -464,8 +465,42 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
 
         catch (JsonException ex)
         {
+            try
+            {
+                var repairedJson = TryRepairJson(translatedJson);
+                if (repairedJson != translatedJson)
+                {
+                    var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(repairedJson);
+                    if (translatedItems != null)
+                    {
+                        _logger.LogWarning("Successfully repaired truncated JSON response from Gemini.");
+                        return translatedItems
+                            .GroupBy(item => item.Position)
+                            .ToDictionary(group => group.Key, group => group.First().Line);
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore repair failure
+            }
+
             _logger.LogError(ex, "Failed to parse translated JSON: {Json}", translatedJson);
             throw new TranslationException("Failed to parse translated subtitles", ex);
         }
+    }
+
+    private string TryRepairJson(string json)
+    {
+        json = json.Trim();
+        if (json.StartsWith("[") && !json.EndsWith("]"))
+        {
+            int lastBrace = json.LastIndexOf('}');
+            if (lastBrace > -1)
+            {
+                return json.Substring(0, lastBrace + 1) + "]";
+            }
+        }
+        return json;
     }
 }
