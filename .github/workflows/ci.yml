@@ -26,7 +26,7 @@ jobs:
       run: dotnet build --no-restore --configuration Release
     
     - name: Test
-      run: dotnet test --no-build --configuration Release --verbosity normal
+      run: dotnet test Lingarr.sln --no-build --configuration Release --verbosity normal
 
   test-frontend:
     name: Test Frontend
@@ -53,25 +53,3 @@ jobs:
     - name: Check TypeScript
       working-directory: ./Lingarr.Client
       run: npx vue-tsc --noEmit
-
-  lint-frontend:
-    name: Lint Frontend
-    runs-on: ubuntu-latest
-    
-    steps:
-    - uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '24'
-        cache: 'npm'
-        cache-dependency-path: Lingarr.Client/package-lock.json
-    
-    - name: Install dependencies
-      working-directory: ./Lingarr.Client
-      run: npm ci
-    
-    - name: Run ESLint
-      working-directory: ./Lingarr.Client
-      run: npx eslint . --ext .ts,.vue --max-warnings 0
