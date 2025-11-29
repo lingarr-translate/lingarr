@@ -20,10 +20,10 @@ jobs:
         dotnet-version: '9.0.x'
     
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore Lingarr.sln
     
     - name: Build
-      run: dotnet build --no-restore --configuration Release /p:TreatWarningsAsErrors=false
+      run: dotnet build Lingarr.sln --no-restore --configuration Release /p:TreatWarningsAsErrors=false
     
     - name: Test
       run: dotnet test Lingarr.sln --no-build --configuration Release --verbosity normal
