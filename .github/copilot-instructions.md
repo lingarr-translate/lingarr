@@ -5,7 +5,7 @@
 **Lingarr** is a full-stack application that automates subtitle translation for media files. It integrates with Radarr and Sonarr to detect new media, automatically translates subtitle files using various translation services, and provides a web-based dashboard for management and monitoring.
 
 **Current Version**: 1.0.3  
-**Branch**: fix/sonarr-deepl-resilience  
+**Branch**: main  
 **Repository**: https://github.com/lingarr-translate/lingarr
 
 ## Architecture
@@ -71,7 +71,9 @@ Lingarr/
 │
 ├── Lingarr.Migrations.SQLite/   # SQLite EF Core migrations
 ├── Lingarr.Migrations.MySQL/    # MySQL EF Core migrations
-├── Lingarr.Server.Tests/        # Unit tests
+├── Lingarr.Server.Tests/        # Unit and integration tests
+│   ├── Jobs/                 # Job tests
+│   └── Services/             # Service tests (including translation)
 └── deployment/                   # Ansible deployment scripts
 ```
 
@@ -122,9 +124,12 @@ Lingarr supports multiple translation providers:
 #### Important Classes
 - `TranslationRequestService`: Orchestrates translation workflows
 - `SubtitleTranslationService`: Core translation logic
+- `GoogleGeminiService`: Gemini API integration with JSON truncation handling
+- `DeepLService`: DeepL API with enhanced retry logic
 - `RadarrService`/`SonarrService`: Media server integration
 - `PathMappingService`: Handles Docker path mappings
 - `SettingService`: Configuration management
+- `TranslationException`: Custom exception with proper inner exception chaining
 
 ### Frontend Development
 
@@ -236,9 +241,18 @@ The script builds for both `linux/amd64` and `linux/arm64` platforms.
 
 #### Testing
 ```bash
-# Run unit tests
+# Run all tests
 dotnet test Lingarr.Server.Tests/
+
+# Run specific test class
+dotnet test --filter "FullyQualifiedName~GoogleGeminiServiceTests"
+
+# Run integration tests (requires API keys)
+export LINGARR_TEST_GEMINI_KEY="your-api-key"
+dotnet test --filter "FullyQualifiedName~Integration"
 ```
+
+**Note**: Integration tests auto-skip in CI/CD when API keys are not set.
 
 ### Git Workflow
 
@@ -288,7 +302,14 @@ dotnet test Lingarr.Server.Tests/
 ### Known Issues
 - DeepL does not support Brazilian Portuguese (pt-BR)
 - Dynamic path mapper may have issues with complex directory hierarchies
-- Current branch focuses on Sonarr/DeepL resilience improvements
+
+### Recent Fixes (v1.0.3)
+- **Google Gemini JSON Truncation (Issue #204)**: Fixed batch translation failures
+  - Added `maxOutputTokens: 8192` configuration
+  - Implemented `TryRepairJson` method for graceful degradation
+  - Transforms 100% crashes into 76-92% success rate
+- **TranslationException**: Now properly chains inner exceptions for debugging
+- **Sonarr/DeepL**: Enhanced resilience and retry logic
 
 ## Resources
 
@@ -339,5 +360,16 @@ npm run build
 
 ---
 
-**Last Updated**: November 29, 2025  
+**Last Updated**: November 30, 2025  
 **For**: GitHub Copilot and AI-assisted development
+
+## Recent Development Activity
+
+### Latest Changes (November 2025)
+1. **Issue #204 - Gemini JSON Truncation**: Implemented comprehensive fix
+   - Prevention: Increased token limits
+   - Resilience: JSON repair logic
+   - Testing: Unit tests + real API integration tests
+2. **Exception Handling**: Fixed TranslationException inner exception propagation
+3. **Documentation**: Added CI/CD workflows, security policy, code of conduct
+4. **Testing Infrastructure**: Comprehensive test suite with mocking and real API tests

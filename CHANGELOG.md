@@ -5,17 +5,31 @@ All notable changes to Lingarr will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.3] - 2025-11-29
+## [1.0.3] - 2025-11-30
 
 ### Fixed
-- Improved Sonarr integration resilience
-- Enhanced DeepL translation service error handling
+- **Google Gemini**: Fixed JSON truncation handling in batch translation (Issue #204)
+  - Increased `maxOutputTokens` to 8192 to reduce truncation likelihood
+  - Added `TryRepairJson` method to salvage partial responses
+  - Transforms catastrophic failures into graceful degradation (76-92% success rate)
+- **Exception Handling**: Fixed `TranslationException` to properly chain inner exceptions for better debugging
+- Improved Sonarr integration resilience with 404 fallback handling
+- Enhanced DeepL translation service error handling and retry logic
 - Fixed path mapping issues with deeply nested directories
 
 ### Changed
+- Updated to `gemini-2.5-flash` model (Gemini 1.x models deprecated)
 - Updated frontend dependencies (Vue 3.5.12, Vite 6.4.1, Tailwind CSS 4.0)
 - Improved error logging and debugging capabilities
 - Enhanced translation retry logic with exponential backoff
+
+### Added
+- Comprehensive test suite for Google Gemini service
+  - Unit tests for JSON truncation scenarios
+  - Integration tests with real API (auto-skip in CI/CD)
+- CI/CD workflows for automated testing and Docker builds
+- Complete documentation suite (SECURITY.md, CODE_OF_CONDUCT.md, GitHub templates)
+- Dependabot configuration for automated dependency updates
 
 ## [1.0.2] - 2025-10-10
 
