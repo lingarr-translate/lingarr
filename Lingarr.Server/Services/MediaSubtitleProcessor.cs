@@ -46,7 +46,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         }
         var allSubtitles = await _subtitleService.GetAllSubtitles(media.Path);
         var matchingSubtitles = allSubtitles
-            .Where(s => Path.GetFileNameWithoutExtension(s.FileName) == media.FileName)
+            .Where(s => s.FileName.StartsWith(media.FileName + ".") || s.FileName == media.FileName)
             .ToList();
 
         if (!matchingSubtitles.Any())
@@ -98,7 +98,12 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         var sourceLanguage = existingLanguages.FirstOrDefault(lang => sourceLanguages.Contains(lang));
         if (sourceLanguage != null && targetLanguages.Any())
         {
-            var sourceSubtitle = subtitles.FirstOrDefault(s => s.Language == sourceLanguage);
+            // If ignoreCaptions is disabled, prefer non-caption source subtitles, but fallback to caption subtitles if no alternative exists
+            var sourceSubtitle = ignoreCaptions == "true"
+                ? subtitles.FirstOrDefault(s => s.Language == sourceLanguage && string.IsNullOrEmpty(s.Caption)) 
+                    ?? subtitles.FirstOrDefault(s => s.Language == sourceLanguage)
+                : subtitles.FirstOrDefault(s => s.Language == sourceLanguage);
+                
             if (sourceSubtitle != null)
             {
                 // Get languages that don't yet exist to validate whether captions in those languages are available
