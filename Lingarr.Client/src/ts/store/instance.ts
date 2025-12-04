@@ -5,6 +5,7 @@ export interface IUseInstanceStore {
     isOpen: boolean
     theme: ITheme
     poster: string
+    authenticated: boolean
 }
 
 export const THEMES = {
