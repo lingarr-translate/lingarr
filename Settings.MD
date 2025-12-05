@@ -78,6 +78,14 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 | `DEEPSEEK_API_KEY`      | The API key for authenticating with Anthropic.                                  |
 | `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
 
+#### **Chutes**
+
+| **Environment Variable** | **Description**                                                                 |
+|--------------------------|---------------------------------------------------------------------------------|
+| `CHUTES_MODEL`           | The model to use for Chutes translations. Example: `deepseek-ai/DeepSeek-V3.1-Terminus`. |
+| `CHUTES_API_KEY`         | The API key for authenticating with Chutes. Get yours at https://chutes.ai/app/api |
+| `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
+
 #### **LocalAI**
 
 | **Environment Variable** | **Description**                                                                 |
@@ -106,6 +114,7 @@ The `SERVICE_TYPE` variable determines which translation service to use. Below a
 | `anthropic`     | Use Anthropic's models (e.g., Claude-2) for translations.                       |
 | `localai`       | Use a locally hosted AI model for translations.                                 |
 | `deepl`         | Use the DeepL API for translations.                                             |
+| `chutes`        | Use Chutes.AI OpenAI-compatible API for translations.                           |
 | `google`        | Use Google Translate for translations.                                          |
 | `bing`          | Use Bing Translate for translations.                                            |
 | `microsoft`     | Use Microsoft Translator for translations.                                      |

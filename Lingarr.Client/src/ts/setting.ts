@@ -31,6 +31,8 @@ export const SETTINGS = {
     GEMINI_API_KEY: 'gemini_api_key',
     DEEPSEEK_MODEL: 'deepseek_model',
     DEEPSEEK_API_KEY: 'deepseek_api_key',
+    CHUTES_MODEL: 'chutes_model',
+    CHUTES_API_KEY: 'chutes_api_key',
     AI_PROMPT: 'ai_prompt',
     THEME: 'theme',
     LOCALE: 'locale',
@@ -91,6 +93,8 @@ export interface ISettings {
     gemini_api_key: string
     deepseek_model: string
     deepseek_api_key: string
+    chutes_model: string
+    chutes_api_key: string
     ai_prompt: string
     movie_age_threshold: string
     show_age_threshold: string
@@ -134,6 +138,7 @@ export const SERVICE_TYPE = {
     DEEPL: 'deepl',
     GEMINI: 'gemini',
     DEEPSEEK: 'deepseek',
+    CHUTES: 'chutes',
     GOOGLE: 'google',
     BING: 'bing',
     MICROSOFT: 'microsoft',

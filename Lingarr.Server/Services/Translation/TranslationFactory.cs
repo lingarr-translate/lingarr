@@ -82,6 +82,12 @@ public class TranslationFactory : ITranslationServiceFactory
                 _serviceProvider.GetRequiredService<ILogger<DeepSeekService>>()
             ),
 
+            "chutes" => new ChutesService(
+                _serviceProvider.GetRequiredService<ISettingService>(),
+                _serviceProvider.GetRequiredService<HttpClient>(),
+                _serviceProvider.GetRequiredService<ILogger<ChutesService>>()
+            ),
+
             "gemini" => new GoogleGeminiService(
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<HttpClient>(),

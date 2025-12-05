@@ -36,6 +36,7 @@ import OpenAiConfig from '@/components/features/settings/services/OpenAiConfig.v
 import LocalAiConfig from '@/components/features/settings/services/LocalAiConfig.vue'
 import GeminiConfig from '@/components/features/settings/services/GeminiConfig.vue'
 import DeepSeekConfig from '@/components/features/settings/services/DeepSeekConfig.vue'
+import ChutesConfig from '@/components/features/settings/services/ChutesConfig.vue'
 import SourceAndTarget from '@/components/features/settings/SourceAndTarget.vue'
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
@@ -52,6 +53,7 @@ const serviceType = computed({
 const serviceOptions = [
     { value: SERVICE_TYPE.ANTHROPIC, label: 'Anthropic' },
     { value: SERVICE_TYPE.BING, label: 'Bing' },
+    { value: SERVICE_TYPE.CHUTES, label: 'Chutes' },
     { value: SERVICE_TYPE.DEEPL, label: 'DeepL' },
     { value: SERVICE_TYPE.DEEPSEEK, label: 'DeepSeek' },
     { value: SERVICE_TYPE.GEMINI, label: 'Gemini' },
@@ -79,6 +81,8 @@ const serviceConfigComponent = computed(() => {
             return GeminiConfig
         case SERVICE_TYPE.DEEPSEEK:
             return DeepSeekConfig
+        case SERVICE_TYPE.CHUTES:
+            return ChutesConfig
         case SERVICE_TYPE.GOOGLE:
         case SERVICE_TYPE.BING:
         case SERVICE_TYPE.MICROSOFT:

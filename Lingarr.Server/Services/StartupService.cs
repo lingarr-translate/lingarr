@@ -109,6 +109,9 @@ public class StartupService : IHostedService
             { "DEEPSEEK_MODEL", SettingKeys.Translation.DeepSeek.Model },
             { "DEEPSEEK_API_KEY", SettingKeys.Translation.DeepSeek.ApiKey },
 
+            { "CHUTES_MODEL", SettingKeys.Translation.Chutes.Model },
+            { "CHUTES_API_KEY", SettingKeys.Translation.Chutes.ApiKey },
+
             { "DEEPL_API_KEY", SettingKeys.Translation.DeepL.DeeplApiKey }
         };
 
