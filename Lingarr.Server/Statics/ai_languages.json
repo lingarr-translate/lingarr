@@ -504,8 +504,12 @@
     "name": "Pashto"
   },
   {
-    "code": "pt",
-    "name": "Portuguese"
+    "code": "pt-PT",
+    "name": "Portuguese (Portugal)"
+  },
+  {
+    "code": "pt-BR",
+    "name": "Portuguese (Brazil)"
   },
   {
     "code": "qu",

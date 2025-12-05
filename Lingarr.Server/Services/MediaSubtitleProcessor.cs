@@ -54,29 +54,37 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             return false;
         }
 
+        var sourceLanguages = await GetLanguagesSetting<SourceLanguage>(SettingKeys.Translation.SourceLanguages);
+        var targetLanguages = await GetLanguagesSetting<TargetLanguage>(SettingKeys.Translation.TargetLanguages);
+        var ignoreCaptions = await _settingService.GetSetting(SettingKeys.Translation.IgnoreCaptions);
+
         _media = media;
         _mediaType = mediaType;
-        _hash = CreateHash(matchingSubtitles);
+        _hash = CreateHash(matchingSubtitles, sourceLanguages, targetLanguages, ignoreCaptions);
         if (!string.IsNullOrEmpty(media.MediaHash) && media.MediaHash == _hash)
         {
             return false;
         }
         
         _logger.LogInformation("Initiating subtitle processing.");
-        return await ProcessSubtitles(matchingSubtitles);
+        return await ProcessSubtitles(matchingSubtitles, sourceLanguages, targetLanguages, ignoreCaptions);
     }
 
     /// <summary>
     /// Processes subtitle files for translation based on configured languages.
     /// </summary>
     /// <param name="subtitles">List of subtitle files to process.</param>
+    /// <param name="sourceLanguages">The source languages.</param>
+    /// <param name="targetLanguages">The target languages.</param>
+    /// <param name="ignoreCaptions">The ignore captions setting.</param>
     /// <returns>True if new translation requests were created, false otherwise.</returns>
-    private async Task<bool> ProcessSubtitles(List<Subtitles> subtitles)
+    private async Task<bool> ProcessSubtitles(
+        List<Subtitles> subtitles,
+        HashSet<string> sourceLanguages,
+        HashSet<string> targetLanguages,
+        string ignoreCaptions)
     {
         var existingLanguages = ExtractLanguageCodes(subtitles);
-        var sourceLanguages = await GetLanguagesSetting<SourceLanguage>(SettingKeys.Translation.SourceLanguages);
-        var targetLanguages = await GetLanguagesSetting<TargetLanguage>(SettingKeys.Translation.TargetLanguages);
-        var ignoreCaptions = await _settingService.GetSetting(SettingKeys.Translation.IgnoreCaptions);
 
         if (sourceLanguages.Count == 0 || targetLanguages.Count == 0)
         {
@@ -160,13 +168,25 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     /// Creates a hash of the current subtitle file state.
     /// </summary>
     /// <param name="subtitles">List of subtitle file paths to include in the hash.</param>
+    /// <param name="sourceLanguages">The source languages.</param>
+    /// <param name="targetLanguages">The target languages.</param>
+    /// <param name="ignoreCaptions">The ignore captions setting.</param>
     /// <returns>A Base64 encoded string representing the hash of the current subtitle state.</returns>
-    private string CreateHash(List<Subtitles> subtitles)
+    private string CreateHash(
+        List<Subtitles> subtitles,
+        HashSet<string> sourceLanguages,
+        HashSet<string> targetLanguages,
+        string ignoreCaptions)
     {
         using var sha256 = SHA256.Create();
-        var hashInput = string.Join("|", subtitles.Select(subtitle => subtitle.Path)
+        var subtitlePaths = string.Join("|", subtitles.Select(subtitle => subtitle.Path)
             .ToList()
             .OrderBy(f => f));
+        
+        var sourceLangs = string.Join(",", sourceLanguages.OrderBy(l => l));
+        var targetLangs = string.Join(",", targetLanguages.OrderBy(l => l));
+        
+        var hashInput = $"{subtitlePaths}|{sourceLangs}|{targetLangs}|{ignoreCaptions}";
         var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(hashInput));
         return Convert.ToBase64String(hashBytes);
     }
