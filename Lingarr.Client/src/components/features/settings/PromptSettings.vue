@@ -6,7 +6,7 @@
         <template #content>
             <div class="flex flex-col space-y-4">
                 <SaveNotification ref="saveNotification" />
-                <div class="flex flex-col space-x-2">
+                <div class="flex flex-col space-y-2">
                     <span class="font-semibold">
                         {{ translate('settings.prompt.promptTitle') }}
                     </span>
@@ -15,7 +15,7 @@
                 <AiSystemPrompt @save="saveNotification?.show()" />
 
                 <div>
-                    <div class="flex flex-col space-x-2">
+                    <div class="flex flex-col space-y-2">
                         <span class="font-semibold">
                             {{ translate('settings.prompt.contextPromptToggle') }}
                         </span>
@@ -29,15 +29,19 @@
                             }}
                         </span>
                     </ToggleButton>
-                    <div v-if="aiContextPromptEnabled == 'true'" class="flex flex-col space-x-2">
-                        <span class="font-semibold">
+                    
+                    <div v-if="aiContextPromptEnabled == 'true'" class="flex flex-col space-y-2 mt-4">
+                        <span>{{ translate('settings.prompt.contextPromptDescription') }}</span>
+                        
+                        <div v-if="useBatchTranslation == 'true'" class="text-xs text-info">
+                            {{ translate('settings.prompt.batchContextNote') }}
+                        </div>
+                        
+                        <span class="font-semibold pt-2">
                             {{ translate('settings.prompt.contextPromptTitle') }}
                         </span>
-                        {{ translate('settings.prompt.contextPromptDescription') }}
                     </div>
-                    <div v-if="aiContextPromptEnabled == 'true' && useBatchTranslation == 'true'" class="text-xs text-info mt-2">
-                        {{ translate('settings.prompt.batchContextNote') }}
-                    </div>
+
                     <AiContextPrompt
                         v-if="aiContextPromptEnabled == 'true'"
                         @save="saveNotification?.show()" />
