@@ -30,9 +30,6 @@ Choose the service that best fits your needs.
 ## Usage
 To run Lingarr using Docker Compose, add the following configuration to your `docker-compose.yml` file,
 
-**Note:** _As of version 1.0.3, Lingarr uses a dynamic path mapper, which may encounter issues with deeper media directories.   
-If your mapping involves more than a single directory, please consult the [wiki](https://github.com/lingarr-translate/lingarr/wiki), create an [issue](https://github.com/lingarr-translate/lingarr/issues), or contact us on [Discord](https://discord.gg/HkubmH2rcR)_
-
 ## Setting up Lingarr
 ```yaml
 services:

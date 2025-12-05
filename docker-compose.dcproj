@@ -11,13 +11,4 @@
     <Configurations>Debug;Release</Configurations>
     <Platforms>AnyCPU</Platforms>
   </PropertyGroup>
-  <ItemGroup>
-    <None Include="docker-compose.dev.yml" />
-    <None Include=".dockerignore" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Lingarr.Server\Dockerfile" >
-      <Link>Dockerfile</Link>
-    </Content>
-  </ItemGroup>
 </Project>
