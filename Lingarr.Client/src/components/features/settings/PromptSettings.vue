@@ -14,7 +14,7 @@
                 </div>
                 <AiSystemPrompt @save="saveNotification?.show()" />
 
-                <div v-if="useBatchTranslation == 'false'">
+                <div>
                     <div class="flex flex-col space-x-2">
                         <span class="font-semibold">
                             {{ translate('settings.prompt.contextPromptToggle') }}
@@ -35,6 +35,9 @@
                         </span>
                         {{ translate('settings.prompt.contextPromptDescription') }}
                     </div>
+                    <div v-if="aiContextPromptEnabled == 'true' && useBatchTranslation == 'true'" class="text-xs text-info mt-2">
+                        {{ translate('settings.prompt.batchContextNote') }}
+                    </div>
                     <AiContextPrompt
                         v-if="aiContextPromptEnabled == 'true'"
                         @save="saveNotification?.show()" />
@@ -53,9 +56,6 @@
                         validation-type="number"
                         :label="translate('settings.prompt.contextAfter')"
                         @update:validation="(val) => (isValid.contextAfter = val)" />
-                </div>
-                <div v-else class="text-xs">
-                    {{ translate('settings.prompt.notSupported') }}
                 </div>
             </div>
         </template>

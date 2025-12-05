@@ -361,6 +361,20 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
+        // Check if we have any context-only items
+        var hasContextItems = subtitleBatch.Any(item => item.IsContextOnly);
+        var itemsToTranslate = subtitleBatch.Where(item => !item.IsContextOnly).ToList();
+        
+        // Build context-aware prompt if we have context items
+        var effectivePrompt = _prompt!;
+        if (hasContextItems)
+        {
+            effectivePrompt = _prompt + "\n\nIMPORTANT: Some items in the batch are marked with \"isContextOnly\": true. " +
+                "These are provided ONLY for context to help you understand the conversation flow. " +
+                "Do NOT translate or include context-only items in your output. " +
+                "Only translate and return items where \"isContextOnly\" is false or not present.";
+        }
+
         var responseFormat = new
         {
             type = "json_schema",
@@ -408,7 +422,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             new Dictionary<string, string>
             {
                 ["role"] = "system",
-                ["content"] = _prompt!
+                ["content"] = effectivePrompt
             },
             new Dictionary<string, string>
             {
@@ -476,7 +490,10 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 throw new TranslationException("Failed to deserialize translated subtitles");
             }
 
+            // Only return translations for non-context items
+            var expectedPositions = itemsToTranslate.Select(i => i.Position).ToHashSet();
             return translatedItems
+                .Where(item => expectedPositions.Contains(item.Position))
                 .GroupBy(item => item.Position)
                 .ToDictionary(group => group.Key, group => group.First().Line);
         }
@@ -491,12 +508,26 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
+        // Check if we have any context-only items
+        var hasContextItems = subtitleBatch.Any(item => item.IsContextOnly);
+        var itemsToTranslate = subtitleBatch.Where(item => !item.IsContextOnly).ToList();
+        
+        // Build context-aware prompt if we have context items
+        var effectivePrompt = _prompt!;
+        if (hasContextItems)
+        {
+            effectivePrompt = _prompt + "\n\nIMPORTANT: Some items in the batch are marked with \"isContextOnly\": true. " +
+                "These are provided ONLY for context to help you understand the conversation flow. " +
+                "Do NOT translate or include context-only items in your output. " +
+                "Only translate and return items where \"isContextOnly\" is false or not present.";
+        }
+
         var messages = new[]
         {
             new Dictionary<string, string>
             {
                 ["role"] = "system",
-                ["content"] = _prompt!
+                ["content"] = effectivePrompt
             },
             new Dictionary<string, string>
             {
@@ -556,7 +587,10 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 throw new TranslationException("Failed to deserialize translated subtitles from JSON parsing");
             }
 
+            // Only return translations for non-context items
+            var expectedPositions = itemsToTranslate.Select(i => i.Position).ToHashSet();
             return translatedItems
+                .Where(item => expectedPositions.Contains(item.Position))
                 .GroupBy(item => item.Position)
                 .ToDictionary(group => group.Key, group => group.First().Line);
         }
@@ -571,7 +605,21 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
-        var batchPrompt = _prompt +
+        // Check if we have any context-only items
+        var hasContextItems = subtitleBatch.Any(item => item.IsContextOnly);
+        var itemsToTranslate = subtitleBatch.Where(item => !item.IsContextOnly).ToList();
+        
+        // Build context-aware prompt if we have context items
+        var effectivePrompt = _prompt;
+        if (hasContextItems)
+        {
+            effectivePrompt = _prompt + "\n\nIMPORTANT: Some items in the batch are marked with \"isContextOnly\": true. " +
+                "These are provided ONLY for context to help you understand the conversation flow. " +
+                "Do NOT translate or include context-only items in your output. " +
+                "Only translate and return items where \"isContextOnly\" is false or not present.";
+        }
+
+        var batchPrompt = effectivePrompt +
                           "\n\nPlease return the response as a JSON array with objects containing 'position' and 'line' fields. Example: [{\"position\": 1, \"line\": \"translated text\"}]\n\n";
 
         var requestData = new Dictionary<string, object>
@@ -622,7 +670,10 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 throw new TranslationException("Failed to deserialize translated subtitles from generate API");
             }
 
+            // Only return translations for non-context items
+            var expectedPositions = itemsToTranslate.Select(i => i.Position).ToHashSet();
             return translatedItems
+                .Where(item => expectedPositions.Contains(item.Position))
                 .GroupBy(item => item.Position)
                 .ToDictionary(group => group.Key, group => group.First().Line);
         }

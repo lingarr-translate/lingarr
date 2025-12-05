@@ -325,6 +325,20 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
             }
         };
 
+        // Check if we have any context-only items
+        var hasContextItems = subtitleBatch.Any(item => item.IsContextOnly);
+        var itemsToTranslate = subtitleBatch.Where(item => !item.IsContextOnly).ToList();
+        
+        // Build context-aware prompt if we have context items
+        var effectivePrompt = _prompt!;
+        if (hasContextItems)
+        {
+            effectivePrompt = _prompt + "\n\nIMPORTANT: Some items in the batch are marked with \"isContextOnly\": true. " +
+                "These are provided ONLY for context to help you understand the conversation flow. " +
+                "Do NOT translate or include context-only items in your output. " +
+                "Only translate and return items where \"isContextOnly\" is false or not present.";
+        }
+
         var requestBody = new Dictionary<string, object>
         {
             ["model"] = _model!,
@@ -333,7 +347,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                 new Dictionary<string, string>
                 {
                     ["role"] = "system",
-                    ["content"] = _prompt!
+                    ["content"] = effectivePrompt
                 },
                 new Dictionary<string, string>
                 {
@@ -393,7 +407,10 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                 throw new TranslationException("Failed to deserialize translated subtitles");
             }
 
+            // Only return translations for non-context items
+            var expectedPositions = itemsToTranslate.Select(i => i.Position).ToHashSet();
             return translatedItems
+                .Where(item => expectedPositions.Contains(item.Position))
                 .GroupBy(item => item.Position)
                 .ToDictionary(group => group.Key, group => group.First().Line);
         }

@@ -181,14 +181,16 @@ public class TranslationJob
                     : 10000;
 
                 _logger.LogInformation(
-                    "Using batch translation with max batch size: {maxBatchSize} for subtitle: {filePath}",
-                    maxSize, translationRequest.SubtitleToTranslate);
+                    "Using batch translation with max batch size: {maxBatchSize}, context before: {contextBefore}, context after: {contextAfter} for subtitle: {filePath}",
+                    maxSize, contextBefore, contextAfter, translationRequest.SubtitleToTranslate);
 
                 translatedSubtitles = await translator.TranslateSubtitlesBatch(
                     subtitles,
                     translationRequest,
                     stripSubtitleFormatting,
                     maxSize,
+                    contextBefore,
+                    contextAfter,
                     cancellationToken);
             }
             else

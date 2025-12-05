@@ -124,18 +124,22 @@ public class SubtitleTranslationService
     }
     
     /// <summary>
-    /// Translates subtitles in batch mode 
+    /// Translates subtitles in batch mode with optional boundary context
     /// </summary>
     /// <param name="subtitles">The list of subtitle items to translate.</param>
     /// <param name="translationRequest">Contains the source and target language specifications.</param>
     /// <param name="stripSubtitleFormatting">Boolean used for indicating that styles need to be stripped from the subtitle</param>
     /// <param name="batchSize">Number of subtitles to process in each batch (0 for all)</param>
+    /// <param name="contextBefore">Number of context lines to prepend before each batch</param>
+    /// <param name="contextAfter">Number of context lines to append after each batch</param>
     /// <param name="cancellationToken">Token to support cancellation of the translation operation.</param>
     public async Task<List<SubtitleItem>> TranslateSubtitlesBatch(
         List<SubtitleItem> subtitles,
         TranslationRequest translationRequest,
         bool stripSubtitleFormatting,
         int batchSize = 0,
+        int contextBefore = 0,
+        int contextAfter = 0,
         CancellationToken cancellationToken = default)
     {
         if (_progressService == null)
@@ -165,16 +169,27 @@ public class SubtitleTranslationService
                 break;
             }
 
+            // Calculate batch boundaries
+            var batchStartIndex = batchIndex * batchSize;
             var currentBatch = subtitles
-                .Skip(batchIndex * batchSize)
+                .Skip(batchStartIndex)
                 .Take(batchSize)
                 .ToList();
             
-            await ProcessSubtitleBatch(currentBatch,
+            // Build boundary context: lines before this batch and lines after this batch
+            var contextLinesBefore = BuildBatchBoundaryContext(
+                subtitles, batchStartIndex, contextBefore, stripSubtitleFormatting, true);
+            var contextLinesAfter = BuildBatchBoundaryContext(
+                subtitles, batchStartIndex + currentBatch.Count - 1, contextAfter, stripSubtitleFormatting, false);
+            
+            await ProcessSubtitleBatchWithContext(
+                currentBatch,
                 batchTranslationService,
                 translationRequest.SourceLanguage,
                 translationRequest.TargetLanguage,
                 stripSubtitleFormatting,
+                contextLinesBefore,
+                contextLinesAfter,
                 cancellationToken);
 
             processedSubtitles += currentBatch.Count;
@@ -234,6 +249,126 @@ public class SubtitleTranslationService
                     subtitle.Lines;
             }
         }
+    }
+    
+    /// <summary>
+    /// Processes a batch of subtitles with boundary context for improved translation quality.
+    /// Context lines are prepended/appended to help the AI understand conversational flow.
+    /// </summary>
+    /// <param name="currentBatch">The batch of subtitles to process</param>
+    /// <param name="batchTranslationService">The batch translation service to use</param>
+    /// <param name="sourceLanguage">Source language code</param>
+    /// <param name="targetLanguage">Target language code</param>
+    /// <param name="stripSubtitleFormatting">Whether to strip formatting from subtitles</param>
+    /// <param name="contextLinesBefore">Context lines to prepend (marked as context-only)</param>
+    /// <param name="contextLinesAfter">Context lines to append (marked as context-only)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    public async Task ProcessSubtitleBatchWithContext(
+        List<SubtitleItem> currentBatch,
+        IBatchTranslationService batchTranslationService,
+        string sourceLanguage,
+        string targetLanguage,
+        bool stripSubtitleFormatting,
+        List<BatchSubtitleItem> contextLinesBefore,
+        List<BatchSubtitleItem> contextLinesAfter,
+        CancellationToken cancellationToken)
+    {
+        // Build the batch items from subtitles to translate
+        var batchItems = currentBatch.Select(subtitle => new BatchSubtitleItem
+        {
+            Position = subtitle.Position,
+            Line = string.Join(" ", stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines),
+            IsContextOnly = false
+        }).ToList();
+
+        // Combine: context before + batch items + context after
+        var fullBatch = new List<BatchSubtitleItem>();
+        fullBatch.AddRange(contextLinesBefore);
+        fullBatch.AddRange(batchItems);
+        fullBatch.AddRange(contextLinesAfter);
+
+        if (contextLinesBefore.Count > 0 || contextLinesAfter.Count > 0)
+        {
+            _logger.LogDebug(
+                "Processing batch with boundary context: {ContextBefore} lines before, {BatchSize} to translate, {ContextAfter} lines after",
+                contextLinesBefore.Count, batchItems.Count, contextLinesAfter.Count);
+        }
+
+        var batchResults = await batchTranslationService.TranslateBatchAsync(
+            fullBatch,
+            sourceLanguage,
+            targetLanguage,
+            cancellationToken);
+        
+        // Only process results for non-context items
+        foreach (var subtitle in currentBatch)
+        {
+            if (batchResults.TryGetValue(subtitle.Position, out var translated))
+            {
+                if (stripSubtitleFormatting)
+                {
+                    translated = SubtitleFormatterService.RemoveMarkup(translated);
+                }
+
+                // Rebuild lines based on max length
+                subtitle.TranslatedLines = translated.SplitIntoLines(MaxLineLength);
+            }
+            else
+            {
+                _logger.LogWarning("Translation not found for subtitle at position {Position} using original line.", subtitle.Position);
+                subtitle.TranslatedLines = stripSubtitleFormatting ? 
+                    subtitle.PlaintextLines : 
+                    subtitle.Lines;
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Builds boundary context for batch translation by extracting lines before or after a batch boundary.
+    /// </summary>
+    /// <param name="subtitles">The full list of subtitle items</param>
+    /// <param name="boundaryIndex">The index at the batch boundary (first index for before, last index for after)</param>
+    /// <param name="count">Number of context lines to extract</param>
+    /// <param name="stripSubtitleFormatting">Whether to strip formatting</param>
+    /// <param name="isBeforeContext">True to get lines before the boundary, false to get lines after</param>
+    /// <returns>List of BatchSubtitleItem marked as context-only</returns>
+    private static List<BatchSubtitleItem> BuildBatchBoundaryContext(
+        List<SubtitleItem> subtitles,
+        int boundaryIndex,
+        int count,
+        bool stripSubtitleFormatting,
+        bool isBeforeContext)
+    {
+        if (count <= 0) return [];
+        
+        var contextItems = new List<BatchSubtitleItem>();
+        
+        int start, end;
+        if (isBeforeContext)
+        {
+            // Get 'count' lines before the boundary index
+            start = Math.Max(0, boundaryIndex - count);
+            end = boundaryIndex;
+        }
+        else
+        {
+            // Get 'count' lines after the boundary index
+            start = boundaryIndex + 1;
+            end = Math.Min(subtitles.Count, boundaryIndex + 1 + count);
+        }
+
+        for (var i = start; i < end; i++)
+        {
+            var contextSubtitle = subtitles[i];
+            contextItems.Add(new BatchSubtitleItem
+            {
+                Position = contextSubtitle.Position,
+                Line = string.Join(" ", stripSubtitleFormatting ? contextSubtitle.PlaintextLines : contextSubtitle.Lines),
+                IsContextOnly = true
+            });
+        }
+
+        return contextItems;
     }
     
     /// <summary>

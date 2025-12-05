@@ -254,11 +254,25 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
+        // Check if we have any context-only items
+        var hasContextItems = subtitleBatch.Any(item => item.IsContextOnly);
+        var itemsToTranslate = subtitleBatch.Where(item => !item.IsContextOnly).ToList();
+        
+        // Build context-aware prompt if we have context items
+        var effectivePrompt = _prompt!;
+        if (hasContextItems)
+        {
+            effectivePrompt = _prompt + "\n\nIMPORTANT: Some items in the batch are marked with \"isContextOnly\": true. " +
+                "These are provided ONLY for context to help you understand the conversation flow. " +
+                "Do NOT translate or include context-only items in your output. " +
+                "Only translate and return items where \"isContextOnly\" is false or not present.";
+        }
+
         var requestBody = new Dictionary<string, object>
         {
             ["model"] = _model!,
             ["max_tokens"] = 1024,
-            ["system"] = _prompt!,
+            ["system"] = effectivePrompt,
             ["tools"] = new[]
             {
                 new
@@ -382,7 +396,10 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 });
             }
 
+            // Only return translations for non-context items
+            var expectedPositions = itemsToTranslate.Select(i => i.Position).ToHashSet();
             return translatedItems
+                .Where(item => expectedPositions.Contains(item.Position))
                 .GroupBy(item => item.Position)
                 .ToDictionary(group => group.Key, group => group.First().Line);
         }

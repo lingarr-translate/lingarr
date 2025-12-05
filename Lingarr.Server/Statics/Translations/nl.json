@@ -269,7 +269,7 @@
           "description": "ndertitelregel om te vertalen"
         }
       },
-      "notSupported": "Context prompt wordt niet ondersteund en is uitgeschakeld bij het verzenden van ondertitels in batch."
+      "batchContextNote": "Bij batchvertaling worden contextregels aan de batchgrenzen toegevoegd om de AI te helpen de gespreksstroom te begrijpen."
     },
     "logs": {
       "systemLogs": "Systeemlog",
