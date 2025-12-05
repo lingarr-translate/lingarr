@@ -6,6 +6,7 @@ using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Models;
 using Lingarr.Server.Models.Batch;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.Integrations.Translation;
@@ -19,7 +20,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
     private string? _model;
     private string? _endpoint;
     private string? _prompt;
-    private Dictionary<string, string> _replacements;
+
     private bool _isChatEndpoint;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
@@ -117,6 +118,115 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         finally
         {
             _initLock.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public override async Task<ModelsResponse> GetModels()
+    {
+        var settings = await _settings.GetSettings([
+            SettingKeys.Translation.LocalAi.Endpoint,
+            SettingKeys.Translation.LocalAi.ApiKey
+        ]);
+        
+        var endpoint = settings[SettingKeys.Translation.LocalAi.Endpoint];
+        var apiKey = settings[SettingKeys.Translation.LocalAi.ApiKey];
+
+        if (string.IsNullOrEmpty(endpoint))
+        {
+            return new ModelsResponse
+            {
+                Message = "LocalAI endpoint is not configured."
+            };
+        }
+
+        try
+        {
+            // Derive models endpoint from the configured endpoint
+            // Common patterns:
+            // .../v1/chat/completions -> .../v1/models
+            // .../api/generate -> .../api/tags (Ollama) or .../models
+            
+            var modelsEndpoint = endpoint.TrimEnd('/');
+            if (modelsEndpoint.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase))
+            {
+                modelsEndpoint = modelsEndpoint.Substring(0, modelsEndpoint.Length - "/chat/completions".Length) + "/models";
+            }
+            else if (modelsEndpoint.EndsWith("/generate", StringComparison.OrdinalIgnoreCase))
+            {
+                 // Assuming standard LocalAI behaviour or OpenAI compatible /v1/models
+                 modelsEndpoint = modelsEndpoint.Substring(0, modelsEndpoint.Length - "/generate".Length) + "/models";
+            }
+            else if (!modelsEndpoint.EndsWith("/models", StringComparison.OrdinalIgnoreCase))
+            {
+                 // Fallback append
+                 modelsEndpoint += "/models";
+            }
+
+            var request = new HttpRequestMessage(HttpMethod.Get, modelsEndpoint);
+            
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            }
+
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync();
+            using var document = JsonDocument.Parse(content);
+            var root = document.RootElement;
+
+            var labelValues = new List<LabelValue>();
+            
+            // Handle standard OpenAI format: { "data": [ { "id": "..." } ] }
+            if (root.TryGetProperty("data", out var data))
+            {
+                foreach (var model in data.EnumerateArray())
+                {
+                    if (model.TryGetProperty("id", out var idElement))
+                    {
+                        var id = idElement.GetString();
+                        if (!string.IsNullOrEmpty(id))
+                        {
+                            labelValues.Add(new LabelValue { Label = id, Value = id });
+                        }
+                    }
+                }
+            }
+            // Handle Ollama format: { "models": [ { "name": "..." } ] } (if hitting /api/tags)
+            else if (root.TryGetProperty("models", out var models))
+            {
+                 foreach (var model in models.EnumerateArray())
+                {
+                    if (model.TryGetProperty("name", out var nameElement))
+                    {
+                        var name = nameElement.GetString();
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            labelValues.Add(new LabelValue { Label = name, Value = name });
+                        }
+                    }
+                }
+            }
+            
+            if (labelValues.Count == 0)
+            {
+                 return new ModelsResponse { Message = "No models found in response." };
+            }
+
+            return new ModelsResponse
+            {
+                Options = labelValues.OrderBy(x => x.Label).ToList()
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching models from LocalAI");
+            return new ModelsResponse
+            {
+                Message = "Error fetching models from LocalAI: " + ex.Message
+            };
         }
     }
 

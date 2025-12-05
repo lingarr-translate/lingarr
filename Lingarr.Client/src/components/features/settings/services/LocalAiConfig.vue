@@ -22,12 +22,15 @@
             :label="translate('settings.services.serviceAddress')"
             @update:validation="(val) => (isValid.address = val)" />
 
-        <InputComponent
-            v-model="aiModel"
-            validation-type="string"
+        <ComboBox
+            ref="selectRef"
+            v-model:selected="aiModel"
+            :options="options"
+            :load-on-open="true"
+            :placeholder="translate('settings.services.selectModel')"
             :label="translate('settings.services.aiModel')"
-            :placeholder="translate('settings.services.localAiModelPlaceholder')"
-            @update:validation="(val) => (isValid.model = val)" />
+            :no-options="errorMessage || translate('settings.services.loadingModels')"
+            @fetch-options="loadOptions" />
 
         <InputComponent
             v-model="apiKey"
@@ -52,6 +55,8 @@ import { useSettingStore } from '@/store/setting'
 import { SETTINGS } from '@/ts'
 import { useRouter } from 'vue-router'
 import InputComponent from '@/components/common/InputComponent.vue'
+import ComboBox from '@/components/common/ComboBox.vue'
+import { useModelOptions } from '@/composables/useModelOptions'
 
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])
@@ -61,6 +66,7 @@ const isValid = reactive({
     apiKey: false
 })
 const router = useRouter()
+const { options, errorMessage, selectRef, loadOptions } = useModelOptions()
 
 const aiModel = computed({
     get: () => settingsStore.getSetting(SETTINGS.LOCAL_AI_MODEL) as string,
