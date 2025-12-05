@@ -58,21 +58,21 @@ import InputComponent from '@/components/common/InputComponent.vue'
 import ComboBox from '@/components/common/ComboBox.vue'
 import { useModelOptions } from '@/composables/useModelOptions'
 
+const router = useRouter()
+const { options, errorMessage, selectRef, loadOptions } = useModelOptions()
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])
 const isValid = reactive({
     address: false,
-    model: false,
     apiKey: false
 })
-const router = useRouter()
-const { options, errorMessage, selectRef, loadOptions } = useModelOptions()
 
 const aiModel = computed({
     get: () => settingsStore.getSetting(SETTINGS.LOCAL_AI_MODEL) as string,
     set: (newValue: string) => {
-        settingsStore.updateSetting(SETTINGS.LOCAL_AI_MODEL, newValue, isValid.model)
-        if (isValid.model) {
+        const hasSelection = !!newValue
+        settingsStore.updateSetting(SETTINGS.LOCAL_AI_MODEL, newValue, hasSelection)
+        if (hasSelection) {
             emit('save')
         }
     }
