@@ -129,12 +129,17 @@ public class SettingService : ISettingService
         var setting = await _dbContext.Settings.FirstOrDefaultAsync(s => s.Key == key);
         if (setting == null)
         {
-            return false;
+            // Create the setting if it doesn't exist
+            setting = new Lingarr.Core.Entities.Setting { Key = key, Value = value };
+            _dbContext.Settings.Add(setting);
+        }
+        else
+        {
+            setting.Value = value;
         }
 
-        setting.Value = value;
         await _dbContext.SaveChangesAsync();
-        OnSettingChange(setting.Key);
+        OnSettingChange(key);
         return true;
     }
     

@@ -321,6 +321,7 @@ As an AI agent you **must not**:
 - [ ] Pinia stores are updated if data shapes or flows changed.
 - [ ] Components compile and the TypeScript checker would be happy (`npm run build`).
 - [ ] You did not introduce new global dependencies or tooling without reason.
+- [ ] You did not add `"peer": true` to `package-lock.json`.
 
 ### 8.3 Before ending your assistant run
 
