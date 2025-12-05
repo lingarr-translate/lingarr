@@ -25,7 +25,7 @@ These settings can be configured as environment variables to persist configurati
 
 | **Environment Variable** | **Description**                                                                 |
 |--------------------------|---------------------------------------------------------------------------------|
-| `SERVICE_TYPE`           | The type of translation service to use. Supported values: `libretranslate`, `openai`, `anthropic`, `localai`, `deepl`, `google`, `bing`, `microsoft`, `yandex`. |
+| `SERVICE_TYPE`           | The type of translation service to use. Supported values: `libretranslate`, `openai`, `anthropic`, `localai`, `deepl`, `gemini`, `deepseek`, `chutes`, `google`, `bing`, `microsoft`, `yandex`. |
 | `SOURCE_LANGUAGES`       | A minified JSON array of source languages for translation. |
 | `TARGET_LANGUAGES`       | A minified JSON array of target languages for translation. |
 
