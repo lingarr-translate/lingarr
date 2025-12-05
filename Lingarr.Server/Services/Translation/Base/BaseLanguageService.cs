@@ -10,8 +10,19 @@ public abstract class BaseLanguageService : BaseTranslationService
     private readonly string _languageFilePath;
     protected string? _contextPrompt;
     protected string? _contextPromptEnabled;
+    protected string? _batchContextInstruction;
     protected Dictionary<string, string> _replacements;
     protected List<KeyValuePair<string, object>>? _customParameters;
+    
+    /// <summary>
+    /// Default batch context instruction used when no custom instruction is configured.
+    /// This tells the AI how to handle context-only items in batch translation.
+    /// </summary>
+    protected const string DefaultBatchContextInstruction = 
+        "IMPORTANT: Some items in the batch are marked with \"isContextOnly\": true. " +
+        "These are provided ONLY for context to help you understand the conversation flow. " +
+        "Do NOT translate or include context-only items in your output. " +
+        "Only translate and return items where \"isContextOnly\" is false or not present.";
 
     protected BaseLanguageService(
         ISettingService settings,
@@ -107,6 +118,18 @@ public abstract class BaseLanguageService : BaseTranslationService
         _replacements["lineToTranslate"] = text;
         _replacements["contextAfter"] = string.Join("\n", contextLinesAfter ?? []);
         return ReplacePlaceholders(_contextPrompt, _replacements);
+    }
+
+    /// <summary>
+    /// Gets the effective batch context instruction.
+    /// Returns the configured instruction if set, otherwise falls back to the default.
+    /// </summary>
+    /// <returns>The batch context instruction to append to prompts for context-aware batch translation.</returns>
+    protected string GetEffectiveBatchContextInstruction()
+    {
+        return string.IsNullOrEmpty(_batchContextInstruction) 
+            ? DefaultBatchContextInstruction 
+            : _batchContextInstruction;
     }
 
     

@@ -60,6 +60,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiContextPrompt,
                 SettingKeys.Translation.AiContextPromptEnabled,
+                SettingKeys.Translation.AiBatchContextInstruction,
                 SettingKeys.Translation.CustomAiParameters,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
@@ -70,6 +71,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             _apiKey = settings[SettingKeys.Translation.Anthropic.ApiKey];
             _version = settings[SettingKeys.Translation.Anthropic.Version];
             _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
+            _batchContextInstruction = settings[SettingKeys.Translation.AiBatchContextInstruction];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey) || string.IsNullOrEmpty(_version))
             {
@@ -262,10 +264,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         var effectivePrompt = _prompt!;
         if (hasContextItems)
         {
-            effectivePrompt = _prompt + "\n\nIMPORTANT: Some items in the batch are marked with \"isContextOnly\": true. " +
-                "These are provided ONLY for context to help you understand the conversation flow. " +
-                "Do NOT translate or include context-only items in your output. " +
-                "Only translate and return items where \"isContextOnly\" is false or not present.";
+            effectivePrompt = _prompt + "\n\n" + GetEffectiveBatchContextInstruction();
         }
 
         var requestBody = new Dictionary<string, object>

@@ -269,7 +269,13 @@
           "description": "ndertitelregel om te vertalen"
         }
       },
-      "batchContextNote": "Bij batchvertaling worden contextregels aan de batchgrenzen toegevoegd om de AI te helpen de gespreksstroom te begrijpen."
+      "batchContextNote": "Bij batchvertaling worden contextregels aan de batchgrenzen toegevoegd om de AI te helpen de gespreksstroom te begrijpen.",
+      "batchContextInstructionTitle": "Batch Contextinstructie",
+      "batchContextInstructionDescription": "Deze instructie vertelt de AI hoe context-only items moeten worden verwerkt tijdens batchvertaling. Het wordt aan je systeemprompt toegevoegd wanneer er contextitems in een batch aanwezig zijn.",
+      "batchContextInstructionWarning": "KRITIEK: Deze instructie is essentieel voor het correct werken van batchvertaling. Onjuist wijzigen kan ertoe leiden dat de AI contextregels in vertalingen opneemt of daadwerkelijke inhoud overslaat.",
+      "batchContextInstructionAdvancedToggle": "Ik begrijp de risico's - sta bewerken toe",
+      "batchContextInstructionResetDefault": "Herstel naar standaard",
+      "batchContextInstructionResetConfirm": "Batch contextinstructie is teruggezet naar standaard."
     },
     "logs": {
       "systemLogs": "Systeemlog",

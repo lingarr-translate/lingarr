@@ -61,6 +61,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiContextPrompt,
                 SettingKeys.Translation.AiContextPromptEnabled,
+                SettingKeys.Translation.AiBatchContextInstruction,
                 SettingKeys.Translation.CustomAiParameters,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
@@ -70,6 +71,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             _apiKey = settings[SettingKeys.Translation.Gemini.ApiKey];
             _model = settings[SettingKeys.Translation.Gemini.Model];
             _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
+            _batchContextInstruction = settings[SettingKeys.Translation.AiBatchContextInstruction];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey))
             {
@@ -369,10 +371,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         var effectivePrompt = _prompt;
         if (hasContextItems)
         {
-            effectivePrompt = _prompt + "\n\nIMPORTANT: Some items in the batch are marked with \"isContextOnly\": true. " +
-                "These are provided ONLY for context to help you understand the conversation flow. " +
-                "Do NOT translate or include context-only items in your output. " +
-                "Only translate and return items where \"isContextOnly\" is false or not present.";
+            effectivePrompt = _prompt + "\n\n" + GetEffectiveBatchContextInstruction();
         }
 
         var endpoint = $"{_endpoint}/models/{_model}:generateContent?key={_apiKey}";

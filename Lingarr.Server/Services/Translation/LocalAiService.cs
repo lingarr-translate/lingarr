@@ -63,6 +63,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiContextPrompt,
                 SettingKeys.Translation.AiContextPromptEnabled,
+                SettingKeys.Translation.AiBatchContextInstruction,
                 SettingKeys.Translation.CustomAiParameters,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
@@ -72,6 +73,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             _model = settings[SettingKeys.Translation.LocalAi.Model];
             _endpoint = settings[SettingKeys.Translation.LocalAi.Endpoint];
             _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
+            _batchContextInstruction = settings[SettingKeys.Translation.AiBatchContextInstruction];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_endpoint))
             {
@@ -369,10 +371,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         var effectivePrompt = _prompt!;
         if (hasContextItems)
         {
-            effectivePrompt = _prompt + "\n\nIMPORTANT: Some items in the batch are marked with \"isContextOnly\": true. " +
-                "These are provided ONLY for context to help you understand the conversation flow. " +
-                "Do NOT translate or include context-only items in your output. " +
-                "Only translate and return items where \"isContextOnly\" is false or not present.";
+            effectivePrompt = _prompt + "\n\n" + GetEffectiveBatchContextInstruction();
         }
 
         var responseFormat = new
@@ -516,10 +515,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         var effectivePrompt = _prompt!;
         if (hasContextItems)
         {
-            effectivePrompt = _prompt + "\n\nIMPORTANT: Some items in the batch are marked with \"isContextOnly\": true. " +
-                "These are provided ONLY for context to help you understand the conversation flow. " +
-                "Do NOT translate or include context-only items in your output. " +
-                "Only translate and return items where \"isContextOnly\" is false or not present.";
+            effectivePrompt = _prompt + "\n\n" + GetEffectiveBatchContextInstruction();
         }
 
         var messages = new[]
@@ -613,10 +609,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         var effectivePrompt = _prompt;
         if (hasContextItems)
         {
-            effectivePrompt = _prompt + "\n\nIMPORTANT: Some items in the batch are marked with \"isContextOnly\": true. " +
-                "These are provided ONLY for context to help you understand the conversation flow. " +
-                "Do NOT translate or include context-only items in your output. " +
-                "Only translate and return items where \"isContextOnly\" is false or not present.";
+            effectivePrompt = _prompt + "\n\n" + GetEffectiveBatchContextInstruction();
         }
 
         var batchPrompt = effectivePrompt +
