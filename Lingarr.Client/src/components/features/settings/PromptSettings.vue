@@ -184,8 +184,17 @@ const contextAfter = computed({
     }
 })
 
-// Batch context instruction editable toggle (local state, not persisted)
-const batchContextInstructionEditable = ref('false')
+// Batch context instruction editable toggle (persisted in settings)
+const batchContextInstructionEditable = computed({
+    get: () => {
+        const stored = settingsStore.getSetting(SETTINGS.AI_BATCH_CONTEXT_INSTRUCTION_EDITABLE) as string
+        return stored || 'false'
+    },
+    set: (newValue: string) => {
+        settingsStore.updateSetting(SETTINGS.AI_BATCH_CONTEXT_INSTRUCTION_EDITABLE, newValue, true)
+        saveNotification.value?.show()
+    }
+})
 
 // Batch context instruction
 const batchContextInstruction = computed({
