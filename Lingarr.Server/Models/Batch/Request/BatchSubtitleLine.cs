@@ -17,5 +17,5 @@ public class BatchSubtitleLine
     /// Line to translate
     /// </summary>
     [Required]
-    public string Line { get; set; }
+    public string Line { get; set; } = string.Empty;
 }

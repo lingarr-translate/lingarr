@@ -13,5 +13,5 @@ public class BatchTranslatedLine
     /// <summary>
     /// Translated line
     /// </summary>
-    public string Line { get; set; }
+    public string Line { get; set; } = string.Empty;
 }

@@ -83,7 +83,6 @@ public class TranslationJob
 
                 SettingKeys.Translation.AiContextPromptEnabled,
                 SettingKeys.Translation.AiContextBefore,
-                SettingKeys.Translation.AiContextBefore,
                 SettingKeys.Translation.AiContextAfter,
                 SettingKeys.Translation.UseBatchTranslation,
                 SettingKeys.Translation.MaxBatchSize,
@@ -110,6 +109,15 @@ public class TranslationJob
                     ? linesAfter
                     : 0;
             }
+
+            if (string.IsNullOrWhiteSpace(request.SubtitleToTranslate))
+            {
+                _logger.LogWarning(
+                    "SubtitleToTranslate is null or empty for translation request {RequestId}", request.Id);
+                throw new TaskCanceledException("Subtitle path is missing for translation request.");
+            }
+
+            var subtitlePath = request.SubtitleToTranslate!;
 
             // validate subtitles
             if (validateSubtitles)
@@ -150,14 +158,8 @@ public class TranslationJob
                     StripSubtitleFormatting = stripSubtitleFormatting
                 };
 
-                if (!_subtitleService.ValidateSubtitle(request.SubtitleToTranslate, validationOptions))
-                {
-                    _logger.LogWarning("Subtitle is not valid according to configured preferences.");
-                    throw new TaskCanceledException("Subtitle is not valid according to configured preferences.");
-                }
-
                 var isValid = _subtitleService.ValidateSubtitle(
-                    request.SubtitleToTranslate,
+                    subtitlePath,
                     validationOptions);
 
                 if (!isValid)
@@ -170,7 +172,7 @@ public class TranslationJob
             // translate subtitles
             var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
             var translator = new SubtitleTranslationService(translationService, _logger, _progressService);
-            var subtitles = await _subtitleService.ReadSubtitles(request.SubtitleToTranslate);
+            var subtitles = await _subtitleService.ReadSubtitles(subtitlePath);
             List<SubtitleItem> translatedSubtitles;
             if (settings[SettingKeys.Translation.UseBatchTranslation] == "true"
                 && translationService is IBatchTranslationService _)
@@ -182,7 +184,7 @@ public class TranslationJob
 
                 _logger.LogInformation(
                     "Using batch translation with max batch size: {maxBatchSize}, context before: {contextBefore}, context after: {contextAfter} for subtitle: {filePath}",
-                    maxSize, contextBefore, contextAfter, translationRequest.SubtitleToTranslate);
+                    maxSize, contextBefore, contextAfter, subtitlePath);
 
                 translatedSubtitles = await translator.TranslateSubtitlesBatch(
                     subtitles,
@@ -197,7 +199,7 @@ public class TranslationJob
             {
                 _logger.LogInformation(
                     "Using individual translation with context (before: {contextBefore}, after: {contextAfter}) for subtitle: {filePath}",
-                    contextBefore, contextAfter, translationRequest.SubtitleToTranslate);
+                    contextBefore, contextAfter, subtitlePath);
 
                 translatedSubtitles = await translator.TranslateSubtitles(
                     subtitles,
@@ -267,7 +269,7 @@ public class TranslationJob
             var targetLanguage = removeLanguageTag ? "" : translationRequest.TargetLanguage;
 
             var outputPath = _subtitleService.CreateFilePath(
-                translationRequest.SubtitleToTranslate,
+                translationRequest.SubtitleToTranslate ?? string.Empty,
                 targetLanguage,
                 subtitleTag);
 
