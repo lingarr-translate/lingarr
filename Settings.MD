@@ -31,6 +31,19 @@ These settings can be configured as environment variables to persist configurati
 
 The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a minified JSON array. Each object in the array should contain the `name` and `code` of the language.
 
+#### **Context & Batch Translation Settings**
+
+| **Environment Variable**          | **Description**                                                                                                                                                      |
+|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `USE_BATCH_TRANSLATION`          | Enables batch-mode translations for providers that support it (`openai`, `anthropic`, `localai`, `gemini`, `chutes`). Set to `true` to process subtitle lines in batches. |
+| `MAX_BATCH_SIZE`                 | Maximum number of subtitle lines to send in one batch call. Defaults to 10,000 when unset.                                                                            |
+| `AI_CONTEXT_PROMPT_ENABLED`      | Toggles contextual prompting. When `true`, Lingarr includes surrounding subtitle lines to help AI models preserve conversation flow.                                   |
+| `AI_CONTEXT_PROMPT`              | Template used when contextual prompting is enabled. Supports placeholders such as `{contextBefore}`, `{lineToTranslate}`, `{contextAfter}`.                           |
+| `AI_CONTEXT_BEFORE`              | Number of subtitle lines to send as context before the current line (used when `AI_CONTEXT_PROMPT_ENABLED` is `true`).                                                |
+| `AI_CONTEXT_AFTER`               | Number of subtitle lines to send as context after the current line (used when `AI_CONTEXT_PROMPT_ENABLED` is `true`).                                                 |
+| `AI_BATCH_CONTEXT_INSTRUCTION`   | Instruction appended to batch prompts whenever context-only lines are included. Defaults to the safest phrasing shipped with the app.                                |
+| `AI_BATCH_CONTEXT_INSTRUCTION_EDITABLE` | Controls whether the batch context instruction can be edited from the UI. Set to `true` to allow edits, `false` to lock it to the default value.                          |
+
 #### Example:
 ```json
 [{"name":"English","code":"en"},{"name":"Dutch","code":"nl"}]
