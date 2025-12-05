@@ -367,9 +367,9 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         var hasContextItems = subtitleBatch.Any(item => item.IsContextOnly);
         var itemsToTranslate = subtitleBatch.Where(item => !item.IsContextOnly).ToList();
         
-        // Build context-aware prompt if we have context items
+        // Build context-aware prompt if we have context items and context prompting is enabled
         var effectivePrompt = _prompt;
-        if (hasContextItems)
+        if (hasContextItems && _contextPromptEnabled == "true")
         {
             effectivePrompt = _prompt + "\n\n" + GetEffectiveBatchContextInstruction();
         }
