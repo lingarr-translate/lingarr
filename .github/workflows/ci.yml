@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop, fix/**, feat/** ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+    
+    - name: Restore dependencies
+      run: dotnet restore Lingarr.sln
+    
+    - name: Build
+      run: dotnet build Lingarr.sln --no-restore --configuration Release /p:TreatWarningsAsErrors=false
+    
+    - name: Test
+      run: dotnet test Lingarr.sln --no-build --configuration Release --verbosity normal
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'npm'
+        cache-dependency-path: Lingarr.Client/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./Lingarr.Client
+      run: npm ci
+    
+    - name: Build
+      working-directory: ./Lingarr.Client
+      run: npm run build
+    
+    - name: Check TypeScript
+      working-directory: ./Lingarr.Client
+      run: npx vue-tsc --noEmit

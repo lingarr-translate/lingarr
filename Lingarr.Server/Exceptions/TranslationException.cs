@@ -7,7 +7,7 @@ public class TranslationException : Exception
     /// </summary>
     /// <param name="message">The message that describes the error.</param>
     /// <param name="exception"></param>
-    public TranslationException(string message, Exception? exception = null) : base(message)
+    public TranslationException(string message, Exception? exception = null) : base(message, exception)
     {
     }
 }
