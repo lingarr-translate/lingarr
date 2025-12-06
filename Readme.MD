@@ -1,9 +1,9 @@
 ﻿# Lingarr: Subtitle Translation Made Easy
 
-[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/lingarr-translate/lingarr/releases)
+[![Version](https://img.shields.io/github/v/release/lingarr-translate/lingarr)](https://github.com/lingarr-translate/lingarr/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/lingarr/lingarr.svg)](https://hub.docker.com/r/lingarr/lingarr)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)](LICENSE)
-[![Discord](https://img.shields.io/discord/1234567890?label=discord&logo=discord)](https://discord.gg/HkubmH2rcR)
+[![Discord](https://img.shields.io/discord/1293119073739210885?label=discord&logo=discord)](https://discord.gg/HkubmH2rcR)
 
 Lingarr is an application that leverages translation technologies to automatically translate subtitle files to your desired target language. 
 With support for multiple translation services including LibreTranslate, DeepL, and various AI providers, Lingarr offers a flexible solution for all your subtitle translation needs.
@@ -148,7 +148,5 @@ GTranslate: [GTranslate](https://github.com/d4n3436/GTranslate)
 ### 🙏 Special thanks:
 For supporting open source:  
 [selfh.st by Ethan](https://selfh.st/?ref=lingarr)  
-[r/selfhosted](https://www.reddit.com/r/selfhosted/)
-
-For helping to squash a big bug:  
+[r/selfhosted](https://www.reddit.com/r/selfhosted/)  
 [FrankieBBBB](https://github.com/FrankieBBBB)  
