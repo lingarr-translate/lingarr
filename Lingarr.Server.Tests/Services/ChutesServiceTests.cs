@@ -120,7 +120,7 @@ public class ChutesServiceTests
         var containsContextFlag = batchDoc.RootElement
             .EnumerateArray()
             .Any(element =>
-                element.TryGetProperty("IsContextOnly", out var flag) &&
+                element.TryGetProperty("isContextOnly", out var flag) &&
                 flag.GetBoolean());
         Assert.True(containsContextFlag);
 
