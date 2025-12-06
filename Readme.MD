@@ -30,17 +30,18 @@ Choose the service that best fits your needs.
 ## Usage
 
 ### Docker Image Tags
-Lingarr provides multi-architecture Docker images that automatically select the correct platform:
 
 | Tag | Description | Architectures |
 |-----|-------------|---------------|
-| `latest` | Latest stable release | `linux/amd64`, `linux/arm64` |
-| `1.2.3` | Specific version | `linux/amd64`, `linux/arm64` |
-| `main` | ⚠️ Development build from main branch | `linux/amd64`, `linux/arm64` |
+| `lingarr/lingarr:latest` | Latest stable release | `linux/amd64`, `linux/arm64` |
+| `lingarr/lingarr:1.2.3` | Specific version | `linux/amd64`, `linux/arm64` |
+| `lingarr/lingarr:main` | ⚠️ Development build from main branch | `linux/amd64`, `linux/arm64` |
 
 **Note:** As of 1.0.3 all images support both AMD64 (Intel/AMD) and ARM64 (Raspberry Pi, Apple Silicon) architectures. Docker will automatically pull the correct architecture for your system.
 
 ## Setting up Lingarr
+To run Lingarr using Docker Compose, add the following configuration to your `docker-compose.yml` file
+
 ```yaml
 services:
   lingarr:
