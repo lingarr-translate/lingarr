@@ -1,14 +1,14 @@
 ﻿# Lingarr: Subtitle Translation Made Easy
 
-[![Version](https://img.shields.io/badge/version-1.0.3-blue.svg)](https://github.com/lingarr-translate/lingarr/releases)
+[![Version](https://img.shields.io/github/v/release/lingarr-translate/lingarr)](https://github.com/lingarr-translate/lingarr/releases)
 [![Docker Pulls](https://img.shields.io/docker/pulls/lingarr/lingarr.svg)](https://hub.docker.com/r/lingarr/lingarr)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)](LICENSE)
-[![Discord](https://img.shields.io/discord/1234567890?label=discord&logo=discord)](https://discord.gg/HkubmH2rcR)
+[![Discord](https://img.shields.io/discord/1293119073739210885?label=discord&logo=discord)](https://discord.gg/HkubmH2rcR)
 
 Lingarr is an application that leverages translation technologies to automatically translate subtitle files to your desired target language. 
 With support for multiple translation services including LibreTranslate, DeepL, and various AI providers, Lingarr offers a flexible solution for all your subtitle translation needs.
 
-![Lingarr Demo](https://github.com/user-attachments/assets/be753d77-ca53-4867-adea-363145613d2b)
+https://github.com/user-attachments/assets/be753d77-ca53-4867-adea-363145613d2b
 
 ### 🌟 Multiple Translation Service Support
 Lingarr now offers multiple services for automated translation:
