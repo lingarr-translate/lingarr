@@ -53,7 +53,7 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.AiPrompt, "Translate this." },
             { SettingKeys.Translation.AiContextPrompt, "Context." },
             { SettingKeys.Translation.AiContextPromptEnabled, "false" },
-            { SettingKeys.Translation.CustomAiParameters, "{}" },
+            { SettingKeys.Translation.CustomAiParameters, "[]" },
             { SettingKeys.Translation.RequestTimeout, "30" },
             { SettingKeys.Translation.MaxRetries, "3" },
             { SettingKeys.Translation.RetryDelay, "1000" },
@@ -119,7 +119,7 @@ public class GoogleGeminiServiceTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Successfully repaired truncated JSON")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Successfully repaired the truncated JSON")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
@@ -145,7 +145,7 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.AiPrompt, "Translate this." },
             { SettingKeys.Translation.AiContextPrompt, "Context." },
             { SettingKeys.Translation.AiContextPromptEnabled, "false" },
-            { SettingKeys.Translation.CustomAiParameters, "{}" },
+            { SettingKeys.Translation.CustomAiParameters, "[]" },
             { SettingKeys.Translation.RequestTimeout, "30" },
             { SettingKeys.Translation.MaxRetries, "3" },
             { SettingKeys.Translation.RetryDelay, "1000" },
