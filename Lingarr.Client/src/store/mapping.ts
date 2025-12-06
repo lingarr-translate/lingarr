@@ -2,8 +2,7 @@ import { acceptHMRUpdate, defineStore } from 'pinia'
 import services from '@/services'
 import { IPathMapping } from '@/ts'
 
-export const useMappingStore = defineStore({
-    id: 'mapping',
+export const useMappingStore = defineStore('mapping', {
     state: () => ({
         mappings: [] as IPathMapping[],
         error: null as string | null

@@ -55,6 +55,7 @@ import { useModelOptions } from '@/composables/useModelOptions'
 import { useRouter } from 'vue-router'
 
 const { translate } = useI18n()
+// @ts-expect-error - TypeScript doesn't recognize template ref usage
 const { options, errorMessage, selectRef, loadOptions } = useModelOptions()
 const router = useRouter()
 
