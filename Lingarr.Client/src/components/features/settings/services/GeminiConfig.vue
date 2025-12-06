@@ -53,7 +53,9 @@ import InputComponent from '@/components/common/InputComponent.vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from '@/plugins/i18n'
 import { useModelOptions } from '@/composables/useModelOptions'
+
 const { translate } = useI18n()
+// @ts-expect-error - TypeScript doesn't recognize template ref usage
 const { options, errorMessage, selectRef, loadOptions } = useModelOptions()
 
 const settingsStore = useSettingStore()

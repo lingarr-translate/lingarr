@@ -3,8 +3,7 @@ import { ILanguage, ISubtitle, IUseTranslateStore, MediaType } from '@/ts'
 import services from '@/services'
 import { useTranslationRequestStore } from '@/store/translationRequest'
 
-export const useTranslateStore = defineStore({
-    id: 'translate',
+export const useTranslateStore = defineStore('translate', {
     state: (): IUseTranslateStore => ({
         languages: [],
         languagesError: false,

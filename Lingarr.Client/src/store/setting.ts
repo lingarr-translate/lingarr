@@ -11,8 +11,7 @@ import services from '@/services'
 import { useTranslateStore } from '@/store/translate'
 import { useInstanceStore } from '@/store/instance'
 
-export const useSettingStore = defineStore({
-    id: 'setting',
+export const useSettingStore = defineStore('setting', {
     state: (): IUseSettingStore => ({
         settings: {} as ISettings
     }),
