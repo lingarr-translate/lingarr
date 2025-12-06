@@ -17,7 +17,7 @@ public class SettingChangedListener
     private readonly ILogger<SettingChangedListener> _logger;
     private static readonly HashSet<string> BatchServiceTypes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "openai", "anthropic", "localai", "gemini"
+        "openai", "anthropic", "localai", "gemini", "chutes"
     };
 
     public SettingChangedListener(IServiceProvider serviceProvider,
@@ -218,11 +218,7 @@ public class SettingChangedListener
                     break;
 
                 case "BatchTranslation":
-                    var useBatchTranslation = await settingService.GetSetting(SettingKeys.Translation.UseBatchTranslation);
-                    if (useBatchTranslation is "true")
-                    {
-                        await settingService.SetSetting(SettingKeys.Translation.AiContextPromptEnabled, "false");
-                    }
+                    // No automatic toggle of context prompts anymore; leave user preference intact
                     break;
             }
         }
