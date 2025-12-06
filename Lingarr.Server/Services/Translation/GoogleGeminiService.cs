@@ -389,7 +389,6 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             ["generationConfig"] = new Dictionary<string, object>
             {
                 ["response_mime_type"] = "application/json",
-                ["maxOutputTokens"] = 8192,
                 ["response_schema"] = new
                 {
                     type = "array",
@@ -473,7 +472,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                     var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(repairedJson);
                     if (translatedItems != null)
                     {
-                        _logger.LogWarning("Successfully repaired truncated JSON response from Gemini.");
+                        _logger.LogWarning("Successfully repaired the truncated JSON response from Gemini. Please verify the result.");
                         return translatedItems
                             .GroupBy(item => item.Position)
                             .ToDictionary(group => group.Key, group => group.First().Line);
@@ -490,12 +489,12 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         }
     }
 
-    private string TryRepairJson(string json)
+    private static string TryRepairJson(string json)
     {
         json = json.Trim();
         if (json.StartsWith("[") && !json.EndsWith("]"))
         {
-            int lastBrace = json.LastIndexOf('}');
+            var lastBrace = json.LastIndexOf('}');
             if (lastBrace > -1)
             {
                 return json.Substring(0, lastBrace + 1) + "]";

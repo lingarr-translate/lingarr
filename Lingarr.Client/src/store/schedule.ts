@@ -2,8 +2,7 @@
 import { IUseScheduleStore, IRecurringJob } from '@/ts'
 import services from '@/services'
 
-export const useScheduleStore = defineStore({
-    id: 'schedule',
+export const useScheduleStore = defineStore('schedule', {
     state: (): IUseScheduleStore => ({
         recurringJobs: []
     }),
