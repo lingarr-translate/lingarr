@@ -389,7 +389,6 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             ["generationConfig"] = new Dictionary<string, object>
             {
                 ["response_mime_type"] = "application/json",
-                ["maxOutputTokens"] = 8192,
                 ["response_schema"] = new
                 {
                     type = "array",
