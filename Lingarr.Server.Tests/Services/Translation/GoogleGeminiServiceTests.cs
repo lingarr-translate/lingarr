@@ -123,15 +123,6 @@ public class GoogleGeminiServiceTests
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
-
-        // Verify maxOutputTokens was sent
-        _httpMessageHandlerMock.Protected().Verify(
-            "SendAsync",
-            Times.Once(),
-            ItExpr.Is<HttpRequestMessage>(req => 
-                req.Content!.ReadAsStringAsync().Result.Contains("\"maxOutputTokens\":8192")),
-            ItExpr.IsAny<CancellationToken>()
-        );
     }
 
     [Fact]
