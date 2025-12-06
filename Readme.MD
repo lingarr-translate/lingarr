@@ -8,7 +8,7 @@
 Lingarr is an application that leverages translation technologies to automatically translate subtitle files to your desired target language. 
 With support for multiple translation services including LibreTranslate, DeepL, and various AI providers, Lingarr offers a flexible solution for all your subtitle translation needs.
 
-![Lingarr Demo](https://github.com/user-attachments/assets/be753d77-ca53-4867-adea-363145613d2b)
+https://github.com/user-attachments/assets/be753d77-ca53-4867-adea-363145613d2b
 
 ### 🌟 Multiple Translation Service Support
 Lingarr now offers multiple services for automated translation:
@@ -29,9 +29,6 @@ Choose the service that best fits your needs.
 
 ## Usage
 To run Lingarr using Docker Compose, add the following configuration to your `docker-compose.yml` file,
-
-**Note:** _As of version 1.0.3, Lingarr uses a dynamic path mapper, which may encounter issues with deeper media directories.   
-If your mapping involves more than a single directory, please consult the [wiki](https://github.com/lingarr-translate/lingarr/wiki), create an [issue](https://github.com/lingarr-translate/lingarr/issues), or contact us on [Discord](https://discord.gg/HkubmH2rcR)_
 
 ## Setting up Lingarr
 ```yaml

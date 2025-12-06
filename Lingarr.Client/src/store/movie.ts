@@ -2,8 +2,7 @@ import { acceptHMRUpdate, defineStore } from 'pinia'
 import { IFilter, IMovie, IPagedResult, IUseMovieStore, MediaType } from '@/ts'
 import services from '@/services'
 
-export const useMovieStore = defineStore({
-    id: 'movie',
+export const useMovieStore = defineStore('movie', {
     state: (): IUseMovieStore => ({
         movies: {
             totalCount: 0,

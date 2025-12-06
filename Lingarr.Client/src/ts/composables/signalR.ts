@@ -1,4 +1,5 @@
 import { IRequestProgress, ISettings } from '@/ts'
+import type { HubConnection as SignalRHubConnection } from '@microsoft/signalr'
 
 export interface SignalRStore {
     state: SignalRState
@@ -10,7 +11,7 @@ export interface SignalRState {
 }
 
 interface HubConnection {
-    connection: signalR.HubConnection
+    connection: SignalRHubConnection
     isConnected: boolean
     lastError: Error | null
 }
