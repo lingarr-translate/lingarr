@@ -8,8 +8,7 @@ import {
 } from '@/ts'
 import services from '@/services'
 
-export const useTranslationRequestStore = defineStore({
-    id: 'translateRequest',
+export const useTranslationRequestStore = defineStore('translateRequest', {
     state: (): IUseTranslationRequestStore => ({
         activeTranslationRequests: 0,
         translationRequests: {

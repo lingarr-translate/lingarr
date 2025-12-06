@@ -5,8 +5,7 @@ import services from '@/services'
 
 const localStorage = useLocalStorage()
 
-export const useInstanceStore = defineStore({
-    id: 'instance',
+export const useInstanceStore = defineStore('instance', {
     state: (): IUseInstanceStore => ({
         version: {
             newVersion: false,

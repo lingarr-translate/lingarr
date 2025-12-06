@@ -2,8 +2,7 @@ import { acceptHMRUpdate, defineStore } from 'pinia'
 import services from '@/services'
 import { IFilter, IUseShowStore, IPagedResult, IShow, MediaType } from '@/ts'
 
-export const useShowStore = defineStore({
-    id: 'show',
+export const useShowStore = defineStore('show', {
     state: (): IUseShowStore => ({
         shows: {
             totalCount: 0,
