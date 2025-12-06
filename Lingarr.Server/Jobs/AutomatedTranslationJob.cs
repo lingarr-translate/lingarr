@@ -75,21 +75,24 @@ public class AutomatedTranslationJob
         var translationCycle = settings[SettingKeys.Automation.TranslationCycle] == "true" ? "movies" : "shows";
         _logger.LogInformation($"Starting translation cycle for |Green|{translationCycle}|/Green|");
 
+        var translationsPerformed = 0;
         switch (translationCycle)
         {
             case "movies":
                 await _settingService.SetSetting(SettingKeys.Automation.TranslationCycle, "false");
-                if (!await ProcessMovies())
+                translationsPerformed += await ProcessMovies(_maxTranslationsPerRun);
+                if (translationsPerformed < _maxTranslationsPerRun)
                 {
-                    await ProcessShows();
+                    await ProcessShows(_maxTranslationsPerRun - translationsPerformed);
                 }
 
                 break;
             case "shows":
                 await _settingService.SetSetting(SettingKeys.Automation.TranslationCycle, "true");
-                if (!await ProcessShows())
+                translationsPerformed += await ProcessShows(_maxTranslationsPerRun);
+                if (translationsPerformed < _maxTranslationsPerRun)
                 {
-                    await ProcessMovies();
+                    await ProcessMovies(_maxTranslationsPerRun - translationsPerformed);
                 }
 
                 break;
@@ -134,7 +137,7 @@ public class AutomatedTranslationJob
         return false;
     }
 
-    private async Task<bool> ProcessMovies()
+    private async Task<int> ProcessMovies(int limit)
     {
         _logger.LogInformation("Movie Translation job initiated");
 
@@ -145,8 +148,8 @@ public class AutomatedTranslationJob
 
         if (!movies.Any())
         {
-            _logger.LogInformation("No translatable movies found, starting show translation.");
-            return false;
+            _logger.LogInformation("No translatable movies found.");
+            return 0;
         }
         
         // Instead of a random selection based on updatedAt, we will use a cycle so that all shows are processed.
@@ -162,7 +165,7 @@ public class AutomatedTranslationJob
         // we evaluate past the initial window when few items are eligible.
         _logger.LogInformation(
             "Processing up to {MaxTranslations} movies starting at {StartIndex} out of {TotalCount}",
-            _maxTranslationsPerRun,
+            limit,
             currentIndex,
             movies.Count);
 
@@ -170,12 +173,12 @@ public class AutomatedTranslationJob
         var scannedMovies = 0;
         var index = currentIndex;
 
-        while (translationsInitiated < _maxTranslationsPerRun && scannedMovies < movies.Count)
+        while (translationsInitiated < limit && scannedMovies < movies.Count)
         {
             var movie = movies[index % movies.Count];
             try
             {
-                if (translationsInitiated >= _maxTranslationsPerRun)
+                if (translationsInitiated >= limit)
                 {
                     _logger.LogInformation("Max translations per run reached. Stopping translation process.");
                     break;
@@ -216,10 +219,10 @@ public class AutomatedTranslationJob
         var newIndex = index % movies.Count;
         SetProcessingIndex(MovieProcessingIndexKey, newIndex);
 
-        return true;
+        return translationsInitiated;
     }
 
-    private async Task<bool> ProcessShows()
+    private async Task<int> ProcessShows(int limit)
     {
         _logger.LogInformation("Show Translation job initiated");
 
@@ -239,8 +242,8 @@ public class AutomatedTranslationJob
 
         if (!episodes.Any())
         {
-            _logger.LogInformation("No translatable shows found, starting movie translation.");
-            return false;
+            _logger.LogInformation("No translatable shows found.");
+            return 0;
         }
 
         // Instead of a random selection based on updatedAt, we will use a cycle so that all shows are processed.
@@ -253,7 +256,7 @@ public class AutomatedTranslationJob
         }
         _logger.LogInformation(
             "Processing up to {MaxTranslations} episodes starting at {StartIndex} out of {TotalCount}",
-            _maxTranslationsPerRun,
+            limit,
             currentIndex,
             episodes.Count);
 
@@ -261,7 +264,7 @@ public class AutomatedTranslationJob
         var scannedEpisodes = 0;
         var episodeIndex = currentIndex;
 
-        while (translationsInitiated < _maxTranslationsPerRun && scannedEpisodes < episodes.Count)
+        while (translationsInitiated < limit && scannedEpisodes < episodes.Count)
         {
             var episode = episodes[episodeIndex % episodes.Count];
 
@@ -308,7 +311,7 @@ public class AutomatedTranslationJob
         var newIndex = episodeIndex % episodes.Count;
         SetProcessingIndex(ShowProcessingIndexKey, newIndex);
 
-        return true;
+        return translationsInitiated;
     }
 
     private int GetProcessingIndex(string key)

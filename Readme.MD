@@ -1,7 +1,12 @@
 ﻿# Lingarr: Subtitle Translation Made Easy
 
+[![Version](https://img.shields.io/github/v/release/lingarr-translate/lingarr)](https://github.com/lingarr-translate/lingarr/releases)
+[![Docker Pulls](https://img.shields.io/docker/pulls/lingarr/lingarr.svg)](https://hub.docker.com/r/lingarr/lingarr)
+[![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)](LICENSE)
+[![Discord](https://img.shields.io/discord/1293119073739210885?label=discord&logo=discord)](https://discord.gg/HkubmH2rcR)
+
 Lingarr is an application that leverages translation technologies to automatically translate subtitle files to your desired target language. 
-With support for both LibreTranslate, DeepL and AI Lingarr offers a flexible solution for all your subtitle translation needs.
+With support for multiple translation services including LibreTranslate, DeepL, and various AI providers, Lingarr offers a flexible solution for all your subtitle translation needs.
 
 https://github.com/user-attachments/assets/be753d77-ca53-4867-adea-363145613d2b
 
@@ -23,16 +28,23 @@ Lingarr now offers multiple services for automated translation:
 Choose the service that best fits your needs.
 
 ## Usage
-To run Lingarr using Docker Compose, add the following configuration to your `docker-compose.yml` file,
 
-**Note:** _As of this version, Lingarr uses a dynamic mapper, which may encounter issues with deeper media directories.   
-If your mapping involves more than a single directory, please consult the [wiki](https://github.com/lingarr-translate/lingarr/wiki), create an [issue](https://github.com/lingarr-translate/lingarr/issues), or contact me on [Discord](https://discord.gg/HkubmH2rcR)_
+### Docker Image Tags
+Lingarr provides multi-architecture Docker images that automatically select the correct platform:
+
+| Tag | Description | Architectures |
+|-----|-------------|---------------|
+| `latest` | Latest stable release | `linux/amd64`, `linux/arm64` |
+| `1.2.3` | Specific version | `linux/amd64`, `linux/arm64` |
+| `main` | ⚠️ Development build from main branch | `linux/amd64`, `linux/arm64` |
+
+**Note:** As of 1.0.3 all images support both AMD64 (Intel/AMD) and ARM64 (Raspberry Pi, Apple Silicon) architectures. Docker will automatically pull the correct architecture for your system.
 
 ## Setting up Lingarr
 ```yaml
 services:
   lingarr:
-    image: lingarr/lingarr:latest # Use latest-arm64 for the ARM build
+    image: lingarr/lingarr:latest
     container_name: lingarr
     restart: unless-stopped
     environment:
@@ -146,7 +158,5 @@ GTranslate: [GTranslate](https://github.com/d4n3436/GTranslate)
 ### 🙏 Special thanks:
 For supporting open source:  
 [selfh.st by Ethan](https://selfh.st/?ref=lingarr)  
-[r/selfhosted](https://www.reddit.com/r/selfhosted/)
-
-For helping to squash a big bug:  
+[r/selfhosted](https://www.reddit.com/r/selfhosted/)  
 [FrankieBBBB](https://github.com/FrankieBBBB)  

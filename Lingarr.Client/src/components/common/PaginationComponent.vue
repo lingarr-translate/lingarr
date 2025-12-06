@@ -40,7 +40,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 import { computed, ComputedRef } from 'vue'
 import { IFilter } from '@/ts'
 
