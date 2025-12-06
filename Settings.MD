@@ -25,11 +25,24 @@ These settings can be configured as environment variables to persist configurati
 
 | **Environment Variable** | **Description**                                                                 |
 |--------------------------|---------------------------------------------------------------------------------|
-| `SERVICE_TYPE`           | The type of translation service to use. Supported values: `libretranslate`, `openai`, `anthropic`, `localai`, `deepl`, `google`, `bing`, `microsoft`, `yandex`. |
+| `SERVICE_TYPE`           | The type of translation service to use. Supported values: `libretranslate`, `openai`, `anthropic`, `localai`, `deepl`, `gemini`, `deepseek`, `chutes`, `google`, `bing`, `microsoft`, `yandex`. |
 | `SOURCE_LANGUAGES`       | A minified JSON array of source languages for translation. |
 | `TARGET_LANGUAGES`       | A minified JSON array of target languages for translation. |
 
 The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a minified JSON array. Each object in the array should contain the `name` and `code` of the language.
+
+#### **Context & Batch Translation Settings**
+
+| **Environment Variable**          | **Description**                                                                                                                                                      |
+|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `USE_BATCH_TRANSLATION`          | Enables batch-mode translations for providers that support it (`openai`, `anthropic`, `localai`, `gemini`, `chutes`). Set to `true` to process subtitle lines in batches. |
+| `MAX_BATCH_SIZE`                 | Maximum number of subtitle lines to send in one batch call. Defaults to 10,000 when unset.                                                                            |
+| `AI_CONTEXT_PROMPT_ENABLED`      | Toggles contextual prompting. When `true`, Lingarr includes surrounding subtitle lines to help AI models preserve conversation flow.                                   |
+| `AI_CONTEXT_PROMPT`              | Template used when contextual prompting is enabled. Supports placeholders such as `{contextBefore}`, `{lineToTranslate}`, `{contextAfter}`.                           |
+| `AI_CONTEXT_BEFORE`              | Number of subtitle lines to send as context before the current line (used when `AI_CONTEXT_PROMPT_ENABLED` is `true`).                                                |
+| `AI_CONTEXT_AFTER`               | Number of subtitle lines to send as context after the current line (used when `AI_CONTEXT_PROMPT_ENABLED` is `true`).                                                 |
+| `AI_BATCH_CONTEXT_INSTRUCTION`   | Instruction appended to batch prompts whenever context-only lines are included. Defaults to the safest phrasing shipped with the app.                                |
+| `AI_BATCH_CONTEXT_INSTRUCTION_EDITABLE` | Controls whether the batch context instruction can be edited from the UI. Set to `true` to allow edits, `false` to lock it to the default value.                          |
 
 #### Example:
 ```json
@@ -78,6 +91,14 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 | `DEEPSEEK_API_KEY`      | The API key for authenticating with Anthropic.                                  |
 | `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
 
+#### **Chutes**
+
+| **Environment Variable** | **Description**                                                                 |
+|--------------------------|---------------------------------------------------------------------------------|
+| `CHUTES_MODEL`           | The model to use for Chutes translations. Example: `deepseek-ai/DeepSeek-V3.1-Terminus`. |
+| `CHUTES_API_KEY`         | The API key for authenticating with Chutes. Get yours at https://chutes.ai/app/api |
+| `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
+
 #### **LocalAI**
 
 | **Environment Variable** | **Description**                                                                 |
@@ -106,6 +127,7 @@ The `SERVICE_TYPE` variable determines which translation service to use. Below a
 | `anthropic`     | Use Anthropic's models (e.g., Claude-2) for translations.                       |
 | `localai`       | Use a locally hosted AI model for translations.                                 |
 | `deepl`         | Use the DeepL API for translations.                                             |
+| `chutes`        | Use Chutes.AI OpenAI-compatible API for translations.                           |
 | `google`        | Use Google Translate for translations.                                          |
 | `bing`          | Use Bing Translate for translations.                                            |
 | `microsoft`     | Use Microsoft Translator for translations.                                      |

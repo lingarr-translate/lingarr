@@ -31,6 +31,8 @@ export const SETTINGS = {
     GEMINI_API_KEY: 'gemini_api_key',
     DEEPSEEK_MODEL: 'deepseek_model',
     DEEPSEEK_API_KEY: 'deepseek_api_key',
+    CHUTES_MODEL: 'chutes_model',
+    CHUTES_API_KEY: 'chutes_api_key',
     AI_PROMPT: 'ai_prompt',
     THEME: 'theme',
     LOCALE: 'locale',
@@ -50,6 +52,8 @@ export const SETTINGS = {
     AI_CONTEXT_PROMPT: 'ai_context_prompt',
     AI_CONTEXT_BEFORE: 'ai_context_before',
     AI_CONTEXT_AFTER: 'ai_context_after',
+    AI_BATCH_CONTEXT_INSTRUCTION: 'ai_batch_context_instruction',
+    AI_BATCH_CONTEXT_INSTRUCTION_EDITABLE: 'ai_batch_context_instruction_editable',
     USE_BATCH_TRANSLATION: 'use_batch_translation',
     MAX_BATCH_SIZE: 'max_batch_size',
     USE_SUBTITLE_TAGGING: 'use_subtitle_tagging',
@@ -91,6 +95,8 @@ export interface ISettings {
     gemini_api_key: string
     deepseek_model: string
     deepseek_api_key: string
+    chutes_model: string
+    chutes_api_key: string
     ai_prompt: string
     movie_age_threshold: string
     show_age_threshold: string
@@ -110,6 +116,8 @@ export interface ISettings {
     ai_context_prompt: string
     ai_context_before: string
     ai_context_after: string
+    ai_batch_context_instruction: string
+    ai_batch_context_instruction_editable: string
     use_batch_translation: string
     max_batch_size: string
     use_subtitle_tagging: string
@@ -134,6 +142,7 @@ export const SERVICE_TYPE = {
     DEEPL: 'deepl',
     GEMINI: 'gemini',
     DEEPSEEK: 'deepseek',
+    CHUTES: 'chutes',
     GOOGLE: 'google',
     BING: 'bing',
     MICROSOFT: 'microsoft',

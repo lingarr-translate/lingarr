@@ -56,7 +56,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
 
         var sourceLanguages = await GetLanguagesSetting<SourceLanguage>(SettingKeys.Translation.SourceLanguages);
         var targetLanguages = await GetLanguagesSetting<TargetLanguage>(SettingKeys.Translation.TargetLanguages);
-        var ignoreCaptions = await _settingService.GetSetting(SettingKeys.Translation.IgnoreCaptions);
+        var ignoreCaptions = await _settingService.GetSetting(SettingKeys.Translation.IgnoreCaptions) ?? "false";
 
         _media = media;
         _mediaType = mediaType;
@@ -220,7 +220,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     /// <summary>
     /// Updates the media hash in the database.
     /// </summary>
-    /// <returns>A task representing the asynchronous operation.</returns
+    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task UpdateHash()
     {
         _media.MediaHash = _hash;

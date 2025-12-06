@@ -14,7 +14,7 @@
                 </div>
                 <AiSystemPrompt @save="saveNotification?.show()" />
 
-                <div v-if="useBatchTranslation == 'false'">
+                <div>
                     <div class="flex flex-col space-x-2">
                         <span class="font-semibold">
                             {{ translate('settings.prompt.contextPromptToggle') }}
@@ -35,6 +35,9 @@
                         </span>
                         {{ translate('settings.prompt.contextPromptDescription') }}
                     </div>
+                    <div v-if="aiContextPromptEnabled == 'true' && useBatchTranslation == 'true'" class="text-xs text-info mt-2">
+                        {{ translate('settings.prompt.batchContextNote') }}
+                    </div>
                     <AiContextPrompt
                         v-if="aiContextPromptEnabled == 'true'"
                         @save="saveNotification?.show()" />
@@ -54,8 +57,75 @@
                         :label="translate('settings.prompt.contextAfter')"
                         @update:validation="(val) => (isValid.contextAfter = val)" />
                 </div>
-                <div v-else class="text-xs">
-                    {{ translate('settings.prompt.notSupported') }}
+
+                <!-- Batch Context Instruction Section -->
+                <div
+                    v-if="useBatchTranslation == 'true' && aiContextPromptEnabled == 'true'"
+                    class="mt-8 pt-6 border-t border-base-content/10">
+                    <div class="flex flex-col gap-4">
+                        <!-- Header -->
+                        <div>
+                            <h3 class="font-semibold text-lg flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                                    <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" />
+                                </svg>
+                                {{ translate('settings.prompt.batchContextInstructionTitle') }}
+                            </h3>
+                            <p class="text-sm text-base-content/70 mt-1">
+                                {{ translate('settings.prompt.batchContextInstructionDescription') }}
+                            </p>
+                        </div>
+
+                        <!-- content box -->
+                        <div class="bg-base-200/50 rounded-lg p-5 border border-base-300">
+                            
+                            <!-- Critical Warning -->
+                            <div class="flex items-start gap-3 mb-5 text-warning/90 bg-warning/10 p-4 rounded-md border border-warning/20">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-5 w-5 mt-0.5" fill="none" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                <div class="text-sm leading-relaxed">
+                                    <span class="font-bold uppercase text-xs tracking-wider block mb-1 opacity-80">Critical</span>
+                                    {{ translate('settings.prompt.batchContextInstructionWarning') }}
+                                </div>
+                            </div>
+
+                            <!-- Advanced edit toggle -->
+                            <div class="flex items-center mb-4">
+                                <ToggleButton v-model="batchContextInstructionEditable" size="small">
+                                    <span
+                                        class="text-sm font-medium transition-colors"
+                                        :class="batchContextInstructionEditable == 'true' ? 'text-warning' : 'text-base-content/70'">
+                                        {{ translate('settings.prompt.batchContextInstructionAdvancedToggle') }}
+                                    </span>
+                                </ToggleButton>
+                            </div>
+
+                            <!-- Editor -->
+                            <div
+                                v-if="batchContextInstructionEditable == 'true'"
+                                class="relative mt-3 space-y-3">
+                                <textarea
+                                    v-model="batchContextInstruction"
+                                    class="textarea textarea-bordered textarea-warning w-full h-48 font-mono text-sm leading-relaxed bg-base-100 shadow-inner focus:ring-2 focus:ring-warning/50 transition-all duration-200"
+                                ></textarea>
+
+                                <!-- Reset button below editor -->
+                                <div class="flex justify-end">
+                                    <button 
+                                        class="btn btn-outline btn-xs btn-error"
+                                        @click="resetBatchContextInstruction"
+                                        :title="translate('settings.prompt.batchContextInstructionResetDefault')">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                        </svg>
+                                        {{ translate('settings.prompt.batchContextInstructionResetDefault') }}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </template>
@@ -71,6 +141,9 @@ import AiContextPrompt from '@/components/features/settings/services/AiContextPr
 import SaveNotification from '@/components/common/SaveNotification.vue'
 import ToggleButton from '@/components/common/ToggleButton.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
+
+// Default batch context instruction - MUST match the backend default
+const DEFAULT_BATCH_CONTEXT_INSTRUCTION = `IMPORTANT: Some items in the batch are marked with "isContextOnly": true. These are provided ONLY for context to help you understand the conversation flow. Do NOT translate or include context-only items in your output. Only translate and return items where "isContextOnly" is false or not present.`
 
 const settingsStore = useSettingStore()
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
@@ -110,4 +183,34 @@ const contextAfter = computed({
         }
     }
 })
+
+// Batch context instruction editable toggle (persisted in settings)
+const batchContextInstructionEditable = computed({
+    get: () => {
+        const stored = settingsStore.getSetting(SETTINGS.AI_BATCH_CONTEXT_INSTRUCTION_EDITABLE) as string
+        return stored || 'false'
+    },
+    set: (newValue: string) => {
+        settingsStore.updateSetting(SETTINGS.AI_BATCH_CONTEXT_INSTRUCTION_EDITABLE, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+
+// Batch context instruction
+const batchContextInstruction = computed({
+    get: () => {
+        const stored = settingsStore.getSetting(SETTINGS.AI_BATCH_CONTEXT_INSTRUCTION) as string
+        return stored || DEFAULT_BATCH_CONTEXT_INSTRUCTION
+    },
+    set: (newValue: string) => {
+        settingsStore.updateSetting(SETTINGS.AI_BATCH_CONTEXT_INSTRUCTION, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+
+// Reset to default function
+function resetBatchContextInstruction() {
+    batchContextInstruction.value = DEFAULT_BATCH_CONTEXT_INSTRUCTION
+    saveNotification.value?.show()
+}
 </script>

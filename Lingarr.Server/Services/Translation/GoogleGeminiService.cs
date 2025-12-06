@@ -61,6 +61,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiContextPrompt,
                 SettingKeys.Translation.AiContextPromptEnabled,
+                SettingKeys.Translation.AiBatchContextInstruction,
                 SettingKeys.Translation.CustomAiParameters,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
@@ -70,6 +71,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             _apiKey = settings[SettingKeys.Translation.Gemini.ApiKey];
             _model = settings[SettingKeys.Translation.Gemini.Model];
             _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
+            _batchContextInstruction = settings[SettingKeys.Translation.AiBatchContextInstruction];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey))
             {
@@ -280,7 +282,8 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                         return false;
 
                     return methods.EnumerateArray()
-                        .Any(method => supportedGenerationMethods.Contains(method.GetString()));
+                        .Select(method => method.GetString())
+                        .Any(methodName => methodName != null && supportedGenerationMethods.Contains(methodName));
                 })
                 .Select(model => new LabelValue
                 {
@@ -360,6 +363,17 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
+        // Check if we have any context-only items
+        var hasContextItems = subtitleBatch.Any(item => item.IsContextOnly);
+        var itemsToTranslate = subtitleBatch.Where(item => !item.IsContextOnly).ToList();
+        
+        // Build context-aware prompt if we have context items and context prompting is enabled
+        var effectivePrompt = _prompt;
+        if (hasContextItems && _contextPromptEnabled == "true")
+        {
+            effectivePrompt = _prompt + "\n\n" + GetEffectiveBatchContextInstruction();
+        }
+
         var endpoint = $"{_endpoint}/models/{_model}:generateContent?key={_apiKey}";
         var requestBody = new Dictionary<string, object>
         {
@@ -369,7 +383,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                 {
                     new
                     {
-                        text = _prompt
+                        text = effectivePrompt
                     }
                 }
             },
@@ -457,7 +471,10 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                 throw new TranslationException("Failed to deserialize translated subtitles");
             }
 
+            // Only return translations for non-context items
+            var expectedPositions = itemsToTranslate.Select(i => i.Position).ToHashSet();
             return translatedItems
+                .Where(item => expectedPositions.Contains(item.Position))
                 .GroupBy(item => item.Position)
                 .ToDictionary(group => group.Key, group => group.First().Line);
         }

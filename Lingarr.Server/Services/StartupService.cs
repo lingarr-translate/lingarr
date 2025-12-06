@@ -91,6 +91,8 @@ public class StartupService : IHostedService
             { "LIBRE_TRANSLATE_URL", SettingKeys.Translation.LibreTranslate.Url },
             { "LIBRE_TRANSLATE_API_KEY", SettingKeys.Translation.LibreTranslate.ApiKey },
             { "AI_PROMPT", SettingKeys.Translation.AiPrompt },
+            { "AI_BATCH_CONTEXT_INSTRUCTION", SettingKeys.Translation.AiBatchContextInstruction },
+            { "AI_BATCH_CONTEXT_INSTRUCTION_EDITABLE", SettingKeys.Translation.AiBatchContextInstructionEditable },
 
             { "OPENAI_MODEL", SettingKeys.Translation.OpenAi.Model },
             { "OPENAI_API_KEY", SettingKeys.Translation.OpenAi.ApiKey },
@@ -108,6 +110,9 @@ public class StartupService : IHostedService
 
             { "DEEPSEEK_MODEL", SettingKeys.Translation.DeepSeek.Model },
             { "DEEPSEEK_API_KEY", SettingKeys.Translation.DeepSeek.ApiKey },
+
+            { "CHUTES_MODEL", SettingKeys.Translation.Chutes.Model },
+            { "CHUTES_API_KEY", SettingKeys.Translation.Chutes.ApiKey },
 
             { "DEEPL_API_KEY", SettingKeys.Translation.DeepL.DeeplApiKey }
         };

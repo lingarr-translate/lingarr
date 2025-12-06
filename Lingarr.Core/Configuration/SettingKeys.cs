@@ -53,6 +53,12 @@ public static class SettingKeys
             public const string ApiKey = "deepseek_api_key";
         }
 
+        public static class Chutes
+        {
+            public const string Model = "chutes_model";
+            public const string ApiKey = "chutes_api_key";
+        }
+
         public static class LibreTranslate
         {
             public const string Url = "libretranslate_url";
@@ -67,6 +73,8 @@ public static class SettingKeys
         public const string AiContextPrompt = "ai_context_prompt";
         public const string AiContextBefore = "ai_context_before";
         public const string AiContextAfter = "ai_context_after";
+        public const string AiBatchContextInstruction = "ai_batch_context_instruction";
+        public const string AiBatchContextInstructionEditable = "ai_batch_context_instruction_editable";
         public const string FixOverlappingSubtitles = "fix_overlapping_subtitles";
         public const string StripSubtitleFormatting = "strip_subtitle_formatting";
         public const string AddTranslatorInfo = "add_translator_info";

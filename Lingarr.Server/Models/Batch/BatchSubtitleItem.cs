@@ -1,4 +1,6 @@
-﻿namespace Lingarr.Server.Models.Batch;
+using System.Text.Json.Serialization;
+
+namespace Lingarr.Server.Models.Batch;
 
 /// <summary>
 /// Represents a subtitle item in a batch translation request
@@ -13,5 +15,12 @@ public class BatchSubtitleItem
     /// <summary>
     /// Line to translate
     /// </summary>
-    public string Line { get; set; }
+    public string Line { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// If true, this line is context-only and should NOT be translated.
+    /// The AI should use it for understanding conversational flow but not include it in output.
+    /// </summary>
+    [JsonPropertyName("isContextOnly")]
+    public bool IsContextOnly { get; set; } = false;
 }

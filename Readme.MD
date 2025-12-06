@@ -15,6 +15,7 @@ Lingarr now offers multiple services for automated translation:
 - **[OpenAI](https://openai.com/)**
 - **[DeepSeek](https://deepseek.com)**
 - **[Gemini](https://gemini.google.com/)**
+- **[Chutes](https://chutes.ai/)**
 - **[Google](https://translate.google.com/)** 
 - **[Bing](https://www.bing.com/translator)**
 - **[Yandex](https://translate.yandex.com/)**

@@ -113,10 +113,10 @@ public class TranslateController : ControllerBase
     /// <summary>
     /// Retrieves available AI models for the currently active translation service.
     /// </summary>
-    /// <returns>A list of models in a standardized label/value format for frontend consumption</returns>
+    /// <returns>A response containing available models and optional status message</returns>
     /// <exception cref="InvalidOperationException">Thrown when service is not properly configured or initialization fails</exception>
     [HttpGet("models")]
-    public async Task<ActionResult<List<LabelValue>>> GetModels()
+    public async Task<ActionResult<ModelsResponse>> GetModels()
     {
         try
         {

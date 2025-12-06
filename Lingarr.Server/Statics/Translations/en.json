@@ -267,7 +267,13 @@
           "description": "Subtitle line to translate"
         }
       },
-      "notSupported": "Context prompt is not supported and has been disabled when sending subtitles in batch."
+      "batchContextNote": "With batch translation, context lines are added at batch boundaries to help the AI understand the conversation flow.",
+      "batchContextInstructionTitle": "Batch Context Instruction",
+      "batchContextInstructionDescription": "This instruction tells the AI how to handle context-only items during batch translation. It is appended to your system prompt when context items are present in a batch.",
+      "batchContextInstructionWarning": "CRITICAL: This instruction is essential for batch translation to work correctly. Modifying it incorrectly may cause the AI to include context lines in translations or skip actual content.",
+      "batchContextInstructionAdvancedToggle": "I understand the risks - allow editing",
+      "batchContextInstructionResetDefault": "Reset to default",
+      "batchContextInstructionResetConfirm": "Batch context instruction has been reset to default."
     },
     "logs": {
       "systemLogs": "System Logs",

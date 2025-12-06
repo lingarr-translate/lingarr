@@ -60,6 +60,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiContextPrompt,
                 SettingKeys.Translation.AiContextPromptEnabled,
+                SettingKeys.Translation.AiBatchContextInstruction,
                 SettingKeys.Translation.CustomAiParameters,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
@@ -70,6 +71,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             _apiKey = settings[SettingKeys.Translation.Anthropic.ApiKey];
             _version = settings[SettingKeys.Translation.Anthropic.Version];
             _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
+            _batchContextInstruction = settings[SettingKeys.Translation.AiBatchContextInstruction];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey) || string.IsNullOrEmpty(_version))
             {
@@ -254,11 +256,22 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
+        // Check if we have any context-only items
+        var hasContextItems = subtitleBatch.Any(item => item.IsContextOnly);
+        var itemsToTranslate = subtitleBatch.Where(item => !item.IsContextOnly).ToList();
+        
+        // Build context-aware prompt if we have context items and context prompting is enabled
+        var effectivePrompt = _prompt!;
+        if (hasContextItems && _contextPromptEnabled == "true")
+        {
+            effectivePrompt = _prompt + "\n\n" + GetEffectiveBatchContextInstruction();
+        }
+
         var requestBody = new Dictionary<string, object>
         {
             ["model"] = _model!,
             ["max_tokens"] = 1024,
-            ["system"] = _prompt!,
+            ["system"] = effectivePrompt,
             ["tools"] = new[]
             {
                 new
@@ -382,7 +395,10 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 });
             }
 
+            // Only return translations for non-context items
+            var expectedPositions = itemsToTranslate.Select(i => i.Position).ToHashSet();
             return translatedItems
+                .Where(item => expectedPositions.Contains(item.Position))
                 .GroupBy(item => item.Position)
                 .ToDictionary(group => group.Key, group => group.First().Line);
         }

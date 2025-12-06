@@ -6,6 +6,7 @@ using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Models;
 using Lingarr.Server.Models.Batch;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.Integrations.Translation;
@@ -19,7 +20,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
     private string? _model;
     private string? _endpoint;
     private string? _prompt;
-    private Dictionary<string, string> _replacements;
+
     private bool _isChatEndpoint;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
@@ -62,6 +63,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiContextPrompt,
                 SettingKeys.Translation.AiContextPromptEnabled,
+                SettingKeys.Translation.AiBatchContextInstruction,
                 SettingKeys.Translation.CustomAiParameters,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
@@ -71,6 +73,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             _model = settings[SettingKeys.Translation.LocalAi.Model];
             _endpoint = settings[SettingKeys.Translation.LocalAi.Endpoint];
             _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
+            _batchContextInstruction = settings[SettingKeys.Translation.AiBatchContextInstruction];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_endpoint))
             {
@@ -117,6 +120,115 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         finally
         {
             _initLock.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public override async Task<ModelsResponse> GetModels()
+    {
+        var settings = await _settings.GetSettings([
+            SettingKeys.Translation.LocalAi.Endpoint,
+            SettingKeys.Translation.LocalAi.ApiKey
+        ]);
+        
+        var endpoint = settings[SettingKeys.Translation.LocalAi.Endpoint];
+        var apiKey = settings[SettingKeys.Translation.LocalAi.ApiKey];
+
+        if (string.IsNullOrEmpty(endpoint))
+        {
+            return new ModelsResponse
+            {
+                Message = "LocalAI endpoint is not configured."
+            };
+        }
+
+        try
+        {
+            // Derive models endpoint from the configured endpoint
+            // Common patterns:
+            // .../v1/chat/completions -> .../v1/models
+            // .../api/generate -> .../api/tags (Ollama) or .../models
+            
+            var modelsEndpoint = endpoint.TrimEnd('/');
+            if (modelsEndpoint.EndsWith("/chat/completions", StringComparison.OrdinalIgnoreCase))
+            {
+                modelsEndpoint = modelsEndpoint.Substring(0, modelsEndpoint.Length - "/chat/completions".Length) + "/models";
+            }
+            else if (modelsEndpoint.EndsWith("/generate", StringComparison.OrdinalIgnoreCase))
+            {
+                 // Assuming standard LocalAI behaviour or OpenAI compatible /v1/models
+                 modelsEndpoint = modelsEndpoint.Substring(0, modelsEndpoint.Length - "/generate".Length) + "/models";
+            }
+            else if (!modelsEndpoint.EndsWith("/models", StringComparison.OrdinalIgnoreCase))
+            {
+                 // Fallback append
+                 modelsEndpoint += "/models";
+            }
+
+            var request = new HttpRequestMessage(HttpMethod.Get, modelsEndpoint);
+            
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            }
+
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync();
+            using var document = JsonDocument.Parse(content);
+            var root = document.RootElement;
+
+            var labelValues = new List<LabelValue>();
+            
+            // Handle standard OpenAI format: { "data": [ { "id": "..." } ] }
+            if (root.TryGetProperty("data", out var data))
+            {
+                foreach (var model in data.EnumerateArray())
+                {
+                    if (model.TryGetProperty("id", out var idElement))
+                    {
+                        var id = idElement.GetString();
+                        if (!string.IsNullOrEmpty(id))
+                        {
+                            labelValues.Add(new LabelValue { Label = id, Value = id });
+                        }
+                    }
+                }
+            }
+            // Handle Ollama format: { "models": [ { "name": "..." } ] } (if hitting /api/tags)
+            else if (root.TryGetProperty("models", out var models))
+            {
+                 foreach (var model in models.EnumerateArray())
+                {
+                    if (model.TryGetProperty("name", out var nameElement))
+                    {
+                        var name = nameElement.GetString();
+                        if (!string.IsNullOrEmpty(name))
+                        {
+                            labelValues.Add(new LabelValue { Label = name, Value = name });
+                        }
+                    }
+                }
+            }
+            
+            if (labelValues.Count == 0)
+            {
+                 return new ModelsResponse { Message = "No models found in response." };
+            }
+
+            return new ModelsResponse
+            {
+                Options = labelValues.OrderBy(x => x.Label).ToList()
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching models from LocalAI");
+            return new ModelsResponse
+            {
+                Message = "Error fetching models from LocalAI: " + ex.Message
+            };
         }
     }
 
@@ -251,6 +363,17 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
+        // Check if we have any context-only items
+        var hasContextItems = subtitleBatch.Any(item => item.IsContextOnly);
+        var itemsToTranslate = subtitleBatch.Where(item => !item.IsContextOnly).ToList();
+        
+        // Build context-aware prompt if we have context items and context prompting is enabled
+        var effectivePrompt = _prompt!;
+        if (hasContextItems && _contextPromptEnabled == "true")
+        {
+            effectivePrompt = _prompt + "\n\n" + GetEffectiveBatchContextInstruction();
+        }
+
         var responseFormat = new
         {
             type = "json_schema",
@@ -298,7 +421,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             new Dictionary<string, string>
             {
                 ["role"] = "system",
-                ["content"] = _prompt!
+                ["content"] = effectivePrompt
             },
             new Dictionary<string, string>
             {
@@ -366,7 +489,10 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 throw new TranslationException("Failed to deserialize translated subtitles");
             }
 
+            // Only return translations for non-context items
+            var expectedPositions = itemsToTranslate.Select(i => i.Position).ToHashSet();
             return translatedItems
+                .Where(item => expectedPositions.Contains(item.Position))
                 .GroupBy(item => item.Position)
                 .ToDictionary(group => group.Key, group => group.First().Line);
         }
@@ -381,12 +507,23 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
+        // Check if we have any context-only items
+        var hasContextItems = subtitleBatch.Any(item => item.IsContextOnly);
+        var itemsToTranslate = subtitleBatch.Where(item => !item.IsContextOnly).ToList();
+        
+        // Build context-aware prompt if we have context items and context prompting is enabled
+        var effectivePrompt = _prompt!;
+        if (hasContextItems && _contextPromptEnabled == "true")
+        {
+            effectivePrompt = _prompt + "\n\n" + GetEffectiveBatchContextInstruction();
+        }
+
         var messages = new[]
         {
             new Dictionary<string, string>
             {
                 ["role"] = "system",
-                ["content"] = _prompt!
+                ["content"] = effectivePrompt
             },
             new Dictionary<string, string>
             {
@@ -446,7 +583,10 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 throw new TranslationException("Failed to deserialize translated subtitles from JSON parsing");
             }
 
+            // Only return translations for non-context items
+            var expectedPositions = itemsToTranslate.Select(i => i.Position).ToHashSet();
             return translatedItems
+                .Where(item => expectedPositions.Contains(item.Position))
                 .GroupBy(item => item.Position)
                 .ToDictionary(group => group.Key, group => group.First().Line);
         }
@@ -461,7 +601,18 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
-        var batchPrompt = _prompt +
+        // Check if we have any context-only items
+        var hasContextItems = subtitleBatch.Any(item => item.IsContextOnly);
+        var itemsToTranslate = subtitleBatch.Where(item => !item.IsContextOnly).ToList();
+        
+        // Build context-aware prompt if we have context items and context prompting is enabled
+        var effectivePrompt = _prompt;
+        if (hasContextItems && _contextPromptEnabled == "true")
+        {
+            effectivePrompt = _prompt + "\n\n" + GetEffectiveBatchContextInstruction();
+        }
+
+        var batchPrompt = effectivePrompt +
                           "\n\nPlease return the response as a JSON array with objects containing 'position' and 'line' fields. Example: [{\"position\": 1, \"line\": \"translated text\"}]\n\n";
 
         var requestData = new Dictionary<string, object>
@@ -512,7 +663,10 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 throw new TranslationException("Failed to deserialize translated subtitles from generate API");
             }
 
+            // Only return translations for non-context items
+            var expectedPositions = itemsToTranslate.Select(i => i.Position).ToHashSet();
             return translatedItems
+                .Where(item => expectedPositions.Contains(item.Position))
                 .GroupBy(item => item.Position)
                 .ToDictionary(group => group.Key, group => group.First().Line);
         }

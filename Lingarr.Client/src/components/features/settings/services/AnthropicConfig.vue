@@ -34,7 +34,7 @@
         <label class="mb-1 block text-sm">
             {{ translate('settings.services.aiModel') }}
         </label>
-        <SelectComponent
+        <ComboBox
             ref="selectRef"
             v-model:selected="aiModel"
             :options="options"
@@ -56,7 +56,7 @@
 import { computed, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import { SETTINGS } from '@/ts'
-import SelectComponent from '@/components/common/SelectComponent.vue'
+import ComboBox from '@/components/common/ComboBox.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 import { useI18n } from '@/plugins/i18n'
 import { useRouter } from 'vue-router'
