@@ -16,6 +16,7 @@ jobs:
   build-and-push:
     name: Build and Push Docker Images
     runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]'
     permissions:
       contents: read
       packages: write
