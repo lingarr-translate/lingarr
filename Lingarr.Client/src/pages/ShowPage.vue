@@ -8,11 +8,11 @@
                     v-model="filter"
                     :options="[
                         {
-                            label: translate('common.sortByTitle'),
+                            label: 'Sort by Title',
                             value: 'Title'
                         },
                         {
-                            label: translate('common.sortByAdded'),
+                            label: 'Sort by Added',
                             value: 'DateAdded'
                         }
                     ]" />

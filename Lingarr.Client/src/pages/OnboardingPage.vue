@@ -13,8 +13,7 @@
                     <ProgressionComponent
                         :current-step="onboardingStore.currentStep"
                         :total-steps="totalSteps"
-                        :enable-user-auth="onboardingStore.enableUserAuth"
-                        :enable-api-key="onboardingStore.enableApiKey" />
+                        :enable-auth="onboardingStore.enableAuth" />
 
                     <div data-info="onboarding-steps">
                         <ChooseAuthentication v-if="stepType === 'choose'" />
@@ -26,15 +25,9 @@
                             v-model:confirm-password="onboardingStore.confirmPassword"
                             @update:validation="handleValidationUpdate" />
 
-                        <ApiKeyConfiguration
-                            v-if="stepType === 'api'"
-                            :api-key="onboardingStore.generatedApiKey || undefined"
-                            @api-key-generated="handleApiKeyGenerated" />
-
                         <CompletionStep
                             v-if="stepType === 'final'"
-                            :enable-user-auth="onboardingStore.enableUserAuth"
-                            :enable-api-key="onboardingStore.enableApiKey" />
+                            :enable-auth="onboardingStore.enableAuth" />
                     </div>
 
                     <div
@@ -54,8 +47,7 @@
                             :disabled="loading || !canProceed"
                             :loading="loading"
                             @click="goToNextStep">
-                            <span v-if="stepType === 'choose'">Continue</span>
-                            <span v-else>Continue</span>
+                            Continue
                         </ButtonComponent>
 
                         <ButtonComponent
@@ -84,7 +76,6 @@ import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import ProgressionComponent from '@/components/onboarding/ProgressionComponent.vue'
 import ChooseAuthentication from '@/components/onboarding/ChooseAuthentication.vue'
 import AccountCreation from '@/components/onboarding/AccountCreation.vue'
-import ApiKeyConfiguration from '@/components/onboarding/ApiKeyConfiguration.vue'
 import CompletionStep from '@/components/onboarding/CompletionStep.vue'
 
 const router = useRouter()
@@ -103,11 +94,8 @@ const isValid = ref({
 // Steps
 const stepOrder = computed(() => {
     const steps = ['choose']
-    if (onboardingStore.enableUserAuth === 'true') {
+    if (onboardingStore.enableAuth === 'true') {
         steps.push('user')
-    }
-    if (onboardingStore.enableApiKey === 'true') {
-        steps.push('api')
     }
     steps.push('final')
     return steps
@@ -136,38 +124,13 @@ const handleValidationUpdate = (field: string, valid: boolean) => {
     }
 }
 
-const handleApiKeyGenerated = (apiKey: string) => {
-    onboardingStore.setGeneratedApiKey(apiKey)
-}
-
-const goToNextStep = async () => {
+const goToNextStep = () => {
     if (!canProceed.value) {
-        error.value =
-            stepType.value === 'choose'
-                ? 'Please select at least one authentication method'
-                : 'Please fill in all required fields correctly'
+        error.value = 'Please fill in all required fields correctly'
         return
     }
 
     error.value = ''
-
-    if (stepType.value === 'user') {
-        loading.value = true
-        try {
-            await services.auth.signup({
-                username: onboardingStore.username,
-                password: onboardingStore.password
-            })
-        } catch (err: any) {
-            console.error('Signup error:', err)
-            error.value = err?.data?.message || 'Failed to create account. Please try again.'
-            loading.value = false
-            return
-        } finally {
-            loading.value = false
-        }
-    }
-
     onboardingStore.setCurrentStep(onboardingStore.currentStep + 1)
 }
 
@@ -178,29 +141,32 @@ const goToPreviousStep = () => {
     }
 }
 
-const submitOnboarding = async () => {
+const completeSetup = async () => {
     loading.value = true
     error.value = ''
 
     try {
+        // Complete all steps of the onboarding
+        if (onboardingStore.enableAuth === 'true') {
+            await services.auth.signup({
+                username: onboardingStore.username,
+                password: onboardingStore.password
+            })
+        }
+        await services.auth.generateApiKey()
         await services.auth.completeOnboarding({
-            enableUserAuth: onboardingStore.enableUserAuth,
-            enableApiKey: onboardingStore.enableApiKey
+            enableUserAuth: onboardingStore.enableAuth,
+            enableApiKey: onboardingStore.enableAuth
         })
+
+        onboardingStore.resetOnboarding()
+        await settingStore.applySettingsOnLoad()
+        router.push('/')
     } catch (err: any) {
         console.error('Onboarding error:', err)
         error.value = err?.data?.message || 'An error occurred during setup. Please try again.'
     } finally {
         loading.value = false
-    }
-}
-
-const completeSetup = async () => {
-    await submitOnboarding()
-    if (!error.value) {
-        onboardingStore.resetOnboarding()
-        await settingStore.applySettingsOnLoad()
-        router.push('/')
     }
 }
 </script>

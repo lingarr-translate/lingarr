@@ -22,7 +22,7 @@
                         </router-link>
                     </li>
                     <li
-                        v-if="settings.getSetting(SETTINGS.USER_AUTH_ENABLED) == 'true'"
+                        v-if="settings.getSetting(SETTINGS.AUTH_ENABLED) == 'true'"
                         class="text-primary-content/50 w-full hover:brightness-150"
                         @click="handleLogout">
                         <div
@@ -47,7 +47,6 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { useI18n } from '@/plugins/i18n'
 import { MenuItem, SETTINGS } from '@/ts'
 import { useSettingStore } from '@/store/setting'
 import services from '@/services'
@@ -60,43 +59,42 @@ import LanguageIcon from '@/components/icons/LanguageIcon.vue'
 import LogIcon from '@/components/icons/LogIcon.vue'
 import LogoutIcon from '@/components/icons/LogoutIcon.vue'
 
-const { translate } = useI18n()
 const router = useRouter()
 const settings = useSettingStore()
 
 const menuItems: MenuItem[] = [
     {
-        label: translate('navigation.integrations'),
+        label: 'Integrations',
         icon: IntegrationIcon,
         route: 'integration-settings',
         children: []
     },
     {
-        label: translate('navigation.authentication'),
+        label: 'Authentication',
         icon: KeyIcon,
         route: 'authentication-settings',
         children: []
     },
     {
-        label: translate('navigation.services'),
+        label: 'Services',
         icon: SettingIcon,
         route: 'services-settings',
         children: []
     },
     {
-        label: translate('navigation.subtitle'),
+        label: 'Subtitle',
         icon: LanguageIcon,
         route: 'subtitle-settings',
         children: []
     },
     {
-        label: translate('navigation.automation'),
+        label: 'Automation',
         icon: AutomationIcon,
         route: 'automation-settings',
         children: []
     },
-    { label: translate('navigation.tasks'), icon: TaskIcon, route: 'tasks-settings', children: [] },
-    { label: translate('navigation.logs'), icon: LogIcon, route: 'logs-settings', children: [] }
+    { label: 'Tasks', icon: TaskIcon, route: 'tasks-settings', children: [] },
+    { label: 'Logs', icon: LogIcon, route: 'logs-settings', children: [] }
 ]
 
 const handleLogout = async () => {

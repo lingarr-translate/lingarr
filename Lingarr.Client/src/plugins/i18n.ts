@@ -37,8 +37,9 @@ export function createI18nPlugin(options: I18nPluginOptions = {}) {
         const response = await fetch(`/api/translation`)
         const data = await response.json()
         messages.value = { [data.locale]: data.messages }
-        currentLocale.value = data.locale
-        localStorage.setItem('locale', data.locale)
+        // @todo remove all localisation
+        currentLocale.value = 'en'
+        localStorage.setItem('locale', 'en')
     }
 
     const setLocale = async (locale: string) => {
