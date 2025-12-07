@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using Lingarr.Server.Attributes;
 using Lingarr.Server.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Lingarr.Server.Controllers;
 
 [ApiController]
+[LingarrAuthorize]
 [Route("api/[controller]")]
 public class TranslationController : ControllerBase
 {
@@ -21,6 +24,7 @@ public class TranslationController : ControllerBase
         _logger = logger;
     }
 
+    [AllowAnonymous]
     [HttpGet("languages")]
     public ActionResult GetAvailableLanguages()
     {
@@ -41,6 +45,7 @@ public class TranslationController : ControllerBase
         }
     }
 
+    [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult> GetTranslations()
     {

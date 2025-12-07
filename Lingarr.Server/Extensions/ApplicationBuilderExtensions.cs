@@ -1,7 +1,6 @@
 ﻿using Hangfire;
 using Lingarr.Core;
 using Lingarr.Core.Data;
-using Lingarr.Server.Filters;
 using Lingarr.Server.Hubs;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,7 +17,7 @@ public static class ApplicationBuilderExtensions
         {
             app.UseHangfireDashboard("/hangfire", new DashboardOptions
             {
-                Authorization = [new LingarrAuthorizationFilter()]
+                Authorization = []
             });
             app.UseSwagger();
             app.UseSwaggerUI(options =>
@@ -29,7 +28,7 @@ public static class ApplicationBuilderExtensions
             });
         }
 
-        app.UseAuthorization();
+        app.UseAuthentication();
         app.MapControllers();
         app.UseStaticFiles();
         app.ConfigureSpa();

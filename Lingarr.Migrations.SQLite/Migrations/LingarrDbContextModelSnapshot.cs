@@ -462,6 +462,39 @@ namespace Lingarr.Migrations.SQLite.Migrations
                     b.ToTable("translation_requests", (string)null);
                 });
 
+            modelBuilder.Entity("Lingarr.Core.Entities.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("last_login_at");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("password_hash");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("username");
+
+                    b.HasKey("Id")
+                        .HasName("pk_users");
+
+                    b.ToTable("users", (string)null);
+                });
+
             modelBuilder.Entity("Lingarr.Core.Entities.Episode", b =>
                 {
                     b.HasOne("Lingarr.Core.Entities.Season", "Season")
