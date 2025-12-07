@@ -21,21 +21,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-const { currentStep, totalSteps, enableUserAuth, enableApiKey } = defineProps<{
+const { currentStep, totalSteps, enableAuth } = defineProps<{
     currentStep: number
     totalSteps: number
-    enableUserAuth: string
-    enableApiKey: string
+    enableAuth: string
 }>()
 
 const steps = computed(() => {
     const labels = ['Choose']
 
-    if (enableUserAuth === 'true') {
-        labels.push('User Setup')
-    }
-    if (enableApiKey === 'true') {
-        labels.push('API Setup')
+    if (enableAuth === 'true') {
+        labels.push('Account')
     }
 
     labels.push('Complete')

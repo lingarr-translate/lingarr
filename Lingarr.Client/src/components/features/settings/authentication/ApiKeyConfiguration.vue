@@ -1,4 +1,4 @@
-<template>
+﻿<template>
     <div>
         <h2 class="mb-4 text-xl font-semibold text-white">{{ title }}</h2>
         <p class="mb-6 text-sm text-gray-400">
