@@ -36,6 +36,6 @@
         "typescript": "^5.9.3",
         "vite": "^7.2.6",
         "vue-eslint-parser": "^10.2.0",
-        "vue-tsc": "^2.2.12"
+        "vue-tsc": "^3.1.7"
     }
 }
