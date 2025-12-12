@@ -129,7 +129,7 @@ public class AutomatedTranslationJob
 
         var fileAgeHours = fileAge.TotalHours;
         var thresholdHours = threshold.TotalHours;
-        if (!(fileAgeHours < thresholdHours))
+        if (fileAgeHours >= thresholdHours)
         {
             return true;
         }
@@ -183,12 +183,6 @@ public class AutomatedTranslationJob
             var movie = movies[index % movies.Count];
             try
             {
-                if (translationsInitiated >= limit)
-                {
-                    _logger.LogInformation("Max translations per run reached. Stopping translation process.");
-                    break;
-                }
-
                 TimeSpan? threshold = movie.TranslationAgeThreshold.HasValue
                     ? TimeSpan.FromHours(movie.TranslationAgeThreshold.Value)
                     : null;
