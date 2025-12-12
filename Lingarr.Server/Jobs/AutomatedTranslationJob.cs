@@ -108,15 +108,20 @@ public class AutomatedTranslationJob
             return false;
         }
 
-        TimeSpan fileAge;
-        if (media.DateAdded.HasValue)
+        var fileInfo = new FileInfo(media.Path);
+        var fileAge = TimeSpan.Zero;
+        if (!fileInfo.Exists)
         {
+            if (!media.DateAdded.HasValue)
+            {
+                return false;
+            }
+
             fileAge = DateTime.UtcNow - media.DateAdded.Value.ToUniversalTime();
         }
         else
         {
-            var fileInfo = new FileInfo(media.Path);
-            fileAge = DateTime.UtcNow - fileInfo.LastWriteTime.ToUniversalTime();
+            fileAge = DateTime.UtcNow - fileInfo.LastWriteTimeUtc;
         }
 
         var threshold = customAgeThreshold ??
@@ -124,7 +129,7 @@ public class AutomatedTranslationJob
 
         var fileAgeHours = fileAge.TotalHours;
         var thresholdHours = threshold.TotalHours;
-        if (!(fileAgeHours < thresholdHours))
+        if (fileAgeHours >= thresholdHours)
         {
             return true;
         }
@@ -178,12 +183,6 @@ public class AutomatedTranslationJob
             var movie = movies[index % movies.Count];
             try
             {
-                if (translationsInitiated >= limit)
-                {
-                    _logger.LogInformation("Max translations per run reached. Stopping translation process.");
-                    break;
-                }
-
                 TimeSpan? threshold = movie.TranslationAgeThreshold.HasValue
                     ? TimeSpan.FromHours(movie.TranslationAgeThreshold.Value)
                     : null;

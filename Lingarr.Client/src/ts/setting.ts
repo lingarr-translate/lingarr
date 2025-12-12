@@ -58,7 +58,10 @@ export const SETTINGS = {
     IGNORE_CAPTIONS: 'ignore_captions',
     MAX_RETRIES: 'max_retries',
     RETRY_DELAY: 'retry_delay',
-    RETRY_DELAY_MULTIPLIER: 'retry_delay_multiplier'
+    RETRY_DELAY_MULTIPLIER: 'retry_delay_multiplier',
+    AUTH_ENABLED: 'auth_enabled',
+    API_KEY: 'api_key',
+    ONBOARDING_COMPLETED: 'onboarding_completed'
 } as const
 
 export interface ISettings {
@@ -119,6 +122,9 @@ export interface ISettings {
     max_retries: string
     retry_delay: string
     retry_delay_multiplier: string
+    auth_enabled: string
+    api_key: string
+    onboarding_completed: string
 }
 
 export interface ICustomAiParams {

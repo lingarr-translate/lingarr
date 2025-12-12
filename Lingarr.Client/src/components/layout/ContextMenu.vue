@@ -54,12 +54,12 @@ const languages: ComputedRef<ILanguage[]> = computed(
     () => settingsStore.getSetting('target_languages') as ILanguage[]
 )
 
-function toggle() {
+const toggle = () => {
     emit('update:toggle')
     isOpen.value = !isOpen.value
 }
 
-function selectOption(target: ILanguage) {
+const selectOption = (target: ILanguage) => {
     translateStore.translateSubtitle(media.id, subtitle, subtitle.language, target, mediaType)
     toggle()
     tooltip.value?.showTooltip()

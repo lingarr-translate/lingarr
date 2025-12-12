@@ -34,11 +34,11 @@
 <script setup lang="ts">
 const {
     label,
-    modelValue,
+    modelValue = 'false',
     size = 'default'
 } = defineProps<{
     label?: string
-    modelValue: string | boolean
+    modelValue?: string | boolean
     size?: 'default' | 'small'
 }>()
 

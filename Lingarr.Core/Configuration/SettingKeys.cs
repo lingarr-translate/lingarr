@@ -103,4 +103,11 @@ public static class SettingKeys
         public const string MaxDurationSecs = "subtitle_validation_maxdurationsecs";
         public const string ValidateSubtitles = "subtitle_validation_enabled";
     }
+
+    public static class Authentication
+    {
+        public const string AuthEnabled = "auth_enabled";
+        public const string ApiKey = "api_key";
+        public const string OnboardingCompleted = "onboarding_completed";
+    }
 }

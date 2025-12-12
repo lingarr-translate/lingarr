@@ -80,6 +80,11 @@ To build and push the Docker image (if logged into a Docker registry):
 ## Development Guidelines
 Lingarr welcomes suggestions for improving these standards. Please provide feedback through issues or discussions.
 
+### General Guidelines
+- Discuss significant changes with project maintainers before implementing (via Discord, issues, or discussions)
+- Contributors must understand all code they submit
+- AI assisted coding is welcome; however, submitting code without understanding how it works (i.e., vibe coding) is not acceptable
+
 ### Backend Guidelines
 - Follow C# coding conventions
 - Use async/await for asynchronous operations

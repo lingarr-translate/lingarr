@@ -1,4 +1,5 @@
 ﻿using Hangfire;
+using Lingarr.Server.Attributes;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Jobs;
 using Lingarr.Server.Models;
@@ -6,8 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Lingarr.Server.Controllers;
 
-[Route("api/[controller]")]
 [ApiController]
+[LingarrAuthorize]
+[Route("api/[controller]")]
 public class ScheduleController : ControllerBase
 {
     private readonly IScheduleService _scheduleService;

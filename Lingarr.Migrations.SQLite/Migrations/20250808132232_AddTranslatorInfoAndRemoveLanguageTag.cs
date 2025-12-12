@@ -51,7 +51,7 @@ namespace Lingarr.Migrations.SQLite.Migrations
                 name: "subtitle_to_translate",
                 table: "translation_requests",
                 type: "TEXT",
-                nullable: false,
+                nullable: false, 
                 defaultValue: "",
                 oldClrType: typeof(string),
                 oldType: "TEXT",
