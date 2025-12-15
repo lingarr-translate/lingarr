@@ -64,6 +64,7 @@ import { useModelOptions } from '@/composables/useModelOptions'
 
 const router = useRouter()
 const { translate } = useI18n()
+// @ts-ignore selectRef
 const { options, errorMessage, selectRef, loadOptions } = useModelOptions()
 
 const settingsStore = useSettingStore()
