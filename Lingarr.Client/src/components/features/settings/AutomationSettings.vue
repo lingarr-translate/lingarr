@@ -7,7 +7,7 @@
             <SaveNotification ref="saveNotification" />
             <div class="flex flex-col space-y-2 pb-4">
                 <span class="font-semibold">
-                    {{ translate('settings.indexing.indexingMoviesLabel') }}
+                    Set movie indexer:
                 </span>
                 <InputComponent
                     v-model="movieSchedule"
@@ -16,7 +16,7 @@
                     validation-type="cron"
                     @update:validation="(val) => (movieScheduleIsValid = val)" />
                 <span class="font-semibold">
-                    {{ translate('settings.indexing.indexingMoviesLabel') }}
+                    Set tv show indexer:
                 </span>
                 <InputComponent
                     v-model="showSchedule"
