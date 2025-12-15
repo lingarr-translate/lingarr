@@ -3,7 +3,7 @@
         <label v-if="label" :for="id" class="mb-1 block text-sm">
             {{ label }}
         </label>
-        <div class="mb-1">
+        <div v-if="$slots.default" class="mb-1">
             <slot></slot>
         </div>
         <div class="relative">
