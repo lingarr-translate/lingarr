@@ -1,4 +1,6 @@
-﻿export * from './instance'
+﻿export * from './auth'
+export * from './instance'
+export * from './onboarding'
 export * from './setting'
 export * from './movie'
 export * from './show'

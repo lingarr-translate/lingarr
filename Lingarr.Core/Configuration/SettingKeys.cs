@@ -110,4 +110,14 @@ public static class SettingKeys
         public const string ApiKey = "api_key";
         public const string OnboardingCompleted = "onboarding_completed";
     }
+
+    public static class Telemetry
+    {
+        public const string Enabled = "telemetry_enabled";
+        public const string LastSubmission = "telemetry_last_submission";
+        
+        public const string LastReportedLines = "telemetry_last_reported_lines";
+        public const string LastReportedFiles = "telemetry_last_reported_files";
+        public const string LastReportedCharacters = "telemetry_last_reported_characters";
+    }
 }

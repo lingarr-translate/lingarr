@@ -25,9 +25,12 @@
                             v-model:confirm-password="onboardingStore.confirmPassword"
                             @update:validation="handleValidationUpdate" />
 
+                        <TelemetryComponent v-if="stepType === 'telemetry'" />
+
                         <CompletionStep
                             v-if="stepType === 'final'"
-                            :enable-auth="onboardingStore.enableAuth" />
+                            :enable-auth="onboardingStore.enableAuth"
+                            :enable-telemetry="onboardingStore.enableTelemetry" />
                     </div>
 
                     <div
@@ -41,8 +44,23 @@
                             Back
                         </ButtonComponent>
 
+                        <div v-if="stepType === 'telemetry'" class="flex gap-3">
+                            <ButtonComponent
+                                variant="ghost"
+                                :disabled="loading"
+                                @click="skipTelemetry">
+                                Skip
+                            </ButtonComponent>
+                            <ButtonComponent
+                                variant="accent"
+                                :disabled="loading"
+                                @click="enableTelemetry">
+                                Enable
+                            </ButtonComponent>
+                        </div>
+
                         <ButtonComponent
-                            v-if="onboardingStore.currentStep < lastStep"
+                            v-if="onboardingStore.currentStep < lastStep && stepType !== 'telemetry'"
                             variant="accent"
                             :disabled="loading || !canProceed"
                             :loading="loading"
@@ -70,12 +88,14 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useOnboardingStore } from '@/store/onboarding'
 import { useSettingStore } from '@/store/setting'
+import { SETTINGS } from '@/ts'
 import services from '@/services'
 import CardComponent from '@/components/common/CardComponent.vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import ProgressionComponent from '@/components/onboarding/ProgressionComponent.vue'
 import ChooseAuthentication from '@/components/onboarding/ChooseAuthentication.vue'
 import AccountCreation from '@/components/onboarding/AccountCreation.vue'
+import TelemetryComponent from '@/components/onboarding/TelemetryComponent.vue'
 import CompletionStep from '@/components/onboarding/CompletionStep.vue'
 
 const router = useRouter()
@@ -97,6 +117,7 @@ const stepOrder = computed(() => {
     if (onboardingStore.enableAuth === 'true') {
         steps.push('user')
     }
+    steps.push('telemetry')
     steps.push('final')
     return steps
 })
@@ -141,6 +162,16 @@ const goToPreviousStep = () => {
     }
 }
 
+const enableTelemetry = () => {
+    onboardingStore.setEnableTelemetry('true')
+    onboardingStore.setCurrentStep(onboardingStore.currentStep + 1)
+}
+
+const skipTelemetry = () => {
+    onboardingStore.setEnableTelemetry('false')
+    onboardingStore.setCurrentStep(onboardingStore.currentStep + 1)
+}
+
 const completeSetup = async () => {
     loading.value = true
     error.value = ''
@@ -153,15 +184,22 @@ const completeSetup = async () => {
                 password: onboardingStore.password
             })
         }
+
         await services.auth.generateApiKey()
         await services.auth.completeOnboarding({
             enableUserAuth: onboardingStore.enableAuth,
             enableApiKey: onboardingStore.enableAuth
         })
 
+        await settingStore.updateSetting(
+            SETTINGS.TELEMETRY_ENABLED,
+            onboardingStore.enableTelemetry,
+            true
+        )
         onboardingStore.resetOnboarding()
         await settingStore.applySettingsOnLoad()
         router.push('/')
+
     } catch (err: any) {
         console.error('Onboarding error:', err)
         error.value = err?.data?.message || 'An error occurred during setup. Please try again.'

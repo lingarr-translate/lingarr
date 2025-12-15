@@ -1,5 +1,6 @@
 import axios, { AxiosStatic } from 'axios'
 import { Services } from '@/ts'
+import { translationRequestService } from '@/services/translationRequestService'
 import { authService } from './authService'
 import { subtitleService } from './subtitleService'
 import { translateService } from './translateService'
@@ -7,10 +8,10 @@ import { settingService } from './settingService'
 import { mediaService } from './mediaService'
 import { versionService } from './versionService'
 import { scheduleService } from '@/services/scheduleService'
-import { translationRequestService } from '@/services/translationRequestService'
 import { mappingService } from '@/services/mappingService'
 import { directoryService } from '@/services/directoryService'
 import { statisticsService } from '@/services/statisticsService'
+import { telemetryService } from '@/services/telemetryService'
 import { logsService } from '@/services/logsService'
 
 axios.interceptors.response.use(
@@ -20,7 +21,6 @@ axios.interceptors.response.use(
             window.location.href = '/auth/onboarding'
             return
         }
-        // @todo investigate alternatives
         if (error.response?.status === 401) {
             const currentPath = window.location.pathname
             if (
@@ -47,7 +47,8 @@ const services = (axios: AxiosStatic): Services => ({
     mapping: mappingService(axios),
     directory: directoryService(axios),
     statistics: statisticsService(axios),
-    logs: logsService()
+    logs: logsService(),
+    telemetry: telemetryService(axios)
 })
 
 export default services(axios)

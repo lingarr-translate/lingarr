@@ -13,8 +13,8 @@
             label="Username"
             placeholder="Enter your username"
             validation-type="string"
-            :min-length="3"
-            :error-message="'Username must be at least 3 characters long'"
+            :min-length="2"
+            :error-message="'Username must be at least 2 characters long'"
             @update:validation="(valid: boolean) => updateValidation('username', valid)" />
 
         <InputComponent

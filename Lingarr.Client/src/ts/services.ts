@@ -9,7 +9,9 @@ import {
     IOnboardingRequest,
     ISignupRequest,
     ILoginRequest,
-    IApiKeyResponse
+    IApiKeyResponse,
+    IUser,
+    IUpdateUserRequest
 } from '@/ts'
 
 export interface Services {
@@ -25,6 +27,7 @@ export interface Services {
     directory: IDirectoryService
     statistics: IStatisticsService
     logs: ILogsService
+    telemetry: ITelemetryService
 }
 
 export interface IAuthService {
@@ -34,6 +37,9 @@ export interface IAuthService {
     login(request: ILoginRequest): Promise<void>
     logout(): Promise<void>
     generateApiKey(): Promise<IApiKeyResponse>
+    getUsers(): Promise<IUser[]>
+    updateUser(id: number, request: IUpdateUserRequest): Promise<void>
+    deleteUser(id: number): Promise<void>
 }
 
 export interface IMediaService {
@@ -117,4 +123,8 @@ export interface IStatisticsService {
 
 export interface ILogsService {
     getStream(): EventSource
+}
+
+export interface ITelemetryService {
+    preview<T>(): Promise<T>
 }

@@ -58,6 +58,7 @@ import TaskIcon from '@/components/icons/TaskIcon.vue'
 import LanguageIcon from '@/components/icons/LanguageIcon.vue'
 import LogIcon from '@/components/icons/LogIcon.vue'
 import LogoutIcon from '@/components/icons/LogoutIcon.vue'
+import TelemetryIcon from '@/components/icons/TelemetryIcon.vue'
 
 const router = useRouter()
 const settings = useSettingStore()
@@ -94,7 +95,8 @@ const menuItems: MenuItem[] = [
         children: []
     },
     { label: 'Tasks', icon: TaskIcon, route: 'tasks-settings', children: [] },
-    { label: 'Logs', icon: LogIcon, route: 'logs-settings', children: [] }
+    { label: 'Logs', icon: LogIcon, route: 'logs-settings', children: [] },
+    { label: 'Telemetry', icon: TelemetryIcon, route: 'telemetry-settings', children: [] }
 ]
 
 const handleLogout = async () => {

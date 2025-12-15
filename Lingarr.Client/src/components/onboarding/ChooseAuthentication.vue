@@ -19,21 +19,8 @@
                 <div class="ml-4 flex-1">
                     <h3 class="text-lg font-semibold text-white">Enable Authentication</h3>
                     <p class="mt-1 text-sm text-gray-400">
-                        Secure the web interface with username/password login and generate an API
-                        key for programmatic access. Recommended for production use.
+                        Secure the web interface with username/password login and generate an API access. Recommended for production use.
                     </p>
-                    <div class="mt-3 space-y-1">
-                        <div class="flex items-center text-xs text-gray-500">
-                            <CheckMarkIcon class="mr-2 h-4 w-4 text-green-500" v-if="enableAuth === 'true'" />
-                            <TimesIcon class="mr-2 h-4 w-4 text-red-500" v-else />
-                            Session-based authentication for web interface
-                        </div>
-                        <div class="flex items-center text-xs text-gray-500">
-                            <CheckMarkIcon class="mr-2 h-4 w-4 text-green-500" v-if="enableAuth === 'true'" />
-                            <TimesIcon class="mr-2 h-4 w-4 text-red-500" v-else />
-                            API key for scripts and integrations
-                        </div>
-                    </div>
                 </div>
                 <ToggleButton v-model="enableAuth" />
             </div>
@@ -53,8 +40,6 @@
 import { computed } from 'vue'
 import { useOnboardingStore } from '@/store/onboarding'
 import ToggleButton from '@/components/common/ToggleButton.vue'
-import CheckMarkIcon from '@/components/icons/CheckMarkIcon.vue'
-import TimesIcon from '@/components/icons/TimesIcon.vue'
 
 const onboardingStore = useOnboardingStore()
 

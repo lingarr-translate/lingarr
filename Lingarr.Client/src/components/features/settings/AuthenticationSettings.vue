@@ -18,10 +18,10 @@
             </div>
         </template>
     </CardComponent>
-    <CardComponent title="API Key">
+    <CardComponent v-if="authEnabled == 'true'" title="API Key">
         <template #description></template>
         <template #content>
-            <ApiKeyConfiguration v-if="authEnabled" />
+            <ApiKeyConfiguration />
         </template>
     </CardComponent>
 </template>

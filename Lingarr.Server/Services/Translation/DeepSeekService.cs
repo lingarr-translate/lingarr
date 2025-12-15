@@ -20,6 +20,9 @@ public class DeepSeekService : BaseLanguageService
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
+    /// <inheritdoc />
+    public override string? ModelName => _model;
+
     public DeepSeekService(
         ISettingService settings,
         HttpClient httpClient,

@@ -4,7 +4,9 @@ import {
     IAuthService,
     ILoginRequest,
     IOnboardingRequest,
-    ISignupRequest
+    ISignupRequest,
+    IUser,
+    IUpdateUserRequest
 } from '@/ts'
 
 const service = (http: AxiosStatic, resource = '/api/auth'): IAuthService => ({
@@ -75,6 +77,42 @@ const service = (http: AxiosStatic, resource = '/api/auth'): IAuthService => ({
         return new Promise((resolve, reject) => {
             http.post(`${resource}/apikey/generate`)
                 .then((response: AxiosResponse<IApiKeyResponse>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
+    },
+
+    getUsers(): Promise<IUser[]> {
+        return new Promise((resolve, reject) => {
+            http.get(`${resource}/users`)
+                .then((response: AxiosResponse<IUser[]>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
+    },
+
+    updateUser(id: number, request: IUpdateUserRequest): Promise<void> {
+        return new Promise((resolve, reject) => {
+            http.put(`${resource}/users/${id}`, request)
+                .then((response: AxiosResponse<void>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
+    },
+
+    deleteUser(id: number): Promise<void> {
+        return new Promise((resolve, reject) => {
+            http.delete(`${resource}/users/${id}`)
+                .then((response: AxiosResponse<void>) => {
                     resolve(response.data)
                 })
                 .catch((error: AxiosError) => {

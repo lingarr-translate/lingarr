@@ -227,7 +227,7 @@ public class TranslationJob
             }
 
             // statistics tracking
-            await _statisticsService.UpdateTranslationStatisticsFromSubtitles(request, serviceType, translatedSubtitles);
+            await _statisticsService.UpdateTranslationStatisticsFromSubtitles(request, serviceType, translationService.ModelName, translatedSubtitles);
 
             var subtitleTag = "";
             if (settings[SettingKeys.Translation.UseSubtitleTagging] == "true")

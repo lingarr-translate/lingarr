@@ -7,6 +7,12 @@ namespace Lingarr.Server.Interfaces.Services.Translation;
 public interface ITranslationService
 {
     /// <summary>
+    /// Gets the name of the model being used for translation (e.g., "gpt-4o", "llama3", etc.).
+    /// Returns null if the service doesn't use a specific model or if not initialized yet.
+    /// </summary>
+    string? ModelName { get; }
+
+    /// <summary>
     /// Translates the given text from the source language to the target language.
     /// </summary>
     /// <param name="text">The text to be translated.</param>
