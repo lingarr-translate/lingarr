@@ -55,6 +55,7 @@ import { useModelOptions } from '@/composables/useModelOptions'
 import { useRouter } from 'vue-router'
 
 const { translate } = useI18n()
+// @ts-ignore selectRef
 const { options, errorMessage, selectRef, loadOptions } = useModelOptions()
 const router = useRouter()
 

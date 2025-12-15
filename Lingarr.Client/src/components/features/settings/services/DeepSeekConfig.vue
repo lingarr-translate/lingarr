@@ -47,6 +47,7 @@ import { useI18n } from '@/plugins/i18n'
 import { useModelOptions } from '@/composables/useModelOptions'
 
 const { translate } = useI18n()
+// @ts-ignore selectRef
 const { options, errorMessage, selectRef, loadOptions } = useModelOptions()
 
 const settingsStore = useSettingStore()
