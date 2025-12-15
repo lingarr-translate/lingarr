@@ -10,4 +10,5 @@ public interface IAuthService
     Task<User> CreateUser(string username, string password);
     Task<bool> HasAnyUsers();
     Task<bool> ValidateApiKey(string apiKey);
+    Task CheckIfDefaultUserExists();
 }

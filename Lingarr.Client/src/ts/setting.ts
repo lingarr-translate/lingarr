@@ -61,7 +61,8 @@ export const SETTINGS = {
     RETRY_DELAY_MULTIPLIER: 'retry_delay_multiplier',
     AUTH_ENABLED: 'auth_enabled',
     API_KEY: 'api_key',
-    ONBOARDING_COMPLETED: 'onboarding_completed'
+    ONBOARDING_COMPLETED: 'onboarding_completed',
+    TELEMETRY_ENABLED: 'telemetry_enabled'
 } as const
 
 export interface ISettings {
@@ -125,6 +126,7 @@ export interface ISettings {
     auth_enabled: string
     api_key: string
     onboarding_completed: string
+    telemetry_enabled: string
 }
 
 export interface ICustomAiParams {

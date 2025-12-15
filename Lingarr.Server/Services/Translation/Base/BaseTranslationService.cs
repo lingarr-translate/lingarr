@@ -16,6 +16,9 @@ public abstract class BaseTranslationService : ITranslationService
     }
 
     /// <inheritdoc />
+    public abstract string? ModelName { get; }
+
+    /// <inheritdoc />
     public abstract Task<string> TranslateAsync(
         string text, 
         string sourceLanguage, 

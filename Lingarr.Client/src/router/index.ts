@@ -92,6 +92,11 @@ const routes: RouteRecordRaw[] = [
                         path: 'logs',
                         name: 'logs-settings',
                         component: () => import('@/pages/settings/LogsPage.vue')
+                    },
+                    {
+                        path: 'telemetry',
+                        name: 'telemetry-settings',
+                        component: () => import('@/pages/settings/TelemetryPage.vue')
                     }
                 ]
             }

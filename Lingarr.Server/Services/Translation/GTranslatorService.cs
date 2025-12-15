@@ -10,6 +10,9 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
 {
     private readonly T _translator;
 
+    /// <inheritdoc />
+    public override string? ModelName => null;
+
     public GTranslatorService(
         T translator,
         string languageFilePath,

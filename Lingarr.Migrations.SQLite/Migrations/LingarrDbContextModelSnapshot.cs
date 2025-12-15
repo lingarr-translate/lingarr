@@ -15,7 +15,7 @@ namespace Lingarr.Migrations.SQLite.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.8");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
 
             modelBuilder.Entity("Lingarr.Core.Entities.DailyStatistics", b =>
                 {
@@ -382,6 +382,11 @@ namespace Lingarr.Migrations.SQLite.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT")
                         .HasColumnName("translations_by_media_type_json");
+
+                    b.Property<string>("TranslationsByModelJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("translations_by_model_json");
 
                     b.Property<string>("TranslationsByServiceJson")
                         .IsRequired()

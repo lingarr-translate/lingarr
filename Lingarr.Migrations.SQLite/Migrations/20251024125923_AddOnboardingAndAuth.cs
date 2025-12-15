@@ -26,7 +26,7 @@ namespace Lingarr.Migrations.SQLite.Migrations
                 {
                     table.PrimaryKey("pk_users", x => x.id);
                 });
-            
+
             migrationBuilder.DeleteData(
                 table: "settings",
                 keyColumn: "key",
@@ -41,8 +41,26 @@ namespace Lingarr.Migrations.SQLite.Migrations
                 values: new object[,]
                 {
                     { "onboarding_completed", "false" },
-                    { "auth_enabled", "false" }
+                    { "auth_enabled", "false" },
+                    { "telemetry_enabled", "false" },
+                    { "telemetry_last_submission", "" },
+                    { "telemetry_last_reported_lines", "0" },
+                    { "telemetry_last_reported_files", "0" },
+                    { "telemetry_last_reported_characters", "0" }
                 });
+            
+            migrationBuilder.AddColumn<DateTime>(
+                name: "date_added",
+                table: "episodes",
+                type: "TEXT",
+                nullable: true);
+            
+            migrationBuilder.AddColumn<string>(
+                name: "translations_by_model_json",
+                table: "statistics",
+                type: "TEXT",
+                nullable: false,
+                defaultValue: "{}");
         }
 
         /// <inheritdoc />
@@ -50,7 +68,7 @@ namespace Lingarr.Migrations.SQLite.Migrations
         {
             migrationBuilder.DropTable(
                 name: "users");
-            
+
             migrationBuilder.DeleteData(
                 table: "settings",
                 keyColumn: "key",
@@ -58,7 +76,20 @@ namespace Lingarr.Migrations.SQLite.Migrations
                 {
                     "onboarding_completed",
                     "auth_enabled",
+                    "telemetry_enabled",
+                    "telemetry_last_submission",
+                    "telemetry_last_reported_lines",
+                    "telemetry_last_reported_files",
+                    "telemetry_last_reported_characters",
                 });
+            
+            migrationBuilder.DropColumn(
+                name: "date_added",
+                table: "episodes");
+            
+            migrationBuilder.DropColumn(
+                name: "translations_by_model_json",
+                table: "statistics");
         }
     }
 }

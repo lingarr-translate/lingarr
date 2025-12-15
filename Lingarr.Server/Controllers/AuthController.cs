@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Controllers;
 
@@ -85,9 +86,9 @@ public class AuthController : ControllerBase
             {
                 return BadRequest(new { message = "A user already exists. Please continue and login instead." });
             }
-            if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 3)
+            if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 2)
             {
-                return BadRequest(new { message = "Username must be at least 3 characters long" });
+                return BadRequest(new { message = "Username must be at least 2 characters long" });
             }
 
             if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 4)
@@ -198,5 +199,96 @@ public class AuthController : ControllerBase
         {
             ApiKey = apiKey
         });
+    }
+
+    /// <summary>
+    /// Get all users
+    /// </summary>
+    [HttpGet("users")]
+    [LingarrAuthorize]
+    public async Task<ActionResult> GetAllUsers()
+    {
+        var users = await _context.Users.ToListAsync();
+        var userDtos = users.Select(u => new
+        {
+            u.Id,
+            u.Username,
+            u.CreatedAt,
+            u.LastLoginAt
+        });
+        return Ok(userDtos);
+    }
+
+    /// <summary>
+    /// Update a user
+    /// </summary>
+    [HttpPut("users/{id}")]
+    [LingarrAuthorize]
+    public async Task<ActionResult> UpdateUser(int id, [FromBody] UpdateUserRequest request)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null)
+        {
+            return NotFound(new { message = "User not found" });
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Username))
+        {
+            if (request.Username.Length < 2)
+            {
+                return BadRequest(new { message = "Username must be at least 2 characters long" });
+            }
+
+            var existingUser = await _authService.GetUserByUsername(request.Username);
+            if (existingUser != null && existingUser.Id != id)
+            {
+                return BadRequest(new { message = "Username already exists" });
+            }
+
+            user.Username = request.Username;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.Password))
+        {
+            if (request.Password.Length < 4)
+            {
+                return BadRequest(new { message = "Password must be at least 4 characters long" });
+            }
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+        }
+
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("User {Username} updated", user.Username);
+
+        return Ok(new { message = "User updated successfully" });
+    }
+
+    /// <summary>
+    /// Delete a user
+    /// </summary>
+    [HttpDelete("users/{id}")]
+    [LingarrAuthorize]
+    public async Task<ActionResult> DeleteUser(int id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null)
+        {
+            return NotFound(new { message = "User not found" });
+        }
+
+        var userCount = await _context.Users.CountAsync();
+        if (userCount <= 1)
+        {
+            return BadRequest(new { message = "Cannot delete the last user" });
+        }
+
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("User {Username} deleted", user.Username);
+
+        return Ok(new { message = "User deleted successfully" });
     }
 }

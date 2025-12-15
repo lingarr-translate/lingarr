@@ -11,11 +11,13 @@ public class AuthService : IAuthService
 {
     private readonly LingarrDbContext _context;
     private readonly ISettingService _settingService;
+    private readonly ILogger<AuthService> _logger;
 
-    public AuthService(LingarrDbContext context, ISettingService settingService)
+    public AuthService(LingarrDbContext context, ISettingService settingService, ILogger<AuthService> logger)
     {
         _context = context;
         _settingService = settingService;
+        _logger = logger;
     }
 
     public string GenerateApiKey()
@@ -91,6 +93,24 @@ public class AuthService : IAuthService
         return apiKey == storedApiKey;
     }
 
+    public async Task CheckIfDefaultUserExists()
+    {
+        try
+        {
+            var hasUsers = await HasAnyUsers();
+
+            if (!hasUsers)
+            {
+                await CreateUser("admin", "lingarr");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error occurred while ensuring default user exists");
+            throw;
+        }
+    }
+
     private static string HashPassword(string password)
     {
         // random salt
@@ -100,7 +120,6 @@ public class AuthService : IAuthService
             rng.GetBytes(salt);
         }
 
-        // Hash
         var hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
             password: password,
             salt: salt,

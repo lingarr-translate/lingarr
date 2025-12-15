@@ -378,7 +378,7 @@ public class TranslationRequestService : ITranslationRequestService
                         cancellationToken);
 
                     // Handle completion now since we early exit here
-                    await HandleAsyncTranslationCompletion(translationRequest, serviceType, results, cancellationToken);
+                    await HandleAsyncTranslationCompletion(translationRequest, serviceType, translationService, results, cancellationToken);
                     return results; 
                 }
 
@@ -451,7 +451,7 @@ public class TranslationRequestService : ITranslationRequestService
                 results = tempResults.ToArray();
             }
 
-            await HandleAsyncTranslationCompletion(translationRequest, serviceType, results, cancellationToken);
+            await HandleAsyncTranslationCompletion(translationRequest, serviceType, translationService, results, cancellationToken);
             return results;
         }
         catch (TaskCanceledException)
@@ -503,10 +503,11 @@ public class TranslationRequestService : ITranslationRequestService
     private async Task HandleAsyncTranslationCompletion(
         TranslationRequest translationRequest,
         string serviceType,
+        ITranslationService translationService,
         BatchTranslatedLine[] results,
         CancellationToken cancellationToken)
     {
-        await _statisticsService.UpdateTranslationStatisticsFromLines(translationRequest, serviceType, results);
+        await _statisticsService.UpdateTranslationStatisticsFromLines(translationRequest, serviceType, translationService.ModelName, results);
 
         translationRequest.CompletedAt = DateTime.UtcNow;
         translationRequest.Status = TranslationStatus.Completed;

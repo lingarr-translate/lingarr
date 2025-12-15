@@ -24,6 +24,9 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
+    /// <inheritdoc />
+    public override string? ModelName => _model;
+
     // retry settings
     private int _maxRetries;
     private TimeSpan _retryDelay;
