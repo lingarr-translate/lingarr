@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Lingarr.Migrations.SQLite.Migrations
 {
     [DbContext(typeof(LingarrDbContext))]
-    [Migration("20251125131430_AddDateAddedToEpisode")]
-    partial class AddDateAddedToEpisode
+    [Migration("20251024125923_AddOnboardingAndAuth")]
+    partial class AddOnboardingAndAuth
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -59,10 +59,6 @@ namespace Lingarr.Migrations.SQLite.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT")
                         .HasColumnName("created_at");
-
-                    b.Property<DateTime?>("DateAdded")
-                        .HasColumnType("TEXT")
-                        .HasColumnName("date_added");
 
                     b.Property<int>("EpisodeNumber")
                         .HasColumnType("INTEGER")
@@ -463,6 +459,39 @@ namespace Lingarr.Migrations.SQLite.Migrations
                         .HasName("pk_translation_requests");
 
                     b.ToTable("translation_requests", (string)null);
+                });
+
+            modelBuilder.Entity("Lingarr.Core.Entities.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("last_login_at");
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("password_hash");
+
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("username");
+
+                    b.HasKey("Id")
+                        .HasName("pk_users");
+
+                    b.ToTable("users", (string)null);
                 });
 
             modelBuilder.Entity("Lingarr.Core.Entities.Episode", b =>

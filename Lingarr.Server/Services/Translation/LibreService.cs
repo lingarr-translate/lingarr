@@ -18,6 +18,9 @@ public class LibreService : BaseLanguageService
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
+    /// <inheritdoc />
+    public override string? ModelName => null;
+
     public LibreService(
         HttpClient httpClient,
         ISettingService settings,

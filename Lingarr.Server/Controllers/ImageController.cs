@@ -1,4 +1,5 @@
-﻿using Lingarr.Server.Interfaces.Providers;
+﻿using Lingarr.Server.Attributes;
+using Lingarr.Server.Interfaces.Providers;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Lingarr.Server.Controllers;
 
 [ApiController]
+[LingarrAuthorize]
 [Route("api/[controller]")]
 public class ImageController : ControllerBase
 {

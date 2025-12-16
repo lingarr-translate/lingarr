@@ -11,9 +11,11 @@ public interface IStatisticsService
     Task<int> UpdateTranslationStatisticsFromSubtitles(
         TranslationRequest request,
         string serviceType,
+        string? modelName,
         List<SubtitleItem> translatedSubtitles);
     Task<int> UpdateTranslationStatisticsFromLines(
-        TranslationRequest request, 
-        string serviceType, 
+        TranslationRequest request,
+        string serviceType,
+        string? modelName,
         BatchTranslatedLine[] translatedLines);
 }

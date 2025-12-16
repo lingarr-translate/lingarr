@@ -378,7 +378,7 @@ public class TranslationRequestService : ITranslationRequestService
                         cancellationToken);
 
                     // Handle completion now since we early exit here
-                    await HandleAsyncTranslationCompletion(translationRequest, serviceType, results, cancellationToken);
+                    await HandleAsyncTranslationCompletion(translationRequest, serviceType, translationService, results, cancellationToken);
                     return results; 
                 }
 
@@ -421,8 +421,8 @@ public class TranslationRequestService : ITranslationRequestService
                 var subtitleTranslator = new SubtitleTranslationService(translationService, _logger);
                 var tempResults = new List<BatchTranslatedLine>();
 
-                int iteration = 1;
-                int total = translateAbleContent.Lines.Count();
+                var iteration = 1;
+                var total = translateAbleContent.Lines.Count();
                 foreach (var item in translateAbleContent.Lines)
                 {
                     var translateLine = new TranslateAbleSubtitleLine
@@ -432,9 +432,13 @@ public class TranslationRequestService : ITranslationRequestService
                         TargetLanguage = translateAbleContent.TargetLanguage
                     };
 
-                    var translatedText = await subtitleTranslator.TranslateSubtitleLine(
-                        translateLine,
-                        cancellationToken);
+                    var translatedText = "";
+                    if (!string.IsNullOrWhiteSpace(translateLine.SubtitleLine))
+                    {
+                        translatedText = await subtitleTranslator.TranslateSubtitleLine(
+                            translateLine,
+                            cancellationToken);
+                    }
 
                     tempResults.Add(new BatchTranslatedLine
                     {
@@ -442,7 +446,7 @@ public class TranslationRequestService : ITranslationRequestService
                         Line = translatedText
                     });
 
-                    int progress = (int)Math.Round((double)iteration * 100 / total);
+                    var progress = (int)Math.Round((double)iteration * 100 / total);
                     await _progressService.Emit(translationRequest, progress);
                     iteration++;
                 }
@@ -451,7 +455,7 @@ public class TranslationRequestService : ITranslationRequestService
                 results = tempResults.ToArray();
             }
 
-            await HandleAsyncTranslationCompletion(translationRequest, serviceType, results, cancellationToken);
+            await HandleAsyncTranslationCompletion(translationRequest, serviceType, translationService, results, cancellationToken);
             return results;
         }
         catch (TaskCanceledException)
@@ -503,10 +507,11 @@ public class TranslationRequestService : ITranslationRequestService
     private async Task HandleAsyncTranslationCompletion(
         TranslationRequest translationRequest,
         string serviceType,
+        ITranslationService translationService,
         BatchTranslatedLine[] results,
         CancellationToken cancellationToken)
     {
-        await _statisticsService.UpdateTranslationStatisticsFromLines(translationRequest, serviceType, results);
+        await _statisticsService.UpdateTranslationStatisticsFromLines(translationRequest, serviceType, translationService.ModelName, results);
 
         translationRequest.CompletedAt = DateTime.UtcNow;
         translationRequest.Status = TranslationStatus.Completed;

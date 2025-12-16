@@ -1,4 +1,5 @@
 ﻿using Lingarr.Core.Entities;
+using Lingarr.Server.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
@@ -6,6 +7,7 @@ using Lingarr.Server.Models;
 namespace Lingarr.Server.Controllers;
 
 [ApiController]
+[LingarrAuthorize]
 [Route("api/[controller]")]
 public class TranslationRequestController : ControllerBase
 {

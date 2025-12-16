@@ -4,11 +4,18 @@ import {
     ISettings,
     ISubtitle,
     ITranslationRequest,
-    MediaType
+    MediaType,
+    IPathMapping,
+    IOnboardingRequest,
+    ISignupRequest,
+    ILoginRequest,
+    IApiKeyResponse,
+    IUser,
+    IUpdateUserRequest
 } from '@/ts'
-import { IPathMapping } from '@/ts/index'
 
 export interface Services {
+    auth: IAuthService
     setting: ISettingService
     subtitle: ISubtitleService
     translate: ITranslateService
@@ -20,6 +27,19 @@ export interface Services {
     directory: IDirectoryService
     statistics: IStatisticsService
     logs: ILogsService
+    telemetry: ITelemetryService
+}
+
+export interface IAuthService {
+    completeOnboarding(request: IOnboardingRequest): Promise<void>
+    authenticated(): Promise<void>
+    signup(request: ISignupRequest): Promise<void>
+    login(request: ILoginRequest): Promise<void>
+    logout(): Promise<void>
+    generateApiKey(): Promise<IApiKeyResponse>
+    getUsers(): Promise<IUser[]>
+    updateUser(id: number, request: IUpdateUserRequest): Promise<void>
+    deleteUser(id: number): Promise<void>
 }
 
 export interface IMediaService {
@@ -103,4 +123,8 @@ export interface IStatisticsService {
 
 export interface ILogsService {
     getStream(): EventSource
+}
+
+export interface ITelemetryService {
+    preview<T>(): Promise<T>
 }

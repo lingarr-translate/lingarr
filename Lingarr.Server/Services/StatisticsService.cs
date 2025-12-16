@@ -64,30 +64,33 @@ public class StatisticsService : IStatisticsService
     public async Task<int> UpdateTranslationStatisticsFromSubtitles(
         TranslationRequest request,
         string serviceType,
+        string? modelName,
         List<SubtitleItem> translatedSubtitles)
     {
-        int lineCount = translatedSubtitles.Sum(s => s.Lines.Count);
-        int charCount = translatedSubtitles.Sum(s => s.Lines.Sum(l => l.Length));
+        var lineCount = translatedSubtitles.Sum(s => s.Lines.Count);
+        var charCount = translatedSubtitles.Sum(s => s.Lines.Sum(l => l.Length));
 
         return await UpdateTranslationStatisticsInternal(
-            request, serviceType, lineCount, charCount);
+            request, serviceType, modelName, lineCount, charCount);
     }
 
     public async Task<int> UpdateTranslationStatisticsFromLines(
         TranslationRequest request,
         string serviceType,
+        string? modelName,
         BatchTranslatedLine[] translatedLines)
     {
-        int lineCount = translatedLines.Length;
-        int charCount = translatedLines.Sum(s => s.Line.Length);
+        var lineCount = translatedLines.Length;
+        var charCount = translatedLines.Sum(s => s.Line.Length);
 
         return await UpdateTranslationStatisticsInternal(
-            request, serviceType, lineCount, charCount);
+            request, serviceType, modelName, lineCount, charCount);
     }
 
     private async Task<int> UpdateTranslationStatisticsInternal(
         TranslationRequest request,
         string serviceType,
+        string? modelName,
         int totalLines,
         int totalCharacters)
     {
@@ -110,10 +113,20 @@ public class StatisticsService : IStatisticsService
         serviceStats[serviceType] = serviceStats.GetValueOrDefault(serviceType) + 1;
         stats.TranslationsByService = serviceStats;
 
-        // Update language statistics
+        // Update language pair statistics 
         var languageStats = stats.SubtitlesByLanguage;
-        languageStats[request.TargetLanguage] = languageStats.GetValueOrDefault(request.TargetLanguage) + 1;
+        var languagePair = $"{request.SourceLanguage}:{request.TargetLanguage}";
+        languageStats[languagePair] = languageStats.GetValueOrDefault(languagePair) + 1;
         stats.SubtitlesByLanguage = languageStats;
+
+        // Update model statistics (correlated with service)
+        if (!string.IsNullOrEmpty(modelName))
+        {
+            var modelStats = stats.TranslationsByModel;
+            var serviceModelKey = $"{serviceType}:{modelName}";
+            modelStats[serviceModelKey] = modelStats.GetValueOrDefault(serviceModelKey) + 1;
+            stats.TranslationsByModel = modelStats;
+        }
 
         // Update daily statistics
         var dailyStats = await GetOrCreateDailyStatistics(today);

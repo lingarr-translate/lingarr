@@ -18,7 +18,7 @@
                 </p>
             </div>
         </div>
-        <div class="bg-secondary mt-2 h-2 w-full rounded-full">
+        <div class="bg-secondary mt-2 h-2 w-full overflow-hidden rounded-full">
             <div
                 class="bg-accent h-full rounded-full transition-all duration-500"
                 :style="{ width: `${calculatePercentage(translated, total)}%` }"></div>
@@ -43,6 +43,8 @@ const formatNumber = (num: number): string => {
 }
 
 const calculatePercentage = (value: number, total: number): number => {
-    return (value / total) * 100
+    if (total === 0) return 0
+    const percentage = (value / total) * 100
+    return Math.min(percentage, 100)
 }
 </script>

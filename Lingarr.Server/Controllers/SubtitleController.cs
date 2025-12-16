@@ -1,15 +1,13 @@
+using Lingarr.Server.Attributes;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Models;
 using Lingarr.Server.Models.FileSystem;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Lingarr.Server.Controllers;
 
-public class SubtitlePath
-{
-    public required string  Path { get; set; }
-}
-
 [ApiController]
+[LingarrAuthorize]
 [Route("api/[controller]")]
 public class SubtitleController : ControllerBase
 {
