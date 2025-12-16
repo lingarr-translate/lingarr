@@ -1,7 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.Json;
 using Lingarr.Core;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Interfaces.Services;
@@ -14,20 +11,20 @@ public class TelemetryService : ITelemetryService
     private readonly IStatisticsService _statisticsService;
     private readonly ISettingService _settingService;
     private readonly ILogger<TelemetryService> _logger;
-    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILingarrApiService _lingarrApiService;
     private readonly IWebHostEnvironment _environment;
 
     public TelemetryService(
         IStatisticsService statisticsService,
         ISettingService settingService,
         ILogger<TelemetryService> logger,
-        IHttpClientFactory httpClientFactory,
+        ILingarrApiService lingarrApiService,
         IWebHostEnvironment environment)
     {
         _statisticsService = statisticsService;
         _settingService = settingService;
         _logger = logger;
-        _httpClientFactory = httpClientFactory;
+        _lingarrApiService = lingarrApiService;
         _environment = environment;
     }
 
@@ -87,27 +84,9 @@ public class TelemetryService : ITelemetryService
     {
         try
         {
-            var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions
+            var success = await _lingarrApiService.SubmitTelemetry(payload);
+            if (!success)
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
-
-            var signature = GenerateHmac(json);
-            var httpClient = _httpClientFactory.CreateClient();
-            var request = new HttpRequestMessage(HttpMethod.Post,
-                Encoding.UTF8.GetString(Convert.FromBase64String("aHR0cHM6Ly9hcGkubGluZ2Fyci5jb20v")))
-            {
-                Content = new StringContent(json, Encoding.UTF8, "application/json")
-            };
-
-            request.Headers.Add("X-Signature", signature);
-            var response = await httpClient.SendAsync(request);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogWarning("Telemetry submission failed: {Status} - {Response}",
-                response.StatusCode,
-                await response.Content.ReadAsStringAsync());
                 return false;
             }
 
@@ -118,7 +97,7 @@ public class TelemetryService : ITelemetryService
             await _settingService.SetSetting(SettingKeys.Telemetry.LastReportedFiles, stats.TotalFilesTranslated.ToString());
             await _settingService.SetSetting(SettingKeys.Telemetry.LastReportedCharacters, stats.TotalCharactersTranslated.ToString());
 
-            _logger.LogInformation("Telemetry submitted successfully with HMAC authentication");
+            _logger.LogInformation("Telemetry submitted successfully");
             return true;
         }
         catch (Exception ex)
@@ -127,15 +106,7 @@ public class TelemetryService : ITelemetryService
             return false;
         }
     }
-
-    private string GenerateHmac(string payload)
-    {
-        using var hmac = new HMACSHA256("tSBTCU4Qv76so0c2U8bBX0faSzc3uc6Z"u8.ToArray());
-        var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
-        return BitConverter.ToString(hash).Replace("-", "").ToLowerInvariant();
-    }
-
-
+    
     private string GetPlatformInfo()
     {
         var arch = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
