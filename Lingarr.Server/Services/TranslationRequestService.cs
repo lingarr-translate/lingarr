@@ -421,8 +421,8 @@ public class TranslationRequestService : ITranslationRequestService
                 var subtitleTranslator = new SubtitleTranslationService(translationService, _logger);
                 var tempResults = new List<BatchTranslatedLine>();
 
-                int iteration = 1;
-                int total = translateAbleContent.Lines.Count();
+                var iteration = 1;
+                var total = translateAbleContent.Lines.Count();
                 foreach (var item in translateAbleContent.Lines)
                 {
                     var translateLine = new TranslateAbleSubtitleLine
@@ -432,9 +432,13 @@ public class TranslationRequestService : ITranslationRequestService
                         TargetLanguage = translateAbleContent.TargetLanguage
                     };
 
-                    var translatedText = await subtitleTranslator.TranslateSubtitleLine(
-                        translateLine,
-                        cancellationToken);
+                    var translatedText = "";
+                    if (!string.IsNullOrWhiteSpace(translateLine.SubtitleLine))
+                    {
+                        translatedText = await subtitleTranslator.TranslateSubtitleLine(
+                            translateLine,
+                            cancellationToken);
+                    }
 
                     tempResults.Add(new BatchTranslatedLine
                     {
@@ -442,7 +446,7 @@ public class TranslationRequestService : ITranslationRequestService
                         Line = translatedText
                     });
 
-                    int progress = (int)Math.Round((double)iteration * 100 / total);
+                    var progress = (int)Math.Round((double)iteration * 100 / total);
                     await _progressService.Emit(translationRequest, progress);
                     iteration++;
                 }
