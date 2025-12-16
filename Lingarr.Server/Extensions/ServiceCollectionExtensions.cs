@@ -171,6 +171,7 @@ public static class ServiceCollectionExtensions
         builder.Services.AddTransient<PathConversionService>();
         builder.Services.AddScoped<IStatisticsService, StatisticsService>();
         builder.Services.AddScoped<ITelemetryService, TelemetryService>();
+        builder.Services.AddScoped<ILingarrApiService, LingarrApiService>();
 
         // Add Sync services
         builder.Services.AddScoped<IShowSyncService, ShowSyncService>();

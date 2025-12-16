@@ -2,6 +2,7 @@
 using Lingarr.Core;
 using Lingarr.Core.Models;
 using Lingarr.Server.Attributes;
+using Lingarr.Server.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Lingarr.Server.Controllers;
@@ -11,6 +12,13 @@ namespace Lingarr.Server.Controllers;
 [Route("api/[controller]")]
 public class VersionController : ControllerBase
 {
+    private readonly ILingarrApiService _lingarrApiService;
+
+    public VersionController(ILingarrApiService lingarrApiService)
+    {
+        _lingarrApiService = lingarrApiService;
+    }
+
     /// <summary>
     /// Retrieves the current version information and checks for available updates.
     /// </summary>
@@ -21,7 +29,7 @@ public class VersionController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<VersionInfo>> Get()
     {
-        var versionInfo = await LingarrVersion.CheckForUpdates();
+        var versionInfo = await LingarrVersion.CheckForUpdates(_lingarrApiService);
         return Ok(versionInfo);
     }
 }
