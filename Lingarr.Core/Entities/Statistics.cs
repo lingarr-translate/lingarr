@@ -15,6 +15,7 @@ public class Statistics : BaseEntity
     public string TranslationsByMediaTypeJson { get; set; } = "{}";
     public string TranslationsByServiceJson { get; set; } = "{}";
     public string SubtitlesByLanguageJson { get; set; } = "{}";
+    public string TranslationsByModelJson { get; set; } = "{}";
 
     [NotMapped]
     public Dictionary<string, int> TranslationsByMediaType
@@ -35,5 +36,12 @@ public class Statistics : BaseEntity
     {
         get => JsonSerializer.Deserialize<Dictionary<string, int>>(SubtitlesByLanguageJson) ?? new();
         set => SubtitlesByLanguageJson = JsonSerializer.Serialize(value);
+    }
+
+    [NotMapped]
+    public Dictionary<string, int> TranslationsByModel
+    {
+        get => JsonSerializer.Deserialize<Dictionary<string, int>>(TranslationsByModelJson) ?? new();
+        set => TranslationsByModelJson = JsonSerializer.Serialize(value);
     }
 }

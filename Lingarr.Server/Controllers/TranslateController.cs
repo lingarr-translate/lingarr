@@ -1,18 +1,19 @@
 ﻿using System.Text.Json;
 using Lingarr.Core.Configuration;
+using Lingarr.Server.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
-using Lingarr.Server.Models.Batch.Request;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Services;
 
 namespace Lingarr.Server.Controllers;
 
 [ApiController]
+[LingarrAuthorize]
 [Route("api/[controller]")]
 public class TranslateController : ControllerBase
 {

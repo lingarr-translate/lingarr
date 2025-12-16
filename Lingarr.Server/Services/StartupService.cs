@@ -26,6 +26,10 @@ public class StartupService : IHostedService
     {
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
+        var authService = scope.ServiceProvider.GetRequiredService<Interfaces.Services.IAuthService>();
+
+        // check if default user exists
+        await authService.CheckIfDefaultUserExists();
 
         await ApplySettingsFromEnvironment(dbContext);
 
@@ -48,7 +52,7 @@ public class StartupService : IHostedService
     /// <param name="requiredKeys">Array of setting keys that must be present and non-empty for the service.</param>
     private async Task CheckAndUpdateIntegrationSettings(LingarrDbContext dbContext, string serviceName, string[] requiredKeys)
     {
-        string completedKey = serviceName == "radarr"
+        var completedKey = serviceName == "radarr"
             ? SettingKeys.Integration.RadarrSettingsCompleted
             : SettingKeys.Integration.SonarrSettingsCompleted;
 
@@ -56,7 +60,7 @@ public class StartupService : IHostedService
             .Where(s => requiredKeys.Contains(s.Key))
             .ToDictionaryAsync(s => s.Key, s => s.Value);
 
-        bool allRequiredKeysHaveValues = requiredKeys.All(key =>
+        var allRequiredKeysHaveValues = requiredKeys.All(key =>
             settings.TryGetValue(key, out var value) && !string.IsNullOrEmpty(value));
 
         if (allRequiredKeysHaveValues)
@@ -115,17 +119,19 @@ public class StartupService : IHostedService
         foreach (var (envVar, settingKey) in environmentSettings)
         {
             var value = Environment.GetEnvironmentVariable(envVar);
-            if (!string.IsNullOrEmpty(value))
+            if (string.IsNullOrEmpty(value))
             {
-                var setting = await dbContext.Settings.FirstOrDefaultAsync(s => s.Key == settingKey);
-                if (setting != null)
-                {
-                    setting.Value = value;
-                    await dbContext.SaveChangesAsync();
-                }
-
-                _logger.LogInformation($"Updated setting '{settingKey}' from environment variable '{envVar}'.");
+                continue;
             }
+            
+            var setting = await dbContext.Settings.FirstOrDefaultAsync(s => s.Key == settingKey);
+            if (setting != null)
+            {
+                setting.Value = value;
+                await dbContext.SaveChangesAsync();
+            }
+
+            _logger.LogInformation($"Updated setting '{settingKey}' from environment variable '{envVar}'.");
         }
     }
 

@@ -23,6 +23,7 @@ using Lingarr.Server.Services.Integration;
 using Lingarr.Server.Services.Subtitle;
 using Lingarr.Server.Services.Sync;
 using Lingarr.Server.Services.Translation;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 
@@ -32,7 +33,8 @@ public static class ServiceCollectionExtensions
 {
     public static void Configure(this WebApplicationBuilder builder)
     {
-        builder.Services.AddControllers().AddJsonOptions(options =>
+        builder.Services.AddControllers()
+        .AddJsonOptions(options =>
         {
             options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
@@ -42,13 +44,14 @@ public static class ServiceCollectionExtensions
         });
 
         builder.Services.AddEndpointsApiExplorer();
-        ;
+
         builder.Services.AddMemoryCache();
         builder.Services.AddHttpClient();
 
         builder.ConfigureSwagger();
         builder.ConfigureLogging();
         builder.ConfigureDatabase();
+        builder.ConfigureAuthentication();
         builder.ConfigureProviders();
         builder.ConfigureServices();
         builder.ConfigureSignalR();
@@ -93,6 +96,31 @@ public static class ServiceCollectionExtensions
         });
     }
 
+    private static void ConfigureAuthentication(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        })
+        .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+        {
+            options.Cookie.Name = "Lingarr.Auth";
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+            options.Cookie.SameSite = SameSiteMode.Lax;
+            options.ExpireTimeSpan = TimeSpan.FromDays(7);
+            options.SlidingExpiration = true;
+            options.Events.OnRedirectToLogin = context =>
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            };
+        });
+        
+        builder.Services.AddAuthorization();
+    }
+
     private static void ConfigureProviders(this WebApplicationBuilder builder)
     {
         builder.Services.AddScoped<IIntegrationSettingsProvider, IntegrationSettingsProvider>();
@@ -100,6 +128,9 @@ public static class ServiceCollectionExtensions
 
     private static void ConfigureServices(this WebApplicationBuilder builder)
     {
+        // Register auth
+        builder.Services.AddScoped<IAuthService, AuthService>();
+        
         builder.Services.AddScoped<ISettingService, SettingService>();
         builder.Services.AddSingleton<SettingChangedListener>();
 
@@ -139,6 +170,8 @@ public static class ServiceCollectionExtensions
 
         builder.Services.AddTransient<PathConversionService>();
         builder.Services.AddScoped<IStatisticsService, StatisticsService>();
+        builder.Services.AddScoped<ITelemetryService, TelemetryService>();
+        builder.Services.AddScoped<ILingarrApiService, LingarrApiService>();
 
         // Add Sync services
         builder.Services.AddScoped<IShowSyncService, ShowSyncService>();
