@@ -17,16 +17,16 @@
         "pinia": "^3.0.4",
         "vue": "^3.5.25",
         "vue-chartjs": "^5.3.3",
-        "vue-router": "^4.6.3"
+        "vue-router": "^4.6.4"
     },
     "devDependencies": {
-        "@tailwindcss/postcss": "^4.1.17",
-        "@tailwindcss/vite": "^4.1.17",
+        "@tailwindcss/postcss": "^4.1.18",
+        "@tailwindcss/vite": "^4.1.18",
         "@types/node": "^24.10.1",
-        "@typescript-eslint/eslint-plugin": "^8.49.0",
+        "@typescript-eslint/eslint-plugin": "^8.50.0",
         "@typescript-eslint/parser": "^8.48.1",
-        "@vitejs/plugin-vue": "^6.0.2",
-        "eslint": "9.39.1",
+        "@vitejs/plugin-vue": "^6.0.3",
+        "eslint": "9.39.2",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-prettier": "^5.5.4",
         "eslint-plugin-vue": "^10.6.2",
@@ -34,7 +34,7 @@
         "prettier-plugin-tailwindcss": "^0.7.2",
         "tailwindcss": "^4.1.17",
         "typescript": "^5.9.3",
-        "vite": "^7.2.7",
+        "vite": "^7.3.0",
         "vue-eslint-parser": "^10.2.0",
         "vue-tsc": "^3.1.8"
     }
