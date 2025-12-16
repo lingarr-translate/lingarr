@@ -1,59 +1,31 @@
 version: 2
 updates:
-  # Frontend - Minor and Patch updates (Monthly)
+  # Frontend dependencies
   - package-ecosystem: "npm"
     directory: "/Lingarr.Client"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 5
     groups:
-      minor-and-patch:
+      npm-minor-and-patch:
         update-types:
           - "minor"
           - "patch"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-
-  # Frontend - Major updates (Weekly)
-  - package-ecosystem: "npm"
-    directory: "/Lingarr.Client"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 2
-    groups:
-      major:
+      npm-major:
         update-types:
           - "major"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
 
-  # Backend - Minor and Patch updates (Monthly)
+  # Backend dependencies
   - package-ecosystem: "nuget"
     directory: "/"
     schedule:
       interval: "monthly"
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 5
     groups:
-      minor-and-patch:
+      nuget-minor-and-patch:
         update-types:
           - "minor"
           - "patch"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-
-  # Backend - Major updates (Weekly)
-  - package-ecosystem: "nuget"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 2
-    groups:
-      major:
+      nuget-major:
         update-types:
           - "major"
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-minor", "version-update:semver-patch"]
