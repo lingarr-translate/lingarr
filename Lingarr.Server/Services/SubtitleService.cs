@@ -143,10 +143,17 @@ public class SubtitleService : ISubtitleService
 
         // Resolve target language code
         string? targetLanguageCode = null;
-        if (!string.IsNullOrEmpty(targetLanguage)
-            && !TryGetLanguageByPart(targetLanguage, out targetLanguageCode))
+        if (!string.IsNullOrEmpty(targetLanguage))
         {
-            targetLanguageCode = targetLanguage;
+            // Preserve Portuguese Brazil variant (pt-BR) with correct casing
+            if (targetLanguage.Equals("pt-BR", StringComparison.OrdinalIgnoreCase))
+            {
+                targetLanguageCode = "pt-BR";
+            }
+            else if (!TryGetLanguageByPart(targetLanguage, out targetLanguageCode))
+            {
+                targetLanguageCode = targetLanguage;
+            }
         }
 
         // Reconstruct base parts
@@ -155,7 +162,11 @@ public class SubtitleService : ISubtitleService
         
         if (targetLanguageCode != null)
         {
-            newParts.Add(targetLanguageCode.ToLowerInvariant());
+            // Preserve pt-BR casing, lowercase everything else
+            var codeToAdd = targetLanguageCode == "pt-BR" 
+                ? targetLanguageCode 
+                : targetLanguageCode.ToLowerInvariant();
+            newParts.Add(codeToAdd);
         }
 
         // Add caption if present
