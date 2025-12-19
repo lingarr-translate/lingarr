@@ -98,6 +98,29 @@ public class LibreService : BaseLanguageService
             .ToList();
     }
 
+    /// <summary>
+    /// Maps internal language codes to LibreTranslate-specific codes.
+    /// Specifically handles Portuguese variants: pt-BR -> pb, pt-PT -> pt.
+    /// </summary>
+    /// <param name="code">The internal language code</param>
+    /// <returns>The LibreTranslate-compatible language code</returns>
+    private static string MapToLibreCode(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            return code;
+        }
+
+        code = code.Trim();
+
+        return code switch
+        {
+            "pt-BR" => "pb",
+            "pt-PT" => "pt",
+            _ => code
+        };
+    }
+
     /// <inheritdoc />
     public override async Task<string> TranslateAsync(
         string text,
@@ -114,11 +137,18 @@ public class LibreService : BaseLanguageService
             throw new InvalidOperationException("LibreTranslate URL is not configured.");
         }
 
+        var libreSource = MapToLibreCode(sourceLanguage);
+        var libreTarget = MapToLibreCode(targetLanguage);
+
+        _logger.LogDebug(
+            "LibreService mapping languages: internal source={SourceInternal}, target={TargetInternal} -> libre source={SourceLibre}, target={TargetLibre}",
+            sourceLanguage, targetLanguage, libreSource, libreTarget);
+
         var content = new StringContent(JsonSerializer.Serialize(new
         {
             q = text,
-            source = sourceLanguage,
-            target = targetLanguage,
+            source = libreSource,
+            target = libreTarget,
             format = "text",
             api_key = _apiKey
         }), Encoding.UTF8, "application/json");
