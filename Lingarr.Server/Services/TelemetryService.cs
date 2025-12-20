@@ -66,7 +66,7 @@ public class TelemetryService : ITelemetryService
             return false;
         }
 
-        if (await _settingService.GetSetting(SettingKeys.Telemetry.Enabled) != "true")
+        if (await _settingService.GetSetting(SettingKeys.Telemetry.TelemetryEnabled) != "true")
         {
             return false;
         }

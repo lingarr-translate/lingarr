@@ -37,7 +37,8 @@ public class ScheduleService : IScheduleService
         var settings = await settingService.GetSettings([
             SettingKeys.Automation.MovieSchedule,
             SettingKeys.Automation.ShowSchedule,
-            SettingKeys.Automation.AutomationEnabled
+            SettingKeys.Automation.AutomationEnabled,
+            SettingKeys.Telemetry.TelemetryEnabled
         ]);
 
         _logger.LogInformation("Configuring media indexers.");
@@ -67,7 +68,16 @@ public class ScheduleService : IScheduleService
                             translationSchedule,
                             new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
                     }
-
+                    break;
+                case "telemetry_enabled":
+                    if (setting.Value == "true")
+                    {
+                        RecurringJob.AddOrUpdate<TelemetryJob>(
+                            "TelemetryJob",
+                            job => job.Execute(),
+                            "0 9 * * 5",
+                            new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+                    }
                     break;
             }
         }

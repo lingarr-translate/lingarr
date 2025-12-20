@@ -113,7 +113,7 @@ public static class SettingKeys
 
     public static class Telemetry
     {
-        public const string Enabled = "telemetry_enabled";
+        public const string TelemetryEnabled = "telemetry_enabled";
         public const string LastSubmission = "telemetry_last_submission";
         
         public const string LastReportedLines = "telemetry_last_reported_lines";
