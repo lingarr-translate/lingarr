@@ -82,8 +82,9 @@ Lingarr welcomes suggestions for improving these standards. Please provide feedb
 
 ### General Guidelines
 - Discuss significant changes with project maintainers before implementing (via Discord, issues, or discussions)
-- Contributors must understand all code they submit
-- AI assisted coding is welcome; however, submitting code without understanding how it works (i.e., vibe coding) is not acceptable
+- **AI assisted** coding is welcome, however:
+    - Contributors must understand and be able to explain all submitted code
+    - Low-effort, unreviewed, or fully generated changes ("AI slop") will be rejected
 
 ### Backend Guidelines
 - Follow C# coding conventions
