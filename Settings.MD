@@ -19,6 +19,22 @@ These settings can be configured as environment variables to persist configurati
 
 ---
 
+### **Authentication Configuration**
+
+| **Environment Variable** | **Description**                    |
+|--------------------------|------------------------------------|
+| `AUTH_ENABLED`             | Enables or disables authentication. |
+
+---
+
+### **Telemetry Configuration**
+
+| **Environment Variable** | **Description**                                                                 |
+|--------------------------|---------------------------------------------------------------------------------|
+| `TELEMETRY_ENABLED`             | Opt-in for anonymized telemetry to help other Lingarr users, defaults to false. |
+
+---
+
 ### **Translation Service Configuration**
 
 #### **General Translation Settings**

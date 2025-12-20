@@ -59,7 +59,7 @@
                     </BadgeComponent>
                     <BadgeComponent v-else>
                         {{
-                            'Version: {version} beta'.format({
+                            'Version: {version}'.format({
                                 version: instanceStore.getVersion.currentVersion
                             })
                         }}
