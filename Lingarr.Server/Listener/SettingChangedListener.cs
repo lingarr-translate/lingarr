@@ -53,6 +53,11 @@ public class SettingChangedListener
                 ])
             },
             {
+                "telemetry", ("Job", "Telemetry", [
+                    SettingKeys.Telemetry.TelemetryEnabled
+                ])
+            },
+            {
                 "clearHash", ("Action", "ClearHash", [
                     SettingKeys.Translation.SourceLanguages
                 ])
@@ -153,7 +158,7 @@ public class SettingChangedListener
                     {
                         var translationSchedule =
                             await settingService.GetSetting(SettingKeys.Automation.TranslationSchedule);
-                        RecurringJob.RemoveIfExists(SettingKeys.Automation.TranslationSchedule);
+                        RecurringJob.RemoveIfExists("AutomatedTranslationJob");
                         RecurringJob.AddOrUpdate<AutomatedTranslationJob>(
                             "AutomatedTranslationJob",
                             job => job.Execute(),
@@ -162,6 +167,23 @@ public class SettingChangedListener
                     else
                     {
                         RecurringJob.RemoveIfExists("AutomatedTranslationJob");
+                    }
+
+                    break;
+                case "Telemetry":
+                    _logger.LogInformation(
+                        $"Settings changed for |Green|{jobName}|/Green|. Telemetry has been |Orange|modified|/Orange|.");
+                    if (settings[SettingKeys.Telemetry.TelemetryEnabled] == "true")
+                    {
+                        RecurringJob.RemoveIfExists("TelemetryJob");
+                        RecurringJob.AddOrUpdate<TelemetryJob>(
+                            "TelemetryJob",
+                            job => job.Execute(),
+                            "0 9 * * 5");
+                    }
+                    else
+                    {
+                        RecurringJob.RemoveIfExists("TelemetryJob");
                     }
 
                     break;
