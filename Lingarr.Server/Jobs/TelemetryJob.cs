@@ -1,5 +1,4 @@
 using Hangfire;
-using Lingarr.Core.Configuration;
 using Lingarr.Core.Enum;
 using Lingarr.Server.Filters;
 using Lingarr.Server.Interfaces.Services;
