@@ -1,6 +1,5 @@
 ﻿using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
-using Lingarr.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Services;
@@ -26,10 +25,6 @@ public class StartupService : IHostedService
     {
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
-        var authService = scope.ServiceProvider.GetRequiredService<Interfaces.Services.IAuthService>();
-
-        // check if default user exists
-        await authService.CheckIfDefaultUserExists();
 
         await ApplySettingsFromEnvironment(dbContext);
 
@@ -113,7 +108,10 @@ public class StartupService : IHostedService
             { "DEEPSEEK_MODEL", SettingKeys.Translation.DeepSeek.Model },
             { "DEEPSEEK_API_KEY", SettingKeys.Translation.DeepSeek.ApiKey },
 
-            { "DEEPL_API_KEY", SettingKeys.Translation.DeepL.DeeplApiKey }
+            { "DEEPL_API_KEY", SettingKeys.Translation.DeepL.DeeplApiKey },
+
+            { "AUTH_ENABLED", SettingKeys.Authentication.AuthEnabled },
+            { "TELEMETRY_ENABLED", SettingKeys.Telemetry.TelemetryEnabled }
         };
 
         foreach (var (envVar, settingKey) in environmentSettings)

@@ -76,11 +76,6 @@ public class AuthService : IAuthService
         return user;
     }
 
-    public async Task<bool> HasAnyUsers()
-    {
-        return await _context.Users.AnyAsync();
-    }
-
     public async Task<bool> ValidateApiKey(string apiKey)
     {
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -91,24 +86,6 @@ public class AuthService : IAuthService
             return false;
 
         return apiKey == storedApiKey;
-    }
-
-    public async Task CheckIfDefaultUserExists()
-    {
-        try
-        {
-            var hasUsers = await HasAnyUsers();
-
-            if (!hasUsers)
-            {
-                await CreateUser("admin", "lingarr");
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error occurred while ensuring default user exists");
-            throw;
-        }
     }
 
     private static string HashPassword(string password)

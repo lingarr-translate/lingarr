@@ -81,11 +81,6 @@ public class AuthController : ControllerBase
     {
         try
         {
-            var hasUsers = await _authService.HasAnyUsers();
-            if (hasUsers)
-            {
-                return BadRequest(new { message = "A user already exists. Please continue and login instead." });
-            }
             if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 2)
             {
                 return BadRequest(new { message = "Username must be at least 2 characters long" });

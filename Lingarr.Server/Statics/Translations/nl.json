@@ -88,7 +88,7 @@
     "statusCancelled": "Geannuleerd",
     "statusInterrupted": "Onderbroken",
     "updateAvailable": "Update {version} is beschikbaar",
-    "currentVersion": "Versie: {version} beta",
+    "currentVersion": "Versie: {version}",
     "enabled": "Actief",
     "disabled": "Inactief",
     "saved": "opgeslagen",

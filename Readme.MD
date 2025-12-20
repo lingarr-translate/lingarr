@@ -146,8 +146,10 @@ Lingarr provides a RESTful API that allows you to integrate subtitle translation
 [Lingarr API Documentation](https://lingarr.com/docs/api/)
 
 ### 🤝 Contributing:
-We welcome contributions to Lingarr! Whether it's bug reports, 
-feature requests, or code contributions, please feel free to help out. Visit the [Lingarr](https://github.com/lingarr-translate/lingarr) GitHub repository to get started.
+We welcome contributions to Lingarr! Whether it's bug reports,
+feature requests, or code contributions, please feel free to help out.
+
+Please read our [Contributing Guidelines](CONTRIBUTING.md) for development setup, coding standards, and requirements for submit pull requests.
 
 ### 🙏 Credits:
 Icons: [Lucide](https://lucide.dev/icons)  
