@@ -211,34 +211,81 @@ public static class ServiceCollectionExtensions
             var dbConnection = Environment.GetEnvironmentVariable("DB_CONNECTION")?.ToLower() ?? "sqlite";
             if (dbConnection == "mysql")
             {
-                var variables = new Dictionary<string, string>
-                {
-                    { "DB_HOST", Environment.GetEnvironmentVariable("DB_HOST") ?? "Lingarr.Mysql" },
-                    { "DB_PORT", Environment.GetEnvironmentVariable("DB_PORT") ?? "3306" },
-                    { "DB_DATABASE", Environment.GetEnvironmentVariable("DB_DATABASE") ?? "LingarrMysql" },
-                    { "DB_USERNAME", Environment.GetEnvironmentVariable("DB_USERNAME") ?? "LingarrMysql" },
-                    { "DB_PASSWORD", Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "Secret1234" }
-                };
-
-                var connectionString =
-                    $"Server={variables["DB_HOST"]};Port={variables["DB_PORT"]};Database={variables["DB_DATABASE"]};Uid={variables["DB_USERNAME"]};Pwd={variables["DB_PASSWORD"]};Allow User Variables=True";
-
-                configuration.UseStorage(new MySqlStorage(connectionString, new MySqlStorageOptions
-                {
-                    TablesPrefix = tablePrefix
-                }));
+                ConfigureMySqlStorage(configuration, tablePrefix);
             }
             else
             {
-                var sqliteDbPath = Environment.GetEnvironmentVariable("DB_HANGFIRE_SQLITE_PATH") ?? "/app/config/Hangfire.db";
-
-                configuration
-                    .UseSimpleAssemblyNameTypeSerializer()
-                    .UseRecommendedSerializerSettings()
-                    .UseSQLiteStorage(sqliteDbPath, new SQLiteStorageOptions());
+                ConfigureSqLiteStorage(configuration);
             }
 
             configuration.UseFilter(new JobContextFilter());
         });
+    }
+
+    /// <summary>
+    /// Configures Hangfire to use MySQL storage.
+    /// </summary>
+    /// <param name="configuration">Hangfire global configuration</param>
+    /// <param name="tablePrefix">Prefix for Hangfire tables in MySQL</param>
+    private static void ConfigureMySqlStorage(IGlobalConfiguration configuration, string tablePrefix)
+    {
+        var variables = new Dictionary<string, string>
+        {
+            { "DB_HOST", Environment.GetEnvironmentVariable("DB_HOST") ?? "Lingarr.Mysql" },
+            { "DB_PORT", Environment.GetEnvironmentVariable("DB_PORT") ?? "3306" },
+            { "DB_DATABASE", Environment.GetEnvironmentVariable("DB_DATABASE") ?? "LingarrMysql" },
+            { "DB_USERNAME", Environment.GetEnvironmentVariable("DB_USERNAME") ?? "LingarrMysql" },
+            { "DB_PASSWORD", Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "Secret1234" }
+        };
+
+        var connectionString =
+            $"Server={variables["DB_HOST"]};Port={variables["DB_PORT"]};Database={variables["DB_DATABASE"]};Uid={variables["DB_USERNAME"]};Pwd={variables["DB_PASSWORD"]};Allow User Variables=True";
+
+        configuration.UseStorage(new MySqlStorage(connectionString, new MySqlStorageOptions
+        {
+            TablesPrefix = tablePrefix
+        }));
+    }
+
+    /// <summary>
+    /// Configures Hangfire to use SQLite storage.
+    /// </summary>
+    /// <param name="configuration">Hangfire global configuration</param>
+    private static void ConfigureSqLiteStorage(IGlobalConfiguration configuration)
+    {
+        var sqliteDbPath = Environment.GetEnvironmentVariable("DB_HANGFIRE_SQLITE_PATH") ?? "/app/config/Hangfire.db";
+        using (var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={sqliteDbPath}"))
+        {
+            // add Write-Ahead Logging
+            connection.Open();
+            using var command = connection.CreateCommand();
+
+            command.CommandText = "PRAGMA journal_mode=WAL";
+            command.ExecuteScalar();
+
+            command.CommandText = "PRAGMA busy_timeout=120000";
+            command.ExecuteNonQuery();
+
+            command.CommandText = "PRAGMA synchronous=NORMAL";
+            command.ExecuteNonQuery();
+        }
+
+        configuration
+            .UseSimpleAssemblyNameTypeSerializer()
+            .UseRecommendedSerializerSettings()
+            .UseSQLiteStorage(sqliteDbPath, new SQLiteStorageOptions
+            {
+                // Clean up expired jobs more often
+                JobExpirationCheckInterval = TimeSpan.FromHours(1),
+                
+                // Reduce writes by increasing the aggregation counters
+                CountersAggregateInterval = TimeSpan.FromMinutes(5),
+                
+                // Reduced database polling
+                QueuePollInterval = TimeSpan.FromSeconds(15),
+                
+                // Job recovery timeout if worker crashes
+                InvisibilityTimeout = TimeSpan.FromMinutes(30)
+            });
     }
 }
