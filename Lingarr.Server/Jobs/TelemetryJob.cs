@@ -41,18 +41,15 @@ public class TelemetryJob
             var success = await _telemetryService.SubmitTelemetry(payload);
             if (success)
             {
-                _logger.LogInformation("Telemetry submitted successfully");
                 await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());
             }
             else
             {
-                _logger.LogWarning("Telemetry submission failed");
                 await _scheduleService.UpdateJobState(jobName, JobStatus.Failed.GetDisplayName());
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error executing telemetry job");
             await _scheduleService.UpdateJobState(jobName, JobStatus.Failed.GetDisplayName());
             throw;
         }
