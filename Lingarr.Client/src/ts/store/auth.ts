@@ -3,8 +3,8 @@
     loading: boolean
     error: string
     success: string
+    isCreating: boolean
     editingUserId: number | null
-    savingUserId: number | null
     deletingUserId: number | null
     editUsername: string
     editPassword: string

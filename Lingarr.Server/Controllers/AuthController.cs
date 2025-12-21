@@ -197,6 +197,17 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
+    /// Check if any users exist in the system
+    /// </summary>
+    [HttpGet("users/any")]
+    [AllowAnonymous]
+    public async Task<ActionResult<bool>> HasAnyUsers()
+    {
+        var hasUsers = await _authService.HasAnyUsers();
+        return Ok(hasUsers);
+    }
+
+    /// <summary>
     /// Get all users
     /// </summary>
     [HttpGet("users")]

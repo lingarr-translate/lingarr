@@ -45,7 +45,9 @@
                     :error-message="translate('settings.integrations.sonarrApiKeyError')"
                     @update:validation="(val) => (isValid.sonarrApiKey = val)" />
             </div>
-            <div v-translate="'settings.integrations.reindexTask'" />
+            <div>
+                No media visible? Try reindexing by starting a sync task <a href="/settings/tasks" class="underline">here</a>
+            </div>
         </template>
     </CardComponent>
 </template>
