@@ -97,7 +97,6 @@ public class TelemetryService : ITelemetryService
             await _settingService.SetSetting(SettingKeys.Telemetry.LastReportedFiles, stats.TotalFilesTranslated.ToString());
             await _settingService.SetSetting(SettingKeys.Telemetry.LastReportedCharacters, stats.TotalCharactersTranslated.ToString());
 
-            _logger.LogInformation("Telemetry submitted successfully");
             return true;
         }
         catch (Exception ex)
