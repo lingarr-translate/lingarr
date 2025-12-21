@@ -85,6 +85,18 @@ const service = (http: AxiosStatic, resource = '/api/auth'): IAuthService => ({
         })
     },
 
+    hasAnyUsers(): Promise<boolean> {
+        return new Promise((resolve, reject) => {
+            http.get(`${resource}/users/any`)
+                .then((response: AxiosResponse<boolean>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
+    },
+
     getUsers(): Promise<IUser[]> {
         return new Promise((resolve, reject) => {
             http.get(`${resource}/users`)

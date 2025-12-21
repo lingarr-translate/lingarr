@@ -141,6 +141,21 @@ docker run -d \
 | `LT_LOAD_ONLY`                  | Allows you to add source languages by their [iso code](https://libretranslate.com/languages)                    |
 | `LT_DISABLE_WEB_UI`              | Enables or disables a Google translate like web ui                            |
 
+### Running Lingarr as non-root
+When running Docker containers, you can optionally specify which user should run the container process using the `user` flag. This is useful for:
+- **Security**: Running containers as non-root users
+- **Permissions**: Ensuring files created by the container have the correct ownership on your host system
+
+**Docker Compose syntax:**
+```yaml
+user: "1000:1000"  # UID:GID
+```
+
+**Docker CLI syntax:**
+```bash
+--user 1000:1000  # UID:GID
+```
+
 ## API Integration
 Lingarr provides a RESTful API that allows you to integrate subtitle translation capabilities into your applications. You can find the complete API documentation, including a Swagger definition of all available endpoints at the 
 [Lingarr API Documentation](https://lingarr.com/docs/api/)

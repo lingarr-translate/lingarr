@@ -11,13 +11,11 @@ public class AuthService : IAuthService
 {
     private readonly LingarrDbContext _context;
     private readonly ISettingService _settingService;
-    private readonly ILogger<AuthService> _logger;
 
     public AuthService(LingarrDbContext context, ISettingService settingService, ILogger<AuthService> logger)
     {
         _context = context;
         _settingService = settingService;
-        _logger = logger;
     }
 
     public string GenerateApiKey()
@@ -105,5 +103,10 @@ public class AuthService : IAuthService
             numBytesRequested: 256 / 8));
 
         return $"{Convert.ToBase64String(salt)}:{hashed}";
+    }
+
+    public async Task<bool> HasAnyUsers()
+    {
+        return await _context.Users.AnyAsync();
     }
 }

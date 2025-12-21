@@ -6,20 +6,91 @@
                 <StatusMessage :message="authStore.error" type="error" />
                 <StatusMessage :message="authStore.success" type="success" />
 
+                <div class="flex justify-end">
+                    <ButtonComponent
+                        variant="accent"
+                        size="sm"
+                        :disabled="authStore.isCreating || authStore.editingUserId !== null"
+                        @click="authStore.createOrEditUser()">
+                        Create User
+                    </ButtonComponent>
+                </div>
+
                 <div v-if="authStore.loading" class="flex justify-center py-8">
                     <LoaderCircleIcon class="h-8 w-8 animate-spin" />
                 </div>
 
-                <div v-else-if="authStore.users.length === 0" class="text-center text-gray-400 py-8">
-                    No users found
-                </div>
-
-                <div v-else>
+                <div >
                     <div class="border-accent grid grid-cols-12 border-b font-bold">
                         <div class="col-span-7 md:col-span-4 px-4 py-2">Username</div>
                         <div class="col-span-3 hidden md:block px-4 py-2">Last Login</div>
                         <div class="col-span-2 md:col-span-5 flex justify-end px-4 py-2">Actions</div>
                     </div>
+                    <div v-if="authStore.isCreatingUser">
+                        <div class="border-accent grid grid-cols-12 border-b hover:bg-accent/5 bg-accent/10">
+                            <div class="col-span-7 md:col-span-4 px-4 py-2 flex items-center">
+                                <div class="w-full">
+                                    <InputComponent
+                                        id="newUsername"
+                                        v-model="authStore.editUsername"
+                                        placeholder="Username"
+                                        validation-type="string"
+                                        :min-length="2"
+                                        error-message="Username must be at least 2 characters long"
+                                        @update:validation="authStore.setUsernameValidation" />
+                                </div>
+                            </div>
+                            <div class="col-span-3 hidden md:flex items-center px-4 py-2 text-sm text-gray-400">
+                                -
+                            </div>
+                            <div class="col-span-2 md:col-span-5 flex items-center justify-end gap-2 px-4 py-2">
+                                <ButtonComponent
+                                    variant="accent"
+                                    size="sm"
+                                    :disabled="authStore.loading"
+                                    @click="authStore.cancelEdit">
+                                    <span class="md:hidden">X</span>
+                                    <span class="hidden md:block">Cancel</span>
+                                </ButtonComponent>
+                                <ButtonComponent
+                                    variant="accent"
+                                    size="sm"
+                                    :disabled="!authStore.canSave || authStore.loading"
+                                    :loading="authStore.loading"
+                                    @click="authStore.saveUser()">
+                                    Create
+                                </ButtonComponent>
+                            </div>
+                        </div>
+                        <div class="border-accent grid grid-cols-1 border-b bg-accent/5">
+                            <div class="col-span-1 px-4 py-2">
+                                <div class="space-y-2">
+                                    <InputComponent
+                                        id="newPassword"
+                                        v-model="authStore.editPassword"
+                                        type="password"
+                                        label="Password (required)"
+                                        placeholder="Enter password"
+                                        validation-type="string"
+                                        :min-length="4"
+                                        error-message="Password must be at least 4 characters long and match"
+                                        @update:validation="authStore.setPasswordValidation" />
+
+                                    <InputComponent
+                                        id="newConfirmPassword"
+                                        v-model="authStore.editConfirmPassword"
+                                        type="password"
+                                        label="Confirm Password (required)"
+                                        placeholder="Confirm your password"
+                                        validation-type="string"
+                                        :min-length="4"
+                                        error-message="Password must be at least 4 characters long and match"
+                                        @update:validation="authStore.setConfirmPasswordValidation" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Existing Users -->
                     <div v-for="user in authStore.users" :key="user.id">
                         <div class="border-accent grid grid-cols-12 border-b hover:bg-accent/5">
                             <div class="col-span-7 md:col-span-4 px-4 py-2 flex items-center">
@@ -30,7 +101,7 @@
                                         placeholder="Username"
                                         validation-type="string"
                                         :min-length="2"
-                                        :error-message="'Username must be at least 2 characters long'"
+                                        error-message="Username must be at least 2 characters long"
                                         @update:validation="authStore.setUsernameValidation" />
                                 </div>
                                 <span v-else class="text-sm">{{ user.username }}</span>
@@ -43,7 +114,7 @@
                                     <ButtonComponent
                                         variant="accent"
                                         size="sm"
-                                        :disabled="authStore.savingUserId === user.id"
+                                        :disabled="authStore.loading"
                                         @click="authStore.cancelEdit">
                                         <span class="md:hidden">X</span>
                                         <span class="hidden md:block">Cancel</span>
@@ -51,9 +122,9 @@
                                     <ButtonComponent
                                         variant="accent"
                                         size="sm"
-                                        :disabled="!authStore.canSave || authStore.savingUserId === user.id"
-                                        :loading="authStore.savingUserId === user.id"
-                                        @click="authStore.saveUser(user.id)">
+                                        :disabled="!authStore.canSave || authStore.loading"
+                                        :loading="authStore.loading"
+                                        @click="authStore.saveUser()">
                                         Save
                                     </ButtonComponent>
                                 </template>
@@ -61,7 +132,7 @@
                                     <ButtonComponent
                                         variant="accent"
                                         size="sm"
-                                        @click="authStore.startEdit(user)">
+                                        @click="authStore.createOrEditUser(user)">
                                         Edit
                                     </ButtonComponent>
                                     <ButtonComponent
@@ -87,7 +158,7 @@
                                         placeholder="Leave blank to keep current password"
                                         validation-type="string"
                                         :min-length="4"
-                                        :error-message="'Password must be at least 4 characters long'"
+                                        error-message="Password must be at least 4 characters long and match"
                                         @update:validation="authStore.setPasswordValidation" />
 
                                     <InputComponent
@@ -98,11 +169,15 @@
                                         placeholder="Confirm your new password"
                                         validation-type="string"
                                         :min-length="4"
-                                        :error-message="authStore.passwordMatchError"
+                                        error-message="Password must be at least 4 characters long and match"
                                         @update:validation="authStore.setConfirmPasswordValidation" />
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <div if="authStore.users.length === 0 && !authStore.createUser" class="text-center text-gray-400 py-8">
+                        No users found
                     </div>
                 </div>
             </div>
