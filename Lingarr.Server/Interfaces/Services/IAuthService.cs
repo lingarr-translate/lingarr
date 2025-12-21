@@ -34,4 +34,9 @@ public interface IAuthService
     /// </summary>
     /// <param name="apiKey">The API key to validate.</param>
     Task<bool> ValidateApiKey(string apiKey);
+
+    /// <summary>
+    /// Check if a user exists in the database
+    /// </summary>
+    Task<bool> HasAnyUsers();
 }

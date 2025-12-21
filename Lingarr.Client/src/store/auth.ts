@@ -8,8 +8,8 @@ export const useAuthStore = defineStore('auth', {
         loading: false,
         error: '',
         success: '',
+        isCreating: false,
         editingUserId: null,
-        savingUserId: null,
         deletingUserId: null,
         editUsername: '',
         editPassword: '',
@@ -20,11 +20,23 @@ export const useAuthStore = defineStore('auth', {
     }),
     getters: {
         getUsers: (state): IUser[] => state.users,
+        isCreatingUser: (state): boolean => state.isCreating,
         canSave: (state): boolean => {
             if (!state.isUsernameValid) {
                 return false
             }
 
+            // new users, password is required
+            if (state.isCreating) {
+                if (!state.editPassword || !state.isPasswordValid || !state.isConfirmPasswordValid) {
+                    return false
+                }
+                if (state.editPassword !== state.editConfirmPassword) {
+                    return false
+                }
+            }
+
+            // existing users, password is optional
             if (state.editPassword || state.editConfirmPassword) {
                 if (!state.isPasswordValid || !state.isConfirmPasswordValid) {
                     return false
@@ -34,12 +46,6 @@ export const useAuthStore = defineStore('auth', {
                 }
             }
             return true
-        },
-        passwordMatchError: (state): string => {
-            if (state.editPassword !== state.editConfirmPassword && (state.editPassword || state.editConfirmPassword)) {
-                return 'Passwords do not match'
-            }
-            return 'Password must be at least 4 characters long'
         }
     },
     actions: {
@@ -57,17 +63,19 @@ export const useAuthStore = defineStore('auth', {
             }
         },
 
-        startEdit(user: IUser): void {
-            this.editingUserId = user.id
-            this.editUsername = user.username
+        createOrEditUser(user?: IUser): void {
+            this.isCreating = user === undefined
+            this.editingUserId = user?.id ?? null
+            this.editUsername = user?.username ?? ''
+            this.isUsernameValid = user !== undefined
+            this.isPasswordValid = user !== undefined
+            this.isConfirmPasswordValid = user !== undefined
             this.editPassword = ''
             this.editConfirmPassword = ''
-            this.isUsernameValid = true
-            this.isPasswordValid = true
-            this.isConfirmPasswordValid = true
         },
 
         cancelEdit(): void {
+            this.isCreating = false
             this.editingUserId = null
             this.editUsername = ''
             this.editPassword = ''
@@ -78,27 +86,30 @@ export const useAuthStore = defineStore('auth', {
             this.error = ''
         },
 
-        async saveUser(userId: number): Promise<void> {
+        async saveUser(): Promise<void> {
             if (!this.canSave) return
 
-            this.savingUserId = userId
+            this.loading = true
             this.error = ''
             this.success = ''
 
             try {
-                const updateData: { username?: string; password?: string } = {}
-
-                if (this.editUsername) {
-                    updateData.username = this.editUsername
+                if (this.isCreating) {
+                    // Creating a new user
+                    await services.auth.signup({
+                        username: this.editUsername,
+                        password: this.editPassword
+                    })
+                    this.success = 'User created successfully'
+                } else {
+                    // Updating a user
+                    await services.auth.updateUser(this.editingUserId!, {
+                        username: this.editUsername,
+                        password: this.editPassword,
+                    })
+                    this.success = 'User updated successfully'
                 }
 
-                if (this.editPassword) {
-                    updateData.password = this.editPassword
-                }
-
-                await services.auth.updateUser(userId, updateData)
-
-                this.success = 'User updated successfully'
                 setTimeout(() => {
                     this.success = ''
                 }, 3000)
@@ -106,10 +117,10 @@ export const useAuthStore = defineStore('auth', {
                 this.cancelEdit()
                 await this.loadUsers()
             } catch (err: any) {
-                console.error('Error updating user:', err)
-                this.error = err?.data?.message || 'Failed to update user'
+                console.error('Error saving user:', err)
+                this.error = err?.data?.message || (this.isCreating ? 'Failed to create user' : 'Failed to update user')
             } finally {
-                this.savingUserId = null
+                this.loading = false
             }
         },
 

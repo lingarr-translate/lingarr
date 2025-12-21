@@ -14,7 +14,7 @@
             placeholder="Enter your username"
             validation-type="string"
             :min-length="2"
-            :error-message="'Username must be at least 2 characters long'"
+            error-message="Username must be at least 2 characters long"
             @update:validation="(valid: boolean) => updateValidation('username', valid)" />
 
         <InputComponent
@@ -25,7 +25,7 @@
             placeholder="Enter your password"
             validation-type="string"
             :min-length="4"
-            :error-message="'Password must be at least 4 characters long'"
+            error-message="Password must be at least 4 characters long and match"
             @update:validation="(valid: boolean) => updateValidation('password', valid)" />
 
         <InputComponent
@@ -36,13 +36,12 @@
             placeholder="Confirm your password"
             validation-type="string"
             :min-length="4"
-            :error-message="passwordMatchError"
+            error-message="Password must be at least 4 characters long and match"
             @update:validation="(valid: boolean) => updateValidation('confirmPassword', valid)" />
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 
 const username = defineModel<string>('username', { default: '' })
@@ -52,13 +51,6 @@ const confirmPassword = defineModel<string>('confirmPassword', { default: '' })
 const emit = defineEmits<{
     'update:validation': [field: string, valid: boolean]
 }>()
-
-const passwordMatchError = computed(() => {
-    if (password.value !== confirmPassword.value && confirmPassword.value.length > 0) {
-        return 'Passwords do not match'
-    }
-    return 'Password must be at least 8 characters long'
-})
 
 const updateValidation = (field: string, valid: boolean) => {
     emit('update:validation', field, valid)

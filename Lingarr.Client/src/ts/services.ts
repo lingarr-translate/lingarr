@@ -37,6 +37,7 @@ export interface IAuthService {
     login(request: ILoginRequest): Promise<void>
     logout(): Promise<void>
     generateApiKey(): Promise<IApiKeyResponse>
+    hasAnyUsers(): Promise<boolean>
     getUsers(): Promise<IUser[]>
     updateUser(id: number, request: IUpdateUserRequest): Promise<void>
     deleteUser(id: number): Promise<void>
