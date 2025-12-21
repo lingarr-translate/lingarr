@@ -104,6 +104,7 @@ public class ScheduleService : IScheduleService
         var recurringJobs = JobStorage.Current.GetConnection().GetRecurringJobs();
 
         return recurringJobs
+            .Where(job => job.Id != "TelemetryJob")
             .Select(job => MapToJobStatus(job, monitor))
             .OrderBy(j => j.Id)
             .ToList();

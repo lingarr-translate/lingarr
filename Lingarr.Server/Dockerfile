@@ -1,8 +1,9 @@
 # Set default build configuration
 ARG BUILD_CONFIGURATION=Debug
 ARG BUILDPLATFORM=linux/amd64
+ARG TARGETPLATFORM=linux/amd64
 ARG TARGETARCH=amd64
-FROM node:24-slim AS client
+FROM --platform=$BUILDPLATFORM node:24-slim AS client
 
 # Prepare Client
 COPY ./Lingarr.Client/ /Client
@@ -12,7 +13,7 @@ RUN if [ "$BUILD_CONFIGURATION" = "Release" ] ; then npm ci --only=production ; 
 RUN npm run build
 
 # Step 2: Prepare the base image for the server
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+FROM --platform=$TARGETPLATFORM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
 
 # Step 3: Build the server
