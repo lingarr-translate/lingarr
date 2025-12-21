@@ -68,7 +68,7 @@ public class LingarrApiService : ILingarrApiService
                     .SetAbsoluteExpiration(TimeSpan.FromHours(24));
                 _cache.Set(CacheKeyLatestVersion, versionResponse.Version, cacheOptions);
 
-                _logger.LogInformation("Retrieved latest version from Lingarr API: {Version}", versionResponse.Version);
+                _logger.LogInformation("Retrieved latest version: {Version}", versionResponse.Version);
                 return versionResponse.Version;
             }
 
@@ -77,7 +77,7 @@ public class LingarrApiService : ILingarrApiService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching latest version from Lingarr API");
+            _logger.LogError(ex, "Error fetching latest version");
             return null;
         }
     }
@@ -109,12 +109,10 @@ public class LingarrApiService : ILingarrApiService
                 return false;
             }
 
-            _logger.LogInformation("Telemetry submitted successfully to Lingarr API");
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error submitting telemetry to Lingarr API");
             return false;
         }
     }
