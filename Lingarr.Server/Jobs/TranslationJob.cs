@@ -96,10 +96,11 @@ public class TranslationJob
             var addTranslatorInfo = settings[SettingKeys.Translation.AddTranslatorInfo] == "true";
             var validateSubtitles = settings[SettingKeys.SubtitleValidation.ValidateSubtitles] != "false";
             var removeLanguageTag = settings[SettingKeys.Translation.RemoveLanguageTag] != "false";
+            var contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled] == "true";
 
             var contextBefore = 0;
             var contextAfter = 0;
-            if (settings[SettingKeys.Translation.AiContextPromptEnabled] == "true")
+            if (contextPromptEnabled)
             {
                 contextBefore = int.TryParse(settings[SettingKeys.Translation.AiContextBefore],
                     out var linesBefore)
@@ -193,9 +194,12 @@ public class TranslationJob
             }
             else
             {
-                _logger.LogInformation(
-                    "Using individual translation with context (before: {contextBefore}, after: {contextAfter}) for subtitle: {filePath}",
-                    contextBefore, contextAfter, translationRequest.SubtitleToTranslate);
+                if (contextPromptEnabled)
+                {
+                    _logger.LogInformation(
+                        "Using individual translation with context (before: {contextBefore}, after: {contextAfter}) for subtitle: {filePath}",
+                        contextBefore, contextAfter, translationRequest.SubtitleToTranslate);
+                }
 
                 translatedSubtitles = await translator.TranslateSubtitles(
                     subtitles,
