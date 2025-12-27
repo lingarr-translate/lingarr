@@ -4,10 +4,10 @@ ARG BUILD_CONFIGURATION=Release
 FROM --platform=$BUILDPLATFORM node:24-slim AS client
 ARG BUILD_CONFIGURATION
 
-# Prepare Client
+# Step 1: Prepare Client
 COPY ./Lingarr.Client/ /Client
 WORKDIR /Client
-# Install dependencies (including dev deps needed for build)
+# Install dependencies
 RUN npm ci
 RUN npm run build
 
