@@ -34,8 +34,9 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
     public OpenAiService(
         ISettingService settings,
         ILogger<OpenAiService> logger,
+        LanguageCodeService languageCodeService,
         HttpClient? httpClient = null)
-        : base(settings, logger, "/app/Statics/ai_languages.json")
+        : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
     {
         _httpClient = httpClient ?? new HttpClient();
     }

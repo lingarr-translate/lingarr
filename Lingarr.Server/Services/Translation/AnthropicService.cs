@@ -33,8 +33,9 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
 
     public AnthropicService(ISettingService settings,
         HttpClient httpClient,
-        ILogger<AnthropicService> logger)
-        : base(settings, logger, "/app/Statics/ai_languages.json")
+        ILogger<AnthropicService> logger,
+        LanguageCodeService languageCodeService)
+        : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
     {
         _httpClient = httpClient;
     }

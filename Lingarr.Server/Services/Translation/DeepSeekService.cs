@@ -26,8 +26,9 @@ public class DeepSeekService : BaseLanguageService
     public DeepSeekService(
         ISettingService settings,
         HttpClient httpClient,
-        ILogger<DeepSeekService> logger)
-        : base(settings, logger, "/app/Statics/ai_languages.json")
+        ILogger<DeepSeekService> logger,
+        LanguageCodeService languageCodeService)
+        : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
     {
         _httpClient = httpClient;
     }

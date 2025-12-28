@@ -24,8 +24,9 @@ public class LibreService : BaseLanguageService
     public LibreService(
         HttpClient httpClient,
         ISettingService settings,
-        ILogger<LibreService> logger)
-        : base(settings, logger, "/app/Statics/libre_translate_languages.json")
+        ILogger<LibreService> logger,
+        LanguageCodeService languageCodeService)
+        : base(settings, logger, languageCodeService, "/app/Statics/libre_translate_languages.json")
     {
         _httpClient = httpClient;
     }
