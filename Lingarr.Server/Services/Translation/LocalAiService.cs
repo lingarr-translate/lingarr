@@ -35,8 +35,9 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
     public LocalAiService(
         ISettingService settings,
         HttpClient httpClient,
-        ILogger<LocalAiService> logger)
-        : base(settings, logger, "/app/Statics/ai_languages.json")
+        ILogger<LocalAiService> logger,
+        LanguageCodeService languageCodeService)
+        : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
     {
         _httpClient = httpClient;
     }

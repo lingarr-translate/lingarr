@@ -8,6 +8,7 @@ namespace Lingarr.Server.Services.Translation.Base;
 public abstract class BaseLanguageService : BaseTranslationService
 {
     private readonly string _languageFilePath;
+    protected readonly LanguageCodeService _languageCodeService;
     protected string? _contextPrompt;
     protected string? _contextPromptEnabled;
     protected Dictionary<string, string> _replacements;
@@ -16,9 +17,11 @@ public abstract class BaseLanguageService : BaseTranslationService
     protected BaseLanguageService(
         ISettingService settings,
         ILogger logger,
+        LanguageCodeService languageCodeService,
         string languageFilePath) : base(settings, logger)
     {
         _languageFilePath = languageFilePath;
+        _languageCodeService = languageCodeService;
         _replacements = new Dictionary<string, string>();
     }
     
@@ -171,26 +174,23 @@ public abstract class BaseLanguageService : BaseTranslationService
     }
     
     /// <summary>
-    /// Converts a two-letter ISO language code to a full language name.
+    /// Converts a language code to its full culture name in English.
     /// </summary>
-    /// <param name="twoLetterIsoLanguageName">The two-letter ISO language code to convert.</param>
+    /// <param name="languageCode">The language code to convert (e.g., "en", "pt-BR", "zh-TW").</param>
     /// <returns>The full language name or the original code if no match is found.</returns>
-    protected static string GetFullLanguageName(string twoLetterIsoLanguageName)
+    protected string GetFullLanguageName(string languageCode)
     {
-        if (string.IsNullOrWhiteSpace(twoLetterIsoLanguageName))
-            return twoLetterIsoLanguageName;
-            
+        if (string.IsNullOrWhiteSpace(languageCode))
+            return languageCode;
+
         try
         {
-            var culture = CultureInfo.GetCultures(CultureTypes.AllCultures)
-                .FirstOrDefault(c => string.Equals(c.TwoLetterISOLanguageName, 
-                    twoLetterIsoLanguageName, StringComparison.OrdinalIgnoreCase));
-                
-            return culture?.DisplayName ?? twoLetterIsoLanguageName;
+            return _languageCodeService.GetCultureName(languageCode);
         }
-        catch
+        catch (ArgumentException ex)
         {
-            return twoLetterIsoLanguageName;
+            _logger.LogWarning(ex, "Invalid language code: {LanguageCode}", languageCode);
+            return languageCode;
         }
     }
 }

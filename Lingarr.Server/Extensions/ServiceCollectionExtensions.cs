@@ -130,7 +130,7 @@ public static class ServiceCollectionExtensions
     {
         // Register auth
         builder.Services.AddScoped<IAuthService, AuthService>();
-        
+
         builder.Services.AddScoped<ISettingService, SettingService>();
         builder.Services.AddSingleton<SettingChangedListener>();
 
@@ -154,9 +154,10 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<ISubtitleWriter, SrtWriter>();
         builder.Services.AddScoped<ISubtitleWriter, SsaWriter>();
         builder.Services.AddScoped<ISubtitleWriter, SsaWriter>();
-
+        
         // Register translate services
         builder.Services.AddScoped<ITranslationServiceFactory, TranslationFactory>();
+        builder.Services.AddSingleton<LanguageCodeService>();
 
         // Added startup service to validate new settings
         builder.Services.AddHostedService<StartupService>();

@@ -17,7 +17,8 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
         T translator,
         string languageFilePath,
         ISettingService settings,
-        ILogger logger) : base(settings, logger, languageFilePath)
+        ILogger logger,
+        LanguageCodeService languageCodeService) : base(settings, logger, languageCodeService, languageFilePath)
     {
         _translator = translator;
     }
