@@ -10,8 +10,10 @@ using System.Threading.Tasks;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models.Batch;
+using Lingarr.Server.Services;
 using Lingarr.Server.Services.Translation;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Moq.Protected;
 using Xunit;
@@ -36,10 +38,12 @@ public class GoogleGeminiServiceTests
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
 
+        var languageCodeService = new LanguageCodeService(NullLogger<LanguageCodeService>.Instance);
         _service = new GoogleGeminiService(
             _settingsMock.Object,
             _httpClient,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            languageCodeService);
     }
 
     [Fact]
@@ -232,10 +236,12 @@ public class GoogleGeminiServiceTests
             .ReturnsAsync(apiKey);
 
         var realHttpClient = new HttpClient();
+        var languageCodeService = new LanguageCodeService(NullLogger<LanguageCodeService>.Instance);
         var service = new GoogleGeminiService(
             _settingsMock.Object,
             realHttpClient,
-            _loggerMock.Object
+            _loggerMock.Object,
+            languageCodeService
         );
 
         // Create a LARGE batch similar to the bug report (150 items to trigger truncation)

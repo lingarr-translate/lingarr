@@ -35,8 +35,9 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
     public GoogleGeminiService(
         ISettingService settings,
         HttpClient httpClient,
-        ILogger<GoogleGeminiService> logger)
-        : base(settings, logger, "/app/Statics/ai_languages.json")
+        ILogger<GoogleGeminiService> logger,
+        LanguageCodeService languageCodeService)
+        : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
     {
         _httpClient = httpClient;
     }

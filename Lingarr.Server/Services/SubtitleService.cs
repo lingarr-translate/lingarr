@@ -17,13 +17,15 @@ public class SubtitleService : ISubtitleService
     private static readonly string[] SupportedCaptions = ["sdh", "cc", "forced", "hi"];
     private static readonly char[] WhitespaceCharacters = [' ', '\t', '\n', '\r'];
 
-    private static readonly CultureInfo[] Cultures = CultureInfo.GetCultures(CultureTypes.AllCultures);
     private readonly ILogger<SubtitleService> _logger;
+    private readonly LanguageCodeService _languageCodeService;
 
     public SubtitleService(
-        ILogger<SubtitleService> logger)
+        ILogger<SubtitleService> logger,
+        LanguageCodeService languageCodeService)
     {
         _logger = logger;
+        _languageCodeService = languageCodeService;
     }
 
     /// <inheritdoc />
@@ -567,20 +569,23 @@ public class SubtitleService : ISubtitleService
     /// When this method returns, contains the two-letter ISO language code corresponding to the 
     /// matched culture; otherwise, <c>null</c> if no match is found.
     /// </param>
-    private static bool TryGetLanguageByPart(string part, out string? languageCode)
+    private bool TryGetLanguageByPart(string part, out string? languageCode)
     {
         languageCode = null;
-        var culture = Cultures.FirstOrDefault(c =>
-            string.Equals(part, c.Name, StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(part, c.ThreeLetterISOLanguageName, StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(part, c.TwoLetterISOLanguageName, StringComparison.OrdinalIgnoreCase));
-
-        if (culture != null)
+        if (!_languageCodeService.Validate(part))
         {
-            languageCode = culture.TwoLetterISOLanguageName;
+            return false;
+        }
+        
+        try
+        {
+            languageCode = _languageCodeService.GetNormalizedCode(part);
             return true;
         }
-
-        return false;
+        catch (ArgumentException)
+        {
+            // Should not happen as we validated
+            return false;
+        }
     }
 }
