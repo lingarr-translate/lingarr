@@ -18,4 +18,5 @@ public interface IStatisticsService
         string serviceType,
         string? modelName,
         BatchTranslatedLine[] translatedLines);
+    Task ResetStatistics();
 }

@@ -24,6 +24,18 @@ const service = (http: AxiosStatic, resource = '/api/statistics'): IStatisticsSe
                     reject(error.response)
                 })
         })
+    },
+
+    resetStatistics(): Promise<void> {
+        return new Promise((resolve, reject) => {
+            http.post(`${resource}/reset`)
+                .then(() => {
+                    resolve()
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
     }
 })
 
