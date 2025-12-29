@@ -104,6 +104,17 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="flex justify-end">
+                    <ButtonComponent
+                        variant="ghost"
+                        size="sm"
+                        :disabled="loading || resetting"
+                        :loading="resetting"
+                        @click="handleResetStatistics">
+                        Reset statistics
+                    </ButtonComponent>
+                </div>
             </template>
         </CardComponent>
     </div>
@@ -115,6 +126,7 @@ import { DailyStatistic, MEDIA_TYPE, Statistics } from '@/ts'
 import { useI18n } from '@/plugins/i18n'
 import services from '@/services'
 import CardComponent from '@/components/common/CardComponent.vue'
+import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import LoaderCircleIcon from '@/components/icons/LoaderCircleIcon.vue'
 import LanguageChart from './LanguageChart.vue'
 import StatCard from './StatCard.vue'
@@ -122,6 +134,7 @@ import MetricCard from './MetricCard.vue'
 const { translate } = useI18n()
 
 const loading = ref(true)
+const resetting = ref(false)
 const error = ref<string | null>(null)
 const statistics = ref<Statistics>()
 const dailyStats = ref<DailyStatistic[]>()
@@ -171,6 +184,27 @@ const fetchDailyStats = async () => {
         console.error('Error fetching daily statistics:', error)
     } finally {
         loading.value = false
+    }
+}
+
+const handleResetStatistics = async () => {
+    if (!confirm('Are you sure you want to reset all statistics? This action cannot be undone.')) {
+        return
+    }
+
+    try {
+        resetting.value = true
+        error.value = null
+        await services.statistics.resetStatistics()
+        await fetchDailyStats()
+        await fetchStatistics()
+    } catch (err: unknown) {
+        if (err instanceof Error) {
+            error.value = err?.message || 'Failed to reset statistics'
+        }
+        console.error('Error resetting statistics:', err)
+    } finally {
+        resetting.value = false
     }
 }
 

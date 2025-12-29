@@ -10,11 +10,14 @@ namespace Lingarr.Server.Services;
 public class StatisticsService : IStatisticsService
 {
     private readonly LingarrDbContext _dbContext;
+    private readonly ISettingService _settingService;
 
     public StatisticsService(
-        LingarrDbContext dbContext)
+        LingarrDbContext dbContext,
+        ISettingService settingService)
     {
         _dbContext = dbContext;
+        _settingService = settingService;
     }
 
     public async Task<Statistics> GetStatistics()
@@ -133,5 +136,36 @@ public class StatisticsService : IStatisticsService
         dailyStats.TranslationCount++;
 
         return await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task ResetStatistics()
+    {
+        // Reset the main statistics entity
+        var stats = await GetOrCreateStatistics();
+        stats.TotalLinesTranslated = 0;
+        stats.TotalCharactersTranslated = 0;
+        stats.TotalFilesTranslated = 0;
+        stats.TotalMovies = 0;
+        stats.TotalEpisodes = 0;
+        stats.TotalSubtitles = 0;
+        stats.TranslationsByMediaType = new Dictionary<string, int>();
+        stats.TranslationsByService = new Dictionary<string, int>();
+        stats.SubtitlesByLanguage = new Dictionary<string, int>();
+        stats.TranslationsByModel = new Dictionary<string, int>();
+
+        // Delete all daily statistics
+        var dailyStats = await _dbContext.DailyStatistics.ToListAsync();
+        _dbContext.DailyStatistics.RemoveRange(dailyStats);
+
+        // Reset telemetry snapshot settings
+        var telemetrySettings = new Dictionary<string, string>
+        {
+            { "telemetry_last_reported_lines", "0" },
+            { "telemetry_last_reported_files", "0" },
+            { "telemetry_last_reported_characters", "0" }
+        };
+        await _settingService.SetSettings(telemetrySettings);
+
+        await _dbContext.SaveChangesAsync();
     }
 }

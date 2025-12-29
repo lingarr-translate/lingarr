@@ -30,4 +30,11 @@ public class StatisticsController : ControllerBase
         var stats = await _statisticsService.GetDailyStatistics(days);
         return Ok(stats);
     }
+
+    [HttpPost("reset")]
+    public async Task<ActionResult> ResetStatistics()
+    {
+        await _statisticsService.ResetStatistics();
+        return Ok(new { message = "Statistics have been reset successfully" });
+    }
 }
