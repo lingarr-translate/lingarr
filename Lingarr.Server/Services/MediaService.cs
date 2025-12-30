@@ -2,8 +2,8 @@
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
 using Lingarr.Server.Models;
-using Microsoft.EntityFrameworkCore;
 using Lingarr.Server.Models.Api;
+using Microsoft.EntityFrameworkCore;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Sync;
 using Lingarr.Server.Interfaces.Services.Integration;
@@ -260,13 +260,28 @@ public class MediaService : IMediaService
     {
         try
         {
+            // Preserve legacy toggle behavior by flipping the current state
+            var current = await GetIncludeState(mediaType, id);
+            return await SetInclude(mediaType, id, !current);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error excluding media item. Type: {MediaType}, Id: {Id}", mediaType, id);
+            return false;
+        }
+    }
+
+    public async Task<bool> SetInclude(MediaType mediaType, int id, bool include)
+    {
+        try
+        {
             switch (mediaType)
             {
                 case MediaType.Movie:
                     var movie = await _dbContext.Movies.FindAsync(id);
                     if (movie != null)
                     {
-                        movie.ExcludeFromTranslation = !movie.ExcludeFromTranslation;
+                        movie.ExcludeFromTranslation = !include;
                         await _dbContext.SaveChangesAsync();
                         return true;
                     }
@@ -276,7 +291,7 @@ public class MediaService : IMediaService
                     var show = await _dbContext.Shows.FindAsync(id);
                     if (show != null)
                     {
-                        show.ExcludeFromTranslation = !show.ExcludeFromTranslation;
+                        show.ExcludeFromTranslation = !include;
                         await _dbContext.SaveChangesAsync();
                         return true;
                     }
@@ -286,7 +301,7 @@ public class MediaService : IMediaService
                     var season = await _dbContext.Seasons.FindAsync(id);
                     if (season != null)
                     {
-                        season.ExcludeFromTranslation = !season.ExcludeFromTranslation;
+                        season.ExcludeFromTranslation = !include;
                         await _dbContext.SaveChangesAsync();
                         return true;
                     }
@@ -296,7 +311,7 @@ public class MediaService : IMediaService
                     var episode = await _dbContext.Episodes.FindAsync(id);
                     if (episode != null)
                     {
-                        episode.ExcludeFromTranslation = !episode.ExcludeFromTranslation;
+                        episode.ExcludeFromTranslation = !include;
                         await _dbContext.SaveChangesAsync();
                         return true;
                     }
@@ -312,9 +327,59 @@ public class MediaService : IMediaService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error excluding media item. Type: {MediaType}, Id: {Id}", mediaType, id);
+            _logger.LogError(ex, "Error setting include state. Type: {MediaType}, Id: {Id}", mediaType, id);
             return false;
         }
+    }
+
+    public async Task<bool> SetIncludeAll(MediaType mediaType, bool include)
+    {
+        try
+        {
+            var exclude = !include;
+
+            if (mediaType == MediaType.Movie)
+            {
+                await _dbContext.Movies.ExecuteUpdateAsync(setters =>
+                    setters.SetProperty(m => m.ExcludeFromTranslation, exclude));
+                return true;
+            }
+
+            if (mediaType == MediaType.Show)
+            {
+                await _dbContext.Shows.ExecuteUpdateAsync(setters =>
+                    setters.SetProperty(s => s.ExcludeFromTranslation, exclude));
+                await _dbContext.Seasons.ExecuteUpdateAsync(setters =>
+                    setters.SetProperty(s => s.ExcludeFromTranslation, exclude));
+                await _dbContext.Episodes.ExecuteUpdateAsync(setters =>
+                    setters.SetProperty(e => e.ExcludeFromTranslation, exclude));
+                return true;
+            }
+
+            _logger.LogWarning("SetIncludeAll called with unsupported media type: {MediaType}", mediaType);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting include state for all media items. Type: {MediaType}", mediaType);
+            return false;
+        }
+    }
+
+    public async Task<IncludeSummaryResponse> GetIncludeSummary()
+    {
+        var totalMovies = await _dbContext.Movies.CountAsync();
+        var excludedMovies = await _dbContext.Movies.CountAsync(m => m.ExcludeFromTranslation);
+        var totalShows = await _dbContext.Shows.CountAsync();
+        var excludedShows = await _dbContext.Shows.CountAsync(s => s.ExcludeFromTranslation);
+
+        return new IncludeSummaryResponse
+        {
+            TotalMovies = totalMovies,
+            ExcludedMovies = excludedMovies,
+            TotalShows = totalShows,
+            ExcludedShows = excludedShows
+        };
     }
     
     /// <inheritdoc />
@@ -359,6 +424,27 @@ public class MediaService : IMediaService
         {
             _logger.LogError(ex, "Error excluding media item. Type: {MediaType}, Id: {Id}", mediaType, id);
             return false;
+        }
+    }
+
+    private async Task<bool> GetIncludeState(MediaType mediaType, int id)
+    {
+        switch (mediaType)
+        {
+            case MediaType.Movie:
+                var movie = await _dbContext.Movies.FindAsync(id);
+                return movie != null && !movie.ExcludeFromTranslation;
+            case MediaType.Show:
+                var show = await _dbContext.Shows.FindAsync(id);
+                return show != null && !show.ExcludeFromTranslation;
+            case MediaType.Season:
+                var season = await _dbContext.Seasons.FindAsync(id);
+                return season != null && !season.ExcludeFromTranslation;
+            case MediaType.Episode:
+                var episode = await _dbContext.Episodes.FindAsync(id);
+                return episode != null && !episode.ExcludeFromTranslation;
+            default:
+                return false;
         }
     }
 }

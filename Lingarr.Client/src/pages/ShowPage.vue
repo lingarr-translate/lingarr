@@ -20,12 +20,29 @@
         </div>
 
         <div class="w-full px-4">
+            <div class="bg-primary text-primary-content mb-2 flex flex-wrap items-center justify-between gap-3 rounded-md px-4 py-3">
+                <div class="flex items-center gap-3">
+                    <ToggleButton
+                        :model-value="includeAllShows"
+                        size="small"
+                        @toggle:update="onToggleIncludeAllShows" />
+                    <div class="leading-tight">
+                        <div class="font-semibold">
+                            {{ translate('tvShows.includeAll') }}
+                        </div>
+                        <div class="text-sm opacity-80">
+                            {{ translate('tvShows.excludedLabel') }}:
+                            {{ includeSummary?.excludedShows ?? 0 }} / {{ includeSummary?.totalShows ?? 0 }}
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Shows -->
             <div class="border-accent grid grid-cols-12 border-b font-bold">
                 <div class="col-span-8 px-4 py-2">{{ translate('tvShows.title') }}</div>
                 <div class="col-span-1 px-4 py-2">
                     <span class="hidden md:block">
-                        {{ translate('tvShows.exclude') }}
+                        {{ translate('tvShows.include') }}
                     </span>
                     <span class="block md:hidden">⊘</span>
                 </div>
@@ -33,7 +50,7 @@
                     {{ translate('tvShows.ageThreshold') }}
                 </div>
                 <div class="col-span-2 flex justify-end px-4 py-2">
-                    <ReloadComponent @toggle:update="showStore.fetch()" />
+                    <ReloadComponent @toggle:update="onReload" />
                 </div>
             </div>
             <div v-for="item in shows.items" :key="item.id">
@@ -46,9 +63,9 @@
                     </div>
                     <div class="col-span-1 flex items-center px-4 py-2" @click.stop>
                         <ToggleButton
-                            v-model="item.excludeFromTranslation"
+                            :model-value="!item.excludeFromTranslation"
                             size="small"
-                            @toggle:update="() => showStore.exclude(MEDIA_TYPE.SHOW, item.id)" />
+                            @toggle:update="() => onToggleIncludeShow(item)" />
                     </div>
                     <div class="col-span-3 flex items-center px-4 py-2" @click.stop>
                         <InputComponent
@@ -66,7 +83,10 @@
                             " />
                     </div>
                 </div>
-                <SeasonTable v-if="expandedShow === item.id" :seasons="item.seasons" />
+                <SeasonTable
+                    v-if="expandedShow === item.id"
+                    :seasons="item.seasons"
+                    @include-changed="refreshIncludeSummary" />
             </div>
         </div>
 
@@ -81,7 +101,7 @@
 
 <script setup lang="ts">
 import { ref, Ref, computed, onMounted, ComputedRef } from 'vue'
-import { IFilter, IPagedResult, IShow, MEDIA_TYPE, SETTINGS } from '@/ts'
+import { IFilter, IIncludeSummary, IPagedResult, IShow, MEDIA_TYPE, SETTINGS } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useInstanceStore } from '@/store/instance'
 import { useSettingStore } from '@/store/setting'
@@ -100,6 +120,8 @@ const instanceStore = useInstanceStore()
 const showStore = useShowStore()
 const settingStore = useSettingStore()
 const expandedShow: Ref<boolean | number | null> = ref(null)
+const includeSummary: Ref<IIncludeSummary | null> = ref(null)
+const includeAllShows: Ref<boolean> = ref(true)
 
 const settingsCompleted: ComputedRef<string> = computed(
     () => settingStore.getSetting(SETTINGS.SONARR_SETTINGS_COMPLETED) as string
@@ -112,6 +134,33 @@ const filter: ComputedRef<IFilter> = computed({
     }, 300)
 })
 
+const refreshIncludeSummary = async () => {
+    includeSummary.value = await showStore.fetchIncludeSummary()
+    includeAllShows.value = includeSummary.value
+        ? includeSummary.value.excludedShows === 0
+        : true
+}
+
+const onToggleIncludeAllShows = async () => {
+    const nextInclude = !includeAllShows.value
+    includeAllShows.value = nextInclude
+    await showStore.includeAll(nextInclude)
+    await showStore.fetch()
+    await refreshIncludeSummary()
+}
+
+const onToggleIncludeShow = async (show: IShow) => {
+    const nextInclude = !show.excludeFromTranslation
+    show.excludeFromTranslation = !nextInclude
+    await showStore.include(MEDIA_TYPE.SHOW, show.id, nextInclude)
+    await refreshIncludeSummary()
+}
+
+const onReload = async () => {
+    await showStore.fetch()
+    await refreshIncludeSummary()
+}
+
 const toggleShow = async (show: IShow) => {
     if (expandedShow.value === show.id) {
         expandedShow.value = null
@@ -122,5 +171,6 @@ const toggleShow = async (show: IShow) => {
 }
 onMounted(async () => {
     await showStore.fetch()
+    await refreshIncludeSummary()
 })
 </script>
