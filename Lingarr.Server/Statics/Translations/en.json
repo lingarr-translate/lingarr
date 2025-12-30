@@ -31,13 +31,17 @@
   "movies": {
     "title": "Title",
     "subtitles": "Subtitles",
-    "exclude": "Exclude",
+    "include": "Include",
+    "includeAll": "Include all movies",
+    "excludedLabel": "Excluded",
     "ageThreshold": "Delay",
     "hours": "hours"
   },
   "tvShows": {
     "title": "Title",
-    "exclude": "Exclude",
+    "include": "Include",
+    "includeAll": "Include all shows",
+    "excludedLabel": "Excluded",
     "season": "Season",
     "episodes": "Episodes",
     "episodesLine": "episodes",

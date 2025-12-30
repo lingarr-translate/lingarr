@@ -1,5 +1,5 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { IFilter, IMovie, IPagedResult, IUseMovieStore, MediaType } from '@/ts'
+import { IFilter, IIncludeSummary, IMovie, IPagedResult, IUseMovieStore, MediaType, MEDIA_TYPE } from '@/ts'
 import services from '@/services'
 
 export const useMovieStore = defineStore('movie', {
@@ -44,8 +44,14 @@ export const useMovieStore = defineStore('movie', {
                 this.filter.isAscending
             )
         },
-        async exclude(type: MediaType, id: number) {
-            await services.media.exclude(type, id)
+        async include(type: MediaType, id: number, include: boolean) {
+            await services.media.include(type, id, include)
+        },
+        async includeAll(include: boolean) {
+            await services.media.includeAll(MEDIA_TYPE.MOVIE, include)
+        },
+        async fetchIncludeSummary(): Promise<IIncludeSummary> {
+            return services.media.includeSummary()
         },
         async updateThreshold(type: MediaType, id: number, hours: string) {
             await services.media.threshold(type, id, hours)

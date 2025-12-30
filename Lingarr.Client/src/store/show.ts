@@ -1,6 +1,6 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import services from '@/services'
-import { IFilter, IUseShowStore, IPagedResult, IShow, MediaType } from '@/ts'
+import { IFilter, IIncludeSummary, IUseShowStore, IPagedResult, IShow, MediaType, MEDIA_TYPE } from '@/ts'
 
 export const useShowStore = defineStore('show', {
     state: (): IUseShowStore => ({
@@ -34,8 +34,14 @@ export const useShowStore = defineStore('show', {
                 this.filter.isAscending
             )
         },
-        async exclude(type: MediaType, id: number) {
-            await services.media.exclude(type, id)
+        async include(type: MediaType, id: number, include: boolean) {
+            await services.media.include(type, id, include)
+        },
+        async includeAll(include: boolean) {
+            await services.media.includeAll(MEDIA_TYPE.SHOW, include)
+        },
+        async fetchIncludeSummary(): Promise<IIncludeSummary> {
+            return services.media.includeSummary()
         },
         async updateThreshold(type: MediaType, id: number, hours: string) {
             await services.media.threshold(type, id, hours)
