@@ -196,7 +196,7 @@ public static class ServiceCollectionExtensions
         var tablePrefix = "_hangfire";
         builder.Services.AddHangfireServer(options =>
         {
-            options.Queues = ["movies", "shows", "system", "translation", "default"];
+            options.Queues = ["movies", "shows", "system", "translation", "webhook", "default"];
             options.WorkerCount =
                 int.TryParse(Environment.GetEnvironmentVariable("MAX_CONCURRENT_JOBS"), out int maxConcurrentJobs)
                     ? maxConcurrentJobs
