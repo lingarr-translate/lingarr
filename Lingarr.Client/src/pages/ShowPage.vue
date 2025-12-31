@@ -150,9 +150,9 @@ const onToggleIncludeAllShows = async () => {
 }
 
 const onToggleIncludeShow = async (show: IShow) => {
-    const nextInclude = !show.excludeFromTranslation
-    show.excludeFromTranslation = !nextInclude
-    await showStore.include(MEDIA_TYPE.SHOW, show.id, nextInclude)
+    const newIncludeState = show.excludeFromTranslation // if currently excluded, new state is included
+    show.excludeFromTranslation = !newIncludeState
+    await showStore.include(MEDIA_TYPE.SHOW, show.id, newIncludeState)
     await refreshIncludeSummary()
 }
 

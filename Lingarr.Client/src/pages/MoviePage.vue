@@ -159,9 +159,9 @@ const onToggleIncludeAllMovies = async () => {
 }
 
 const onToggleIncludeMovie = async (movie: IMovie) => {
-    const nextInclude = !movie.excludeFromTranslation
-    movie.excludeFromTranslation = !nextInclude
-    await movieStore.include(MEDIA_TYPE.MOVIE, movie.id, nextInclude)
+    const newIncludeState = movie.excludeFromTranslation // if currently excluded, new state is included
+    movie.excludeFromTranslation = !newIncludeState
+    await movieStore.include(MEDIA_TYPE.MOVIE, movie.id, newIncludeState)
     await refreshIncludeSummary()
 }
 
