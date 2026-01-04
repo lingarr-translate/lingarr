@@ -1,5 +1,7 @@
-﻿using Lingarr.Core.Configuration;
+﻿using System.Data.Common;
+using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
+using Lingarr.Core.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Services;
@@ -26,6 +28,8 @@ public class StartupService : IHostedService
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
 
+        await EnsureDefaultSettings(dbContext);
+        await EnsureStatisticsSchema(dbContext);
         await ApplySettingsFromEnvironment(dbContext);
 
         await CheckAndUpdateIntegrationSettings(dbContext, "radarr", [
@@ -37,6 +41,88 @@ public class StartupService : IHostedService
             SettingKeys.Integration.SonarrUrl,
             SettingKeys.Integration.SonarrApiKey
         ]);
+    }
+
+    private async Task EnsureStatisticsSchema(LingarrDbContext dbContext)
+    {
+        try
+        {
+            var provider = dbContext.Database.ProviderName ?? string.Empty;
+            var columnMissing = await IsStatisticsModelColumnMissing(dbContext);
+
+            if (!columnMissing)
+            {
+                return;
+            }
+
+            if (dbContext.Database.IsSqlite())
+            {
+                await dbContext.Database.ExecuteSqlRawAsync(
+                    "ALTER TABLE statistics ADD COLUMN translations_by_model_json TEXT NOT NULL DEFAULT '{}'" );
+                _logger.LogInformation("Added translations_by_model_json column to statistics (SQLite self-heal).");
+            }
+            else if (provider.Contains("MySql", StringComparison.OrdinalIgnoreCase))
+            {
+                await dbContext.Database.ExecuteSqlRawAsync(
+                    "ALTER TABLE statistics ADD COLUMN translations_by_model_json LONGTEXT NOT NULL DEFAULT '{}'" );
+                _logger.LogInformation("Added translations_by_model_json column to statistics (MySQL self-heal).");
+            }
+            else
+            {
+                _logger.LogWarning("Unable to self-heal statistics schema for provider {Provider}", provider);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to ensure statistics schema");
+            throw;
+        }
+    }
+
+    private static async Task<bool> IsStatisticsModelColumnMissing(LingarrDbContext dbContext)
+    {
+        await using DbConnection connection = dbContext.Database.GetDbConnection();
+        await connection.OpenAsync();
+
+        await using var command = connection.CreateCommand();
+
+        if (dbContext.Database.IsSqlite())
+        {
+            command.CommandText = "SELECT 1 FROM pragma_table_info('statistics') WHERE name = 'translations_by_model_json'";
+        }
+        else
+        {
+            command.CommandText = "SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'statistics' AND COLUMN_NAME = 'translations_by_model_json'";
+        }
+
+        var result = await command.ExecuteScalarAsync();
+        return result == null;
+    }
+
+    private static async Task EnsureDefaultSettings(LingarrDbContext dbContext)
+    {
+        // Seed critical onboarding/auth/telemetry defaults if they were missing due to skipped migrations
+        var requiredDefaults = new Dictionary<string, string>
+        {
+            { SettingKeys.Authentication.OnboardingCompleted, "false" },
+            { SettingKeys.Authentication.AuthEnabled, "false" },
+            { SettingKeys.Telemetry.TelemetryEnabled, "false" },
+            { SettingKeys.Telemetry.LastSubmission, string.Empty },
+            { SettingKeys.Telemetry.LastReportedLines, "0" },
+            { SettingKeys.Telemetry.LastReportedFiles, "0" },
+            { SettingKeys.Telemetry.LastReportedCharacters, "0" }
+        };
+
+        foreach (var kvp in requiredDefaults)
+        {
+            var setting = await dbContext.Settings.FirstOrDefaultAsync(s => s.Key == kvp.Key);
+            if (setting == null)
+            {
+                dbContext.Settings.Add(new Setting { Key = kvp.Key, Value = kvp.Value });
+            }
+        }
+
+        await dbContext.SaveChangesAsync();
     }
 
     /// <summary>
