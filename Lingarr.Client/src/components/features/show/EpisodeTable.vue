@@ -66,8 +66,10 @@ const showStore = useShowStore()
 const emit = defineEmits(['includeChanged'])
 
 const onToggleIncludeEpisode = async (episode: IEpisode) => {
-    const nextInclude = !episode.excludeFromTranslation
-    episode.excludeFromTranslation = !nextInclude
+    const nextInclude = episode.excludeFromTranslation
+    const newExcludeState = !episode.excludeFromTranslation
+
+    episode.excludeFromTranslation = newExcludeState
     await showStore.include(MEDIA_TYPE.EPISODE, episode.id, nextInclude)
     emit('includeChanged')
 }
