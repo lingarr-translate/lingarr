@@ -153,6 +153,15 @@ const onToggleIncludeShow = async (show: IShow) => {
     const currentIncludeState = !show.excludeFromTranslation // current state: true if included, false if excluded
     const newIncludeState = !currentIncludeState // flip it
     show.excludeFromTranslation = !newIncludeState // update the exclude flag
+
+    // Keep nested seasons/episodes in sync client-side
+    show.seasons?.forEach((season) => {
+        season.excludeFromTranslation = !newIncludeState
+        season.episodes?.forEach((episode) => {
+            episode.excludeFromTranslation = !newIncludeState
+        })
+    })
+
     await showStore.include(MEDIA_TYPE.SHOW, show.id, newIncludeState)
     await refreshIncludeSummary()
 }

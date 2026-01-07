@@ -278,6 +278,7 @@ public class MediaService : IMediaService
             switch (mediaType)
             {
                 case MediaType.Movie:
+                {
                     var movie = await _dbContext.Movies.FindAsync(id);
                     if (movie != null)
                     {
@@ -286,28 +287,60 @@ public class MediaService : IMediaService
                         return true;
                     }
                     break;
+                }
 
                 case MediaType.Show:
-                    var show = await _dbContext.Shows.FindAsync(id);
+                {
+                    var show = await _dbContext.Shows
+                        .Include(s => s.Seasons)
+                        .ThenInclude(season => season.Episodes)
+                        .FirstOrDefaultAsync(s => s.Id == id);
+
                     if (show != null)
                     {
                         show.ExcludeFromTranslation = !include;
+
+                        // Keep seasons and episodes in sync with the show toggle
+                        foreach (var season in show.Seasons)
+                        {
+                            season.ExcludeFromTranslation = !include;
+
+                            foreach (var episode in season.Episodes)
+                            {
+                                episode.ExcludeFromTranslation = !include;
+                            }
+                        }
+
                         await _dbContext.SaveChangesAsync();
                         return true;
                     }
                     break;
+                }
 
                 case MediaType.Season:
-                    var season = await _dbContext.Seasons.FindAsync(id);
+                {
+                    var season = await _dbContext.Seasons
+                        .Include(s => s.Episodes)
+                        .FirstOrDefaultAsync(s => s.Id == id);
+
                     if (season != null)
                     {
                         season.ExcludeFromTranslation = !include;
+
+                        // Keep episodes in sync with the season toggle
+                        foreach (var episode in season.Episodes)
+                        {
+                            episode.ExcludeFromTranslation = !include;
+                        }
+
                         await _dbContext.SaveChangesAsync();
                         return true;
                     }
                     break;
+                }
 
                 case MediaType.Episode:
+                {
                     var episode = await _dbContext.Episodes.FindAsync(id);
                     if (episode != null)
                     {
@@ -316,6 +349,7 @@ public class MediaService : IMediaService
                         return true;
                     }
                     break;
+                }
 
                 default:
                     _logger.LogWarning("Unsupported media type: {MediaType}", mediaType);

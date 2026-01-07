@@ -78,8 +78,16 @@ const expandedSeason: Ref<ISeason | null> = ref(null)
 const emitIncludeChanged = () => emit('includeChanged')
 
 const onToggleIncludeSeason = async (season: ISeason) => {
-    const nextInclude = !season.excludeFromTranslation
-    season.excludeFromTranslation = !nextInclude
+    const nextInclude = season.excludeFromTranslation
+    const newExcludeState = !season.excludeFromTranslation
+
+    season.excludeFromTranslation = newExcludeState
+
+    // Keep episodes in sync client-side
+    season.episodes?.forEach((episode) => {
+        episode.excludeFromTranslation = newExcludeState
+    })
+
     await showStore.include(MEDIA_TYPE.SEASON, season.id, nextInclude)
     emitIncludeChanged()
 }
