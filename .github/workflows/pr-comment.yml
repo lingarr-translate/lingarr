@@ -19,4 +19,4 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: process.env.PR_COMMENT_BODY
-})
+            })
