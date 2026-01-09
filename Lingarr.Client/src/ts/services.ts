@@ -11,8 +11,7 @@ import {
     ILoginRequest,
     IApiKeyResponse,
     IUser,
-    IUpdateUserRequest,
-    IIncludeSummary
+    IUpdateUserRequest
 } from '@/ts'
 
 export interface Services {
