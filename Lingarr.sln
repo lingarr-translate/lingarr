@@ -39,6 +39,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\ci.yml = .github\workflows\ci.yml
 		.github\workflows\docker-build.yml = .github\workflows\docker-build.yml
+		.github\workflows\pr-comment.yml = .github\workflows\pr-comment.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{C3D4E5F6-A7B8-4C5D-9E8F-7A6B5C4D3E2F}"
