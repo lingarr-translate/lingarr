@@ -51,8 +51,7 @@
             <EpisodeTable
                 v-if="expandedSeason?.id === season.id"
                 :subtitles="subtitles"
-                :episodes="season.episodes"
-                @include-changed="emitIncludeChanged" />
+                :episodes="season.episodes" />
         </div>
     </div>
 </template>
@@ -71,25 +70,12 @@ defineProps<{
 }>()
 
 const showStore = useShowStore()
-const emit = defineEmits(['includeChanged'])
 const subtitles: Ref<ISubtitle[]> = ref([])
 const expandedSeason: Ref<ISeason | null> = ref(null)
 
-const emitIncludeChanged = () => emit('includeChanged')
-
 const onToggleIncludeSeason = async (season: ISeason) => {
-    const nextInclude = season.excludeFromTranslation
-    const newExcludeState = !season.excludeFromTranslation
-
-    season.excludeFromTranslation = newExcludeState
-
-    // Keep episodes in sync client-side
-    season.episodes?.forEach((episode) => {
-        episode.excludeFromTranslation = newExcludeState
-    })
-
+    const nextInclude = !season.excludeFromTranslation
     await showStore.include(MEDIA_TYPE.SEASON, season.id, nextInclude)
-    emitIncludeChanged()
 }
 
 async function toggleSeason(season: ISeason) {

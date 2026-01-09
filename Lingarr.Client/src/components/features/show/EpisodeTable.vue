@@ -63,15 +63,10 @@ const props = defineProps<{
     subtitles: ISubtitle[]
 }>()
 const showStore = useShowStore()
-const emit = defineEmits(['includeChanged'])
 
 const onToggleIncludeEpisode = async (episode: IEpisode) => {
-    const nextInclude = episode.excludeFromTranslation
-    const newExcludeState = !episode.excludeFromTranslation
-
-    episode.excludeFromTranslation = newExcludeState
+    const nextInclude = !episode.excludeFromTranslation
     await showStore.include(MEDIA_TYPE.EPISODE, episode.id, nextInclude)
-    emit('includeChanged')
 }
 
 const getSubtitle = (fileName: string | null) => {

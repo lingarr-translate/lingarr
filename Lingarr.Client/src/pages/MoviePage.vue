@@ -32,7 +32,7 @@
                         </div>
                         <div class="text-sm opacity-80">
                             {{ translate('movies.excludedLabel') }}:
-                            {{ includeSummary?.excludedMovies ?? 0 }} / {{ includeSummary?.totalMovies ?? 0 }}
+                            {{ includeSummary.excludedMovies }} / {{ includeSummary.totalMovies }}
                         </div>
                     </div>
                 </div>
@@ -106,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ComputedRef, ref, Ref } from 'vue'
+import { computed, onMounted, ComputedRef } from 'vue'
 import { IFilter, IIncludeSummary, IMovie, IPagedResult, MEDIA_TYPE, SETTINGS } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useMovieStore } from '@/store/movie'
@@ -125,13 +125,16 @@ import InputComponent from '@/components/common/InputComponent.vue'
 const movieStore = useMovieStore()
 const settingStore = useSettingStore()
 const instanceStore = useInstanceStore()
-const includeSummary: Ref<IIncludeSummary | null> = ref(null)
-const includeAllMovies: Ref<boolean> = ref(true)
 
 const settingsCompleted: ComputedRef<string> = computed(
     () => settingStore.getSetting(SETTINGS.RADARR_SETTINGS_COMPLETED) as string
 )
 const movies: ComputedRef<IPagedResult<IMovie>> = computed(() => movieStore.get)
+const includeSummary: ComputedRef<IIncludeSummary> = computed(() => movieStore.includeSummary)
+const includeAllMovies: ComputedRef<boolean> = computed(
+    () => includeSummary.value.excludedMovies === 0
+)
+
 const filter: ComputedRef<IFilter> = computed({
     get: () => movieStore.getFilter,
     set: useDebounce((value: IFilter) => {
@@ -143,36 +146,20 @@ const toggleMovie = useDebounce(async (movie: IMovie) => {
     instanceStore.setPoster({ content: movie, type: 'movie' })
 }, 1000)
 
-const refreshIncludeSummary = async () => {
-    includeSummary.value = await movieStore.fetchIncludeSummary()
-    includeAllMovies.value = includeSummary.value
-        ? includeSummary.value.excludedMovies === 0
-        : true
-}
-
 const onToggleIncludeAllMovies = async () => {
-    const nextInclude = !includeAllMovies.value
-    includeAllMovies.value = nextInclude
-    await movieStore.includeAll(nextInclude)
-    await movieStore.fetch()
-    await refreshIncludeSummary()
+    await movieStore.includeAll(!includeAllMovies.value)
 }
 
 const onToggleIncludeMovie = async (movie: IMovie) => {
-    const currentIncludeState = !movie.excludeFromTranslation // current state: true if included, false if excluded
-    const newIncludeState = !currentIncludeState // flip it
-    movie.excludeFromTranslation = !newIncludeState // update the exclude flag
+    const newIncludeState = movie.excludeFromTranslation // flip: if currently excluded, we want to include
     await movieStore.include(MEDIA_TYPE.MOVIE, movie.id, newIncludeState)
-    await refreshIncludeSummary()
 }
 
 const onReload = async () => {
     await movieStore.fetch()
-    await refreshIncludeSummary()
 }
 
 onMounted(async () => {
     await movieStore.fetch()
-    await refreshIncludeSummary()
 })
 </script>

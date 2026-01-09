@@ -75,17 +75,6 @@ const service = (http: AxiosStatic, resource = '/api/media'): IMediaService => (
                 })
         })
     },
-    includeSummary(): Promise<IIncludeSummary> {
-        return new Promise((resolve, reject) => {
-            http.get(`${resource}/include/summary`)
-                .then((response: AxiosResponse<IIncludeSummary>) => {
-                    resolve(response.data)
-                })
-                .catch((error: AxiosError) => {
-                    reject(error.response)
-                })
-        })
-    },
     exclude<T>(mediaType: MediaType, id: number): Promise<T> {
         return new Promise((resolve, reject) => {
             http.post(`${resource}/exclude`, {

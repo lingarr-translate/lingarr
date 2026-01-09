@@ -291,27 +291,23 @@ public class MediaService : IMediaService
 
                 case MediaType.Show:
                 {
-                    var show = await _dbContext.Shows
-                        .Include(s => s.Seasons)
-                        .ThenInclude(season => season.Episodes)
-                        .FirstOrDefaultAsync(s => s.Id == id);
-
+                    var show = await _dbContext.Shows.FindAsync(id);
                     if (show != null)
                     {
                         show.ExcludeFromTranslation = !include;
-
-                        // Keep seasons and episodes in sync with the show toggle
-                        foreach (var season in show.Seasons)
-                        {
-                            season.ExcludeFromTranslation = !include;
-
-                            foreach (var episode in season.Episodes)
-                            {
-                                episode.ExcludeFromTranslation = !include;
-                            }
-                        }
-
                         await _dbContext.SaveChangesAsync();
+
+                        // Cascade to seasons and episodes using ExecuteUpdateAsync
+                        var exclude = !include;
+                        await _dbContext.Seasons
+                            .Where(s => s.ShowId == id)
+                            .ExecuteUpdateAsync(setters =>
+                                setters.SetProperty(s => s.ExcludeFromTranslation, exclude));
+                        await _dbContext.Episodes
+                            .Where(e => e.Season.ShowId == id)
+                            .ExecuteUpdateAsync(setters =>
+                                setters.SetProperty(e => e.ExcludeFromTranslation, exclude));
+
                         return true;
                     }
                     break;
@@ -319,21 +315,19 @@ public class MediaService : IMediaService
 
                 case MediaType.Season:
                 {
-                    var season = await _dbContext.Seasons
-                        .Include(s => s.Episodes)
-                        .FirstOrDefaultAsync(s => s.Id == id);
-
+                    var season = await _dbContext.Seasons.FindAsync(id);
                     if (season != null)
                     {
                         season.ExcludeFromTranslation = !include;
-
-                        // Keep episodes in sync with the season toggle
-                        foreach (var episode in season.Episodes)
-                        {
-                            episode.ExcludeFromTranslation = !include;
-                        }
-
                         await _dbContext.SaveChangesAsync();
+
+                        // Cascade to episodes using ExecuteUpdateAsync
+                        var exclude = !include;
+                        await _dbContext.Episodes
+                            .Where(e => e.SeasonId == id)
+                            .ExecuteUpdateAsync(setters =>
+                                setters.SetProperty(e => e.ExcludeFromTranslation, exclude));
+
                         return true;
                     }
                     break;
@@ -383,10 +377,14 @@ public class MediaService : IMediaService
             {
                 await _dbContext.Shows.ExecuteUpdateAsync(setters =>
                     setters.SetProperty(s => s.ExcludeFromTranslation, exclude));
-                await _dbContext.Seasons.ExecuteUpdateAsync(setters =>
-                    setters.SetProperty(s => s.ExcludeFromTranslation, exclude));
-                await _dbContext.Episodes.ExecuteUpdateAsync(setters =>
-                    setters.SetProperty(e => e.ExcludeFromTranslation, exclude));
+                await _dbContext.Seasons
+                    .Where(s => s.Show != null)
+                    .ExecuteUpdateAsync(setters =>
+                        setters.SetProperty(s => s.ExcludeFromTranslation, exclude));
+                await _dbContext.Episodes
+                    .Where(e => e.Season != null)
+                    .ExecuteUpdateAsync(setters =>
+                        setters.SetProperty(e => e.ExcludeFromTranslation, exclude));
                 return true;
             }
 
@@ -400,22 +398,6 @@ public class MediaService : IMediaService
         }
     }
 
-    public async Task<IncludeSummaryResponse> GetIncludeSummary()
-    {
-        var totalMovies = await _dbContext.Movies.CountAsync();
-        var excludedMovies = await _dbContext.Movies.CountAsync(m => m.ExcludeFromTranslation);
-        var totalShows = await _dbContext.Shows.CountAsync();
-        var excludedShows = await _dbContext.Shows.CountAsync(s => s.ExcludeFromTranslation);
-
-        return new IncludeSummaryResponse
-        {
-            TotalMovies = totalMovies,
-            ExcludedMovies = excludedMovies,
-            TotalShows = totalShows,
-            ExcludedShows = excludedShows
-        };
-    }
-    
     /// <inheritdoc />
     public async Task<bool> Threshold(
         MediaType mediaType,

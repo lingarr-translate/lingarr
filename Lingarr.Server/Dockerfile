@@ -1,7 +1,7 @@
 # Set default build configuration
 ARG BUILD_CONFIGURATION=Release
 
-FROM node:24-slim AS client
+FROM --platform=$BUILDPLATFORM node:24-slim AS client
 ARG BUILD_CONFIGURATION
 
 # Step 1: Prepare Client
@@ -16,11 +16,12 @@ FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
 WORKDIR /app
 
 # Step 3: Build the server
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+ARG TARGETARCH
 ARG BUILD_CONFIGURATION
 WORKDIR /src
 COPY ["Lingarr.Server/Lingarr.Server.csproj", "Lingarr.Server/"]
-RUN dotnet restore "./Lingarr.Server/./Lingarr.Server.csproj"
+RUN dotnet restore "./Lingarr.Server/./Lingarr.Server.csproj" -a $TARGETARCH
 COPY . .
 WORKDIR "/src/Lingarr.Server"
 COPY --from=client /Client/dist/ ./wwwroot
@@ -35,11 +36,6 @@ RUN dotnet publish "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/pub
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-
-# Run as dedicated non-root user (UID/GID 999)
-RUN groupadd -g 999 lingarr || true \
-	&& id -u 999 >/dev/null 2>&1 || useradd -u 999 -g 999 -m lingarr
-USER 999
 
 VOLUME /app/config
 # Start the application

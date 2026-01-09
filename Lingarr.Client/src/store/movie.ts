@@ -29,6 +29,16 @@ export const useMovieStore = defineStore('movie', {
                 }
             })
             return this.movies
+        },
+        includeSummary(): IIncludeSummary {
+            const totalMovies = this.movies.items?.length || 0
+            const excludedMovies = this.movies.items?.filter(m => m.excludeFromTranslation).length || 0
+            return {
+                totalMovies,
+                excludedMovies,
+                totalShows: 0,
+                excludedShows: 0
+            }
         }
     },
     actions: {
@@ -46,12 +56,19 @@ export const useMovieStore = defineStore('movie', {
         },
         async include(type: MediaType, id: number, include: boolean) {
             await services.media.include(type, id, include)
+            // Update local state
+            const movie = this.movies.items?.find(m => m.id === id)
+            if (movie) {
+                movie.excludeFromTranslation = !include
+            }
         },
         async includeAll(include: boolean) {
             await services.media.includeAll(MEDIA_TYPE.MOVIE, include)
-        },
-        async fetchIncludeSummary(): Promise<IIncludeSummary> {
-            return services.media.includeSummary()
+            // Update all local state
+            this.movies.items?.forEach(m => {
+                m.excludeFromTranslation = !include
+            })
+            await this.fetch()
         },
         async updateThreshold(type: MediaType, id: number, hours: string) {
             await services.media.threshold(type, id, hours)

@@ -32,7 +32,7 @@
                         </div>
                         <div class="text-sm opacity-80">
                             {{ translate('tvShows.excludedLabel') }}:
-                            {{ includeSummary?.excludedShows ?? 0 }} / {{ includeSummary?.totalShows ?? 0 }}
+                            {{ includeSummary.excludedShows }} / {{ includeSummary.totalShows }}
                         </div>
                     </div>
                 </div>
@@ -85,8 +85,7 @@
                 </div>
                 <SeasonTable
                     v-if="expandedShow === item.id"
-                    :seasons="item.seasons"
-                    @include-changed="refreshIncludeSummary" />
+                    :seasons="item.seasons" />
             </div>
         </div>
 
@@ -120,13 +119,16 @@ const instanceStore = useInstanceStore()
 const showStore = useShowStore()
 const settingStore = useSettingStore()
 const expandedShow: Ref<boolean | number | null> = ref(null)
-const includeSummary: Ref<IIncludeSummary | null> = ref(null)
-const includeAllShows: Ref<boolean> = ref(true)
 
 const settingsCompleted: ComputedRef<string> = computed(
     () => settingStore.getSetting(SETTINGS.SONARR_SETTINGS_COMPLETED) as string
 )
 const shows: ComputedRef<IPagedResult<IShow>> = computed(() => showStore.get)
+const includeSummary: ComputedRef<IIncludeSummary> = computed(() => showStore.includeSummary)
+const includeAllShows: ComputedRef<boolean> = computed(
+    () => includeSummary.value.excludedShows === 0
+)
+
 const filter: ComputedRef<IFilter> = computed({
     get: () => showStore.getFilter,
     set: useDebounce((value: IFilter) => {
@@ -134,41 +136,17 @@ const filter: ComputedRef<IFilter> = computed({
     }, 300)
 })
 
-const refreshIncludeSummary = async () => {
-    includeSummary.value = await showStore.fetchIncludeSummary()
-    includeAllShows.value = includeSummary.value
-        ? includeSummary.value.excludedShows === 0
-        : true
-}
-
 const onToggleIncludeAllShows = async () => {
-    const nextInclude = !includeAllShows.value
-    includeAllShows.value = nextInclude
-    await showStore.includeAll(nextInclude)
-    await showStore.fetch()
-    await refreshIncludeSummary()
+    await showStore.includeAll(!includeAllShows.value)
 }
 
 const onToggleIncludeShow = async (show: IShow) => {
-    const currentIncludeState = !show.excludeFromTranslation // current state: true if included, false if excluded
-    const newIncludeState = !currentIncludeState // flip it
-    show.excludeFromTranslation = !newIncludeState // update the exclude flag
-
-    // Keep nested seasons/episodes in sync client-side
-    show.seasons?.forEach((season) => {
-        season.excludeFromTranslation = !newIncludeState
-        season.episodes?.forEach((episode) => {
-            episode.excludeFromTranslation = !newIncludeState
-        })
-    })
-
+    const newIncludeState = show.excludeFromTranslation // flip: if currently excluded, we want to include
     await showStore.include(MEDIA_TYPE.SHOW, show.id, newIncludeState)
-    await refreshIncludeSummary()
 }
 
 const onReload = async () => {
     await showStore.fetch()
-    await refreshIncludeSummary()
 }
 
 const toggleShow = async (show: IShow) => {
@@ -179,8 +157,8 @@ const toggleShow = async (show: IShow) => {
     instanceStore.setPoster({ content: show, type: 'show' })
     expandedShow.value = show.id
 }
+
 onMounted(async () => {
     await showStore.fetch()
-    await refreshIncludeSummary()
 })
 </script>

@@ -93,11 +93,6 @@ public interface IMediaService
     Task<bool> SetIncludeAll(MediaType mediaType, bool include);
 
     /// <summary>
-    /// Returns counts for included/excluded movies and shows.
-    /// </summary>
-    Task<IncludeSummaryResponse> GetIncludeSummary();
-
-    /// <summary>
     /// Sets the amount of hours a media file needs to exist before translation is initiated.
     /// </summary>
     /// <param name="mediaType">The type of media (Movie, Show, Season, or Episode).</param>

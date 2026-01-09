@@ -102,16 +102,6 @@ public class MediaController : ControllerBase
         var value = await _mediaService.SetIncludeAll(request.MediaType, request.Include);
         return Ok(value);
     }
-
-    /// <summary>
-    /// Returns include/exclude counts for movies and shows.
-    /// </summary>
-    [HttpGet("include/summary")]
-    public async Task<ActionResult<IncludeSummaryResponse>> IncludeSummary()
-    {
-        var value = await _mediaService.GetIncludeSummary();
-        return Ok(value);
-    }
     
     /// <summary>
     /// Sets the amount of hours a media file needs to exist before translation is initiated.
