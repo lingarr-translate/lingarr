@@ -8,7 +8,7 @@
             <div class="col-span-6 flex justify-between px-4 py-2 md:col-span-8">
                 <span>{{ translate('tvShows.episodes') }}</span>
                 <span class="hidden md:block">
-                    {{ translate('tvShows.exclude') }}
+                    {{ translate('tvShows.include') }}
                 </span>
                 <span class="block md:hidden">⊘</span>
             </div>
@@ -40,10 +40,10 @@
                     </span>
                     <span @click.stop>
                         <ToggleButton
-                            v-model="season.excludeFromTranslation"
+                            :model-value="!season.excludeFromTranslation"
                             size="small"
                             @toggle:update="
-                                () => showStore.exclude(MEDIA_TYPE.SEASON, season.id)
+                                () => onToggleIncludeSeason(season)
                             " />
                     </span>
                 </div>
@@ -72,6 +72,11 @@ defineProps<{
 const showStore = useShowStore()
 const subtitles: Ref<ISubtitle[]> = ref([])
 const expandedSeason: Ref<ISeason | null> = ref(null)
+
+const onToggleIncludeSeason = async (season: ISeason) => {
+    const nextInclude = !season.excludeFromTranslation
+    await showStore.include(MEDIA_TYPE.SEASON, season.id, nextInclude)
+}
 
 async function toggleSeason(season: ISeason) {
     if (!season.episodes.length) return

@@ -13,7 +13,7 @@
             <div class="col-span-4 flex justify-between py-2 pr-4 md:col-span-5">
                 <span>{{ translate('tvShows.episodeSubtitles') }}</span>
                 <span class="hidden md:block">
-                    {{ translate('tvShows.exclude') }}
+                    {{ translate('tvShows.include') }}
                 </span>
                 <span class="block md:hidden">⊘</span>
             </div>
@@ -43,9 +43,9 @@
                 </div>
                 <div class="col-span-1 px-1 py-2 md:col-span-1">
                     <ToggleButton
-                        v-model="episode.excludeFromTranslation"
+                        :model-value="!episode.excludeFromTranslation"
                         size="small"
-                        @toggle:update="() => showStore.exclude(MEDIA_TYPE.EPISODE, episode.id)" />
+                        @toggle:update="() => onToggleIncludeEpisode(episode)" />
                 </div>
             </div>
         </div>
@@ -63,6 +63,11 @@ const props = defineProps<{
     subtitles: ISubtitle[]
 }>()
 const showStore = useShowStore()
+
+const onToggleIncludeEpisode = async (episode: IEpisode) => {
+    const nextInclude = !episode.excludeFromTranslation
+    await showStore.include(MEDIA_TYPE.EPISODE, episode.id, nextInclude)
+}
 
 const getSubtitle = (fileName: string | null) => {
     if (!fileName) return null

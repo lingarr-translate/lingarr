@@ -20,17 +20,34 @@
         </div>
 
         <div class="w-full px-4">
+            <div class="bg-primary text-primary-content mb-2 flex flex-wrap items-center justify-between gap-3 rounded-md px-4 py-3">
+                <div class="flex items-center gap-3">
+                    <ToggleButton
+                        :model-value="includeAllMovies"
+                        size="small"
+                        @toggle:update="onToggleIncludeAllMovies" />
+                    <div class="leading-tight">
+                        <div class="font-semibold">
+                            {{ translate('movies.includeAll') }}
+                        </div>
+                        <div class="text-sm opacity-80">
+                            {{ translate('movies.excludedLabel') }}:
+                            {{ includeSummary.excludedMovies }} / {{ includeSummary.totalMovies }}
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div class="border-accent grid grid-cols-12 border-b font-bold">
                 <div class="col-span-5 px-4 py-2">{{ translate('movies.title') }}</div>
                 <div class="col-span-4 px-4 py-2">{{ translate('movies.subtitles') }}</div>
                 <div class="col-span-1 px-4 py-2">
-                    {{ translate('movies.exclude') }}
+                    {{ translate('movies.include') }}
                 </div>
                 <div class="col-span-1 px-4 py-2">
                     {{ translate('movies.ageThreshold') }}
                 </div>
                 <div class="col-span-1 flex justify-end px-4 py-2">
-                    <ReloadComponent @toggle:update="movieStore.fetch()" />
+                    <ReloadComponent @toggle:update="onReload" />
                 </div>
             </div>
             <div v-for="item in movies.items" :key="item.id">
@@ -56,9 +73,9 @@
                     </div>
                     <div class="col-span-1 flex flex-wrap items-center gap-2 px-4 py-2">
                         <ToggleButton
-                            v-model="item.excludeFromTranslation"
+                            :model-value="!item.excludeFromTranslation"
                             size="small"
-                            @toggle:update="() => movieStore.exclude(MEDIA_TYPE.MOVIE, item.id)" />
+                            @toggle:update="() => onToggleIncludeMovie(item)" />
                     </div>
                     <div class="col-span-2 flex items-center px-4 py-2" @click.stop>
                         <InputComponent
@@ -90,7 +107,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ComputedRef } from 'vue'
-import { IFilter, IMovie, IPagedResult, MEDIA_TYPE, SETTINGS } from '@/ts'
+import { IFilter, IIncludeSummary, IMovie, IPagedResult, MEDIA_TYPE, SETTINGS } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useMovieStore } from '@/store/movie'
 import { useSettingStore } from '@/store/setting'
@@ -113,6 +130,11 @@ const settingsCompleted: ComputedRef<string> = computed(
     () => settingStore.getSetting(SETTINGS.RADARR_SETTINGS_COMPLETED) as string
 )
 const movies: ComputedRef<IPagedResult<IMovie>> = computed(() => movieStore.get)
+const includeSummary: ComputedRef<IIncludeSummary> = computed(() => movieStore.includeSummary)
+const includeAllMovies: ComputedRef<boolean> = computed(
+    () => includeSummary.value.excludedMovies === 0
+)
+
 const filter: ComputedRef<IFilter> = computed({
     get: () => movieStore.getFilter,
     set: useDebounce((value: IFilter) => {
@@ -123,6 +145,19 @@ const filter: ComputedRef<IFilter> = computed({
 const toggleMovie = useDebounce(async (movie: IMovie) => {
     instanceStore.setPoster({ content: movie, type: 'movie' })
 }, 1000)
+
+const onToggleIncludeAllMovies = async () => {
+    await movieStore.includeAll(!includeAllMovies.value)
+}
+
+const onToggleIncludeMovie = async (movie: IMovie) => {
+    const newIncludeState = movie.excludeFromTranslation // flip: if currently excluded, we want to include
+    await movieStore.include(MEDIA_TYPE.MOVIE, movie.id, newIncludeState)
+}
+
+const onReload = async () => {
+    await movieStore.fetch()
+}
 
 onMounted(async () => {
     await movieStore.fetch()

@@ -13,26 +13,24 @@ RUN npm run build
 
 # Step 2: Prepare the base image for the server
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
-ARG TARGETARCH
 WORKDIR /app
 
 # Step 3: Build the server
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-ARG BUILD_CONFIGURATION
 ARG TARGETARCH
+ARG BUILD_CONFIGURATION
 WORKDIR /src
 COPY ["Lingarr.Server/Lingarr.Server.csproj", "Lingarr.Server/"]
-RUN dotnet restore "./Lingarr.Server/./Lingarr.Server.csproj" --arch $TARGETARCH
+RUN dotnet restore "./Lingarr.Server/./Lingarr.Server.csproj" -a $TARGETARCH
 COPY . .
 WORKDIR "/src/Lingarr.Server"
 COPY --from=client /Client/dist/ ./wwwroot
-RUN dotnet build "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build --arch $TARGETARCH
+RUN dotnet build "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # Step 4: Publish the application
-FROM --platform=$BUILDPLATFORM build AS publish
+FROM build AS publish
 ARG BUILD_CONFIGURATION
-ARG TARGETARCH
-RUN dotnet publish "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --arch $TARGETARCH
+RUN dotnet publish "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # Step 5: Final image
 FROM base AS final

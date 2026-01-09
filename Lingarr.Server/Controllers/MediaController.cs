@@ -82,6 +82,26 @@ public class MediaController : ControllerBase
         var value = await _mediaService.Exclude(request.MediaType, request.Id);
         return Ok(value);
     }
+
+    /// <summary>
+    /// Sets inclusion state for a media item (include => ExcludeFromTranslation=false).
+    /// </summary>
+    [HttpPost("include")]
+    public async Task<ActionResult<bool>> Include([FromBody] IncludeRequest request)
+    {
+        var value = await _mediaService.SetInclude(request.MediaType, request.Id, request.Include);
+        return Ok(value);
+    }
+
+    /// <summary>
+    /// Sets inclusion state for all media items of a type (movies or shows).
+    /// </summary>
+    [HttpPost("include/all")]
+    public async Task<ActionResult<bool>> IncludeAll([FromBody] IncludeAllRequest request)
+    {
+        var value = await _mediaService.SetIncludeAll(request.MediaType, request.Include);
+        return Ok(value);
+    }
     
     /// <summary>
     /// Sets the amount of hours a media file needs to exist before translation is initiated.

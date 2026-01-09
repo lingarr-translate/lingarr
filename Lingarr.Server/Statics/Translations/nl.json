@@ -31,13 +31,17 @@
   "movies": {
     "title": "Titel",
     "subtitles": "Ondertitels",
-    "exclude": "Uitsluiten",
+    "include": "Opnemen",
+    "includeAll": "Alle films opnemen",
+    "excludedLabel": "Uitgesloten",
     "ageThreshold": "Vertraging",
     "hours": "uren"
   },
   "tvShows": {
     "title": "Titel",
-    "exclude": "Uitsluiten",
+    "include": "Opnemen",
+    "includeAll": "Alle series opnemen",
+    "excludedLabel": "Uitgesloten",
     "season": "Seizoen",
     "episodes": "Afleveringen",
     "episodesLine": "afleveringen",
