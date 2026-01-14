@@ -66,6 +66,15 @@ const authEnabled = computed({
         saveNotification.value?.show()
     }
 })
+const fetchApiKey = async () => {
+    try {
+        const response = await services.auth.fetchApiKey()
+        apiKey.value = response.apiKey
+    } catch (err: any) {
+        console.error('Failed to fetch API key:', err)
+    }
+}
+
 const generateApiKey = async () => {
     generating.value = true
     error.value = ''
@@ -82,6 +91,6 @@ const generateApiKey = async () => {
 }
 
 onMounted(async () => {
-    await generateApiKey()
+    await fetchApiKey()
 })
 </script>
