@@ -191,12 +191,12 @@ public class AuthController : ControllerBase
         var apiKey = await _settingService.GetSetting(SettingKeys.Authentication.ApiKey);
         return Ok(new ApiKeyResponse
         {
-            ApiKey = apiKey ?? ""
+            ApiKey = apiKey
         });
     }
 
     /// <summary>
-    /// Generate a new API key (only during onboarding or if not already exists)
+    /// Generate a new API key, overwriting any existing key
     /// </summary>
     [HttpPost("apikey/generate")]
     [AllowAnonymous]

@@ -14,6 +14,10 @@
                     {{ loading ? 'Generating...' : 'Generate API Key' }}
                 </ButtonComponent>
 
+                <div v-if="error" class="rounded-lg border border-red-700/50 bg-red-900/20 p-3">
+                    <p class="text-sm text-red-400">{{ error }}</p>
+                </div>
+
                 <div class="rounded-lg bg-gray-900 p-4">
                     <div class="mb-2 flex items-center justify-between">
                         <label class="text-sm font-medium text-gray-400">API Key</label>
@@ -75,9 +79,15 @@ const apiKey = computed({
 const fetchApiKey = async () => {
     try {
         const response = await services.auth.fetchApiKey()
+<<<<<<< HEAD
         await settingsStore.updateSetting(SETTINGS.API_KEY, response.apiKey, false)
+=======
+        apiKey.value = response.apiKey || 'No API key generated yet'
+>>>>>>> d210dad (fix: address Copilot review feedback)
     } catch (err: any) {
         console.error('Failed to fetch API key:', err)
+        apiKey.value = 'Failed to load API key'
+        error.value = 'Failed to fetch API key. Please try generating a new one.'
     }
 }
 
