@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import CardComponent from '@/components/common/CardComponent.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
@@ -72,8 +72,26 @@ const apiKey = computed({
     }
 })
 
-const generateApiKey = async () => {
-    const response = await services.auth.generateApiKey()
-    await settingsStore.updateSetting(SETTINGS.API_KEY, response.apiKey, true)
+const fetchApiKey = async () => {
+    try {
+        const response = await services.auth.fetchApiKey()
+        await settingsStore.updateSetting(SETTINGS.API_KEY, response.apiKey, false)
+    } catch (err: any) {
+        console.error('Failed to fetch API key:', err)
+    }
 }
+
+const generateApiKey = async () => {
+    loading.value = true
+    try {
+        const response = await services.auth.generateApiKey()
+        await settingsStore.updateSetting(SETTINGS.API_KEY, response.apiKey, true)
+    } finally {
+        loading.value = false
+    }
+}
+
+onMounted(async () => {
+    await fetchApiKey()
+})
 </script>
