@@ -246,9 +246,10 @@ public class TranslationJob
         {
             await HandleCancellation(jobName, translationRequest);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             await _translationRequestService.ClearMediaHash(translationRequest);
+            translationRequest.ErrorMessage = ex.Message;
             translationRequest = await _translationRequestService.UpdateTranslationRequest(translationRequest, TranslationStatus.Failed,
                 jobId);
             await _scheduleService.UpdateJobState(jobName, JobStatus.Failed.GetDisplayName());
