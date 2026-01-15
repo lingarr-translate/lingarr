@@ -242,6 +242,7 @@ public class TranslationJob
         catch (Exception ex)
         {
             await _translationRequestService.ClearMediaHash(translationRequest);
+            translationRequest.ErrorMessage = ex.Message;
             translationRequest = await _translationRequestService.UpdateTranslationRequest(translationRequest, TranslationStatus.Failed,
                 jobId);
             

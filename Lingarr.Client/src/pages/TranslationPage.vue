@@ -105,6 +105,16 @@
                         <span class="mr-2 font-bold md:hidden">Progress:&nbsp;</span>
                         <TranslationProgress :progress="item.progress" />
                     </div>
+                    <div
+                        v-if="item.status === TRANSLATION_STATUS.FAILED && item.errorMessage"
+                        class="w-full">
+                        <span class="mr-2 font-bold md:hidden">
+                            {{ translate('translations.error') }}:&nbsp;
+                        </span>
+                        <div class="text-sm text-red-400" :title="item.errorMessage">
+                            {{ item.errorMessage.length > 100 ? item.errorMessage.substring(0, 100) + '...' : item.errorMessage }}
+                        </div>
+                    </div>
                 </div>
                 <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
                     <span class="font-bold md:hidden">Completed:&nbsp;</span>
