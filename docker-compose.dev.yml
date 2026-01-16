@@ -78,7 +78,7 @@ services:
       test: ["CMD-SHELL", "./venv/bin/python scripts/healthcheck.py"]
 
   Lingarr.Mysql:
-    image: mariadb:10.5
+    image: mariadb:latest
     container_name: Lingarr.Mysql
     tty: true
     ports:

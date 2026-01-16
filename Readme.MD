@@ -55,17 +55,39 @@ Use GHCR if you're experiencing Docker Hub rate limits.
 ```yaml
 services:
   lingarr:
-    image: lingarr/lingarr:latest  # or ghcr.io/lingarr-translate/lingarr:latest
+    image: ghcr.io/lingarr-translate/lingarr:latest # or lingarr/lingarr:latest
     container_name: lingarr
     restart: unless-stopped
     environment:
       - ASPNETCORE_URLS=http://+:9876
+      - DB_CONNECTION=mysql
+      - DB_HOST=lingarr-db
+      - DB_PORT=3306
+      - DB_DATABASE=lingarr
+      - DB_USERNAME=lingarr
+      - DB_PASSWORD=your-password # provide a password
     ports:
       - "9876:9876"
     volumes:
       - /path/to/media/movies:/movies
       - /path/to/media/tv:/tv
       - /path/to/config:/app/config
+    networks:
+      - lingarr
+    depends_on:
+      - lingarr-db
+
+  lingarr-db:
+    image: mariadb:latest
+    container_name: lingarr-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_DATABASE=lingarr
+      - MYSQL_USER=lingarr
+      - MYSQL_PASSWORD=your-password # provide a password
+      - MYSQL_ROOT_PASSWORD=your-password # provide a root password
+    volumes:
+      - /path/to/db:/var/lib/mysql # define a volume to persist the database
     networks:
       - lingarr
 
@@ -75,20 +97,41 @@ networks:
 ```
 
 ### Setting up Lingarr using Docker CLI
-Follow the following steps to set up Lingarr and LibreTranslate via docker CLI
+Follow the following steps to set up Lingarr via Docker CLI
 
 ```bash
+# Create the network
+docker network create lingarr
+
+# Start MariaDB
+docker run -d \
+  --name lingarr-db \
+  --restart unless-stopped \
+  -e MYSQL_DATABASE=lingarr \
+  -e MYSQL_USER=lingarr \
+  -e MYSQL_PASSWORD=your-password \
+  -e MYSQL_ROOT_PASSWORD=your-root-password \
+  -v /path/to/db:/var/lib/mysql \
+  --network lingarr \
+  mariadb:latest
+
+# Start Lingarr
 docker run -d \
   --name lingarr \
   --restart unless-stopped \
   -p 9876:9876 \
   -e ASPNETCORE_URLS=http://+:9876 \
+  -e DB_CONNECTION=mysql \
+  -e DB_HOST=lingarr-db \
+  -e DB_PORT=3306 \
+  -e DB_DATABASE=lingarr \
+  -e DB_USERNAME=lingarr \
+  -e DB_PASSWORD=your-password \ # provide a password
   -v /path/to/media/movies:/movies \
   -v /path/to/media/tv:/tv \
   -v /path/to/config:/app/config \
   --network lingarr \
-  lingarr/lingarr:latest
-  # or use: ghcr.io/lingarr-translate/lingarr:latest
+  ghcr.io/lingarr-translate/lingarr:latest # or use: lingarr/lingarr:latest
 ```
 
 ### Lingarr environment variables
