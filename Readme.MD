@@ -40,11 +40,22 @@ Lingarr provides multi-architecture Docker images that automatically select the 
 
 **Note:** As of 1.0.3 all images support both AMD64 (Intel/AMD) and ARM64 (Raspberry Pi, Apple Silicon) architectures. Docker will automatically pull the correct architecture for your system.
 
+### Available Registries
+
+Lingarr Docker images are available from multiple registries:
+
+| Registry | Image |
+|----------|-------|
+| Docker Hub | `docker.io/lingarr/lingarr:latest` |
+| GitHub Container Registry | `ghcr.io/lingarr-translate/lingarr:latest` |
+
+Use GHCR if you're experiencing Docker Hub rate limits.
+
 ## Setting up Lingarr
 ```yaml
 services:
   lingarr:
-    image: lingarr/lingarr:latest
+    image: lingarr/lingarr:latest  # or ghcr.io/lingarr-translate/lingarr:latest
     container_name: lingarr
     restart: unless-stopped
     environment:
@@ -77,6 +88,7 @@ docker run -d \
   -v /path/to/config:/app/config \
   --network lingarr \
   lingarr/lingarr:latest
+  # or use: ghcr.io/lingarr-translate/lingarr:latest
 ```
 
 ### Lingarr environment variables
