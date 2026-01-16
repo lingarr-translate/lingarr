@@ -182,7 +182,21 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// Generate a new API key (only during onboarding or if not already exists)
+    /// Get the current API key
+    /// </summary>
+    [HttpGet("apikey")]
+    [LingarrAuthorize]
+    public async Task<ActionResult<ApiKeyResponse>> GetApiKey()
+    {
+        var apiKey = await _settingService.GetSetting(SettingKeys.Authentication.ApiKey);
+        return Ok(new ApiKeyResponse
+        {
+            ApiKey = apiKey
+        });
+    }
+
+    /// <summary>
+    /// Generate a new API key, overwriting any existing key
     /// </summary>
     [HttpPost("apikey/generate")]
     [AllowAnonymous]

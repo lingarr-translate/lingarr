@@ -73,6 +73,18 @@ const service = (http: AxiosStatic, resource = '/api/auth'): IAuthService => ({
         })
     },
 
+    fetchApiKey(): Promise<IApiKeyResponse> {
+        return new Promise((resolve, reject) => {
+            http.get(`${resource}/apikey`)
+                .then((response: AxiosResponse<IApiKeyResponse>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
+    },
+
     generateApiKey(): Promise<IApiKeyResponse> {
         return new Promise((resolve, reject) => {
             http.post(`${resource}/apikey/generate`)
