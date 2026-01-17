@@ -34,11 +34,9 @@
                     </span>
                     <span @click.stop>
                         <ToggleButton
-                            v-model="season.excludeFromTranslation"
+                            :model-value="season.excludeFromTranslation === 'false'"
                             size="small"
-                            @toggle:update="
-                                () => showStore.exclude(MEDIA_TYPE.SEASON, season.id)
-                            " />
+                            @toggle:update="() => handleIncludeToggle(season)" />
                     </span>
                 </div>
             </div>
@@ -81,5 +79,11 @@ async function collectSubtitles() {
     if (expandedSeason.value?.path) {
         subtitles.value = await services.subtitle.collect(expandedSeason.value.path)
     }
+}
+
+async function handleIncludeToggle(season: ISeason) {
+    const currentlyIncluded = season.excludeFromTranslation === 'false'
+    const newIncludeState = !currentlyIncluded
+    await showStore.include(MEDIA_TYPE.SEASON, season.id, newIncludeState)
 }
 </script>

@@ -84,6 +84,28 @@ public class MediaController : ControllerBase
     }
     
     /// <summary>
+    /// Sets the inclusion status of a specified media item for translation with cascading.
+    /// </summary>
+    /// <param name="request">The request object containing the media type, id, and include flag.</param>
+    [HttpPost("include")]
+    public async Task<ActionResult<bool>> Include([FromBody] IncludeRequest request)
+    {
+        var value = await _mediaService.SetInclude(request.MediaType, request.Id, request.Include);
+        return Ok(value);
+    }
+
+    /// <summary>
+    /// Sets the inclusion status for all items of a media type.
+    /// </summary>
+    /// <param name="request">The request object containing the media type and include flag.</param>
+    [HttpPost("include/all")]
+    public async Task<ActionResult<bool>> IncludeAll([FromBody] IncludeAllRequest request)
+    {
+        var value = await _mediaService.SetIncludeAll(request.MediaType, request.Include);
+        return Ok(value);
+    }
+    
+    /// <summary>
     /// Sets the amount of hours a media file needs to exist before translation is initiated.
     /// </summary>
     /// <param name="request">The request object containing the media type, id, and amount of hours to be set.</param>

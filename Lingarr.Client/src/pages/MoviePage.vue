@@ -8,6 +8,16 @@
                     v-model="navigateToDetails"
                     size="small"
                     label="Open details on request" />
+                <div class="flex items-center gap-2">
+                    <span class="text-sm">{{ translate('movies.includeAll') }}:</span>
+                    <ToggleButton
+                        :model-value="movieStore.includeSummary.allIncluded"
+                        size="small"
+                        @toggle:update="handleIncludeAll" />
+                    <span class="text-xs text-primary-content/70">
+                        ({{ movieStore.includeSummary.included }}/{{ movieStore.includeSummary.total }})
+                    </span>
+                </div>
                 <ContextMenu
                     v-if="isSelectMode && movieStore.selectedMovies.length > 0"
                     @select="handleTranslate">
@@ -36,11 +46,15 @@
         <div class="w-full px-4">
             <div class="grid grid-cols-12 border-b border-accent font-bold">
                 <div :class="isSelectMode ? 'col-span-4' : 'col-span-5'" class="px-4 py-2">
-                    Title
+                    {{ translate('movies.title') }}
                 </div>
-                <div class="col-span-4 px-4 py-2">Subtitles</div>
-                <div class="col-span-1 px-4 py-2">Exclude</div>
-                <div class="col-span-1 px-4 py-2">Delay</div>
+                <div class="col-span-4 px-4 py-2">{{ translate('movies.subtitles') }}</div>
+                <div class="col-span-1 px-4 py-2">
+                    {{ translate('movies.include') }}
+                </div>
+                <div class="col-span-1 px-4 py-2">
+                    {{ translate('movies.ageThreshold') }}
+                </div>
                 <div class="col-span-1 flex justify-end px-4 py-2">
                     <ReloadComponent @toggle:update="movieStore.fetch()" />
                 </div>
@@ -75,9 +89,9 @@
                     </div>
                     <div class="col-span-1 flex flex-wrap items-center gap-2 px-4 py-2">
                         <ToggleButton
-                            v-model="item.excludeFromTranslation"
+                            :model-value="item.excludeFromTranslation === 'false'"
                             size="small"
-                            @toggle:update="() => movieStore.exclude(MEDIA_TYPE.MOVIE, item.id)" />
+                            @toggle:update="() => handleIncludeToggle(item)" />
                     </div>
                     <div class="col-span-2 flex items-center px-4 py-2" @click.stop>
                         <InputComponent
@@ -179,6 +193,17 @@ const handleTranslate = async (language: ILanguage) => {
     )
     movieStore.clearSelection()
     isSelectMode.value = false
+}
+
+const handleIncludeToggle = async (movie: IMovie) => {
+    const currentlyIncluded = movie.excludeFromTranslation === 'false'
+    const newIncludeState = !currentlyIncluded
+    await movieStore.include(MEDIA_TYPE.MOVIE, movie.id, newIncludeState)
+}
+
+const handleIncludeAll = async () => {
+    const newState = !movieStore.includeSummary.allIncluded
+    await movieStore.includeAll(newState)
 }
 
 onMounted(async () => {
