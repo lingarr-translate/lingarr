@@ -242,7 +242,12 @@ public class TranslationJob
         catch (Exception ex)
         {
             await _translationRequestService.ClearMediaHash(translationRequest);
-            translationRequest.ErrorMessage = ex.Message;
+            
+            // Log full exception details for debugging
+            _logger.LogError(ex, "Translation failed for subtitle: {SubtitlePath}", translationRequest.SubtitleToTranslate);
+            
+            // Provide sanitized user-friendly error message
+            translationRequest.ErrorMessage = SanitizeErrorMessage(ex);
             translationRequest = await _translationRequestService.UpdateTranslationRequest(translationRequest, TranslationStatus.Failed,
                 jobId);
             
@@ -322,5 +327,77 @@ public class TranslationJob
             await _progressService.Emit(translationRequest, 0);
             await _scheduleService.UpdateJobState(jobName, JobStatus.Cancelled.GetDisplayName());
         }
+    }
+}
+    /// <summary>
+    /// Sanitizes exception messages to prevent leaking sensitive information to users
+    /// while providing helpful categorized error messages
+    /// </summary>
+    private string SanitizeErrorMessage(Exception ex)
+    {
+        // Check exception type and message for common patterns
+        var message = ex.Message.ToLowerInvariant();
+        var exceptionType = ex.GetType().Name;
+
+        // Network/HTTP errors
+        if (ex is HttpRequestException || message.Contains("connection") || message.Contains("network") || 
+            message.Contains("timeout") || message.Contains("unreachable"))
+        {
+            return "Network error: Unable to reach translation service";
+        }
+
+        // Authentication/Authorization errors
+        if (message.Contains("unauthorized") || message.Contains("forbidden") || 
+            message.Contains("authentication") || message.Contains("api key") || 
+            message.Contains("invalid key"))
+        {
+            return "Authentication error: Invalid or missing API key";
+        }
+
+        // Rate limiting
+        if (message.Contains("rate limit") || message.Contains("quota") || 
+            message.Contains("too many requests") || message.Contains("429"))
+        {
+            return "Rate limit exceeded: Please try again later";
+        }
+
+        // File system errors
+        if (ex is FileNotFoundException || ex is DirectoryNotFoundException || 
+            ex is UnauthorizedAccessException || message.Contains("file") || 
+            message.Contains("path") || message.Contains("permission"))
+        {
+            return "File system error: Unable to access subtitle file";
+        }
+
+        // Configuration errors
+        if (message.Contains("configuration") || message.Contains("setting") || 
+            message.Contains("not configured"))
+        {
+            return "Configuration error: Translation service not properly configured";
+        }
+
+        // Serialization/Format errors
+        if (ex is System.Text.Json.JsonException || message.Contains("json") || 
+            message.Contains("deserialize") || message.Contains("parse"))
+        {
+            return "Format error: Invalid response from translation service";
+        }
+
+        // Validation errors
+        if (ex is ArgumentException || ex is ArgumentNullException || 
+            message.Contains("invalid") || message.Contains("validation"))
+        {
+            return "Validation error: Invalid translation request";
+        }
+
+        // Database errors
+        if (message.Contains("database") || message.Contains("sql") || 
+            exceptionType.Contains("Db"))
+        {
+            return "Database error: Unable to save translation";
+        }
+
+        // Default generic error for unknown cases
+        return "Translation service error: Please check logs for details";
     }
 }
