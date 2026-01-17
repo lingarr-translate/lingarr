@@ -328,7 +328,7 @@ public class TranslationJob
             await _scheduleService.UpdateJobState(jobName, JobStatus.Cancelled.GetDisplayName());
         }
     }
-}
+
     /// <summary>
     /// Sanitizes exception messages to prevent leaking sensitive information to users
     /// while providing helpful categorized error messages
