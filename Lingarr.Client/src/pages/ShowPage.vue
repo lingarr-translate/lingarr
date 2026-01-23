@@ -4,6 +4,16 @@
             <SearchComponent v-model="filter" />
             <div
                 class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:justify-between md:space-x-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm">{{ translate('tvShows.includeAll') }}:</span>
+                    <ToggleButton
+                        :model-value="showStore.includeSummary.allIncluded"
+                        size="small"
+                        @toggle:update="handleIncludeAll" />
+                    <span class="text-xs text-primary-content/70">
+                        ({{ showStore.includeSummary.included }}/{{ showStore.includeSummary.total }})
+                    </span>
+                </div>
                 <SortControls
                     v-model="filter"
                     :options="[
@@ -14,6 +24,10 @@
                         {
                             label: 'Sort by Added',
                             value: 'DateAdded'
+                        },
+                        {
+                            label: 'Sort by Included',
+                            value: 'ExcludeFromTranslation'
                         }
                     ]" />
             </div>
@@ -25,9 +39,9 @@
                 <div class="col-span-8 px-4 py-2">{{ translate('tvShows.title') }}</div>
                 <div class="col-span-1 px-4 py-2">
                     <span class="hidden md:block">
-                        {{ translate('tvShows.exclude') }}
+                        {{ translate('tvShows.include') }}
                     </span>
-                    <span class="block md:hidden">⊘</span>
+                    <span class="block md:hidden">✓</span>
                 </div>
                 <div class="col-span-1 px-4 py-2">
                     {{ translate('tvShows.ageThreshold') }}
@@ -46,9 +60,9 @@
                     </div>
                     <div class="col-span-1 flex items-center px-4 py-2" @click.stop>
                         <ToggleButton
-                            v-model="item.excludeFromTranslation"
+                            :model-value="!item.excludeFromTranslation"
                             size="small"
-                            @toggle:update="() => showStore.exclude(MEDIA_TYPE.SHOW, item.id)" />
+                            @toggle:update="() => handleIncludeToggle(item)" />
                     </div>
                     <div class="col-span-3 flex items-center px-4 py-2" @click.stop>
                         <InputComponent
@@ -120,6 +134,18 @@ const toggleShow = async (show: IShow) => {
     instanceStore.setPoster({ content: show, type: 'show' })
     expandedShow.value = show.id
 }
+
+const handleIncludeToggle = async (show: IShow) => {
+    const currentlyIncluded = !show.excludeFromTranslation
+    const newIncludeState = !currentlyIncluded
+    await showStore.include(MEDIA_TYPE.SHOW, show.id, newIncludeState)
+}
+
+const handleIncludeAll = async () => {
+    const newState = !showStore.includeSummary.allIncluded
+    await showStore.includeAll(newState)
+}
+
 onMounted(async () => {
     await showStore.fetch()
 })

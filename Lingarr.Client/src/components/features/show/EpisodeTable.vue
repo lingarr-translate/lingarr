@@ -43,9 +43,9 @@
                 </div>
                 <div class="col-span-1 px-1 py-2 md:col-span-1">
                     <ToggleButton
-                        v-model="episode.excludeFromTranslation"
+                        :model-value="!episode.excludeFromTranslation"
                         size="small"
-                        @toggle:update="() => showStore.exclude(MEDIA_TYPE.EPISODE, episode.id)" />
+                        @toggle:update="() => handleIncludeToggle(episode)" />
                 </div>
             </div>
         </div>
@@ -75,5 +75,11 @@ const getSubtitle = (fileName: string | null) => {
         )
         .slice()
         .sort((a, b) => a.language.localeCompare(b.language))
+}
+
+async function handleIncludeToggle(episode: IEpisode) {
+    const currentlyIncluded = !episode.excludeFromTranslation
+    const newIncludeState = !currentlyIncluded
+    await showStore.include(MEDIA_TYPE.EPISODE, episode.id, newIncludeState)
 }
 </script>

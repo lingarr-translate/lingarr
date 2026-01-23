@@ -83,6 +83,29 @@ public interface IMediaService
     Task<bool> Exclude(MediaType mediaType, int id);
 
     /// <summary>
+    /// Sets the inclusion status of a media item for translation with cascading.
+    /// </summary>
+    /// <param name="mediaType">The type of media (Movie, Show, Season, or Episode).</param>
+    /// <param name="id">The unique identifier of the media item.</param>
+    /// <param name="include">True to include in translation, false to exclude.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a boolean value:
+    /// - true if the operation was successful
+    /// - false if the item was not found or an error occurred
+    /// </returns>
+    Task<bool> SetInclude(MediaType mediaType, int id, bool include);
+
+    /// <summary>
+    /// Sets the inclusion status for all items of a media type.
+    /// </summary>
+    /// <param name="mediaType">The type of media (Movie or Show).</param>
+    /// <param name="include">True to include all in translation, false to exclude all.</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation. The task result contains a boolean value indicating success.
+    /// </returns>
+    Task<bool> SetIncludeAll(MediaType mediaType, bool include);
+
+    /// <summary>
     /// Sets the amount of hours a media file needs to exist before translation is initiated.
     /// </summary>
     /// <param name="mediaType">The type of media (Movie, Show, Season, or Episode).</param>

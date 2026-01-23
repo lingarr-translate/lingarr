@@ -1,5 +1,5 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { IFilter, IMovie, IPagedResult, IUseMovieStore, MediaType } from '@/ts'
+import { IFilter, IMovie, IPagedResult, IUseMovieStore, MediaType, MEDIA_TYPE } from '@/ts'
 import services from '@/services'
 
 export const useMovieStore = defineStore('movie', {
@@ -29,6 +29,19 @@ export const useMovieStore = defineStore('movie', {
                 }
             })
             return this.movies
+        },
+        // Reactive computed summary from API response with global counts
+        includeSummary(state: IUseMovieStore) {
+            const total = state.movies.totalCount || 0
+            const included = state.movies.includedCount ?? 0
+            const excluded = state.movies.excludedCount ?? 0
+            
+            return {
+                total,
+                included,
+                excluded,
+                allIncluded: total > 0 && included === total
+            }
         }
     },
     actions: {
@@ -44,8 +57,30 @@ export const useMovieStore = defineStore('movie', {
                 this.filter.isAscending
             )
         },
-        async exclude(type: MediaType, id: number) {
-            await services.media.exclude(type, id)
+        async include(type: MediaType, id: number, include: boolean) {
+            try {
+                await services.media.include(type, id, include)
+                // Update local state after successful API call
+                const movie = this.movies.items?.find(m => m.id === id)
+                if (movie) {
+                    movie.excludeFromTranslation = !include
+                }
+            } catch (error) {
+                console.error('Failed to update movie include state', error)
+                throw error
+            }
+        },
+        async includeAll(include: boolean) {
+            try {
+                await services.media.includeAll(MEDIA_TYPE.MOVIE, include)
+                // Update all local movie states after successful API call
+                this.movies.items?.forEach(movie => {
+                    movie.excludeFromTranslation = !include
+                })
+            } catch (error) {
+                console.error('Failed to update all movies include state', error)
+                throw error
+            }
         },
         async updateThreshold(type: MediaType, id: number, hours: string) {
             await services.media.threshold(type, id, hours)

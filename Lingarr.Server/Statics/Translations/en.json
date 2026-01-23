@@ -32,12 +32,16 @@
     "title": "Title",
     "subtitles": "Subtitles",
     "exclude": "Exclude",
+    "include": "Include",
+    "includeAll": "Include All",
     "ageThreshold": "Delay",
     "hours": "hours"
   },
   "tvShows": {
     "title": "Title",
     "exclude": "Exclude",
+    "include": "Include",
+    "includeAll": "Include All",
     "season": "Season",
     "episodes": "Episodes",
     "episodesLine": "episodes",
@@ -55,6 +59,7 @@
     "status": "Status",
     "progress": "Progress",
     "completed": "Completed",
+    "error": "Error",
     "cancel": "Cancel",
     "delete": "Delete",
     "select": "Select"
@@ -81,6 +86,7 @@
     "sortByAdded": "Sort by Added",
     "sortByCompleted": "Sort by Completed",
     "sortByTitle": "Sort by Title",
+    "sortByIncluded": "Sort by Included",
     "statusInProgress": "In Progress",
     "statusPending": "Pending",
     "statusCompleted": "Completed",

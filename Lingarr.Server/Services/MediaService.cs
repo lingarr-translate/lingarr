@@ -60,10 +60,13 @@ public class MediaService : IMediaService
             "Id" => ascending ? query.OrderBy(m => m.Id) : query.OrderByDescending(m => m.Id),
             "Title" => ascending ? query.OrderBy(m => m.Title) : query.OrderByDescending(m => m.Title),
             "DateAdded" => ascending ? query.OrderBy(m => m.DateAdded) : query.OrderByDescending(m => m.DateAdded),
+            "ExcludeFromTranslation" => ascending ? query.OrderBy(m => m.ExcludeFromTranslation) : query.OrderByDescending(m => m.ExcludeFromTranslation),
             _ => ascending ? query.OrderBy(m => m.Title) : query.OrderByDescending(m => m.Title)
         };
 
         var totalCount = await query.CountAsync();
+        var excludedCount = await query.CountAsync(m => m.ExcludeFromTranslation);
+        var includedCount = totalCount - excludedCount;
         var movies = await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -98,6 +101,8 @@ public class MediaService : IMediaService
         {
             Items = enrichedMovies,
             TotalCount = totalCount,
+            IncludedCount = includedCount,
+            ExcludedCount = excludedCount,
             PageNumber = pageNumber,
             PageSize = pageSize
         };
@@ -235,10 +240,13 @@ public class MediaService : IMediaService
             "Id" => ascending ? query.OrderBy(s => s.Id) : query.OrderByDescending(s => s.Id),
             "Title" => ascending ? query.OrderBy(s => s.Title) : query.OrderByDescending(s => s.Title),
             "DateAdded" => ascending ? query.OrderBy(s => s.DateAdded) : query.OrderByDescending(s => s.DateAdded),
+            "ExcludeFromTranslation" => ascending ? query.OrderBy(s => s.ExcludeFromTranslation) : query.OrderByDescending(s => s.ExcludeFromTranslation),
             _ => ascending ? query.OrderBy(s => s.Title) : query.OrderByDescending(s => s.Title)
         };
 
         var totalCount = await query.CountAsync();
+        var excludedCount = await query.CountAsync(s => s.ExcludeFromTranslation);
+        var includedCount = totalCount - excludedCount;
         var shows = await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -248,6 +256,8 @@ public class MediaService : IMediaService
         {
             Items = shows,
             TotalCount = totalCount,
+            IncludedCount = includedCount,
+            ExcludedCount = excludedCount,
             PageNumber = pageNumber,
             PageSize = pageSize
         };
@@ -313,6 +323,136 @@ public class MediaService : IMediaService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error excluding media item. Type: {MediaType}, Id: {Id}", mediaType, id);
+            return false;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> SetInclude(MediaType mediaType, int id, bool include)
+    {
+        try
+        {
+            var exclude = !include;
+
+            switch (mediaType)
+            {
+                case MediaType.Movie:
+                {
+                    var affectedRows = await _dbContext.Movies
+                        .Where(m => m.Id == id)
+                        .ExecuteUpdateAsync(setters =>
+                            setters.SetProperty(m => m.ExcludeFromTranslation, exclude));
+                    return affectedRows > 0;
+                }
+
+                case MediaType.Show:
+                {
+                    // Update the show
+                    var affectedRows = await _dbContext.Shows
+                        .Where(s => s.Id == id)
+                        .ExecuteUpdateAsync(setters =>
+                            setters.SetProperty(s => s.ExcludeFromTranslation, exclude));
+                    
+                    if (affectedRows == 0)
+                        return false;
+
+                    // Cascade to all seasons of this show
+                    await _dbContext.Seasons
+                        .Where(s => s.ShowId == id)
+                        .ExecuteUpdateAsync(setters =>
+                            setters.SetProperty(s => s.ExcludeFromTranslation, exclude));
+
+                    // Cascade to all episodes of this show's seasons
+                    await _dbContext.Episodes
+                        .Where(e => e.Season.ShowId == id)
+                        .ExecuteUpdateAsync(setters =>
+                            setters.SetProperty(e => e.ExcludeFromTranslation, exclude));
+
+                    return true;
+                }
+
+                case MediaType.Season:
+                {
+                    // Update the season
+                    var affectedRows = await _dbContext.Seasons
+                        .Where(s => s.Id == id)
+                        .ExecuteUpdateAsync(setters =>
+                            setters.SetProperty(s => s.ExcludeFromTranslation, exclude));
+                    
+                    if (affectedRows == 0)
+                        return false;
+
+                    // Cascade to all episodes of this season
+                    await _dbContext.Episodes
+                        .Where(e => e.SeasonId == id)
+                        .ExecuteUpdateAsync(setters =>
+                            setters.SetProperty(e => e.ExcludeFromTranslation, exclude));
+
+                    return true;
+                }
+
+                case MediaType.Episode:
+                {
+                    var affectedRows = await _dbContext.Episodes
+                        .Where(e => e.Id == id)
+                        .ExecuteUpdateAsync(setters =>
+                            setters.SetProperty(e => e.ExcludeFromTranslation, exclude));
+                    return affectedRows > 0;
+                }
+
+                default:
+                    _logger.LogWarning("Unsupported media type: {MediaType}", mediaType);
+                    return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting include state. Type: {MediaType}, Id: {Id}", mediaType, id);
+            return false;
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> SetIncludeAll(MediaType mediaType, bool include)
+    {
+        try
+        {
+            var exclude = !include;
+
+            if (mediaType == MediaType.Movie)
+            {
+                await _dbContext.Movies.ExecuteUpdateAsync(setters =>
+                    setters.SetProperty(m => m.ExcludeFromTranslation, exclude));
+                return true;
+            }
+
+            if (mediaType == MediaType.Show)
+            {
+                // Update all shows
+                await _dbContext.Shows.ExecuteUpdateAsync(setters =>
+                    setters.SetProperty(s => s.ExcludeFromTranslation, exclude));
+                
+                // Update all seasons that belong to existing shows
+                await _dbContext.Seasons
+                    .Where(s => _dbContext.Shows.Any(show => show.Id == s.ShowId))
+                    .ExecuteUpdateAsync(setters =>
+                        setters.SetProperty(s => s.ExcludeFromTranslation, exclude));
+                
+                // Update all episodes that belong to existing seasons
+                await _dbContext.Episodes
+                    .Where(e => _dbContext.Seasons.Any(season => season.Id == e.SeasonId))
+                    .ExecuteUpdateAsync(setters =>
+                        setters.SetProperty(e => e.ExcludeFromTranslation, exclude));
+                        
+                return true;
+            }
+
+            _logger.LogWarning("SetIncludeAll called with unsupported media type: {MediaType}", mediaType);
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error setting include state for all media items. Type: {MediaType}", mediaType);
             return false;
         }
     }

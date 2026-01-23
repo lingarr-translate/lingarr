@@ -4,6 +4,16 @@
             <SearchComponent v-model="filter" />
             <div
                 class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:justify-between md:space-x-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm">{{ translate('movies.includeAll') }}:</span>
+                    <ToggleButton
+                        :model-value="movieStore.includeSummary.allIncluded"
+                        size="small"
+                        @toggle:update="handleIncludeAll" />
+                    <span class="text-xs text-primary-content/70">
+                        ({{ movieStore.includeSummary.included }}/{{ movieStore.includeSummary.total }})
+                    </span>
+                </div>
                 <SortControls
                     v-model="filter"
                     :options="[
@@ -14,6 +24,10 @@
                         {
                             label: translate('common.sortByAdded'),
                             value: 'DateAdded'
+                        },
+                        {
+                            label: translate('common.sortByIncluded'),
+                            value: 'ExcludeFromTranslation'
                         }
                     ]" />
             </div>
@@ -24,7 +38,7 @@
                 <div class="col-span-5 px-4 py-2">{{ translate('movies.title') }}</div>
                 <div class="col-span-4 px-4 py-2">{{ translate('movies.subtitles') }}</div>
                 <div class="col-span-1 px-4 py-2">
-                    {{ translate('movies.exclude') }}
+                    {{ translate('movies.include') }}
                 </div>
                 <div class="col-span-1 px-4 py-2">
                     {{ translate('movies.ageThreshold') }}
@@ -56,9 +70,9 @@
                     </div>
                     <div class="col-span-1 flex flex-wrap items-center gap-2 px-4 py-2">
                         <ToggleButton
-                            v-model="item.excludeFromTranslation"
+                            :model-value="!item.excludeFromTranslation"
                             size="small"
-                            @toggle:update="() => movieStore.exclude(MEDIA_TYPE.MOVIE, item.id)" />
+                            @toggle:update="() => handleIncludeToggle(item)" />
                     </div>
                     <div class="col-span-2 flex items-center px-4 py-2" @click.stop>
                         <InputComponent
@@ -123,6 +137,17 @@ const filter: ComputedRef<IFilter> = computed({
 const toggleMovie = useDebounce(async (movie: IMovie) => {
     instanceStore.setPoster({ content: movie, type: 'movie' })
 }, 1000)
+
+const handleIncludeToggle = async (movie: IMovie) => {
+    const currentlyIncluded = !movie.excludeFromTranslation
+    const newIncludeState = !currentlyIncluded
+    await movieStore.include(MEDIA_TYPE.MOVIE, movie.id, newIncludeState)
+}
+
+const handleIncludeAll = async () => {
+    const newState = !movieStore.includeSummary.allIncluded
+    await movieStore.includeAll(newState)
+}
 
 onMounted(async () => {
     await movieStore.fetch()
