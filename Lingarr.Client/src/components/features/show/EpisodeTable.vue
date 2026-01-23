@@ -37,7 +37,7 @@
                 </div>
                 <div class="col-span-1 px-1 py-2 md:col-span-1">
                     <ToggleButton
-                        :model-value="episode.excludeFromTranslation === 'false'"
+                        :model-value="!episode.excludeFromTranslation"
                         size="small"
                         @toggle:update="() => handleIncludeToggle(episode)" />
                 </div>
@@ -72,7 +72,7 @@ const getSubtitle = (fileName: string | null) => {
 }
 
 async function handleIncludeToggle(episode: IEpisode) {
-    const currentlyIncluded = episode.excludeFromTranslation === 'false'
+    const currentlyIncluded = !episode.excludeFromTranslation
     const newIncludeState = !currentlyIncluded
     await showStore.include(MEDIA_TYPE.EPISODE, episode.id, newIncludeState)
 }

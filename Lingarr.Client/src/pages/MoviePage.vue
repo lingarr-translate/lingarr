@@ -38,6 +38,10 @@
                         {
                             label: 'Sort by Added',
                             value: 'DateAdded'
+                        },
+                        {
+                            label: translate('common.sortByIncluded'),
+                            value: 'ExcludeFromTranslation'
                         }
                     ]" />
             </div>
@@ -89,7 +93,7 @@
                     </div>
                     <div class="col-span-1 flex flex-wrap items-center gap-2 px-4 py-2">
                         <ToggleButton
-                            :model-value="item.excludeFromTranslation === 'false'"
+                            :model-value="!item.excludeFromTranslation"
                             size="small"
                             @toggle:update="() => handleIncludeToggle(item)" />
                     </div>
@@ -196,7 +200,7 @@ const handleTranslate = async (language: ILanguage) => {
 }
 
 const handleIncludeToggle = async (movie: IMovie) => {
-    const currentlyIncluded = movie.excludeFromTranslation === 'false'
+    const currentlyIncluded = !movie.excludeFromTranslation
     const newIncludeState = !currentlyIncluded
     await movieStore.include(MEDIA_TYPE.MOVIE, movie.id, newIncludeState)
 }

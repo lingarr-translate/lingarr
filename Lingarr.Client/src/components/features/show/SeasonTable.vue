@@ -34,7 +34,7 @@
                     </span>
                     <span @click.stop>
                         <ToggleButton
-                            :model-value="season.excludeFromTranslation === 'false'"
+                            :model-value="!season.excludeFromTranslation"
                             size="small"
                             @toggle:update="() => handleIncludeToggle(season)" />
                     </span>
@@ -82,7 +82,7 @@ async function collectSubtitles() {
 }
 
 async function handleIncludeToggle(season: ISeason) {
-    const currentlyIncluded = season.excludeFromTranslation === 'false'
+    const currentlyIncluded = !season.excludeFromTranslation
     const newIncludeState = !currentlyIncluded
     await showStore.include(MEDIA_TYPE.SEASON, season.id, newIncludeState)
 }

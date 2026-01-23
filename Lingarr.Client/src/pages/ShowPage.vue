@@ -38,6 +38,10 @@
                         {
                             label: 'Sort by Added',
                             value: 'DateAdded'
+                        },
+                        {
+                            label: 'Sort by Included',
+                            value: 'ExcludeFromTranslation'
                         }
                     ]" />
             </div>
@@ -79,7 +83,7 @@
                     </div>
                     <div class="col-span-1 flex items-center px-4 py-2" @click.stop>
                         <ToggleButton
-                            :model-value="item.excludeFromTranslation === 'false'"
+                            :model-value="!item.excludeFromTranslation"
                             size="small"
                             @toggle:update="() => handleIncludeToggle(item)" />
                     </div>
@@ -196,7 +200,7 @@ const handleTranslate = async (language: ILanguage) => {
 }
 
 const handleIncludeToggle = async (show: IShow) => {
-    const currentlyIncluded = show.excludeFromTranslation === 'false'
+    const currentlyIncluded = !show.excludeFromTranslation
     const newIncludeState = !currentlyIncluded
     await showStore.include(MEDIA_TYPE.SHOW, show.id, newIncludeState)
 }

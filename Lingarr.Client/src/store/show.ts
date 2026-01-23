@@ -22,16 +22,18 @@ export const useShowStore = defineStore('show', {
     getters: {
         getFilter: (state: IUseShowStore): IFilter => state.filter,
         get: (state: IUseShowStore): IPagedResult<IShow> => state.shows,
-        // Reactive computed summary from existing show data
+        // Reactive computed summary from existing show data on current page
+        // Reactive computed summary from API response with global counts
         includeSummary(state: IUseShowStore) {
-            const total = state.shows.items?.length || 0
-            const excluded = state.shows.items?.filter(s => s.excludeFromTranslation === 'true').length || 0
-            const included = total - excluded
+            const total = state.shows.totalCount || 0
+            const included = state.shows.includedCount ?? 0
+            const excluded = state.shows.excludedCount ?? 0
+            
             return {
                 total,
                 included,
                 excluded,
-                allIncluded: excluded === 0 && total > 0
+                allIncluded: total > 0 && included === total
             }
         }
     },
@@ -54,12 +56,12 @@ export const useShowStore = defineStore('show', {
                 // Update local state with cascading after successful API call
                 const show = this.shows.items?.find(s => s.id === id)
                 if (show && type === MEDIA_TYPE.SHOW) {
-                    show.excludeFromTranslation = include ? 'false' : 'true'
+                    show.excludeFromTranslation = !include
                     // Cascade to seasons and episodes client-side
                     show.seasons?.forEach(season => {
-                        season.excludeFromTranslation = include ? 'false' : 'true'
+                        season.excludeFromTranslation = !include
                         season.episodes?.forEach(episode => {
-                            episode.excludeFromTranslation = include ? 'false' : 'true'
+                            episode.excludeFromTranslation = !include
                         })
                     })
                 }
@@ -68,10 +70,10 @@ export const useShowStore = defineStore('show', {
                     for (const show of this.shows.items || []) {
                         const season = show.seasons?.find(s => s.id === id)
                         if (season) {
-                            season.excludeFromTranslation = include ? 'false' : 'true'
+                            season.excludeFromTranslation = !include
                             // Cascade to episodes
                             season.episodes?.forEach(episode => {
-                                episode.excludeFromTranslation = include ? 'false' : 'true'
+                                episode.excludeFromTranslation = !include
                             })
                             break
                         }
@@ -83,7 +85,7 @@ export const useShowStore = defineStore('show', {
                         for (const season of show.seasons || []) {
                             const episode = season.episodes?.find(e => e.id === id)
                             if (episode) {
-                                episode.excludeFromTranslation = include ? 'false' : 'true'
+                                episode.excludeFromTranslation = !include
                                 return
                             }
                         }
@@ -99,11 +101,11 @@ export const useShowStore = defineStore('show', {
                 await services.media.includeAll(MEDIA_TYPE.SHOW, include)
                 // Update all local show states with cascading after successful API call
                 this.shows.items?.forEach(show => {
-                    show.excludeFromTranslation = include ? 'false' : 'true'
+                    show.excludeFromTranslation = !include
                     show.seasons?.forEach(season => {
-                        season.excludeFromTranslation = include ? 'false' : 'true'
+                        season.excludeFromTranslation = !include
                         season.episodes?.forEach(episode => {
-                            episode.excludeFromTranslation = include ? 'false' : 'true'
+                            episode.excludeFromTranslation = !include
                         })
                     })
                 })

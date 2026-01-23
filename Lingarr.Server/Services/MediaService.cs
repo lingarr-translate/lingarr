@@ -60,10 +60,13 @@ public class MediaService : IMediaService
             "Id" => ascending ? query.OrderBy(m => m.Id) : query.OrderByDescending(m => m.Id),
             "Title" => ascending ? query.OrderBy(m => m.Title) : query.OrderByDescending(m => m.Title),
             "DateAdded" => ascending ? query.OrderBy(m => m.DateAdded) : query.OrderByDescending(m => m.DateAdded),
+            "ExcludeFromTranslation" => ascending ? query.OrderBy(m => m.ExcludeFromTranslation) : query.OrderByDescending(m => m.ExcludeFromTranslation),
             _ => ascending ? query.OrderBy(m => m.Title) : query.OrderByDescending(m => m.Title)
         };
 
         var totalCount = await query.CountAsync();
+        var excludedCount = await query.CountAsync(m => m.ExcludeFromTranslation);
+        var includedCount = totalCount - excludedCount;
         var movies = await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -98,6 +101,8 @@ public class MediaService : IMediaService
         {
             Items = enrichedMovies,
             TotalCount = totalCount,
+            IncludedCount = includedCount,
+            ExcludedCount = excludedCount,
             PageNumber = pageNumber,
             PageSize = pageSize
         };
@@ -235,10 +240,13 @@ public class MediaService : IMediaService
             "Id" => ascending ? query.OrderBy(s => s.Id) : query.OrderByDescending(s => s.Id),
             "Title" => ascending ? query.OrderBy(s => s.Title) : query.OrderByDescending(s => s.Title),
             "DateAdded" => ascending ? query.OrderBy(s => s.DateAdded) : query.OrderByDescending(s => s.DateAdded),
+            "ExcludeFromTranslation" => ascending ? query.OrderBy(s => s.ExcludeFromTranslation) : query.OrderByDescending(s => s.ExcludeFromTranslation),
             _ => ascending ? query.OrderBy(s => s.Title) : query.OrderByDescending(s => s.Title)
         };
 
         var totalCount = await query.CountAsync();
+        var excludedCount = await query.CountAsync(s => s.ExcludeFromTranslation);
+        var includedCount = totalCount - excludedCount;
         var shows = await query
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
@@ -248,6 +256,8 @@ public class MediaService : IMediaService
         {
             Items = shows,
             TotalCount = totalCount,
+            IncludedCount = includedCount,
+            ExcludedCount = excludedCount,
             PageNumber = pageNumber,
             PageSize = pageSize
         };

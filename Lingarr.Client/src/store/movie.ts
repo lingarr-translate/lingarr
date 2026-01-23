@@ -32,16 +32,17 @@ export const useMovieStore = defineStore('movie', {
             })
             return this.movies
         },
-        // Reactive computed summary from existing movie data
+        // Reactive computed summary from API response with global counts
         includeSummary(state: IUseMovieStore) {
-            const total = state.movies.items?.length || 0
-            const excluded = state.movies.items?.filter(m => m.excludeFromTranslation === 'true').length || 0
-            const included = total - excluded
+            const total = state.movies.totalCount || 0
+            const included = state.movies.includedCount ?? 0
+            const excluded = state.movies.excludedCount ?? 0
+            
             return {
                 total,
                 included,
                 excluded,
-                allIncluded: excluded === 0 && total > 0
+                allIncluded: total > 0 && included === total
             }
         }
     },
@@ -64,7 +65,7 @@ export const useMovieStore = defineStore('movie', {
                 // Update local state after successful API call
                 const movie = this.movies.items?.find(m => m.id === id)
                 if (movie) {
-                    movie.excludeFromTranslation = include ? 'false' : 'true'
+                    movie.excludeFromTranslation = !include
                 }
             } catch (error) {
                 console.error('Failed to update movie include state', error)
@@ -76,7 +77,7 @@ export const useMovieStore = defineStore('movie', {
                 await services.media.includeAll(MEDIA_TYPE.MOVIE, include)
                 // Update all local movie states after successful API call
                 this.movies.items?.forEach(movie => {
-                    movie.excludeFromTranslation = include ? 'false' : 'true'
+                    movie.excludeFromTranslation = !include
                 })
             } catch (error) {
                 console.error('Failed to update all movies include state', error)
