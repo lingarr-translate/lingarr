@@ -78,6 +78,10 @@ networks:
 Follow the following steps to set up Lingarr and LibreTranslate via docker CLI
 
 ```bash
+# create a docker network
+docker network create lingarr
+
+# setup the container
 docker run -d \
   --name lingarr \
   --restart unless-stopped \
