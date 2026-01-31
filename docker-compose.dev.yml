@@ -4,7 +4,6 @@
 
 networks:
   lingarr:
-    
     external: true
 
 services:
@@ -23,8 +22,8 @@ services:
       - DB_CONNECTION=mysql
       - DB_HOST=Lingarr.Mysql
       - DB_PORT=3306
-      - DB_DATABASE=LingarrMysql
-      - DB_USERNAME=LingarrMysql
+      - DB_DATABASE=Lingarr
+      - DB_USERNAME=Lingarr
       - DB_PASSWORD=Secret1234
       - SERVICE_TYPE=libretranslate
       - LIBRE_TRANSLATE_URL=http://libretranslate:5000
@@ -84,17 +83,17 @@ services:
     ports:
       - "1433:3306"
     environment:
-      MYSQL_DATABASE: LingarrMysql
-      MYSQL_USER: LingarrMysql
+      MYSQL_DATABASE: Lingarr
+      MYSQL_USER: Lingarr
       MYSQL_PASSWORD: Secret1234
       MYSQL_ROOT_PASSWORD: Secret1234
       SERVICE_TAGS: dev
       SERVICE_NAME: mariadb
     networks:
       - lingarr
-    command: mysqld --sql_mode=""
+    command: mariadbd --sql_mode=""
     healthcheck:
-      test: "mysql $$MYSQL_DATABASE -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1;'"
+      test: "mariadb $$MYSQL_DATABASE -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1;'"
       interval: 10s
       timeout: 5s
       retries: 5
@@ -104,14 +103,14 @@ services:
     container_name: Lingarr.PHPMyAdmin
     environment:
       PMA_HOST: Lingarr.Mysql
-      PMA_USER: LingarrMysql
+      PMA_USER: Lingarr
       PMA_PASSWORD: Secret1234
       UPLOAD_LIMIT: 500M
     ports:
       - "9878:80"
     networks:
       - lingarr
-        
+  
   radarr:
     image: ghcr.io/hotio/radarr:nightly
     container_name: radarr
@@ -124,7 +123,7 @@ services:
       - 7878:7878
     networks:
       - lingarr
-        
+
   sonarr:
     image: ghcr.io/hotio/sonarr:nightly
     container_name: sonarr
@@ -138,7 +137,7 @@ services:
       - 8989:8989
     networks:
       - lingarr
-        
+
 #  localai:
 #    container_name: localai
 #    image: localai/localai:latest-aio-cpu
