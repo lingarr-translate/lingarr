@@ -10,8 +10,8 @@
             </div>
 
             <div class="space-y-4">
-                <ButtonComponent variant="primary" :loading="generating" @click="generateApiKey">
-                    {{ generating ? 'Generating...' : 'Generate API Key' }}
+                <ButtonComponent variant="primary" :loading="loading" @click="generateApiKey()">
+                    {{ loading ? 'Generating...' : 'Generate API Key' }}
                 </ButtonComponent>
 
                 <div class="rounded-lg bg-gray-900 p-4">
@@ -40,12 +40,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, computed } from 'vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import CardComponent from '@/components/common/CardComponent.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
-import { useSettingStore } from '@/store/setting'
 import services from '@/services'
+import { useSettingStore } from '@/store/setting'
 import { SETTINGS } from '@/ts'
 
 const settingsStore = useSettingStore()
@@ -54,10 +54,7 @@ const { title } = defineProps<{
 }>()
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
-const apiKey = ref('')
-const generating = ref(false)
-const error = ref('')
-
+const loading = ref(false)
 
 const authEnabled = computed({
     get: () => settingsStore.getSetting(SETTINGS.AUTH_ENABLED) as string,
@@ -66,22 +63,17 @@ const authEnabled = computed({
         saveNotification.value?.show()
     }
 })
-const generateApiKey = async () => {
-    generating.value = true
-    error.value = ''
 
-    try {
-        const response = await services.auth.generateApiKey()
-        apiKey.value = response.apiKey
-    } catch (err: any) {
-        console.error('Failed to generate API key:', err)
-        error.value = err?.data?.message || 'Failed to generate API key. Please try again.'
-    } finally {
-        generating.value = false
+const apiKey = computed({
+    get: () => settingsStore.getSetting(SETTINGS.API_KEY) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.API_KEY, newValue.toString(), true)
+        saveNotification.value?.show()
     }
-}
-
-onMounted(async () => {
-    await generateApiKey()
 })
+
+const generateApiKey = async () => {
+    const response = await services.auth.generateApiKey()
+    await settingsStore.updateSetting(SETTINGS.API_KEY, response.apiKey, true)
+}
 </script>
