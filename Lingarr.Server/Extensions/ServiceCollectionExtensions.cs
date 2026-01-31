@@ -4,6 +4,7 @@ using System.Text.Json.Serialization;
 using GTranslate.Translators;
 using Hangfire;
 using Hangfire.MySql;
+using Hangfire.PostgreSql;
 using Hangfire.Storage.SQLite;
 using Lingarr.Core;
 using Lingarr.Core.Configuration;
@@ -23,6 +24,7 @@ using Lingarr.Server.Services.Integration;
 using Lingarr.Server.Services.Subtitle;
 using Lingarr.Server.Services.Sync;
 using Lingarr.Server.Services.Translation;
+using Lingarr.Migrations;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
@@ -94,6 +96,11 @@ public static class ServiceCollectionExtensions
         {
             DatabaseConfiguration.ConfigureDbContext(options);
         });
+
+        // Add FluentMigrator
+        var dbConnection = DatabaseConfiguration.GetDbConnection();
+        var connectionString = DatabaseConfiguration.GetConnectionString(dbConnection);
+        builder.Services.AddFluentMigrator(connectionString, dbConnection);
     }
 
     private static void ConfigureAuthentication(this WebApplicationBuilder builder)
@@ -153,7 +160,6 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<ISubtitleParser, SrtParser>();
         builder.Services.AddScoped<ISubtitleWriter, SrtWriter>();
         builder.Services.AddScoped<ISubtitleWriter, SsaWriter>();
-        builder.Services.AddScoped<ISubtitleWriter, SsaWriter>();
         
         // Register translate services
         builder.Services.AddScoped<ITranslationServiceFactory, TranslationFactory>();
@@ -176,7 +182,6 @@ public static class ServiceCollectionExtensions
 
         // Add Sync services
         builder.Services.AddScoped<IShowSyncService, ShowSyncService>();
-        builder.Services.AddScoped<IShowSync, ShowSync>();
         builder.Services.AddScoped<IMovieSyncService, MovieSyncService>();
         builder.Services.AddScoped<IMovieSync, MovieSync>();
         builder.Services.AddScoped<IEpisodeSync, EpisodeSync>();
@@ -198,7 +203,7 @@ public static class ServiceCollectionExtensions
         {
             options.Queues = ["movies", "shows", "system", "translation", "webhook", "default"];
             options.WorkerCount =
-                int.TryParse(Environment.GetEnvironmentVariable("MAX_CONCURRENT_JOBS"), out int maxConcurrentJobs)
+                int.TryParse(Environment.GetEnvironmentVariable("MAX_CONCURRENT_JOBS"), out var maxConcurrentJobs)
                     ? maxConcurrentJobs
                     : 1;
         });
@@ -210,13 +215,18 @@ public static class ServiceCollectionExtensions
                 .UseRecommendedSerializerSettings();
 
             var dbConnection = Environment.GetEnvironmentVariable("DB_CONNECTION")?.ToLower() ?? "sqlite";
-            if (dbConnection == "mysql")
+            switch (dbConnection)
             {
-                ConfigureMySqlStorage(configuration, tablePrefix);
-            }
-            else
-            {
-                ConfigureSqLiteStorage(configuration);
+                case "mysql":
+                    ConfigureMySqlStorage(configuration, tablePrefix);
+                    break;
+                case "postgres":
+                case "postgresql":
+                    ConfigurePostgresStorage(configuration, tablePrefix);
+                    break;
+                default:
+                    ConfigureSqLiteStorage(configuration);
+                    break;
             }
 
             configuration.UseFilter(new JobContextFilter());
@@ -234,8 +244,8 @@ public static class ServiceCollectionExtensions
         {
             { "DB_HOST", Environment.GetEnvironmentVariable("DB_HOST") ?? "Lingarr.Mysql" },
             { "DB_PORT", Environment.GetEnvironmentVariable("DB_PORT") ?? "3306" },
-            { "DB_DATABASE", Environment.GetEnvironmentVariable("DB_DATABASE") ?? "LingarrMysql" },
-            { "DB_USERNAME", Environment.GetEnvironmentVariable("DB_USERNAME") ?? "LingarrMysql" },
+            { "DB_DATABASE", Environment.GetEnvironmentVariable("DB_DATABASE") ?? "Lingarr" },
+            { "DB_USERNAME", Environment.GetEnvironmentVariable("DB_USERNAME") ?? "Lingarr" },
             { "DB_PASSWORD", Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "Secret1234" }
         };
 
@@ -246,6 +256,29 @@ public static class ServiceCollectionExtensions
         {
             TablesPrefix = tablePrefix
         }));
+    }
+
+    /// <summary>
+    /// Configures Hangfire to use PostgreSQL storage.
+    /// </summary>
+    /// <param name="configuration">Hangfire global configuration</param>
+    /// <param name="tablePrefix">Prefix for Hangfire tables in PostgreSQL</param>
+    private static void ConfigurePostgresStorage(IGlobalConfiguration configuration, string tablePrefix)
+    {
+        var variables = new Dictionary<string, string>
+        {
+            { "DB_HOST", Environment.GetEnvironmentVariable("DB_HOST") ?? "Lingarr.Postgres" },
+            { "DB_PORT", Environment.GetEnvironmentVariable("DB_PORT") ?? "5432" },
+            { "DB_DATABASE", Environment.GetEnvironmentVariable("DB_DATABASE") ?? "Lingarr" },
+            { "DB_USERNAME", Environment.GetEnvironmentVariable("DB_USERNAME") ?? "Lingarr" },
+            { "DB_PASSWORD", Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "Secret1234" }
+        };
+
+        var connectionString =
+            $"Host={variables["DB_HOST"]};Port={variables["DB_PORT"]};Database={variables["DB_DATABASE"]};Username={variables["DB_USERNAME"]};Password={variables["DB_PASSWORD"]}";
+
+        configuration.UsePostgreSqlStorage(options =>
+            options.UseNpgsqlConnection(connectionString));
     }
 
     /// <summary>

@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Lingarr.Migrations</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="FluentMigrator" Version="8.0.0" />
+        <PackageReference Include="FluentMigrator.Extensions.Postgres" Version="8.0.1" />
+        <PackageReference Include="FluentMigrator.Runner" Version="8.0.0" />
+        <PackageReference Include="FluentMigrator.Runner.MySql" Version="8.0.0" />
+        <PackageReference Include="FluentMigrator.Runner.Postgres" Version="8.0.0" />
+        <PackageReference Include="FluentMigrator.Runner.SQLite" Version="8.0.0" />
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.1" />
+        <PackageReference Include="MySqlConnector" Version="2.4.0" />
+        <PackageReference Include="Npgsql" Version="9.0.3" />
+    </ItemGroup>
+
+</Project>

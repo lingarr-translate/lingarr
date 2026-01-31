@@ -97,7 +97,7 @@ const targetLanguages = computed({
 })
 
 const selectedTargetLanguages = computed(() => {
-    if (sourceLanguages.value.length === 0) {
+    if (!sourceLanguages.value || sourceLanguages.value.length === 0 || !languages.value) {
         return []
     }
 
