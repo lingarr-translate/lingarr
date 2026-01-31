@@ -51,16 +51,8 @@ export const useAuthStore = defineStore('auth', {
     actions: {
         async loadUsers(): Promise<void> {
             this.loading = true
-            this.error = ''
-
-            try {
-                this.users = await services.auth.getUsers()
-            } catch (err: any) {
-                console.error('Error loading users:', err)
-                this.error = err?.data?.message || 'Failed to load users'
-            } finally {
-                this.loading = false
-            }
+            this.users = await services.auth.getUsers()
+            this.loading = false
         },
 
         createOrEditUser(user?: IUser): void {
