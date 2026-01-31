@@ -1,8 +1,7 @@
-﻿using Hangfire;
+using Hangfire;
 using Lingarr.Core;
-using Lingarr.Core.Data;
+using Lingarr.Migrations;
 using Lingarr.Server.Hubs;
-using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Extensions;
 
@@ -39,24 +38,23 @@ public static class ApplicationBuilderExtensions
         app.MapHub<TranslationRequestsHub>("/signalr/TranslationRequests");
         app.MapHub<SettingUpdatesHub>("/signalr/SettingUpdates");
         app.MapHub<JobProgressHub>("/signalr/JobProgress");
-
     }
 
-    private static async Task ApplyMigrations(this WebApplication app)
+    private static Task ApplyMigrations(this WebApplication app)
     {
-        using var scope = app.Services.CreateScope();
-        var services = scope.ServiceProvider;
         try
         {
-            var context = services.GetRequiredService<LingarrDbContext>();
             Console.WriteLine("Applying migrations...");
-            await context.Database.MigrateAsync();
+            MigrationConfiguration.RunMigrations(app.Services);
             Console.WriteLine("Migrations applied successfully.");
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"An error occurred while applying migrations. {ex}", ex);
+            Console.Error.WriteLine($"An error occurred while applying migrations: {ex}");
+            throw;
         }
+
+        return Task.CompletedTask;
     }
 
     private static void ConfigureSpa(this WebApplication app)
