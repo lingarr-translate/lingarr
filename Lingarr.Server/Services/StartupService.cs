@@ -114,6 +114,14 @@ public class StartupService : IHostedService
             { "TELEMETRY_ENABLED", SettingKeys.Telemetry.TelemetryEnabled }
         };
 
+        // User-preference settings that should only be set from env vars if they're still at default values
+        // This prevents overwriting user changes made in the UI
+        var userPreferenceSettings = new HashSet<string>
+        {
+            SettingKeys.Telemetry.TelemetryEnabled,
+            SettingKeys.Authentication.AuthEnabled
+        };
+
         foreach (var (envVar, settingKey) in environmentSettings)
         {
             var value = Environment.GetEnvironmentVariable(envVar);
@@ -125,6 +133,13 @@ public class StartupService : IHostedService
             var setting = await dbContext.Settings.FirstOrDefaultAsync(s => s.Key == settingKey);
             if (setting != null)
             {
+                // For user preference settings, only update if still at default value
+                if (userPreferenceSettings.Contains(settingKey) && setting.Value != "false")
+                {
+                    _logger.LogInformation($"Skipping update of '{settingKey}' from environment variable '{envVar}' - user has already modified this setting.");
+                    continue;
+                }
+                
                 setting.Value = value;
                 await dbContext.SaveChangesAsync();
             }

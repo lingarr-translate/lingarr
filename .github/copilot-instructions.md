@@ -188,6 +188,20 @@ Before pushing to git:
 **Problem**: Database migration failures on deployment
 **Solution**: Test migrations locally against SQLite database first
 
+#### Caption Logic Bug (Fixed: Jan 24, 2026)
+**Problem**: Episodes without target language subtitles were skipped with message "captions exist for target languages" even though they had no such subtitles
+**Root Cause**: MediaSubtitleProcessor.cs line 110 had inverted logic - `if (ignoreCaptions == "true")` should be `if (ignoreCaptions == "false")`
+**Explanation**: When `ignoreCaptions=false` (disabled), the system should check for captions and skip if they exist. When `ignoreCaptions=true` (enabled), it should ignore captions and translate anyway. The condition was backwards.
+**Fix**: Changed line 110 from `if (ignoreCaptions == "true")` to `if (ignoreCaptions == "false")`
+**Impact**: Automation job now properly translates episodes/movies that have no target language subtitles
+
+#### Telemetry Settings Not Persisting (Fixed: Jan 24, 2026)
+**Problem**: Telemetry (and auth) settings would reset to default after every Docker deployment
+**Root Cause**: StartupService.ApplySettingsFromEnvironment() overwrites database settings with environment variables on every startup, ignoring user preferences set in UI
+**Explanation**: Settings like telemetry_enabled and auth_enabled are user preferences that should only be initialized from env vars on first run, not overwritten every time
+**Fix**: Added `userPreferenceSettings` HashSet in StartupService.cs to identify settings that should only apply from env vars if still at default value ("false"). If user changed to "true", subsequent deployments won't overwrite.
+**Impact**: User preferences now persist across Docker container restarts and redeployments
+
 ### Naming Conventions
 
 #### Files
@@ -210,6 +224,8 @@ Before pushing to git:
 - Sort ascending = included first when sorting by included status
 - Global counts must come from database aggregation, not page-level counts
 - Cascading updates for TV shows must update show, seasons, and episodes
+- Caption handling: `ignoreCaptions=false` checks for captions and skips if found; `ignoreCaptions=true` ignores captions and translates anyway
+- User preference settings (telemetry, auth) only apply from env vars if still at default values to prevent overwriting UI changes
 
 ### Environment Variables
 Key variables (see Settings.MD for complete list):
@@ -277,5 +293,5 @@ public class IncludeRequest {
 
 ---
 
-*Last Updated: January 23, 2026*
+*Last Updated: January 24, 2026*
 *Version: 1.x*

@@ -111,8 +111,8 @@
                         <span class="mr-2 font-bold md:hidden">
                             {{ translate('translations.error') }}:&nbsp;
                         </span>
-                        <div class="text-sm text-red-400" :title="item.errorMessage || 'Translation failed'">
-                            {{ item.errorMessage ? (item.errorMessage.length > 100 ? item.errorMessage.substring(0, 100) + '...' : item.errorMessage) : 'Translation failed' }}
+                        <div class="text-sm text-red-400" :title="item.errorMessage || 'Translation failed - no error details available'">
+                            {{ item.errorMessage ? (item.errorMessage.length > 100 ? item.errorMessage.substring(0, 100) + '...' : item.errorMessage) : 'Translation failed - check logs for details' }}
                         </div>
                     </div>
                 </div>
@@ -233,6 +233,7 @@ const handleDelete = async () => {
         await translationRequestStore.remove(request)
     }
     translationRequestStore.clearSelection()
-    translationRequestStore.fetch()
+    await translationRequestStore.fetch()
+    await translationRequestStore.getActiveCount()
 }
 </script>
