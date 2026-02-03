@@ -79,15 +79,9 @@ const apiKey = computed({
 const fetchApiKey = async () => {
     try {
         const response = await services.auth.fetchApiKey()
-<<<<<<< HEAD
         await settingsStore.updateSetting(SETTINGS.API_KEY, response.apiKey, false)
-=======
-        apiKey.value = response.apiKey || 'No API key generated yet'
->>>>>>> d210dad (fix: address Copilot review feedback)
     } catch (err: any) {
         console.error('Failed to fetch API key:', err)
-        apiKey.value = 'Failed to load API key'
-        error.value = 'Failed to fetch API key. Please try generating a new one.'
     }
 }
 
