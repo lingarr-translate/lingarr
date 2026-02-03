@@ -295,4 +295,105 @@ public class GoogleGeminiServiceTests
             realHttpClient.Dispose();
         }
     }
+
+    [Fact]
+    public async Task TranslateAsync_ShouldRetry_WhenRateLimited()
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var successResponse = new { candidates = new[] { new { content = new { parts = new[] { new { text = "Translated Text" } } } } } };
+        var successContent = JsonSerializer.Serialize(successResponse);
+
+        // Sequence: 1. Fail with 429, 2. Succeed with 200
+        var handlerMock = _httpMessageHandlerMock.Protected();
+        handlerMock.SetupSequence<Task<HttpResponseMessage>>(
+            "SendAsync",
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>()
+        )
+        .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.TooManyRequests }) // First attempt fails
+        .ReturnsAsync(new HttpResponseMessage // Second attempt succeeds
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(successContent, Encoding.UTF8, "application/json")
+        });
+
+        // Act
+        var result = await _service.TranslateAsync("Source Text", "en", "es", null, null, CancellationToken.None);
+
+        // Assert
+        Assert.Equal("Translated Text", result);
+
+        // Verify LogWarning was called for the retry
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("429 Too Many Requests. Retrying")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task TranslateBatchAsync_ShouldRetry_WhenRateLimited()
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var batch = new List<BatchSubtitleItem> { new() { Position = 1, Line = "Hello" } };
+        var successBatchResponse = new { candidates = new[] { new { content = new { parts = new[] { new { text = "[{\"position\":1,\"line\":\"Hola\"}]" } } } } } };
+        var successContent = JsonSerializer.Serialize(successBatchResponse);
+
+        // Sequence: Fail 429 -> Succeed 200
+        _httpMessageHandlerMock.Protected().SetupSequence<Task<HttpResponseMessage>>(
+            "SendAsync",
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>()
+        )
+        .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.TooManyRequests })
+        .ReturnsAsync(new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(successContent, Encoding.UTF8, "application/json")
+        });
+
+        // Act
+        var result = await _service.TranslateBatchAsync(batch, "en", "es", CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Hola", result[1]);
+
+        // Verify Retry Warning
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("429 Too Many Requests. Retrying")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    // Helper to keep the tests clean
+    private Dictionary<string, string> GetDefaultSettings()
+    {
+        return new Dictionary<string, string>
+        {
+            { SettingKeys.Translation.Gemini.ApiKey, "test-api-key" },
+            { SettingKeys.Translation.Gemini.Model, "gemini-pro" },
+            { SettingKeys.Translation.AiPrompt, "Prompt" },
+            { SettingKeys.Translation.AiContextPrompt, "" },
+            { SettingKeys.Translation.AiContextPromptEnabled, "false" },
+            { SettingKeys.Translation.CustomAiParameters, "[]" },
+            { SettingKeys.Translation.RequestTimeout, "5" },
+            { SettingKeys.Translation.MaxRetries, "3" },
+            { SettingKeys.Translation.RetryDelay, "1" }, // Short delay for fast tests
+            { SettingKeys.Translation.RetryDelayMultiplier, "1" }
+        };
+    }
 }
