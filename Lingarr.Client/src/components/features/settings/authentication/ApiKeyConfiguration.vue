@@ -59,6 +59,7 @@ const { title } = defineProps<{
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const loading = ref(false)
+const error = ref<string | null>(null)
 
 const authEnabled = computed({
     get: () => settingsStore.getSetting(SETTINGS.AUTH_ENABLED) as string,
@@ -81,15 +82,20 @@ const fetchApiKey = async () => {
         const response = await services.auth.fetchApiKey()
         await settingsStore.updateSetting(SETTINGS.API_KEY, response.apiKey, false)
     } catch (err: any) {
+        error.value = err.message || 'Failed to fetch API key'
         console.error('Failed to fetch API key:', err)
     }
 }
 
 const generateApiKey = async () => {
     loading.value = true
+    error.value = null
     try {
         const response = await services.auth.generateApiKey()
         await settingsStore.updateSetting(SETTINGS.API_KEY, response.apiKey, true)
+    } catch (err: any) {
+        error.value = err.message || 'Failed to generate API key'
+        console.error('Failed to generate API key:', err)
     } finally {
         loading.value = false
     }
