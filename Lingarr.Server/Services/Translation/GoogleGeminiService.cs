@@ -220,7 +220,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
             _logger.LogError("Response Content: {ResponseContent}",
                 await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new TranslationException("Translation using Gemini API failed.");
+            throw new HttpRequestException("Translation using Gemini API failed.", null, response.StatusCode);
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -440,7 +440,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             _logger.LogError("Response Content: {ResponseContent}",
                 await response.Content.ReadAsStringAsync(cancellationToken)
             );
-            throw new TranslationException("Batch translation using Gemini API failed.");
+            throw new HttpRequestException("Translation using Gemini API failed.", null, response.StatusCode);
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
