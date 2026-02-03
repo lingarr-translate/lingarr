@@ -169,6 +169,8 @@ public class SubtitleTranslationService
                 .Skip(batchIndex * batchSize)
                 .Take(batchSize)
                 .ToList();
+
+            _logger.LogInformation("Requesting batch {batchIndex} of {totalBatches}", batchIndex, totalBatches);
             
             await ProcessSubtitleBatch(currentBatch,
                 batchTranslationService,
@@ -178,6 +180,9 @@ public class SubtitleTranslationService
                 cancellationToken);
 
             processedSubtitles += currentBatch.Count;
+            
+            _logger.LogInformation("Completed batch {batchIndex} of {totalBatches}", batchIndex, totalBatches);
+
             await EmitProgress(translationRequest, processedSubtitles, subtitles.Count);
         }
 
