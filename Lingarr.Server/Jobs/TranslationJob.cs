@@ -343,6 +343,15 @@ public class TranslationJob
         if (ex is HttpRequestException || message.Contains("connection") || message.Contains("network") || 
             message.Contains("timeout") || message.Contains("unreachable"))
         {
+            // More specific message for connection refused
+            if (message.Contains("connection refused") || message.Contains("refused"))
+            {
+                return "Connection error: Translation service is not running or unreachable";
+            }
+            if (message.Contains("timeout"))
+            {
+                return "Timeout error: Translation service took too long to respond";
+            }
             return "Network error: Unable to reach translation service";
         }
 
