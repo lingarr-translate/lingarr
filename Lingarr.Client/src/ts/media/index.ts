@@ -44,7 +44,6 @@ export interface ITranslationRequest {
     completedAt?: string | null
     errorMessage?: string | null
     stackTrace?: string | null
-    createdAt?: string
 }
 
 export interface ITranslationRequestDetail extends ITranslationRequest {
