@@ -36,15 +36,22 @@
         </div>
 
         <div class="w-full px-4">
-            <div class="hidden border-b border-accent font-bold md:grid md:grid-cols-12">
-                <div class="col-span-4 px-4 py-2">Title</div>
-                <div class="col-span-1 px-4 py-2">Source</div>
-                <div class="col-span-1 px-4 py-2">Target</div>
-                <div class="col-span-1 px-4 py-2">Status</div>
-                <div class="px-4 py-2" :class="isSelectMode ? 'col-span-2' : 'col-span-3'">
-                    Progress
+            <div class="border-accent hidden border-b font-bold md:grid md:grid-cols-12">
+                <div class="col-span-4 px-4 py-2">
+                    {{ translate('translations.title') }}
                 </div>
-                <div class="col-span-1 px-4 py-2">Completed</div>
+                <div class="col-span-1 px-4 py-2">{{ translate('translations.source') }}</div>
+                <div class="col-span-1 px-4 py-2">{{ translate('translations.target') }}</div>
+                <div class="col-span-1 px-4 py-2">{{ translate('translations.status') }}</div>
+                <div class="px-4 py-2" :class="isSelectMode ? 'col-span-1' : 'col-span-2'">
+                    {{ translate('translations.progress') }}
+                </div>
+                <div class="col-span-1 px-4 py-2">
+                    {{ translate('translations.created') }}
+                </div>
+                <div class="col-span-1 px-4 py-2">
+                    {{ translate('translations.completed') }}
+                </div>
                 <div class="col-span-1 flex justify-end px-4 py-2">
                     <ReloadComponent @toggle:update="translationRequestStore.fetch()" />
                 </div>
@@ -98,7 +105,7 @@
                 </div>
                 <div
                     class="mb-2 flex items-center md:mb-0 md:px-4 md:py-2"
-                    :class="isSelectMode ? 'md:col-span-2' : 'md:col-span-3'">
+                    :class="isSelectMode ? 'md:col-span-1' : 'md:col-span-2'">
                     <div
                         v-if="item.status === TRANSLATION_STATUS.INPROGRESS && item.progress"
                         class="w-full">
@@ -107,7 +114,17 @@
                     </div>
                 </div>
                 <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
-                    <span class="font-bold md:hidden">Completed:&nbsp;</span>
+                    <span class="font-bold md:hidden">
+                        {{ translate('translations.created') }}:&nbsp;
+                    </span>
+                    <TranslationCompletedAt
+                        v-if="item.createdAt"
+                        :completed-at="item.createdAt" />
+                </div>
+                <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
+                    <span class="font-bold md:hidden">
+                        {{ translate('translations.completed') }}:&nbsp;
+                    </span>
                     <TranslationCompletedAt
                         v-if="item.completedAt"
                         :completed-at="item.completedAt" />
