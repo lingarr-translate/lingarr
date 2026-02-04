@@ -40,7 +40,6 @@ export interface ITranslationRequest {
     mediaType: MediaType
     status: TranslationStatus
     progress: number
-    errorMessage?: string | null
     completedAt?: string | null
     errorMessage?: string | null
     stackTrace?: string | null

@@ -73,17 +73,6 @@ public class MediaController : ControllerBase
     }
     
     /// <summary>
-    /// Toggles the exclusion status of a specified media item from translation.
-    /// </summary>
-    /// <param name="request">The request object containing the media type and id.</param>
-    [HttpPost("exclude")]
-    public async Task<ActionResult<PagedResult<Show>>> Exclude([FromBody] ExcludeRequest request)
-    {
-        var value = await _mediaService.Exclude(request.MediaType, request.Id);
-        return Ok(value);
-    }
-    
-    /// <summary>
     /// Sets the inclusion status of a specified media item for translation with cascading.
     /// </summary>
     /// <param name="request">The request object containing the media type, id, and include flag.</param>

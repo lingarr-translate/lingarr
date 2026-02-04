@@ -71,18 +71,6 @@ public interface IMediaService
     Task<int> GetEpisodeIdOrSyncFromSonarrEpisodeId(int episodeNumber);
 
     /// <summary>
-    /// Toggles the exclusion status of a media item from translation.
-    /// </summary>
-    /// <param name="mediaType">The type of media (Movie, Show, Season, or Episode).</param>
-    /// <param name="id">The unique identifier of the media item.</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation. The task result contains a boolean value:
-    /// - true if the exclusion status was successfully toggled
-    /// - false if the item was not found or an error occurred
-    /// </returns>
-    Task<bool> Exclude(MediaType mediaType, int id);
-
-    /// <summary>
     /// Sets the inclusion status of a media item for translation with cascading.
     /// </summary>
     /// <param name="mediaType">The type of media (Movie, Show, Season, or Episode).</param>
