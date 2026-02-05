@@ -12,7 +12,7 @@ public class CustomVersionTableMetaData : IVersionTableMetaData
     public string SchemaName => string.Empty;
     public string TableName => "version_info";
     public string ColumnName => "version";
-    public string UniqueIndexName => "uc_version";
+    public string UniqueIndexName => "ux_version";
     public string AppliedOnColumnName => "applied_on";
     public string DescriptionColumnName => "description";
     public bool CreateWithPrimaryKey => true;
