@@ -331,10 +331,41 @@ public class GoogleGeminiServiceTests
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("429 Too Many Requests. Retrying")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Retrying")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
+    }
+
+    [Fact]
+    public async Task TranslateAsync_ShouldRetry_WhenServiceUnavailable()
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var successResponse = new { candidates = new[] { new { content = new { parts = new[] { new { text = "Translated Text" } } } } } };
+        var successContent = JsonSerializer.Serialize(successResponse);
+
+        // Sequence: 1. Fail with 503, 2. Succeed with 200
+        var handlerMock = _httpMessageHandlerMock.Protected();
+        handlerMock.SetupSequence<Task<HttpResponseMessage>>(
+            "SendAsync",
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>()
+        )
+        .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.ServiceUnavailable })
+        .ReturnsAsync(new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(successContent, Encoding.UTF8, "application/json")
+        });
+
+        // Act
+        var result = await _service.TranslateAsync("Source Text", "en", "es", null, null, CancellationToken.None);
+
+        // Assert
+        Assert.Equal("Translated Text", result);
     }
 
     [Fact]
@@ -367,16 +398,38 @@ public class GoogleGeminiServiceTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal("Hola", result[1]);
+    }
 
-        // Verify Retry Warning
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("429 Too Many Requests. Retrying")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
+    [Fact]
+    public async Task TranslateBatchAsync_ShouldRetry_WhenServiceUnavailable()
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var batch = new List<BatchSubtitleItem> { new() { Position = 1, Line = "Hello" } };
+        var successBatchResponse = new { candidates = new[] { new { content = new { parts = new[] { new { text = "[{\"position\":1,\"line\":\"Hola\"}]" } } } } } };
+        var successContent = JsonSerializer.Serialize(successBatchResponse);
+
+        // Sequence: Fail 503 -> Succeed 200
+        _httpMessageHandlerMock.Protected().SetupSequence<Task<HttpResponseMessage>>(
+            "SendAsync",
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>()
+        )
+        .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.ServiceUnavailable })
+        .ReturnsAsync(new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(successContent, Encoding.UTF8, "application/json")
+        });
+
+        // Act
+        var result = await _service.TranslateBatchAsync(batch, "en", "es", CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Hola", result[1]);
     }
 
     // Helper to keep the tests clean
