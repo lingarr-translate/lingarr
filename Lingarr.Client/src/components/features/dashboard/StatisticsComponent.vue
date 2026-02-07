@@ -108,7 +108,7 @@
                 <div class="flex justify-end">
                     <ButtonComponent
                         variant="ghost"
-                        size="sm"
+                        size="xs"
                         :disabled="loading || resetting"
                         :loading="resetting"
                         @click="handleResetStatistics">

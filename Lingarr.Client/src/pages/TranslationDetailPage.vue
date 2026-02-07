@@ -3,7 +3,7 @@
         <div class="bg-tertiary flex items-center p-4">
             <ButtonComponent
                 variant="ghost"
-                size="sm"
+                size="xs"
                 @click="router.push({ name: 'translations' })">
                 <ArrowLeft class="ml-1 h-3.5 w-3.5"/>
             </ButtonComponent>
