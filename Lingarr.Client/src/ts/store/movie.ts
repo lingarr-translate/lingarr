@@ -3,4 +3,6 @@
 export interface IUseMovieStore {
     movies: IPagedResult<IMovie>
     filter: IFilter
+    selectedMovies: IMovie[]
+    selectAll: boolean
 }

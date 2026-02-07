@@ -2,7 +2,7 @@
     <button
         :type="type"
         :disabled="disabled || loading"
-        class="focus-visible:ring-accent focus-visible:ring-offset-primary inline-flex cursor-pointer items-center justify-center rounded-md px-6 py-2 text-sm font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+        class="focus-visible:ring-accent focus-visible:ring-offset-primary inline-flex cursor-pointer items-center justify-center rounded-md text-sm font-semibold transition-all duration-200 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
         :class="[variantClasses, sizeClasses]"
         @click="handleClick">
         <LoaderCircleIcon v-if="loading" class="mr-2 h-4 w-4 animate-spin" />
@@ -16,7 +16,7 @@ import LoaderCircleIcon from '@/components/icons/LoaderCircleIcon.vue'
 
 interface Props {
     variant?: 'primary' | 'secondary' | 'accent' | 'ghost'
-    size?: 'sm' | 'md' | 'lg'
+    size?: 'xs' | 'sm' | 'md' | 'lg'
     type?: 'button' | 'submit' | 'reset'
     disabled?: boolean
     loading?: boolean
@@ -51,8 +51,10 @@ const variantClasses = computed(() => {
 
 const sizeClasses = computed(() => {
     switch (props.size) {
-        case 'sm':
+        case 'xs':
             return 'px-4 py-1 text-xs'
+        case 'sm':
+            return 'px-5 py-1.5 text-xs'
         case 'md':
             return 'px-6 py-2 text-sm'
         case 'lg':

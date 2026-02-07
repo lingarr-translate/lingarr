@@ -9,7 +9,7 @@
                 <div class="flex justify-end">
                     <ButtonComponent
                         variant="accent"
-                        size="sm"
+                        size="xs"
                         :disabled="authStore.isCreating || authStore.editingUserId !== null"
                         @click="authStore.createOrEditUser()">
                         Create User
@@ -46,7 +46,7 @@
                             <div class="col-span-2 md:col-span-5 flex items-center justify-end gap-2 px-4 py-2">
                                 <ButtonComponent
                                     variant="accent"
-                                    size="sm"
+                                    size="xs"
                                     :disabled="authStore.loading"
                                     @click="authStore.cancelEdit">
                                     <span class="md:hidden">X</span>
@@ -54,7 +54,7 @@
                                 </ButtonComponent>
                                 <ButtonComponent
                                     variant="accent"
-                                    size="sm"
+                                    size="xs"
                                     :disabled="!authStore.canSave || authStore.loading"
                                     :loading="authStore.loading"
                                     @click="authStore.saveUser()">
@@ -113,7 +113,7 @@
                                 <template v-if="authStore.editingUserId === user.id">
                                     <ButtonComponent
                                         variant="accent"
-                                        size="sm"
+                                        size="xs"
                                         :disabled="authStore.loading"
                                         @click="authStore.cancelEdit">
                                         <span class="md:hidden">X</span>
@@ -121,7 +121,7 @@
                                     </ButtonComponent>
                                     <ButtonComponent
                                         variant="accent"
-                                        size="sm"
+                                        size="xs"
                                         :disabled="!authStore.canSave || authStore.loading"
                                         :loading="authStore.loading"
                                         @click="authStore.saveUser()">
@@ -131,14 +131,14 @@
                                 <template v-else>
                                     <ButtonComponent
                                         variant="accent"
-                                        size="sm"
+                                        size="xs"
                                         @click="authStore.createOrEditUser(user)">
                                         Edit
                                     </ButtonComponent>
                                     <ButtonComponent
                                         v-if="authStore.users.length >= 2"
                                         variant="accent"
-                                        size="sm"
+                                        size="xs"
                                         :disabled="authStore.deletingUserId === user.id"
                                         :loading="authStore.deletingUserId === user.id"
                                         @click="deleteUserConfirm(user)">

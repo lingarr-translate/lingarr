@@ -15,7 +15,9 @@ export const useMovieStore = defineStore('movie', {
             sortBy: 'Title',
             isAscending: true,
             pageNumber: 1
-        }
+        },
+        selectedMovies: [],
+        selectAll: false
     }),
     getters: {
         getFilter: (state: IUseMovieStore): IFilter => state.filter,
@@ -49,6 +51,28 @@ export const useMovieStore = defineStore('movie', {
         },
         async updateThreshold(type: MediaType, id: number, hours: string) {
             await services.media.threshold(type, id, hours)
+        },
+        clearSelection() {
+            this.selectedMovies = []
+            this.selectAll = false
+        },
+        toggleSelectAll() {
+            if (this.selectAll) {
+                this.selectedMovies = []
+                this.selectAll = false
+            } else {
+                this.selectedMovies = [...this.movies.items]
+                this.selectAll = true
+            }
+        },
+        toggleSelect(movie: IMovie) {
+            const index = this.selectedMovies.findIndex((m) => m.id === movie.id)
+            if (index === -1) {
+                this.selectedMovies.push(movie)
+            } else {
+                this.selectedMovies.splice(index, 1)
+            }
+            this.selectAll = this.selectedMovies.length === this.movies.items.length
         }
     }
 })
