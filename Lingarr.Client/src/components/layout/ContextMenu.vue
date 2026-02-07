@@ -38,11 +38,14 @@ import useClickOutside from '@/composables/useClickOutside'
 import TooltipComponent from '@/components/common/TooltipComponent.vue'
 
 const router = useRouter()
-const emit = defineEmits(['update:toggle'])
+const emit = defineEmits<{
+    (e: 'update:toggle'): void
+    (e: 'select', language: ILanguage): void
+}>()
 const { media, subtitle, mediaType } = defineProps<{
-    media: IMovie | IEpisode
-    subtitle: ISubtitle
-    mediaType: MediaType
+    media?: IMovie | IEpisode
+    subtitle?: ISubtitle
+    mediaType?: MediaType
 }>()
 const settingsStore = useSettingStore()
 const translateStore = useTranslateStore()
@@ -66,18 +69,23 @@ const toggle = () => {
 }
 
 const selectOption = async (target: ILanguage) => {
-    const requestId = await translateStore.translateSubtitle(
-        media.id,
-        subtitle,
-        subtitle.language,
-        target,
-        mediaType
-    )
-    toggle()
-    if (navigateToDetails.value) {
-        router.push({ name: 'translation-detail', params: { id: requestId } })
+    if (media && subtitle && mediaType) {
+        const requestId = await translateStore.translateSubtitle(
+            media.id,
+            subtitle,
+            subtitle.language,
+            target,
+            mediaType
+        )
+        toggle()
+        if (navigateToDetails.value) {
+            router.push({ name: 'translation-detail', params: { id: requestId } })
+        } else {
+            tooltip.value?.showTooltip()
+        }
     } else {
-        tooltip.value?.showTooltip()
+        isOpen.value = false
+        emit('select', target)
     }
 }
 

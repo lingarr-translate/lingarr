@@ -3,4 +3,6 @@
 export interface IUseShowStore {
     shows: IPagedResult<IShow>
     filter: IFilter
+    selectedShows: IShow[]
+    selectAll: boolean
 }
