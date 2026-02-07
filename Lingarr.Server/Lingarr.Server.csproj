@@ -14,36 +14,34 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="DeepL.net" Version="1.15.0" />
-    <PackageReference Include="EFCore.NamingConventions" Version="9.0.0" />
-    <PackageReference Include="GTranslate" Version="2.3.1" />
-    <PackageReference Include="Hangfire" Version="1.8.21" />
-    <PackageReference Include="Hangfire.MemoryStorage" Version="1.8.1.2" />
-    <PackageReference Include="Hangfire.MySqlStorage" Version="2.0.3" />
-    <PackageReference Include="Hangfire.PostgreSql" Version="1.20.10" />
-    <PackageReference Include="Hangfire.Storage.SQLite" Version="0.4.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.8" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.0" />
-    <PackageReference Include="Microsoft.AspNetCore.SpaProxy">
-      <Version>9.0.8</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="9.0.8" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.11" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.11">
+    <PackageReference Include="BCrypt.Net-Next" />
+    <PackageReference Include="DeepL.net" />
+    <PackageReference Include="EFCore.NamingConventions" />
+    <PackageReference Include="GTranslate" />
+    <PackageReference Include="Hangfire" />
+    <PackageReference Include="Hangfire.MemoryStorage" />
+    <PackageReference Include="Hangfire.MySqlStorage" />
+    <PackageReference Include="Hangfire.PostgreSql" />
+    <PackageReference Include="Hangfire.Storage.SQLite" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaProxy" />
+    <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.11" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.11">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
-    <PackageReference Include="System.Net.Http.Json" Version="9.0.8" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="System.Net.Http.Json" />
   </ItemGroup>
 
   <ItemGroup>
@@ -54,7 +52,7 @@
   <ItemGroup>
     <None Remove="..\.dockerignore" />
   </ItemGroup>
-  
+
   <Target Name="Config" AfterTargets="AfterPublish">
     <MakeDir Directories="$(PublishDir)config" />
   </Target>
