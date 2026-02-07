@@ -72,20 +72,22 @@ const signalR = useSignalR()
 const hubConnection = ref<Hub>()
 const jobs = computed(() => scheduleStore.getRecurringJobs)
 
+const onJobStateUpdated = (jobId: string, state: string) => {
+    const job = jobs.value.find((job) => job.id === jobId)
+    if (job) {
+        job.currentState = state
+    }
+}
+
 onMounted(async () => {
     await scheduleStore.fetchRecurringJobs()
     hubConnection.value = await signalR.connect('JobProgress', '/signalr/JobProgress')
     await hubConnection.value.joinGroup({ group: 'JobProgress' })
 
-    hubConnection.value.on('JobStateUpdated', (jobId: string, state: string) => {
-        const job = jobs.value.find((job) => job.id === jobId)
-        if (job) {
-            job.currentState = state
-        }
-    })
+    hubConnection.value.on('JobStateUpdated', onJobStateUpdated)
 })
 
 onUnmounted(async () => {
-    hubConnection.value?.off('JobStateUpdated', () => {})
+    hubConnection.value?.off('JobStateUpdated', onJobStateUpdated)
 })
 </script>

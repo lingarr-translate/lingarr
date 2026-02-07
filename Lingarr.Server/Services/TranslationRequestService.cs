@@ -11,6 +11,7 @@ using Lingarr.Server.Jobs;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,7 +28,7 @@ public class TranslationRequestService : ITranslationRequestService
     private readonly IMediaService _mediaService;
     private readonly ISettingService _settingService;
     private readonly ILogger<TranslationRequestService> _logger;
-    static private Dictionary<int, CancellationTokenSource> _asyncTranslationJobs = new Dictionary<int, CancellationTokenSource>();
+    private static readonly ConcurrentDictionary<int, CancellationTokenSource> _asyncTranslationJobs = new();
 
     public TranslationRequestService(
         LingarrDbContext dbContext,
@@ -138,10 +139,10 @@ public class TranslationRequestService : ITranslationRequestService
         {
             _backgroundJobClient.Delete(translationRequest.JobId);
         }
-        else if (_asyncTranslationJobs.ContainsKey(translationRequest.Id))
+        else if (_asyncTranslationJobs.TryGetValue(translationRequest.Id, out var cts))
         {
             // Maybe an async translation job
-            await _asyncTranslationJobs[translationRequest.Id].CancelAsync();
+            await cts.CancelAsync();
         }
 
         return $"Translation request with id {cancelRequest.Id} has been cancelled";
@@ -340,7 +341,7 @@ public class TranslationRequestService : ITranslationRequestService
             await UpdateActiveCount();
 
             // Add translation as a async translation request with cancellation source
-            _asyncTranslationJobs.Add(translationRequest.Id, cancellationTokenSource);
+            _asyncTranslationJobs.TryAdd(translationRequest.Id, cancellationTokenSource);
 
 
             // Process Translation
@@ -480,7 +481,7 @@ public class TranslationRequestService : ITranslationRequestService
         finally
         {
             // Remove async translation from async translation jobs
-            _asyncTranslationJobs.Remove(translationRequest.Id);
+            _asyncTranslationJobs.TryRemove(translationRequest.Id, out _);
         }
     }
 
