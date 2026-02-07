@@ -15,7 +15,9 @@ export const useShowStore = defineStore('show', {
             sortBy: 'Title',
             isAscending: true,
             pageNumber: 1
-        }
+        },
+        selectedShows: [],
+        selectAll: false
     }),
     getters: {
         getFilter: (state: IUseShowStore): IFilter => state.filter,
@@ -39,6 +41,28 @@ export const useShowStore = defineStore('show', {
         },
         async updateThreshold(type: MediaType, id: number, hours: string) {
             await services.media.threshold(type, id, hours)
+        },
+        clearSelection() {
+            this.selectedShows = []
+            this.selectAll = false
+        },
+        toggleSelectAll() {
+            if (this.selectAll) {
+                this.selectedShows = []
+                this.selectAll = false
+            } else {
+                this.selectedShows = [...this.shows.items]
+                this.selectAll = true
+            }
+        },
+        toggleSelect(show: IShow) {
+            const index = this.selectedShows.findIndex((s) => s.id === show.id)
+            if (index === -1) {
+                this.selectedShows.push(show)
+            } else {
+                this.selectedShows.splice(index, 1)
+            }
+            this.selectAll = this.selectedShows.length === this.shows.items.length
         }
     }
 })
