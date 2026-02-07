@@ -41,6 +41,34 @@ export interface ITranslationRequest {
     status: TranslationStatus
     progress: number
     completedAt?: string | null
+    errorMessage?: string | null
+    stackTrace?: string | null
+    createdAt?: string
+}
+
+export interface ITranslationRequestDetail extends ITranslationRequest {
+    events: ITranslationRequestEvent[]
+    lines: ISubtitleLineComparison[]
+}
+
+export interface ITranslationRequestEvent {
+    id: number
+    status: TranslationStatus
+    message?: string | null
+    createdAt: string
+}
+
+export interface ISubtitleLineComparison {
+    position: number
+    source: string
+    target: string
+}
+
+export interface ILineTranslated {
+    id: number
+    position: number
+    source: string
+    target: string
 }
 
 export interface IRequestProgress {
@@ -50,6 +78,8 @@ export interface IRequestProgress {
     progress: number
     completed: boolean
     completedAt?: string | null
+    errorMessage?: string | null
+    stackTrace?: string | null
 }
 
 export interface IImage {

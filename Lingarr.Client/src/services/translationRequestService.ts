@@ -5,6 +5,17 @@ const service = (
     http: AxiosStatic,
     resource = '/api/translationRequest'
 ): ITranslationRequestService => ({
+    get<T>(id: number): Promise<T> {
+        return new Promise((resolve, reject) => {
+            http.get(`${resource}/${id}`)
+                .then((response: AxiosResponse<T>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
+    },
     getActiveCount<T>(): Promise<T> {
         return new Promise((resolve, reject) => {
             http.get(`${resource}/active`)

@@ -53,7 +53,7 @@ import { useSignalR } from '@/composables/useSignalR'
 import { Hub, ISettings, ITheme, THEMES } from '@/ts'
 import { useSettingStore } from '@/store/setting'
 import { useInstanceStore } from '@/store/instance'
-import { useTranslationRequestStore } from '@/store/translationRequest'
+import useTranslationRequestStore from '@/store/translationRequest'
 
 import AsideNavigation from '@/components/layout/AsideNavigation.vue'
 import DropdownComponent from '@/components/common/DropdownComponent.vue'
@@ -67,6 +67,14 @@ const signalR = useSignalR()
 const themeDropdown = ref(false)
 const settingHubConnection = ref<Hub>()
 const requestHubConnection = ref<Hub>()
+
+const onSettingUpdate = (setting: { key: keyof ISettings; value: string }) => {
+    settingStore.storeSetting(setting.key, setting.value)
+}
+
+const onRequestActive = (request: { count: number }) => {
+    translationRequestStore.setActiveCount(request.count)
+}
 
 const setTheme = (theme: ITheme) => {
     instanceStore.storeTheme(theme)
@@ -85,25 +93,18 @@ onMounted(async () => {
 
     settingHubConnection.value = await signalR.connect('SettingUpdates', '/signalr/SettingUpdates')
     await settingHubConnection.value.joinGroup({ group: 'SettingUpdates' })
-    settingHubConnection.value.on(
-        'SettingUpdate',
-        (setting: { key: keyof ISettings; value: string }) => {
-            settingStore.storeSetting(setting.key, setting.value)
-        }
-    )
+    settingHubConnection.value.on('SettingUpdate', onSettingUpdate)
 
     requestHubConnection.value = await signalR.connect(
         'TranslationRequests',
         '/signalr/TranslationRequests'
     )
     await requestHubConnection.value.joinGroup({ group: 'TranslationRequests' })
-    requestHubConnection.value.on('RequestActive', (request: { count: number }) => {
-        translationRequestStore.setActiveCount(request.count)
-    })
+    requestHubConnection.value.on('RequestActive', onRequestActive)
 })
 
 onUnmounted(async () => {
-    settingHubConnection.value?.off('SettingUpdate', () => {})
-    requestHubConnection.value?.off('RequestActive', () => {})
+    settingHubConnection.value?.off('SettingUpdate', onSettingUpdate)
+    requestHubConnection.value?.off('RequestActive', onRequestActive)
 })
 </script>

@@ -11,6 +11,7 @@ using Lingarr.Server.Jobs;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
+using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,8 +27,10 @@ public class TranslationRequestService : ITranslationRequestService
     private readonly IStatisticsService _statisticsService;
     private readonly IMediaService _mediaService;
     private readonly ISettingService _settingService;
+    private readonly ISubtitleService _subtitleService;
+    private readonly ITranslationRequestEventService _eventService;
     private readonly ILogger<TranslationRequestService> _logger;
-    static private Dictionary<int, CancellationTokenSource> _asyncTranslationJobs = new Dictionary<int, CancellationTokenSource>();
+    private static readonly ConcurrentDictionary<int, CancellationTokenSource> _asyncTranslationJobs = new();
 
     public TranslationRequestService(
         LingarrDbContext dbContext,
@@ -38,6 +41,8 @@ public class TranslationRequestService : ITranslationRequestService
         IStatisticsService statisticsService,
         IMediaService mediaService,
         ISettingService settingService,
+        ISubtitleService subtitleService,
+        ITranslationRequestEventService eventService,
         ILogger<TranslationRequestService> logger)
     {
         _dbContext = dbContext;
@@ -48,7 +53,60 @@ public class TranslationRequestService : ITranslationRequestService
         _statisticsService = statisticsService;
         _mediaService = mediaService;
         _settingService = settingService;
+        _subtitleService = subtitleService;
+        _eventService = eventService;
         _logger = logger;
+    }
+
+    /// <inheritdoc />
+    public async Task<TranslationRequestDetail?> GetTranslationRequest(int id)
+    {
+        var request = await _dbContext.TranslationRequests.FindAsync(id);
+        if (request == null)
+        {
+            return null;
+        }
+
+        var events = await _eventService.GetEvents(id);
+
+        var translationRequestLines = await _dbContext.TranslationRequestLines
+            .Where(l => l.TranslationRequestId == id)
+            .OrderBy(l => l.Position)
+            .Select(l => new TranslationRequestSubtitleLines
+            {
+                Position = l.Position,
+                Source = l.Source,
+                Target = l.Target
+            })
+            .ToListAsync();
+        
+        return new TranslationRequestDetail
+        {
+            Id = request.Id,
+            JobId = request.JobId,
+            MediaId = request.MediaId,
+            Title = request.Title,
+            SourceLanguage = request.SourceLanguage,
+            TargetLanguage = request.TargetLanguage,
+            SubtitleToTranslate = request.SubtitleToTranslate,
+            TranslatedSubtitle = request.TranslatedSubtitle,
+            MediaType = request.MediaType,
+            Status = request.Status,
+            CompletedAt = request.CompletedAt,
+            ErrorMessage = request.ErrorMessage,
+            StackTrace = request.StackTrace,
+            Progress = request.Status == TranslationStatus.Completed ? 100 : 0,
+            CreatedAt = request.CreatedAt,
+            UpdatedAt = request.UpdatedAt,
+            Events = events.Select(translationRequestEvent => new TranslationRequestEventDetail
+            {
+                Id = translationRequestEvent.Id,
+                Status = translationRequestEvent.Status,
+                Message = translationRequestEvent.Message,
+                CreatedAt = translationRequestEvent.CreatedAt
+            }).ToList(),
+            Lines = translationRequestLines.Count > 0 ? translationRequestLines : []
+        };
     }
 
     /// <inheritdoc />
@@ -86,6 +144,7 @@ public class TranslationRequestService : ITranslationRequestService
 
         _dbContext.TranslationRequests.Add(translationRequestCopy);
         await _dbContext.SaveChangesAsync();
+        await _eventService.LogEvent(translationRequestCopy.Id, TranslationStatus.Pending);
 
         var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
             job.Execute(translationRequestCopy, CancellationToken.None)
@@ -138,11 +197,19 @@ public class TranslationRequestService : ITranslationRequestService
         {
             _backgroundJobClient.Delete(translationRequest.JobId);
         }
-        else if (_asyncTranslationJobs.ContainsKey(translationRequest.Id))
+        else if (_asyncTranslationJobs.TryGetValue(translationRequest.Id, out var cts))
         {
             // Maybe an async translation job
-            await _asyncTranslationJobs[translationRequest.Id].CancelAsync();
+            await cts.CancelAsync();
         }
+
+        translationRequest.CompletedAt = DateTime.UtcNow;
+        translationRequest.Status = TranslationStatus.Cancelled;
+        translationRequest.ErrorMessage = "Translation was cancelled";
+        await _dbContext.SaveChangesAsync();
+        await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Cancelled, "Translation was cancelled");
+        await UpdateActiveCount();
+        await _progressService.Emit(translationRequest, 0);
 
         return $"Translation request with id {cancelRequest.Id} has been cancelled";
     }
@@ -213,6 +280,7 @@ public class TranslationRequestService : ITranslationRequestService
                 // Async translation job. Set as Interrupted and don't run
                 // Those cannot be resumed
                 await UpdateTranslationRequest(request, TranslationStatus.Interrupted);
+                await _eventService.LogEvent(request.Id, TranslationStatus.Interrupted);
                 continue;
             }
 
@@ -337,10 +405,11 @@ public class TranslationRequestService : ITranslationRequestService
             // Add TranslationRequest
             _dbContext.TranslationRequests.Add(translationRequest);
             await _dbContext.SaveChangesAsync();
+            await _eventService.LogEvent(translationRequest.Id, TranslationStatus.InProgress);
             await UpdateActiveCount();
 
             // Add translation as a async translation request with cancellation source
-            _asyncTranslationJobs.Add(translationRequest.Id, cancellationTokenSource);
+            _asyncTranslationJobs.TryAdd(translationRequest.Id, cancellationTokenSource);
 
 
             // Process Translation
@@ -403,6 +472,14 @@ public class TranslationRequestService : ITranslationRequestService
                     stripSubtitleFormatting,
                     cancellationToken);
 
+                var batchLineData = subtitleItems.Select(s => new TranslatedLineData
+                {
+                    Position = s.Position,
+                    Source = string.Join(" ", stripSubtitleFormatting ? s.PlaintextLines : s.Lines),
+                    Target = string.Join(" ", s.TranslatedLines ?? s.Lines)
+                }).ToList();
+                await _progressService.EmitLines(translationRequest, batchLineData);
+
                 results = subtitleItems.Select(subtitle => new BatchTranslatedLine
                 {
                     Position = subtitle.Position,
@@ -446,6 +523,8 @@ public class TranslationRequestService : ITranslationRequestService
                         Line = translatedText
                     });
 
+                    await _progressService.EmitLine(translationRequest, item.Position, item.Line, translatedText);
+
                     var progress = (int)Math.Round((double)iteration * 100 / total);
                     await _progressService.Emit(translationRequest, progress);
                     iteration++;
@@ -458,11 +537,13 @@ public class TranslationRequestService : ITranslationRequestService
             await HandleAsyncTranslationCompletion(translationRequest, serviceType, translationService, results, cancellationToken);
             return results;
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException ex)
         {
             translationRequest.CompletedAt = DateTime.UtcNow;
             translationRequest.Status = TranslationStatus.Cancelled;
+            translationRequest.ErrorMessage = ex.Message;
             await _dbContext.SaveChangesAsync();
+            await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Cancelled, ex.Message);
             await UpdateActiveCount();
             await _progressService.Emit(translationRequest, 0);
             throw;
@@ -472,7 +553,10 @@ public class TranslationRequestService : ITranslationRequestService
             _logger.LogError(ex, "Error translating subtitle content");
             translationRequest.CompletedAt = DateTime.UtcNow;
             translationRequest.Status = TranslationStatus.Failed;
+            translationRequest.ErrorMessage = ex.Message;
+            translationRequest.StackTrace = ex.ToString();
             await _dbContext.SaveChangesAsync();
+            await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Failed, ex.Message);
             await UpdateActiveCount();
             await _progressService.Emit(translationRequest, 0);
             throw;
@@ -480,7 +564,7 @@ public class TranslationRequestService : ITranslationRequestService
         finally
         {
             // Remove async translation from async translation jobs
-            _asyncTranslationJobs.Remove(translationRequest.Id);
+            _asyncTranslationJobs.TryRemove(translationRequest.Id, out _);
         }
     }
 
@@ -516,6 +600,7 @@ public class TranslationRequestService : ITranslationRequestService
         translationRequest.CompletedAt = DateTime.UtcNow;
         translationRequest.Status = TranslationStatus.Completed;
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Completed);
         await UpdateActiveCount();
         await _progressService.Emit(translationRequest, 100); // Tells the frontend to update translation request to a finished state
     }
@@ -545,14 +630,14 @@ public class TranslationRequestService : ITranslationRequestService
             if (currentBatch.Count >= maxBatchSize)
             {
                 await ProcessBatch(currentBatch, subtitleTranslator, batchService,
+                    translationRequest,
                     translateAbleSubtitleContent.SourceLanguage, translateAbleSubtitleContent.TargetLanguage,
                     stripSubtitleFormatting, results, cancellationToken);
                 currentBatch.Clear();
 
                 // Report progress
-                // await _progressService.Emit(tra)
                 processedBatches++;
-                int progress = (int)Math.Round((double)processedBatches * 100 / totalBatches);
+                var progress = (int)Math.Round((double)processedBatches * 100 / totalBatches);
                 await _progressService.Emit(translationRequest, progress);
             }
 
@@ -573,6 +658,7 @@ public class TranslationRequestService : ITranslationRequestService
         if (currentBatch.Count > 0)
         {
             await ProcessBatch(currentBatch, subtitleTranslator, batchService,
+                translationRequest,
                 translateAbleSubtitleContent.SourceLanguage, translateAbleSubtitleContent.TargetLanguage,
                 stripSubtitleFormatting, results, cancellationToken);
         }
@@ -587,6 +673,7 @@ public class TranslationRequestService : ITranslationRequestService
         List<SubtitleItem> batch,
         SubtitleTranslationService subtitleTranslator,
         IBatchTranslationService batchService,
+        TranslationRequest translationRequest,
         string sourceLanguage,
         string targetLanguage,
         bool stripSubtitleFormatting,
@@ -600,6 +687,14 @@ public class TranslationRequestService : ITranslationRequestService
             targetLanguage,
             stripSubtitleFormatting,
             cancellationToken);
+
+        var lineData = batch.Select(s => new TranslatedLineData
+        {
+            Position = s.Position,
+            Source = string.Join(" ", stripSubtitleFormatting ? s.PlaintextLines : s.Lines),
+            Target = string.Join(" ", s.TranslatedLines ?? s.Lines)
+        }).ToList();
+        await _progressService.EmitLines(translationRequest, lineData);
 
         results.AddRange(batch.Select(subtitle => new BatchTranslatedLine
         {
