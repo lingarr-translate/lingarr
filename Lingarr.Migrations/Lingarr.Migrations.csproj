@@ -8,15 +8,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FluentMigrator" Version="8.0.0" />
-        <PackageReference Include="FluentMigrator.Extensions.Postgres" Version="8.0.1" />
-        <PackageReference Include="FluentMigrator.Runner" Version="8.0.0" />
-        <PackageReference Include="FluentMigrator.Runner.MySql" Version="8.0.0" />
-        <PackageReference Include="FluentMigrator.Runner.Postgres" Version="8.0.0" />
-        <PackageReference Include="FluentMigrator.Runner.SQLite" Version="8.0.0" />
-        <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.1" />
-        <PackageReference Include="MySqlConnector" Version="2.4.0" />
-        <PackageReference Include="Npgsql" Version="9.0.3" />
+        <PackageReference Include="FluentMigrator" />
+        <PackageReference Include="FluentMigrator.Extensions.Postgres" />
+        <PackageReference Include="FluentMigrator.Runner" />
+        <PackageReference Include="FluentMigrator.Runner.MySql" />
+        <PackageReference Include="FluentMigrator.Runner.Postgres" />
+        <PackageReference Include="FluentMigrator.Runner.SQLite" />
+        <PackageReference Include="Microsoft.Data.Sqlite" />
+        <PackageReference Include="MySqlConnector" />
+        <PackageReference Include="Npgsql" />
     </ItemGroup>
 
 </Project>
