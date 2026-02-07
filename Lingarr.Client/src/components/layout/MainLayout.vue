@@ -53,7 +53,7 @@ import { useSignalR } from '@/composables/useSignalR'
 import { Hub, ISettings, ITheme, THEMES } from '@/ts'
 import { useSettingStore } from '@/store/setting'
 import { useInstanceStore } from '@/store/instance'
-import { useTranslationRequestStore } from '@/store/translationRequest'
+import useTranslationRequestStore from '@/store/translationRequest'
 
 import AsideNavigation from '@/components/layout/AsideNavigation.vue'
 import DropdownComponent from '@/components/common/DropdownComponent.vue'

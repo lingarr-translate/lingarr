@@ -3,6 +3,7 @@ using Lingarr.Server.Exceptions;
 using Lingarr.Server.Extensions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Models;
 using Lingarr.Server.Models.Batch;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Services.Subtitle;
@@ -82,6 +83,8 @@ public class SubtitleTranslationService
             // Rebuild lines based on max length
             subtitle.TranslatedLines = translated.SplitIntoLines(MaxLineLength);
 
+            await _progressService!.EmitLine(translationRequest, subtitle.Position, subtitleLine, translated);
+
             iteration++;
             await EmitProgress(translationRequest, iteration, totalSubtitles);
         }
@@ -157,7 +160,7 @@ public class SubtitleTranslationService
         var totalBatches = (int)Math.Ceiling((double)subtitles.Count / batchSize);
         var processedSubtitles = 0;
 
-        for (int batchIndex = 0; batchIndex < totalBatches; batchIndex++)
+        for (var batchIndex = 0; batchIndex < totalBatches; batchIndex++)
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -176,6 +179,14 @@ public class SubtitleTranslationService
                 translationRequest.TargetLanguage,
                 stripSubtitleFormatting,
                 cancellationToken);
+
+            var lineData = currentBatch.Select(s => new TranslatedLineData
+            {
+                Position = s.Position,
+                Source = string.Join(" ", stripSubtitleFormatting ? s.PlaintextLines : s.Lines),
+                Target = string.Join(" ", s.TranslatedLines ?? s.Lines)
+            }).ToList();
+            await _progressService!.EmitLines(translationRequest, lineData);
 
             processedSubtitles += currentBatch.Count;
             await EmitProgress(translationRequest, processedSubtitles, subtitles.Count);

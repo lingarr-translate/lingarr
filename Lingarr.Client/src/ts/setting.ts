@@ -62,7 +62,8 @@ export const SETTINGS = {
     AUTH_ENABLED: 'auth_enabled',
     API_KEY: 'api_key',
     ONBOARDING_COMPLETED: 'onboarding_completed',
-    TELEMETRY_ENABLED: 'telemetry_enabled'
+    TELEMETRY_ENABLED: 'telemetry_enabled',
+    NAVIGATE_TO_DETAILS_ON_REQUEST: 'navigate_to_details_on_request'
 } as const
 
 export interface ISettings {
@@ -127,6 +128,7 @@ export interface ISettings {
     api_key: string
     onboarding_completed: string
     telemetry_enabled: string
+    navigate_to_details_on_request: string
 }
 
 export interface ICustomAiParams {

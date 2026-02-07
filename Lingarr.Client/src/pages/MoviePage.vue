@@ -3,7 +3,11 @@
         <div class="bg-tertiary flex flex-wrap items-center justify-between gap-2 p-4">
             <SearchComponent v-model="filter" />
             <div
-                class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:justify-between md:space-x-2">
+                class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:items-center md:justify-between md:space-x-2">
+                <ToggleButton
+                    v-model="navigateToDetails"
+                    size="small"
+                    label="Open details on request" />
                 <SortControls
                     v-model="filter"
                     :options="[
@@ -112,6 +116,14 @@ const instanceStore = useInstanceStore()
 const settingsCompleted: ComputedRef<string> = computed(
     () => settingStore.getSetting(SETTINGS.RADARR_SETTINGS_COMPLETED) as string
 )
+
+const navigateToDetails = computed({
+    get: () => settingStore.getSetting(SETTINGS.NAVIGATE_TO_DETAILS_ON_REQUEST) as string,
+    set: (value: string) => {
+        settingStore.updateSetting(SETTINGS.NAVIGATE_TO_DETAILS_ON_REQUEST, value, true)
+    }
+})
+
 const movies: ComputedRef<IPagedResult<IMovie>> = computed(() => movieStore.get)
 const filter: ComputedRef<IFilter> = computed({
     get: () => movieStore.getFilter,

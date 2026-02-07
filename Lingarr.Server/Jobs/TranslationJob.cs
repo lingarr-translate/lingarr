@@ -25,6 +25,7 @@ public class TranslationJob
     private readonly IStatisticsService _statisticsService;
     private readonly ITranslationServiceFactory _translationServiceFactory;
     private readonly ITranslationRequestService _translationRequestService;
+    private readonly ITranslationRequestEventService _eventService;
 
     public TranslationJob(
         ILogger<TranslationJob> logger,
@@ -35,7 +36,8 @@ public class TranslationJob
         IScheduleService scheduleService,
         IStatisticsService statisticsService,
         ITranslationServiceFactory translationServiceFactory,
-        ITranslationRequestService translationRequestService)
+        ITranslationRequestService translationRequestService,
+        ITranslationRequestEventService eventService)
     {
         _logger = logger;
         _settings = settings;
@@ -46,6 +48,7 @@ public class TranslationJob
         _statisticsService = statisticsService;
         _translationServiceFactory = translationServiceFactory;
         _translationRequestService = translationRequestService;
+        _eventService = eventService;
     }
 
     [AutomaticRetry(Attempts = 0)]
@@ -65,6 +68,7 @@ public class TranslationJob
             var request = await _translationRequestService.UpdateTranslationRequest(translationRequest,
                 TranslationStatus.InProgress,
                 jobId);
+            await _eventService.LogEvent(request.Id, TranslationStatus.InProgress);
 
             _logger.LogInformation("TranslateJob started for subtitle: |Green|{filePath}|/Green|",
                 translationRequest.SubtitleToTranslate);
@@ -82,7 +86,6 @@ public class TranslationJob
                 SettingKeys.SubtitleValidation.MaxDurationSecs,
 
                 SettingKeys.Translation.AiContextPromptEnabled,
-                SettingKeys.Translation.AiContextBefore,
                 SettingKeys.Translation.AiContextBefore,
                 SettingKeys.Translation.AiContextAfter,
                 SettingKeys.Translation.UseBatchTranslation,
@@ -152,16 +155,6 @@ public class TranslationJob
                 };
 
                 if (!_subtitleService.ValidateSubtitle(request.SubtitleToTranslate, validationOptions))
-                {
-                    _logger.LogWarning("Subtitle is not valid according to configured preferences.");
-                    throw new TaskCanceledException("Subtitle is not valid according to configured preferences.");
-                }
-
-                var isValid = _subtitleService.ValidateSubtitle(
-                    request.SubtitleToTranslate,
-                    validationOptions);
-
-                if (!isValid)
                 {
                     _logger.LogWarning("Subtitle is not valid according to configured preferences.");
                     throw new TaskCanceledException("Subtitle is not valid according to configured preferences.");
@@ -246,11 +239,17 @@ public class TranslationJob
         {
             await HandleCancellation(jobName, translationRequest);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             await _translationRequestService.ClearMediaHash(translationRequest);
             translationRequest = await _translationRequestService.UpdateTranslationRequest(translationRequest, TranslationStatus.Failed,
                 jobId);
+            
+            translationRequest.ErrorMessage = ex.Message;
+            translationRequest.StackTrace = ex.ToString();
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            
+            await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Failed, ex.Message);
             await _scheduleService.UpdateJobState(jobName, JobStatus.Failed.GetDisplayName());
             await _translationRequestService.UpdateActiveCount();
             await _progressService.Emit(translationRequest, 0);
@@ -274,6 +273,8 @@ public class TranslationJob
                 subtitleTag);
 
             await _subtitleService.WriteSubtitles(outputPath, translatedSubtitles, stripSubtitleFormatting);
+            translationRequest.TranslatedSubtitle = outputPath;
+            await _dbContext.SaveChangesAsync();
 
             _logger.LogInformation("TranslateJob completed and created subtitle: |Green|{filePath}|/Green|",
                 outputPath);
@@ -293,6 +294,7 @@ public class TranslationJob
         translationRequest.CompletedAt = DateTime.UtcNow;
         translationRequest.Status = TranslationStatus.Completed;
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Completed);
         await _translationRequestService.UpdateActiveCount();
         await _progressService.Emit(translationRequest, 100);
         await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());
@@ -310,6 +312,9 @@ public class TranslationJob
         {
             translationRequest.CompletedAt = DateTime.UtcNow;
             translationRequest.Status = TranslationStatus.Cancelled;
+            translationRequest.ErrorMessage = "Translation was cancelled";
+            await _dbContext.SaveChangesAsync();
+            await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Cancelled, "Translation was cancelled");
 
             await _translationRequestService.ClearMediaHash(translationRequest);
             await _translationRequestService.UpdateActiveCount();

@@ -10,8 +10,8 @@
             {{ option.label }}
         </option>
     </select>
-    <button class="flex items-center justify-end space-x-2 md:justify-center" @click="orderBy">
-        <div class="md:hidden">Order by</div>
+    <button class="flex items-center justify-end space-x-2 md:justify-center cursor-pointer" @click="orderBy">
+        <span class="md:hidden">Order by</span>
         <CaretUpIcon v-if="modelValue.isAscending" class="h-6 w-6" />
         <CaretDownIcon v-else class="h-6 w-6" />
     </button>

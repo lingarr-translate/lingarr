@@ -88,6 +88,7 @@ export interface ITranslateService {
 }
 
 export interface ITranslationRequestService {
+    get<T>(id: number): Promise<T>
     getActiveCount<T>(): Promise<T>
     requests<T>(
         pageNumber: number,

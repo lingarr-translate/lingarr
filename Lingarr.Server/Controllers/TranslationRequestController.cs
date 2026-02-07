@@ -20,6 +20,25 @@ public class TranslationRequestController : ControllerBase
     }
 
     /// <summary>
+    /// Gets a single translation request with its event timeline
+    /// </summary>
+    /// <param name="id">The ID of the translation request</param>
+    /// <response code="200">Returns the translation request detail</response>
+    /// <response code="404">If the translation request was not found</response>
+    /// <returns>ActionResult containing the translation request detail</returns>
+    [HttpGet("{id}")]
+    public async Task<ActionResult<TranslationRequestDetail>> GetTranslationRequest(int id)
+    {
+        var detail = await _translationRequestService.GetTranslationRequest(id);
+        if (detail == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(detail);
+    }
+
+    /// <summary>
     /// Gets the count of active translation requests
     /// </summary>
     /// <response code="200">Returns the count of active translation requests</response>
