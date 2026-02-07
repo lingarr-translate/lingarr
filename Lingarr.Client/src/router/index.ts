@@ -49,6 +49,12 @@ const routes: RouteRecordRaw[] = [
                 name: 'translations'
             },
             {
+                path: '/translations/:id',
+                component: () => import('@/pages/TranslationDetailPage.vue'),
+                name: 'translation-detail',
+                props: true
+            },
+            {
                 path: '/settings',
                 component: () => import('@/pages/SettingPage.vue'),
                 name: 'settings',

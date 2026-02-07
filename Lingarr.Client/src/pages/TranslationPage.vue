@@ -69,9 +69,9 @@
                 v-for="item in translationRequests.items"
                 :key="item.id"
                 class="md:border-accent rounded-lg py-4 shadow-sm md:grid md:grid-cols-12 md:rounded-none md:border-b md:bg-transparent md:p-0 md:shadow-none">
-                <div class="deletable float-right w-5 md:hidden">
+                <div class="deletable float-right md:hidden">
                     <TranslationAction
-                        :status="item.status"
+                        :item="item"
                         :on-action="(action) => handleAction(item, action)" />
                 </div>
                 <div class="mb-2 md:col-span-4 md:mb-0 md:px-4 md:py-2">
@@ -133,9 +133,9 @@
                 </div>
                 <div
                     class="hidden items-center justify-between md:col-span-1 md:flex md:justify-end md:py-2">
-                    <div class="flex items-center justify-center">
+                    <div class="flex items-center justify-center gap-1">
                         <TranslationAction
-                            :status="item.status"
+                            :item="item"
                             :on-action="(action) => handleAction(item, action)" />
                     </div>
                 </div>
@@ -171,7 +171,7 @@ import {
     TRANSLATION_ACTIONS,
     TRANSLATION_STATUS
 } from '@/ts'
-import { useTranslationRequestStore } from '@/store/translationRequest'
+import useTranslationRequestStore from '@/store/translationRequest'
 import { useSignalR } from '@/composables/useSignalR'
 import useDebounce from '@/composables/useDebounce'
 import PaginationComponent from '@/components/common/PaginationComponent.vue'

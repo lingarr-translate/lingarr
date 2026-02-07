@@ -4,7 +4,8 @@ import {
     IPagedResult,
     IRequestProgress,
     ITranslationRequest,
-    IUseTranslationRequestStore
+    IUseTranslationRequestStore,
+    TRANSLATION_STATUS, TranslationStatus
 } from '@/ts'
 import services from '@/services'
 
@@ -71,16 +72,30 @@ export const useTranslationRequestStore = defineStore('translateRequest', {
         },
         async retry(translationRequest: ITranslationRequest) {
             await services.translationRequest.retry<string>(translationRequest)
+            await this.fetch()
         },
         async updateProgress(requestProgress: IRequestProgress) {
+            const completionStatuses: TranslationStatus[] = [
+                TRANSLATION_STATUS.CANCELLED,
+                TRANSLATION_STATUS.FAILED,
+                TRANSLATION_STATUS.COMPLETED,
+                TRANSLATION_STATUS.INTERRUPTED
+            ]
+
             this.translationRequests.items = this.translationRequests.items.map(
                 (request: ITranslationRequest) => {
                     if (request.id === requestProgress.id) {
+                        if (completionStatuses.includes(request.status)
+                            && !completionStatuses.includes(requestProgress.status)) {
+                            return request
+                        }
                         return {
                             ...request,
                             status: requestProgress.status,
                             progress: requestProgress.progress,
-                            completedAt: requestProgress.completedAt
+                            completedAt: requestProgress.completedAt,
+                            errorMessage: requestProgress.errorMessage ?? request.errorMessage,
+                            stackTrace: requestProgress.stackTrace ?? request.stackTrace
                         }
                     }
                     return request
@@ -111,6 +126,7 @@ export const useTranslationRequestStore = defineStore('translateRequest', {
         }
     }
 })
+export default useTranslationRequestStore
 
 if (import.meta.hot) {
     import.meta.hot.accept(acceptHMRUpdate(useTranslationRequestStore, import.meta.hot))

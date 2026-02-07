@@ -19,11 +19,6 @@ public class JobProgressHub : Hub
         await Clients.Caller.SendAsync("LeftGroup", group);
     }
 
-    public async Task UpdateJobProgress(string jobId, int progress)
-    {
-        await Clients.Group("JobProgress").SendAsync("JobProgressUpdated", jobId, progress);
-    }
-
     public async Task UpdateJobState(string jobId, string state)
     {
         await Clients.Group("JobProgress").SendAsync("JobStateUpdated", jobId, state);

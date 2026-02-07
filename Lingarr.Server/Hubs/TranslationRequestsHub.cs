@@ -16,5 +16,6 @@ public class TranslationRequestsHub : Hub
     {
         string group = request.Group;
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, group);
+        await Clients.Caller.SendAsync("LeftGroup", group);
     }
 }

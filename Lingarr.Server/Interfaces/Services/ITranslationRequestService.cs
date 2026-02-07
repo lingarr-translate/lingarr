@@ -10,6 +10,13 @@ namespace Lingarr.Server.Interfaces.Services;
 public interface ITranslationRequestService
 {
     /// <summary>
+    /// Retrieves a single translation request with its event timeline.
+    /// </summary>
+    /// <param name="id">The ID of the translation request</param>
+    /// <returns>The translation request detail including events, or null if not found</returns>
+    Task<TranslationRequestDetail?> GetTranslationRequest(int id);
+
+    /// <summary>
     /// Creates a new translation request for a subtitle file and enqueues it for processing.
     /// </summary>
     /// <param name="translateAbleSubtitle">Details of the subtitle to be translated, including source and target languages</param>

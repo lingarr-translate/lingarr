@@ -30,12 +30,14 @@
 
 <script setup lang="ts">
 import { ref, Ref, computed, ComputedRef } from 'vue'
-import { IEpisode, ILanguage, IMovie, ISubtitle, MediaType } from '@/ts'
+import { useRouter } from 'vue-router'
+import { IEpisode, ILanguage, IMovie, ISubtitle, MediaType, SETTINGS } from '@/ts'
 import { useSettingStore } from '@/store/setting'
 import { useTranslateStore } from '@/store/translate'
 import useClickOutside from '@/composables/useClickOutside'
 import TooltipComponent from '@/components/common/TooltipComponent.vue'
 
+const router = useRouter()
 const emit = defineEmits(['update:toggle'])
 const { media, subtitle, mediaType } = defineProps<{
     media: IMovie | IEpisode
@@ -54,15 +56,29 @@ const languages: ComputedRef<ILanguage[]> = computed(
     () => settingsStore.getSetting('target_languages') as ILanguage[]
 )
 
+const navigateToDetails = computed(
+    () => settingsStore.getSetting(SETTINGS.NAVIGATE_TO_DETAILS_ON_REQUEST) === 'true'
+)
+
 const toggle = () => {
     emit('update:toggle')
     isOpen.value = !isOpen.value
 }
 
-const selectOption = (target: ILanguage) => {
-    translateStore.translateSubtitle(media.id, subtitle, subtitle.language, target, mediaType)
+const selectOption = async (target: ILanguage) => {
+    const requestId = await translateStore.translateSubtitle(
+        media.id,
+        subtitle,
+        subtitle.language,
+        target,
+        mediaType
+    )
     toggle()
-    tooltip.value?.showTooltip()
+    if (navigateToDetails.value) {
+        router.push({ name: 'translation-detail', params: { id: requestId } })
+    } else {
+        tooltip.value?.showTooltip()
+    }
 }
 
 useClickOutside(

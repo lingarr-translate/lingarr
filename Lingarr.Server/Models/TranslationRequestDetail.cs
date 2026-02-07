@@ -1,11 +1,12 @@
-﻿using Lingarr.Core.Enum;
+using Lingarr.Core.Enum;
 
-namespace Lingarr.Core.Entities;
+namespace Lingarr.Server.Models;
 
-public class TranslationRequest : BaseEntity
+public class TranslationRequestDetail
 {
-    public string? JobId  { get; set; }
-    public int? MediaId  { get; set; }
+    public int Id { get; set; }
+    public string? JobId { get; set; }
+    public int? MediaId { get; set; }
     public required string Title { get; set; }
     public required string SourceLanguage { get; set; }
     public required string TargetLanguage { get; set; }
@@ -16,4 +17,9 @@ public class TranslationRequest : BaseEntity
     public DateTime? CompletedAt { get; set; }
     public string? ErrorMessage { get; set; }
     public string? StackTrace { get; set; }
+    public int Progress { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+    public List<TranslationRequestEventDetail> Events { get; set; } = [];
+    public List<TranslationRequestSubtitleLines> Lines { get; set; } = [];
 }
