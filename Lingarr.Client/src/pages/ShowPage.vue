@@ -5,10 +5,11 @@
             <div
                 class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:items-center md:justify-between md:space-x-2">
                 <ContextMenu
-                    v-if="isSelectMode && showStore.selectedShows.length > 0"
+                    v-if="isSelectMode && showStore.selectedEpisodeCount > 0"
                     @select="handleTranslate">
                     <ButtonComponent size="sm" variant="accent">
-                        Translate ({{ showStore.selectedShows.length }})
+                        Translate ({{ showStore.selectedEpisodeCount }}
+                        {{ translate('tvShows.episodesLine') }})
                     </ButtonComponent>
                 </ContextMenu>
                 <ButtonComponent size="sm" variant="accent" @click="toggleSelectMode">
@@ -95,13 +96,15 @@
                         class="col-span-1 flex items-center justify-center px-4 py-2"
                         @click.stop>
                         <CheckboxComponent
-                            :model-value="
-                                showStore.selectedShows.some((s) => s.id === item.id)
-                            "
+                            :model-value="showStore.selectedShows.some((s) => s.id === item.id)"
                             @change="showStore.toggleSelect(item)" />
                     </div>
                 </div>
-                <SeasonTable v-if="expandedShow === item.id" :seasons="item.seasons" />
+                <SeasonTable
+                    v-if="expandedShow === item.id"
+                    :seasons="item.seasons"
+                    :show="item"
+                    :is-select-mode="isSelectMode" />
             </div>
         </div>
 
@@ -181,32 +184,32 @@ const toggleSelectMode = () => {
 
 const getSubtitle = (subtitles: ISubtitle[], fileName: string | null) => {
     if (!fileName) return null
-    return subtitles.find(
-        (subtitle: ISubtitle) =>
-            subtitle.fileName.toLocaleLowerCase().includes(fileName.toLocaleLowerCase()) &&
-            subtitle.language &&
-            subtitle.language.trim() !== ''
-    ) ?? null
+    return (
+        subtitles.find(
+            (subtitle: ISubtitle) =>
+                subtitle.fileName.toLocaleLowerCase().includes(fileName.toLocaleLowerCase()) &&
+                subtitle.language &&
+                subtitle.language.trim() !== ''
+        ) ?? null
+    )
 }
 
 const handleTranslate = async (language: ILanguage) => {
-    for (const show of showStore.selectedShows) {
-        for (const season of show.seasons) {
-            if (!season.path) {
-                continue
-            }
-            const subtitles = await services.subtitle.collect<ISubtitle[]>(season.path)
-            for (const episode of season.episodes) {
-                const subtitle = getSubtitle(subtitles, episode.fileName ?? null)
-                if (subtitle) {
-                    await translateStore.translateSubtitle(
-                        episode.id,
-                        subtitle,
-                        subtitle.language,
-                        language,
-                        MEDIA_TYPE.EPISODE
-                    )
-                }
+    for (const season of Object.values(showStore.selectedSeasons)) {
+        if (!season.path) {
+            continue
+        }
+        const subtitles = await services.subtitle.collect<ISubtitle[]>(season.path)
+        for (const episode of season.episodes) {
+            const subtitle = getSubtitle(subtitles, episode.fileName ?? null)
+            if (subtitle) {
+                await translateStore.translateSubtitle(
+                    episode.id,
+                    subtitle,
+                    subtitle.language,
+                    language,
+                    MEDIA_TYPE.EPISODE
+                )
             }
         }
     }
