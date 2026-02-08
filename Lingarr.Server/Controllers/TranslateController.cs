@@ -51,6 +51,26 @@ public class TranslateController : ControllerBase
     }
 
     /// <summary>
+    /// Initiates translation jobs for multiple media items.
+    /// Handles subtitle discovery and source language resolution server-side.
+    /// </summary>
+    /// <param name="request">The bulk translate request containing media IDs, target language, and media type.</param>
+    /// <returns>Returns a list of created translation request IDs.</returns>
+    [HttpPost("bulk")]
+    public async Task<ActionResult> BulkTranslate([FromBody] BulkTranslateRequest request)
+    {
+        try
+        {
+            await _translationRequestService.CreateBulkRequest(request);
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { Error = ex.Message });
+        }
+    }
+
+    /// <summary>
     /// Translate a single subtitle line
     /// </summary>
     /// <param name="translateAbleSubtitleLine">The subtitle to be translated. 

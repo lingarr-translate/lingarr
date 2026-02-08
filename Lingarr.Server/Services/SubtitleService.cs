@@ -531,6 +531,49 @@ public class SubtitleService : ISubtitleService
         translatedSubtitles.Insert(0, introSubtitle);
     }
 
+    /// <inheritdoc />
+    public async Task<List<Subtitles>> GetSubtitles(string path, string fileName)
+    {
+        var allSubtitles = await GetAllSubtitles(path);
+        return allSubtitles
+            .Where(s => s.FileName.StartsWith(fileName + ".") || s.FileName == fileName)
+            .ToList();
+    }
+
+    /// <inheritdoc />
+    public SelectedSourceSubtitle? SelectSourceSubtitle(
+        List<Subtitles> matchingSubtitles,
+        HashSet<string> sourceCodes,
+        string ignoreCaptions)
+    {
+        var availableLanguages = matchingSubtitles
+            .Select(s => s.Language.ToLowerInvariant())
+            .ToHashSet();
+
+        var sourceLanguage = availableLanguages.FirstOrDefault(lang => sourceCodes.Contains(lang));
+        if (sourceLanguage == null)
+        {
+            return null;
+        }
+
+        var sourceSubtitle = ignoreCaptions == "true"
+            ? matchingSubtitles.FirstOrDefault(s => s.Language == sourceLanguage && string.IsNullOrEmpty(s.Caption))
+                ?? matchingSubtitles.FirstOrDefault(s => s.Language == sourceLanguage)
+            : matchingSubtitles.FirstOrDefault(s => s.Language == sourceLanguage);
+
+        if (sourceSubtitle == null)
+        {
+            return null;
+        }
+
+        return new SelectedSourceSubtitle
+        {
+            Subtitle = sourceSubtitle,
+            SourceLanguage = sourceLanguage,
+            AvailableLanguages = availableLanguages
+        };
+    }
+
     /// <summary>
     /// Counts the number of words in a list of plaintext subtitle lines
     /// </summary>

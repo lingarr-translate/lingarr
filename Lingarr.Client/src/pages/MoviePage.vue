@@ -4,6 +4,10 @@
             <SearchComponent v-model="filter" />
             <div
                 class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:items-center md:justify-between md:space-x-2">
+                <ToggleButton
+                    v-model="navigateToDetails"
+                    size="small"
+                    label="Open details on request" />
                 <ContextMenu
                     v-if="isSelectMode && movieStore.selectedMovies.length > 0"
                     @select="handleTranslate">
@@ -12,12 +16,8 @@
                     </ButtonComponent>
                 </ContextMenu>
                 <ButtonComponent size="sm" variant="accent" @click="toggleSelectMode">
-                    {{ isSelectMode ? 'Cancel' : 'Select' }}
+                    {{ isSelectMode ? 'Cancel' : 'Translate multiple' }}
                 </ButtonComponent>
-                <ToggleButton
-                    v-model="navigateToDetails"
-                    size="small"
-                    label="Open details on request" />
                 <SortControls
                     v-model="filter"
                     :options="[
@@ -180,18 +180,11 @@ const toggleSelectMode = () => {
 }
 
 const handleTranslate = async (language: ILanguage) => {
-    for (const movie of movieStore.selectedMovies) {
-        const subtitle = movie.subtitles?.[0]
-        if (subtitle) {
-            await translateStore.translateSubtitle(
-                movie.id,
-                subtitle,
-                subtitle.language,
-                language,
-                MEDIA_TYPE.MOVIE
-            )
-        }
-    }
+    await translateStore.bulkTranslate(
+        movieStore.selectedMovies.map((movie) => movie.id),
+        language.code,
+        MEDIA_TYPE.MOVIE
+    )
     movieStore.clearSelection()
     isSelectMode.value = false
 }

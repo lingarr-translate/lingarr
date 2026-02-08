@@ -2,6 +2,7 @@
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
 using Lingarr.Server.Models;
+using Lingarr.Server.Models.Api;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
 
@@ -24,11 +25,14 @@ public interface ITranslationRequestService
     Task<int> CreateRequest(TranslateAbleSubtitle translateAbleSubtitle);
 
     /// <summary>
-    /// Creates a new translation request from a translationRequest, creating a new one with the same exact settings.
+    /// Creates translation requests for multiple media items, handling subtitle discovery
+    /// and source language resolution server-side.
     /// </summary>
-    /// <param name="translationRequest">Translation request to copie</param>
-    /// <returns>The ID of the created translation request</returns>
-    Task<int> CreateRequest(TranslationRequest translationRequest);
+    /// <param name="request">The bulk translate request containing media IDs, target language, and media type</param>
+    /// <returns>A list of created translation request IDs</returns>
+    Task CreateBulkRequest(BulkTranslateRequest request);
+
+
 
     /// <summary>
     /// Retrieves the count of active translation requests.
