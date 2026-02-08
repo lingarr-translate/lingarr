@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Lingarr.Core.Configuration;
+using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models.Batch;
 using Lingarr.Server.Services;
@@ -296,8 +297,10 @@ public class GoogleGeminiServiceTests
         }
     }
 
-    [Fact]
-    public async Task TranslateAsync_ShouldRetry_WhenRateLimited()
+    [Theory]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    public async Task TranslateAsync_ShouldRetry_WhenRetryableStatusCode(HttpStatusCode statusCode)
     {
         // Arrange
         var settings = GetDefaultSettings();
@@ -306,15 +309,13 @@ public class GoogleGeminiServiceTests
         var successResponse = new { candidates = new[] { new { content = new { parts = new[] { new { text = "Translated Text" } } } } } };
         var successContent = JsonSerializer.Serialize(successResponse);
 
-        // Sequence: 1. Fail with 429, 2. Succeed with 200
-        var handlerMock = _httpMessageHandlerMock.Protected();
-        handlerMock.SetupSequence<Task<HttpResponseMessage>>(
+        _httpMessageHandlerMock.Protected().SetupSequence<Task<HttpResponseMessage>>(
             "SendAsync",
             ItExpr.IsAny<HttpRequestMessage>(),
             ItExpr.IsAny<CancellationToken>()
         )
-        .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.TooManyRequests }) // First attempt fails
-        .ReturnsAsync(new HttpResponseMessage // Second attempt succeeds
+        .ReturnsAsync(new HttpResponseMessage { StatusCode = statusCode })
+        .ReturnsAsync(new HttpResponseMessage
         {
             StatusCode = HttpStatusCode.OK,
             Content = new StringContent(successContent, Encoding.UTF8, "application/json")
@@ -326,19 +327,20 @@ public class GoogleGeminiServiceTests
         // Assert
         Assert.Equal("Translated Text", result);
 
-        // Verify LogWarning was called for the retry
         _loggerMock.Verify(
             x => x.Log(
                 LogLevel.Warning,
                 It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("429 Too Many Requests. Retrying")),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Retrying")),
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
     }
 
-    [Fact]
-    public async Task TranslateBatchAsync_ShouldRetry_WhenRateLimited()
+    [Theory]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    public async Task TranslateBatchAsync_ShouldRetry_WhenRetryableStatusCode(HttpStatusCode statusCode)
     {
         // Arrange
         var settings = GetDefaultSettings();
@@ -348,13 +350,12 @@ public class GoogleGeminiServiceTests
         var successBatchResponse = new { candidates = new[] { new { content = new { parts = new[] { new { text = "[{\"position\":1,\"line\":\"Hola\"}]" } } } } } };
         var successContent = JsonSerializer.Serialize(successBatchResponse);
 
-        // Sequence: Fail 429 -> Succeed 200
         _httpMessageHandlerMock.Protected().SetupSequence<Task<HttpResponseMessage>>(
             "SendAsync",
             ItExpr.IsAny<HttpRequestMessage>(),
             ItExpr.IsAny<CancellationToken>()
         )
-        .ReturnsAsync(new HttpResponseMessage { StatusCode = HttpStatusCode.TooManyRequests })
+        .ReturnsAsync(new HttpResponseMessage { StatusCode = statusCode })
         .ReturnsAsync(new HttpResponseMessage
         {
             StatusCode = HttpStatusCode.OK,
@@ -367,16 +368,57 @@ public class GoogleGeminiServiceTests
         // Assert
         Assert.NotNull(result);
         Assert.Equal("Hola", result[1]);
+    }
 
-        // Verify Retry Warning
-        _loggerMock.Verify(
-            x => x.Log(
-                LogLevel.Warning,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("429 Too Many Requests. Retrying")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-            Times.Once);
+    [Theory]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    public async Task TranslateAsync_ShouldThrow_WhenRetriesExhausted(HttpStatusCode statusCode)
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        // Return the error status for every attempt (MaxRetries = 3)
+        _httpMessageHandlerMock.Protected().Setup<Task<HttpResponseMessage>>(
+            "SendAsync",
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>()
+        )
+        .ReturnsAsync(new HttpResponseMessage { StatusCode = statusCode });
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<TranslationException>(
+            () => _service.TranslateAsync("Source Text", "en", "es", null, null, CancellationToken.None));
+
+        Assert.Contains("Retry limit reached", ex.Message);
+        Assert.IsType<HttpRequestException>(ex.InnerException);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    public async Task TranslateBatchAsync_ShouldThrow_WhenRetriesExhausted(HttpStatusCode statusCode)
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var batch = new List<BatchSubtitleItem> { new() { Position = 1, Line = "Hello" } };
+
+        _httpMessageHandlerMock.Protected().Setup<Task<HttpResponseMessage>>(
+            "SendAsync",
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>()
+        )
+        .ReturnsAsync(new HttpResponseMessage { StatusCode = statusCode });
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<TranslationException>(
+            () => _service.TranslateBatchAsync(batch, "en", "es", CancellationToken.None));
+
+        Assert.Contains("Retry limit reached", ex.Message);
+        Assert.IsType<HttpRequestException>(ex.InnerException);
     }
 
     // Helper to keep the tests clean
