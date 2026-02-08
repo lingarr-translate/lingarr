@@ -1,38 +1,34 @@
 ﻿<template>
     <div class="flex flex-col space-y-2">
         <div>
-            {{ translate('settings.services.aiWarningIntro') }}
+            Automation is:
             <span :class="automationEnabled == 'true' ? 'text-red-500' : 'text-green-500'">
-                {{
-                    automationEnabled == 'true'
-                        ? translate('settings.services.serviceEnabled')
-                        : translate('settings.services.serviceDisabled')
-                }}
+                {{ automationEnabled == 'true' ? 'Enabled' : 'Disabled' }}
             </span>
         </div>
         <p class="text-xs">
-            {{ translate('settings.services.aiCostDescription') }}
+            AI translation is very costly in terms of pricing. Only use it when you know what you are doing and make sure automation is disabled.
         </p>
 
         <InputComponent
             v-model="apiKey"
             validation-type="string"
             type="password"
-            :label="translate('settings.services.apiKey')"
+            label="API key"
             :min-length="1"
-            :error-message="translate('settings.services.apiKeyError')"
+            error-message="API Key must be {minLength} characters"
             @update:validation="(val) => (apiKeyIsValid = val)" />
 
         <label class="mb-1 block text-sm">
-            {{ translate('settings.services.aiModel') }}
+            AI Model
         </label>
         <SelectComponent
             ref="selectRef"
             v-model:selected="aiModel"
             :options="options"
             :load-on-open="true"
-            :placeholder="translate('settings.services.selectModel')"
-            :no-options="errorMessage || translate('settings.services.loadingModels')"
+            placeholder="Select model..."
+            :no-options="errorMessage || 'Loading models...'"
             @fetch-options="loadOptions" />
     </div>
 </template>
@@ -43,10 +39,8 @@ import { useSettingStore } from '@/store/setting'
 import { SETTINGS } from '@/ts'
 import SelectComponent from '@/components/common/SelectComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
-import { useI18n } from '@/plugins/i18n'
 import { useModelOptions } from '@/composables/useModelOptions'
 
-const { translate } = useI18n()
 // @ts-ignore selectRef
 const { options, errorMessage, selectRef, loadOptions } = useModelOptions()
 

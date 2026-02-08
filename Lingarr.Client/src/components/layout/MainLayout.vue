@@ -11,7 +11,6 @@
                         <MenuIcon class="block h-5 w-5 cursor-pointer" @click="isOpen = !isOpen" />
                     </div>
                     <div class="flex items-center justify-between">
-                        <!--<LanguageSelect />-->
                         <DropdownComponent width="medium">
                             <template #button>
                                 <ThemeIcon class="h-5 w-5" />

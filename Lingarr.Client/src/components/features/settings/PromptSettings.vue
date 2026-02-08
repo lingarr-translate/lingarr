@@ -1,39 +1,35 @@
 ﻿<template>
-    <CardComponent :title="translate('settings.prompt.title')">
+    <CardComponent title="System & Context Prompts">
         <template #description>
-            {{ translate('settings.prompt.description') }}
+            Define custom instructions (system prompt) and an optional context prompt to control AI response logic.
         </template>
         <template #content>
             <div class="flex flex-col space-y-4">
                 <SaveNotification ref="saveNotification" />
                 <div class="flex flex-col space-x-2">
                     <span class="font-semibold">
-                        {{ translate('settings.prompt.promptTitle') }}
+                        System prompt
                     </span>
-                    {{ translate('settings.prompt.promptDescription') }}
+                    Define the AI’s behavior and tone by setting global instructions.
                 </div>
                 <AiSystemPrompt @save="saveNotification?.show()" />
 
-                <div v-if="useBatchTranslation == 'false'">
+                <div v-if="useBatchTranslation == 'false'" class="space-y-4">
                     <div class="flex flex-col space-x-2">
                         <span class="font-semibold">
-                            {{ translate('settings.prompt.contextPromptToggle') }}
+                            Enable context prompt:
                         </span>
                     </div>
                     <ToggleButton v-model="aiContextPromptEnabled">
                         <span class="text-primary-content text-sm font-medium">
-                            {{
-                                aiContextPromptEnabled == 'true'
-                                    ? translate('common.enabled')
-                                    : translate('common.disabled')
-                            }}
+                            {{ aiContextPromptEnabled == 'true' ? 'Enable' : 'Disabled' }}
                         </span>
                     </ToggleButton>
                     <div v-if="aiContextPromptEnabled == 'true'" class="flex flex-col space-x-2">
                         <span class="font-semibold">
-                            {{ translate('settings.prompt.contextPromptTitle') }}
+                            Context prompt
                         </span>
-                        {{ translate('settings.prompt.contextPromptDescription') }}
+                        Provide the surrounding context, including lines before and after the current subtitle, to help the AI generate a more accurate translation.
                     </div>
                     <AiContextPrompt
                         v-if="aiContextPromptEnabled == 'true'"
@@ -44,18 +40,18 @@
                         v-model="contextBefore"
                         type="number"
                         validation-type="number"
-                        :label="translate('settings.prompt.contextBefore')"
+                        label="Context before"
                         @update:validation="(val) => (isValid.contextBefore = val)" />
                     <InputComponent
                         v-if="aiContextPromptEnabled == 'true'"
                         v-model="contextAfter"
                         type="number"
                         validation-type="number"
-                        :label="translate('settings.prompt.contextAfter')"
+                        label="Context after"
                         @update:validation="(val) => (isValid.contextAfter = val)" />
                 </div>
                 <div v-else class="text-xs">
-                    {{ translate('settings.prompt.notSupported') }}
+                    Context prompt is not supported and has been disabled when sending subtitles in batch.
                 </div>
             </div>
         </template>

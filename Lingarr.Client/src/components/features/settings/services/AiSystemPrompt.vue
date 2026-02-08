@@ -6,20 +6,16 @@
         :placeholders="[
             {
                 placeholder: '{sourceLanguage}',
-                placeholderText: translate('settings.prompt.insertPlaceholder').format({
-                    placeholder: '{sourceLanguage}'
-                }),
-                title: translate('settings.prompt.placeholders.sourceLanguage.title'),
-                description: translate('settings.prompt.placeholders.sourceLanguage.description'),
+                placeholderText: 'insert {sourceLanguage}',
+                title: 'Source Language',
+                description: 'The language the provided subtitle line is in',
                 required: true
             },
             {
                 placeholder: '{targetLanguage}',
-                placeholderText: translate('settings.prompt.insertPlaceholder').format({
-                    placeholder: '{targetLanguage}'
-                }),
-                title: translate('settings.prompt.placeholders.targetLanguage.title'),
-                description: translate('settings.prompt.placeholders.targetLanguage.description'),
+                placeholderText: 'insert {targetLanguage}',
+                title: 'Target Language',
+                description: 'The language the provided subtitle line needs to be translated to',
                 required: true
             }
         ]"

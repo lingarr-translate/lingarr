@@ -2,23 +2,17 @@
     <div class="bg-secondary w-full p-4">
         <div class="border-secondary bg-primary text-secondary-content mb-4 border-b-2 font-bold">
             <div class="flex items-center justify-between px-4 py-3">
-                <h1 class="text-xl">{{ translate('settings.logs.systemLogs') }}</h1>
+                <h1 class="text-xl">System Logs</h1>
                 <div class="flex items-center space-x-3">
                     <!-- Filters -->
                     <div class="flex items-center space-x-4">
                         <select
                             v-model="filterOptions.logLevel"
                             class="bg-secondary text-accent-content border-secondary rounded border px-2 py-1 text-sm">
-                            <option value="all">
-                                {{ translate('settings.logs.allLevels') }}
-                            </option>
-                            <option value="information">
-                                {{ translate('settings.logs.information') }}
-                            </option>
-                            <option value="warning">
-                                {{ translate('settings.logs.warning') }}
-                            </option>
-                            <option value="error">{{ translate('settings.logs.error') }}</option>
+                            <option value="all">All Levels</option>
+                            <option value="information">Information</option>
+                            <option value="warning">Warning</option>
+                            <option value="error">Error</option>
                         </select>
                     </div>
 
@@ -26,21 +20,21 @@
                         <button
                             class="bg-accent hover:bg-accent/80 cursor-pointer rounded px-3 py-1 text-sm font-medium text-white transition"
                             @click="exportLogs">
-                            {{ translate('settings.logs.export') }}
+                            Export
                         </button>
                         <button
                             class="bg-warning hover:bg-warning/80 cursor-pointer rounded px-3 py-1 text-sm font-medium text-white transition"
                             @click="toggleAutoScroll">
                             {{
                                 autoScroll
-                                    ? translate('settings.logs.disableAutoScroll')
-                                    : translate('settings.logs.enableAutoScroll')
+                                    ? 'Disable Auto-scroll'
+                                    : 'Enable Auto-scroll'
                             }}
                         </button>
                         <button
                             class="bg-error hover:bg-error/80 cursor-pointer rounded px-3 py-1 text-sm font-medium text-white transition"
                             @click="clearLogs">
-                            {{ translate('settings.logs.clear') }}
+                            Clear
                         </button>
                     </div>
                 </div>
@@ -50,16 +44,16 @@
         <div
             class="border-secondary bg-primary text-secondary-content grid grid-cols-12 border-b-2 font-bold">
             <div class="col-span-1 px-4 py-2">
-                {{ translate('settings.logs.time') }}
+                Time
             </div>
             <div class="col-span-1 px-4 py-2">
-                {{ translate('settings.logs.level') }}
+                Level
             </div>
             <div class="col-span-3 px-4 py-2">
-                {{ translate('settings.logs.source') }}
+                Source
             </div>
             <div class="col-span-5 px-4 py-2 md:col-span-7">
-                {{ translate('settings.logs.message') }}
+                Message
             </div>
         </div>
 
@@ -69,7 +63,7 @@
             <div v-if="filteredLogs.length === 0" class="flex h-full items-center justify-center">
                 <div class="text-center text-gray-500">
                     <div class="mb-2 text-lg">📋</div>
-                    <div>{{ translate('settings.logs.waitingForLogs') }}</div>
+                    <div>Waiting for logs...</div>
                 </div>
             </div>
 
@@ -106,15 +100,11 @@
         <!-- Footer Stats -->
         <div
             class="border-secondary bg-primary text-secondary-content mt-4 flex justify-between border-t-2 px-4 py-2 text-sm">
-            <div>{{ translate('settings.logs.totalEntries') }}: {{ filteredLogs.length }}</div>
+            <div>Total entries: {{ filteredLogs.length }}</div>
             <div>
-                {{ translate('settings.logs.autoScroll') }}:
+                Auto-scroll:
                 <span :class="autoScroll ? 'text-success' : 'text-error'">
-                    {{
-                        autoScroll
-                            ? translate('settings.logs.enabled')
-                            : translate('settings.logs.disabled')
-                    }}
+                    {{ autoScroll ? 'Enabled' : 'Disabled' }}
                 </span>
             </div>
         </div>
