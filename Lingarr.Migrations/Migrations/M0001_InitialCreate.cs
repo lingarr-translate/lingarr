@@ -10,7 +10,7 @@ public class M0001_InitialCreate : Migration
         // Settings
         Create.Table("settings")
             .WithColumn("key").AsString(255).PrimaryKey()
-            .WithColumn("value").AsString().NotNullable();
+            .WithColumn("value").AsCustom("TEXT").NotNullable();
 
         // Movies
         Create.Table("movies")
