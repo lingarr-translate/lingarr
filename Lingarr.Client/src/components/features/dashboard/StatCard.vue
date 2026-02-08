@@ -11,7 +11,7 @@
             </div>
             <div class="text-right">
                 <h3 class="text-primary-content/70 text-sm font-medium">
-                    {{ translate('statistics.translated') }}
+                    Translated
                 </h3>
                 <p class="text-accent mt-2 text-xl font-bold">
                     {{ formatNumber(translated) }}

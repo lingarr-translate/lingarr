@@ -1,23 +1,23 @@
 ﻿<template>
-    <CardComponent :title="translate('settings.translation.title')">
+    <CardComponent title="Translation Request">
         <template #description>
-            {{ translate('settings.translation.description') }}
+            Modify translation request settings by changing batch size or retry options.
         </template>
         <template #content>
             <SaveNotification ref="saveNotification" />
 
             <div class="flex flex-col space-x-2">
                 <span class="font-semibold">
-                    {{ translate('settings.translation.useBatchTranslation') }}
+                    Use batch translation
                 </span>
-                {{ translate('settings.translation.useBatchTranslationDescription') }}
+                Process multiple subtitle lines together in batches to improve translation efficiency and context awareness. Note that single-line translations with context are still more reliable and of higher quality.
             </div>
             <ToggleButton v-model="useBatchTranslation">
                 <span class="text-primary-content text-sm font-medium">
                     {{
                         useBatchTranslation == 'true'
-                            ? translate('common.enabled')
-                            : translate('common.disabled')
+                            ? 'Enabled'
+                            : 'Disabled'
                     }}
                 </span>
             </ToggleButton>
@@ -29,9 +29,9 @@
 
             <div class="flex flex-col space-x-2">
                 <span class="font-semibold">
-                    {{ translate('settings.translation.maxRetries') }}
+                    Max translation retries:
                 </span>
-                {{ translate('settings.translation.maxRetriesDescription') }}
+                Maximum number of retries per line or batch.
             </div>
             <InputComponent
                 v-model="maxRetries"
@@ -40,9 +40,9 @@
 
             <div class="flex flex-col space-x-2">
                 <span class="font-semibold">
-                    {{ translate('settings.translation.retryDelay') }}
+                    Delay between retries:
                 </span>
-                {{ translate('settings.translation.retryDelayDescription') }}
+                Initial delay before retrying, in seconds.
             </div>
             <InputComponent
                 v-model="retryDelay"
@@ -51,9 +51,9 @@
 
             <div class="flex flex-col space-x-2">
                 <span class="font-semibold">
-                    {{ translate('settings.translation.retryDelayMultiplier') }}
+                    Retry delay multiplier:
                 </span>
-                {{ translate('settings.translation.retryDelayMultiplierDescription') }}
+                Factor by which the delay increases after each retry.
             </div>
             <InputComponent
                 v-model="retryDelayMultiplier"

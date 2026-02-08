@@ -9,17 +9,12 @@
                     v-if="isSelectMode"
                     class="border-accent text-primary-content hover:text-primary-content/50 cursor-pointer rounded-md border px-2 py-1 transition-colors"
                     @click="handleDelete">
-                    {{ translate('translations.delete') }}
-                    ({{ translationRequestStore.selectedRequests.length }})
+                    Delete ({{ translationRequestStore.selectedRequests.length }})
                 </button>
                 <button
                     class="border-accent text-primary-content hover:text-primary-content/50 cursor-pointer rounded-md border px-2 py-1 transition-colors"
                     @click="toggleSelectMode">
-                    {{
-                        isSelectMode
-                            ? translate('translations.cancel')
-                            : translate('translations.select')
-                    }}
+                    {{ isSelectMode ? 'Cancel' : 'Select' }}
                 </button>
                 <SortControls
                     v-model="filter"
@@ -43,16 +38,16 @@
         <div class="w-full px-4">
             <div class="border-accent hidden border-b font-bold md:grid md:grid-cols-12">
                 <div class="col-span-4 px-4 py-2">
-                    {{ translate('translations.title') }}
+                    Title
                 </div>
-                <div class="col-span-1 px-4 py-2">{{ translate('translations.source') }}</div>
-                <div class="col-span-1 px-4 py-2">{{ translate('translations.target') }}</div>
-                <div class="col-span-1 px-4 py-2">{{ translate('translations.status') }}</div>
+                <div class="col-span-1 px-4 py-2">Source</div>
+                <div class="col-span-1 px-4 py-2">Target</div>
+                <div class="col-span-1 px-4 py-2">Status</div>
                 <div class="px-4 py-2" :class="isSelectMode ? 'col-span-2' : 'col-span-3'">
-                    {{ translate('translations.progress') }}
+                    Progress
                 </div>
                 <div class="col-span-1 px-4 py-2">
-                    {{ translate('translations.completed') }}
+                    Completed
                 </div>
                 <div class="col-span-1 flex justify-end px-4 py-2">
                     <ReloadComponent @toggle:update="translationRequestStore.fetch()" />
@@ -76,7 +71,7 @@
                 </div>
                 <div class="mb-2 md:col-span-4 md:mb-0 md:px-4 md:py-2">
                     <span :id="`deletable-${item.id}`" class="font-bold md:hidden">
-                        {{ translate('translations.title') }}:&nbsp;
+                        Title:&nbsp;
                     </span>
                     <span
                         v-if="item.mediaType === MEDIA_TYPE.EPISODE"
@@ -91,7 +86,7 @@
                 </div>
                 <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
                     <span class="font-bold md:hidden">
-                        {{ translate('translations.source') }}:&nbsp;
+                        Source:&nbsp;
                     </span>
                     <BadgeComponent classes="text-primary-content border-accent bg-secondary">
                         {{ item.sourceLanguage.toUpperCase() }}
@@ -99,7 +94,7 @@
                 </div>
                 <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
                     <span class="font-bold md:hidden">
-                        {{ translate('translations.target') }}:&nbsp;
+                        Target:&nbsp;
                     </span>
                     <BadgeComponent classes="text-primary-content border-accent bg-secondary">
                         {{ item.targetLanguage.toUpperCase() }}
@@ -107,7 +102,7 @@
                 </div>
                 <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
                     <span class="font-bold md:hidden">
-                        {{ translate('translations.status') }}:&nbsp;
+                        Status:&nbsp;
                     </span>
                     <TranslationStatus :translation-status="item.status" />
                 </div>
@@ -118,14 +113,14 @@
                         v-if="item.status === TRANSLATION_STATUS.INPROGRESS && item.progress"
                         class="w-full">
                         <span class="mr-2 font-bold md:hidden">
-                            {{ translate('translations.progress') }}:&nbsp;
+                            Progress:&nbsp;
                         </span>
                         <TranslationProgress :progress="item.progress" />
                     </div>
                 </div>
                 <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
                     <span class="font-bold md:hidden">
-                        {{ translate('translations.completed') }}:&nbsp;
+                        Completed:&nbsp;
                     </span>
                     <TranslationCompletedAt
                         v-if="item.completedAt"

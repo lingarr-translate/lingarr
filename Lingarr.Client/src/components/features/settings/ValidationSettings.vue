@@ -1,7 +1,7 @@
 ﻿<template>
-    <CardComponent :title="translate('settings.validation.title')">
+    <CardComponent title="Subtitle Validation">
         <template #description>
-            {{ translate('settings.validation.description') }}
+            Configure validation rules for subtitles. These rules will be applied when processing subtitle files. If a validation fails, the translation will be canceled.
         </template>
         <template #content>
             <div class="flex flex-col space-y-4">
@@ -9,16 +9,12 @@
 
                 <div class="flex flex-col space-x-2">
                     <span class="font-semibold">
-                        {{ translate('settings.validation.enabled') }}
+                        Enable validation:
                     </span>
                 </div>
                 <ToggleButton v-model="validationEnabled">
                     <span class="text-primary-content text-sm font-medium">
-                        {{
-                            validationEnabled == 'true'
-                                ? translate('common.enabled')
-                                : translate('common.disabled')
-                        }}
+                        {{ validationEnabled == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
 
@@ -26,7 +22,7 @@
                     v-if="validationEnabled == 'true'"
                     v-model="minDurationMs"
                     validation-type="number"
-                    :label="translate('settings.validation.minDurationMs')"
+                    label="The minimum time duration in milliseconds that a subtitle must be displayed:"
                     @update:validation="(val) => (isValid.minDurationMs = val)">
                     <div class="flex flex-wrap gap-2">
                         <button
@@ -60,28 +56,28 @@
                     v-if="validationEnabled == 'true'"
                     v-model="maxDurationSecs"
                     validation-type="number"
-                    :label="translate('settings.validation.maxDurationSecs')"
+                    label="The maximum time duration in seconds that a subtitle can be displayed:"
                     @update:validation="(val) => (isValid.maxDurationSecs = val)" />
 
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="minSubtitleLength"
                     validation-type="number"
-                    :label="translate('settings.validation.minSubtitleLength')"
+                    label="The minimum number of characters that a subtitle must contain:"
                     @update:validation="(val) => (isValid.minSubtitleLength = val)" />
 
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="maxSubtitleLength"
                     validation-type="number"
-                    :label="translate('settings.validation.maxSubtitleLength')"
+                    label="The maximum number of characters that a subtitle can contain:"
                     @update:validation="(val) => (isValid.maxSubtitleLength = val)" />
 
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="maxFileSizeBytes"
                     validation-type="number"
-                    :label="translate('settings.validation.maxFileSizeBytes')"
+                    label="The maximum size of a subtitle file in bytes:"
                     @update:validation="(val) => (isValid.maxFileSizeBytes = val)">
                     <div class="flex flex-wrap gap-2">
                         <button

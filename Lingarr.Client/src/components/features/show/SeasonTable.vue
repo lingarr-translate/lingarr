@@ -3,12 +3,12 @@
         <div
             class="border-secondary bg-primary text-secondary-content grid grid-cols-12 border-b-2 font-bold">
             <div class="col-span-6 px-4 py-2 md:col-span-3">
-                {{ translate('tvShows.season') }}
+                Season
             </div>
             <div class="col-span-6 flex justify-between px-4 py-2 md:col-span-8">
-                <span>{{ translate('tvShows.episodes') }}</span>
+                <span>Episodes</span>
                 <span class="hidden md:block">
-                    {{ translate('tvShows.exclude') }}
+                    Exclude
                 </span>
                 <span class="block md:hidden">⊘</span>
             </div>
@@ -29,14 +29,14 @@
                         class="pr-2" />
                     <div v-else class="w-7" />
                     <span v-if="season.seasonNumber == 0">
-                        {{ translate('tvShows.specials') }}
+                        Specials
                     </span>
-                    <span v-else>{{ translate('tvShows.season') }} {{ season.seasonNumber }}</span>
+                    <span v-else>Season {{ season.seasonNumber }}</span>
                 </div>
                 <div class="col-span-6 flex justify-between px-4 py-2 select-none md:col-span-8">
                     <span>
                         {{ season.episodes.length }}
-                        {{ translate('tvShows.episodesLine') }}
+                        episodes
                     </span>
                     <span @click.stop>
                         <ToggleButton

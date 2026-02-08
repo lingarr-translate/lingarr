@@ -1,12 +1,10 @@
 ﻿<template>
     <span :title="translationStatus.toString()">
-        {{ translate(`common.status${translationStatus}`) }}
+        {{ translationStatus }}
     </span>
 </template>
 
 <script setup lang="ts">
-import { useI18n } from '@/plugins/i18n'
-const { translate } = useI18n()
 import { TranslationStatus } from '@/ts'
 
 defineProps<{

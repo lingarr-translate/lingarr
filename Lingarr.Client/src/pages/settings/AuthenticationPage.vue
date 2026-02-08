@@ -1,6 +1,6 @@
 <template>
     <div
-        class="grid grid-flow-row auto-rows-max grid-cols-1 gap-4 p-4 xl:grid-cols-2 2xl:grid-cols-3">
+        class="grid grid-flow-row auto-rows-max grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-4 p-4">
         <AuthenticationSettings  />
         <ApiKeyConfiguration />
         <UserManagement class="col-span-1 md:col-span-2" />
