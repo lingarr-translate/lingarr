@@ -1,13 +1,13 @@
 ﻿<template>
     <div class="flex w-full justify-center p-4 md:items-center md:justify-between">
         <div class="hidden md:block">
-            {{ translate('common.page') }}
+            Page
             <span class="font-bold">{{ modelValue.pageNumber }}</span>
-            {{ translate('common.of') }}
+            of
             <span class="font-bold">{{ numberOfPages }}</span>
-            {{ translate('common.of') }}
+            of
             <span class="font-bold">{{ totalCount }}</span>
-            {{ translate('common.items') }}
+            items
         </div>
         <div>
             <ul v-if="numberOfPages >= 1" class="flex space-x-1 md:space-x-2">

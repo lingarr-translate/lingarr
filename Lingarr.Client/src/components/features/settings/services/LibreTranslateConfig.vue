@@ -2,15 +2,15 @@
     <InputComponent
         v-model="libreTranslateUrl"
         validation-type="url"
-        :label="translate('settings.services.serviceAddress')"
-        :error-message="translate('settings.services.addressUrlError')"
+        label="Address"
+        error-message="Please enter a valid URL (e.g., http://localhost:3000 or https://api.example.com)"
         @update:validation="(val) => (isValid = val)" />
     <InputComponent
         v-model="libreTranslateApiKey"
         validation-type="string"
         type="password"
-        :label="translate('settings.services.apiKey')"
-        :error-message="translate('settings.services.apiKeyError')"
+        label="API key"
+        error-message="API Key must not be empty"
         @update:validation="(val) => (isValid = val)" />
 </template>
 

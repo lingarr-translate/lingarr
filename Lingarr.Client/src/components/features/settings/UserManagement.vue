@@ -2,7 +2,7 @@
     <CardComponent title="User Management">
         <template #description></template>
         <template #content>
-            <div class="flex flex-col space-y-4">
+            <div class="flex flex-col space-y-2 pb-4">
                 <StatusMessage :message="authStore.error" type="error" />
                 <StatusMessage :message="authStore.success" type="success" />
 

@@ -15,19 +15,19 @@
             </svg>
             <div>
                 <p class="text-secondary-content font-medium">
-                    {{ translate('settings.translate.languageLoadErrorTitle') }}
+                    Error retrieving languages
                 </p>
                 <p class="text-secondary-content mt-1 text-sm">
-                    {{ translate('settings.translate.languageLoadErrorDescription') }}
+                    Unknown error occurred while retrieving languages, make sure the api key is set correctly.
                 </p>
                 <button
                     class="border-accent hover:bg-accent mt-3 cursor-pointer justify-end rounded border px-3 py-2 transition-colors hover:text-white"
                     :disabled="translateStore.isLanguagesLoading"
                     @click="retryLoadLanguages">
                     <span v-if="translateStore.isLanguagesLoading">
-                        {{ translate('common.loading') }}
+                        Loading...
                     </span>
-                    <span v-else>{{ translate('common.retry') }}</span>
+                    <span v-else>Retry</span>
                 </button>
             </div>
         </div>
@@ -36,28 +36,28 @@
     <template v-if="!translateStore.hasLanguagesError">
         <div class="flex flex-col space-x-2">
             <span class="font-semibold">
-                {{ translate('settings.translate.sourceAndTargetTitle') }}
+                Source and target translation
             </span>
-            {{ translate('settings.translate.sourceAndTargetDescription') }}
+            Select a source and target language. Both the source and target are used to request translations.
         </div>
 
         <div v-if="translateStore.isLanguagesLoading" class="py-4">
             <div class="flex items-center space-x-2">
                 <LoaderCircleIcon class="h-5 w-5" />
-                <span>{{ translate('common.loading') }}</span>
+                <span>Loading...</span>
             </div>
         </div>
 
         <template v-else>
             <div>
-                <span>{{ translate('settings.translate.selectSourceDescription') }}</span>
+                <span>Source languages:</span>
                 <LanguageSelect
                     v-model:selected="sourceLanguages"
                     class="w-full"
                     :options="languages" />
             </div>
             <div>
-                <span>{{ translate('settings.translate.selectTargetDescription') }}</span>
+                <span>Target languages:</span>
                 <LanguageSelect
                     v-model:selected="targetLanguages"
                     class="w-full"

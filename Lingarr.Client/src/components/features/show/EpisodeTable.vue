@@ -3,17 +3,17 @@
         <div class="border-primary grid grid-cols-12 border-b-2 font-bold">
             <div class="col-span-1 px-4 py-2">
                 <span class="hidden lg:block">
-                    {{ translate('tvShows.episode') }}
+                    Episodes
                 </span>
                 <span class="block lg:hidden">#</span>
             </div>
             <div class="col-span-7 px-4 py-2 md:col-span-5">
-                {{ translate('tvShows.episodeTitle') }}
+                Title
             </div>
             <div class="col-span-4 flex justify-between py-2 pr-4 md:col-span-5">
-                <span>{{ translate('tvShows.episodeSubtitles') }}</span>
+                <span>Subtitles</span>
                 <span class="hidden md:block">
-                    {{ translate('tvShows.exclude') }}
+                    Exclude
                 </span>
                 <span class="block md:hidden">⊘</span>
             </div>

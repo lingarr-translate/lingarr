@@ -37,16 +37,16 @@
             <!-- Shows -->
             <div class="border-accent grid grid-cols-12 border-b font-bold">
                 <div :class="isSelectMode ? 'col-span-7' : 'col-span-8'" class="px-4 py-2">
-                    {{ translate('tvShows.title') }}
+                    Title
                 </div>
                 <div class="col-span-1 px-4 py-2">
                     <span class="hidden md:block">
-                        {{ translate('tvShows.exclude') }}
+                        Exclude
                     </span>
                     <span class="block md:hidden">⊘</span>
                 </div>
                 <div class="col-span-1 px-4 py-2">
-                    {{ translate('tvShows.ageThreshold') }}
+                    Delay
                 </div>
                 <div class="col-span-2 flex justify-end px-4 py-2">
                     <ReloadComponent @toggle:update="showStore.fetch()" />
@@ -78,7 +78,7 @@
                     <div class="col-span-3 flex items-center px-4 py-2" @click.stop>
                         <InputComponent
                             :model-value="item.translationAgeThreshold ?? null"
-                            :placeholder="translate('tvShows.hours')"
+                            placeholder="hours"
                             class="w-14"
                             size="sm"
                             type="number"

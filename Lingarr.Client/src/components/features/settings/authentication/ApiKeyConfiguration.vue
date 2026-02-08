@@ -2,6 +2,7 @@
     <CardComponent v-if="authEnabled == 'true'" title="API Key">
         <template #description></template>
         <template #content>
+            <div class="flex flex-col space-y-2 pb-4">
             <div>
                 <h2 class="mb-4 text-xl font-semibold text-white">{{ title }}</h2>
                 <p class="mb-6 text-sm text-gray-400">
@@ -34,6 +35,7 @@
                         curl -H "X-Api-Key: {{ apiKey }}" http://lingarr:9876/api/endpoint
                     </code>
                 </div>
+            </div>
             </div>
         </template>
     </CardComponent>

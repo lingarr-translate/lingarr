@@ -72,7 +72,7 @@
 
 <script setup lang="ts">
 import { computed, ComputedRef } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useInstanceStore } from '@/store/instance'
 import { useTranslationRequestStore } from '@/store/translationRequest'
 import { MenuItem } from '@/ts'
@@ -84,8 +84,10 @@ import TimesIcon from '@/components/icons/TimesIcon.vue'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
 import LanguageIcon from '@/components/icons/LanguageIcon.vue'
 
+
 const translationRequestStore = useTranslationRequestStore()
 const instanceStore = useInstanceStore()
+const router = useRouter()
 const route = useRoute()
 
 const activeRequests: ComputedRef<number> = computed(
@@ -101,23 +103,14 @@ const menuItems: MenuItem[] = [
     { label: 'Dashboard', icon: HomeIcon, route: 'dashboard', children: [] },
     { label: 'Movies', icon: MovieIcon, route: 'movies', children: [] },
     { label: 'TV Shows', icon: ShowIcon, route: 'shows', children: [] },
-    {
-        label: 'Translations',
-        icon: LanguageIcon,
-        route: 'translations',
-        children: []
-    },
+    { label: 'Translations', icon: LanguageIcon, route: 'translations', children: [] },
     {
         label: 'Settings',
         icon: SettingIcon,
         route: 'integration-settings',
-        children: [
-            'integration-settings',
-            'services-settings',
-            'automation-settings',
-            'tasks-settings',
-            'logs-settings'
-        ]
+        children: router.getRoutes()
+            .find(r => r.name === 'settings')
+            ?.children.map(c => c.name as string) ?? []
     }
 ]
 

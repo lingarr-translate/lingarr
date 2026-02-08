@@ -1,13 +1,13 @@
 ﻿<template>
-    <CardComponent :title="translate('settings.custom.parameters')">
+    <CardComponent title="Custom Parameters">
         <template #description>
-            {{ translate('settings.custom.description') }}
+            Define custom parameters (e.g., temperature, top_p) to include with requests to your custom endpoint. Only modify these if you understand what you're doing, errors can be found in the Docker logs.
         </template>
         <template #content>
             <div>
                 <div class="mb-2 flex w-full justify-between">
-                    <div class="flex-1">{{ translate('settings.custom.key') }}</div>
-                    <div class="flex-1">{{ translate('settings.custom.value') }}</div>
+                    <div class="flex-1">Key</div>
+                    <div class="flex-1">Value</div>
                     <div class="w-5"></div>
                 </div>
                 <div
@@ -17,27 +17,27 @@
                     <InputComponent
                         :model-value="param.key"
                         validation-type="string"
-                        :placeholder="translate('settings.custom.key_placeholder')"
+                        placeholder="temperature"
                         class="flex-1"
                         @update:model-value="updateKey(index, $event)" />
                     <InputComponent
                         :model-value="param.value"
                         validation-type="string"
-                        :placeholder="translate('settings.custom.value_placeholder')"
+                        placeholder="0.3"
                         class="flex-1"
                         @update:model-value="updateValue(index, $event)" />
                     <TrashIcon
                         class="flex h-5 w-5 cursor-pointer"
-                        :title="translate('settings.custom.remove')"
+                        title="Remove Parameter"
                         @click="removeParameter(index)" />
                 </div>
 
                 <div class="flex justify-end">
-                    <button
-                        class="border-accent hover:bg-accent cursor-pointer justify-end rounded border px-3 py-2 transition-colors hover:text-white"
-                        @click="addParameter">
-                        {{ translate('settings.custom.addParameter') }}
-                    </button>
+                    <ButtonComponent size="sm"
+                                     variant="accent"
+                                     @click="addParameter">
+                        Add Parameter
+                    </ButtonComponent>
                 </div>
             </div>
         </template>
@@ -50,6 +50,7 @@ import { ICustomAiParams, SETTINGS } from '@/ts'
 import InputComponent from '@/components/common/InputComponent.vue'
 import CardComponent from '@/components/common/CardComponent.vue'
 import TrashIcon from '@/components/icons/TrashIcon.vue'
+import ButtonComponent from '@/components/common/ButtonComponent.vue'
 
 const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])

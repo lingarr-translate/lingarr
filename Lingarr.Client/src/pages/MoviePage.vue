@@ -36,14 +36,14 @@
         <div class="w-full px-4">
             <div class="border-accent grid grid-cols-12 border-b font-bold">
                 <div :class="isSelectMode ? 'col-span-4' : 'col-span-5'" class="px-4 py-2">
-                    {{ translate('movies.title') }}
+                    Title
                 </div>
-                <div class="col-span-4 px-4 py-2">{{ translate('movies.subtitles') }}</div>
+                <div class="col-span-4 px-4 py-2">Subtitles</div>
                 <div class="col-span-1 px-4 py-2">
-                    {{ translate('movies.exclude') }}
+                    Exclude
                 </div>
                 <div class="col-span-1 px-4 py-2">
-                    {{ translate('movies.ageThreshold') }}
+                    Delay
                 </div>
                 <div class="col-span-1 flex justify-end px-4 py-2">
                     <ReloadComponent @toggle:update="movieStore.fetch()" />
@@ -88,7 +88,7 @@
                     <div class="col-span-2 flex items-center px-4 py-2" @click.stop>
                         <InputComponent
                             :model-value="item?.translationAgeThreshold"
-                            :placeholder="translate('movies.hours')"
+                            placeholder="hours"
                             class="w-14"
                             size="sm"
                             type="number"

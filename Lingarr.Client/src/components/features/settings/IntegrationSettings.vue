@@ -1,19 +1,19 @@
 ﻿<template>
-    <CardComponent :title="translate('settings.integrations.title')">
+    <CardComponent title="Integrations">
         <template #description>
-            {{ translate('settings.integrations.description') }}
+            Configure the settings for Radarr and Sonarr integrations.
         </template>
         <template #content>
             <SaveNotification ref="saveNotification" />
             <div class="flex flex-col space-y-2">
                 <span class="font-semibold">
-                    {{ translate('settings.integrations.radarrHeader') }}
+                    Radarr Settings:
                 </span>
                 <InputComponent
                     v-model="radarrUrl"
                     validation-type="url"
-                    :label="translate('settings.integrations.radarrAddress')"
-                    :error-message="translate('settings.integrations.radarrAddressError')"
+                    label="Address"
+                    error-message="Please enter a valid URL (e.g., http://localhost:7878 or https://example.com)"
                     @update:validation="(val) => (isValid.radarrUrl = val)" />
                 <InputComponent
                     v-model="radarrApiKey"
@@ -21,19 +21,19 @@
                     :max-length="32"
                     validation-type="string"
                     type="password"
-                    :label="translate('settings.integrations.radarrApiKey')"
-                    :error-message="translate('settings.integrations.radarrApiKeyError')"
+                    label="API key"
+                    error-message="API Key must be {minLength} characters"
                     @update:validation="(val) => (isValid.radarrApiKey = val)" />
             </div>
             <div class="flex flex-col space-y-2">
                 <span class="font-semibold">
-                    {{ translate('settings.integrations.sonarrHeader') }}
+                    Sonarr Settings:
                 </span>
                 <InputComponent
                     v-model="sonarrUrl"
                     validation-type="url"
-                    :label="translate('settings.integrations.sonarrAddress')"
-                    :error-message="translate('settings.integrations.sonarrAddressError')"
+                    label="Address"
+                    error-message="Please enter a valid URL (e.g., http://localhost:8989 or https://example.com)"
                     @update:validation="(val) => (isValid.sonarrUrl = val)" />
                 <InputComponent
                     v-model="sonarrApiKey"
@@ -41,8 +41,8 @@
                     :max-length="32"
                     validation-type="string"
                     type="password"
-                    :label="translate('settings.integrations.sonarrApiKey')"
-                    :error-message="translate('settings.integrations.sonarrApiKeyError')"
+                    label="API key"
+                    error-message="API Key must be {minLength} characters"
                     @update:validation="(val) => (isValid.sonarrApiKey = val)" />
             </div>
             <div>
