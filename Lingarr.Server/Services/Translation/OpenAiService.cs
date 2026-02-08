@@ -164,14 +164,10 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                 var response = await _httpClient.PostAsync(requestUrl, requestContent, linked.Token);
                 if (!response.IsSuccessStatusCode)
                 {
-                    if (response.StatusCode == HttpStatusCode.TooManyRequests)
+                    if (response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
                     {
-                        throw new HttpRequestException("Rate limit exceeded", null, HttpStatusCode.TooManyRequests);
-                    }
-
-                    if (response.StatusCode == HttpStatusCode.ServiceUnavailable)
-                    {
-                        throw new HttpRequestException("OpenAI temporary unavailable", null, HttpStatusCode.ServiceUnavailable);
+                        throw new HttpRequestException(
+                            $"OpenAI returned {response.StatusCode}", null, response.StatusCode);
                     }
 
                     _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
@@ -190,35 +186,20 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
 
                 return completionResponse.Choices[0].Message.Content;
             }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {
                 if (attempt == _maxRetries)
                 {
-                    _logger.LogError(ex, "Too many requests. Max retries exhausted for text: {Text}", text);
-                    throw new TranslationException("Too many requests. Retry limit reached.", ex);
+                    _logger.LogError(ex, "Max retries exhausted ({StatusCode}) for text: {Text}", ex.StatusCode, text);
+                    throw new TranslationException($"Retry limit reached after {ex.StatusCode}.", ex);
                 }
 
                 await Task.Delay(delay, linked.Token).ConfigureAwait(false);
                 delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
 
                 _logger.LogWarning(
-                    "OpenAI rate limit hit. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
-                    delay, attempt, _maxRetries);
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.ServiceUnavailable)
-            {
-                if (attempt == _maxRetries)
-                {
-                    _logger.LogError(ex, "OpenAI server error, it might be down. Max retries exhausted for text: {Text}", text);
-                    throw new TranslationException("OpenAI is temporarily unavailable, usually due to high load or maintenance. Retry limit reached.", ex);
-                }
-
-                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
-                delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
-
-                _logger.LogWarning(
-                    "OpenAI service unavailable. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
-                    delay, attempt, _maxRetries);
+                    "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    "OpenAI", ex.StatusCode, delay, attempt, _maxRetries);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -260,20 +241,20 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
             {
                 return await TranslateBatchWithOpenAiApi(subtitleBatch, linked.Token);
             }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {
                 if (attempt == _maxRetries)
                 {
-                    _logger.LogError(ex, "Too many requests. Max retries exhausted for batch translation");
-                    throw new TranslationException("Too many requests. Retry limit reached.", ex);
+                    _logger.LogError(ex, "Max retries exhausted ({StatusCode}) for batch translation", ex.StatusCode);
+                    throw new TranslationException($"Retry limit reached after {ex.StatusCode}.", ex);
                 }
-
-                _logger.LogWarning(
-                    "429 Too Many Requests. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
-                    delay, attempt, _maxRetries);
 
                 await Task.Delay(delay, linked.Token).ConfigureAwait(false);
                 delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
+
+                _logger.LogWarning(
+                    "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    "OpenAI", ex.StatusCode, delay, attempt, _maxRetries);
             }
             catch (Exception ex)
             {
@@ -369,6 +350,13 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
 
         if (!response.IsSuccessStatusCode)
         {
+            if (response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
+            {
+                throw new HttpRequestException(
+                    $"Batch translation using OpenAI API failed with {response.StatusCode}.",
+                    null, response.StatusCode);
+            }
+
             _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
             _logger.LogError("Response Content: {ResponseContent}",
                 await response.Content.ReadAsStringAsync(cancellationToken));

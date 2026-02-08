@@ -205,20 +205,20 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             {
                 return await TranslateBatchWithLocalAiApi(subtitleBatch, linked.Token);
             }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {
                 if (attempt == _maxRetries)
                 {
-                    _logger.LogError(ex, "Too many requests. Max retries exhausted for batch translation");
-                    throw new TranslationException("Too many requests. Retry limit reached.", ex);
+                    _logger.LogError(ex, "Max retries exhausted ({StatusCode}) for batch translation", ex.StatusCode);
+                    throw new TranslationException($"Retry limit reached after {ex.StatusCode}.", ex);
                 }
-
-                _logger.LogWarning(
-                    "429 Too Many Requests. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
-                    delay, attempt, _maxRetries);
 
                 await Task.Delay(delay, linked.Token).ConfigureAwait(false);
                 delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
+
+                _logger.LogWarning(
+                    "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    "LocalAI", ex.StatusCode, delay, attempt, _maxRetries);
             }
             catch (Exception ex)
             {
