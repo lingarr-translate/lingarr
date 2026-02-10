@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
+using Lingarr.Server.Models.FileSystem;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -35,6 +37,35 @@ public abstract class MediaSubtitleProcessorTestBase : IDisposable
             .UseInMemoryDatabase(databaseName: System.Guid.NewGuid().ToString())
             .Options;
         DbContext = new LingarrDbContext(options);
+
+        SubtitleServiceMock
+            .Setup(s => s.SelectSourceSubtitle(
+                It.IsAny<List<Subtitles>>(),
+                It.IsAny<HashSet<string>>(),
+                It.IsAny<string>()))
+            .Returns((List<Subtitles> subs, HashSet<string> sources, string ignoreCaptions) =>
+            {
+                var candidates = subs.Where(s => sources.Contains(s.Language)).ToList();
+                if (!candidates.Any()) return null;
+
+                Subtitles selected;
+                if (ignoreCaptions == "true")
+                {
+                    selected = candidates.FirstOrDefault(s => string.IsNullOrEmpty(s.Caption))
+                               ?? candidates.First();
+                }
+                else
+                {
+                    selected = candidates.First();
+                }
+
+                return new SelectedSourceSubtitle
+                {
+                    Subtitle = selected,
+                    SourceLanguage = selected.Language,
+                    AvailableLanguages = subs.Select(s => s.Language).ToHashSet()
+                };
+            });
 
         Processor = new Lingarr.Server.Services.MediaSubtitleProcessor(
             TranslationRequestServiceMock.Object,
