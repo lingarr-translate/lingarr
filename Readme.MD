@@ -94,7 +94,10 @@ services:
     networks:
       - lingarr
     healthcheck:
-      test: ["CMD-SHELL", "./venv/bin/python scripts/healthcheck.py"]
+      test: "mariadb $$MYSQL_DATABASE -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1;'"
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   lingarr:
