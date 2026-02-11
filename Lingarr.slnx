@@ -1,0 +1,41 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Lingarr.Root/">
+    <File Path=".dockerignore" />
+    <File Path=".gitignore" />
+    <File Path="build-and-push.ps1" />
+    <File Path="CONTRIBUTING.md" />
+    <File Path="create-migrations.ps1" />
+    <File Path="Directory.Packages.props" />
+    <File Path="docker-compose.dev.yml" />
+    <File Path="launchSettings.json" />
+    <File Path="LICENSE" />
+    <File Path="Readme.MD" />
+    <File Path="Settings.MD" />
+  </Folder>
+  <Folder Name="/Lingarr.Root/.github/">
+    <File Path=".github/dependabot.yml" />
+    <File Path=".github/FUNDING.yml" />
+  </Folder>
+  <Folder Name="/Lingarr.Root/.github/ISSUE_TEMPLATE/">
+    <File Path=".github/ISSUE_TEMPLATE/bug_report.yml" />
+    <File Path=".github/ISSUE_TEMPLATE/config.yml" />
+  </Folder>
+  <Folder Name="/Lingarr.Root/.github/workflows/">
+    <File Path=".github/workflows/ci.yml" />
+    <File Path=".github/workflows/docker-build.yml" />
+    <File Path=".github/workflows/pr-comment.yml" />
+  </Folder>
+  <Project Path="Lingarr.Client/Lingarr.Client.esproj">
+    <Build Solution="Release|Any CPU" />
+    <Deploy Solution="Release|Any CPU" />
+  </Project>
+  <Project Path="Lingarr.Core/Lingarr.Core.csproj" />
+  <Project Path="Lingarr.Migrations/Lingarr.Migrations.csproj" />
+  <Project Path="Lingarr.Server.Tests/Lingarr.Server.Tests.csproj" />
+  <Project Path="Lingarr.Server/Lingarr.Server.csproj" />
+</Solution>
