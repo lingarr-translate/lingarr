@@ -1,7 +1,9 @@
 ﻿<template>
     <CardComponent title="Custom Parameters">
         <template #description>
-            Define custom parameters (e.g., temperature, top_p) to include with requests to your custom endpoint. Only modify these if you understand what you're doing, errors can be found in the Docker logs.
+            Define custom parameters (e.g., temperature, top_p) to include with requests to your
+            custom endpoint. Only modify these if you understand what you're doing, errors can be
+            found in the Docker logs.
         </template>
         <template #content>
             <div>
@@ -33,9 +35,7 @@
                 </div>
 
                 <div class="flex justify-end">
-                    <ButtonComponent size="sm"
-                                     variant="accent"
-                                     @click="addParameter">
+                    <ButtonComponent size="sm" variant="accent" @click="addParameter">
                         Add Parameter
                     </ButtonComponent>
                 </div>

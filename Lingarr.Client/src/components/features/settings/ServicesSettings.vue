@@ -6,9 +6,7 @@
         <template #content>
             <SaveNotification ref="saveNotification" />
             <div class="flex flex-col space-y-2">
-                <span class="font-semibold">
-                    Select translation service:
-                </span>
+                <span class="font-semibold">Select translation service:</span>
                 <SelectComponent v-model:selected="serviceType" :options="serviceOptions" />
                 <component
                     :is="serviceConfigComponent"

@@ -1,11 +1,11 @@
 ﻿<template>
     <div class="w-full">
-        <div class="bg-tertiary flex flex-wrap items-center justify-end gap-2 p-4">
+        <div class="flex flex-wrap items-center justify-end gap-2 bg-tertiary p-4">
             <ReloadComponent @toggle:update="scheduleStore.fetchRecurringJobs" />
         </div>
 
         <div class="w-full px-4">
-            <div class="border-accent hidden border-b font-bold md:grid md:grid-cols-12">
+            <div class="hidden border-b border-accent font-bold md:grid md:grid-cols-12">
                 <div class="col-span-5 px-4 py-2">Job Name</div>
                 <div class="col-span-2 px-4 py-2">State</div>
                 <div class="col-span-2 px-4 py-2">Last Execution</div>
@@ -16,7 +16,7 @@
             <div
                 v-for="job in jobs"
                 :key="job.id"
-                class="border-accent border-b md:grid md:grid-cols-12">
+                class="border-b border-accent md:grid md:grid-cols-12">
                 <div class="px-4 py-2 md:col-span-5">
                     <span class="font-bold md:hidden">Job Name:&nbsp;</span>
                     {{ job.id }}
@@ -39,9 +39,7 @@
                 </div>
                 <div class="px-4 py-2 md:col-span-1">
                     <span class="font-bold md:hidden">Actions:&nbsp;</span>
-                    <TriggerJob
-                        title="Run"
-                        @toggle:trigger="scheduleStore.startJob(job.id)" />
+                    <TriggerJob title="Run" @toggle:trigger="scheduleStore.startJob(job.id)" />
                 </div>
             </div>
         </div>

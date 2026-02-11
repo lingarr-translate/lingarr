@@ -1,14 +1,10 @@
 ﻿<template>
     <CardComponent title="Integrations">
-        <template #description>
-            Configure the settings for Radarr and Sonarr integrations.
-        </template>
+        <template #description>Configure the settings for Radarr and Sonarr integrations.</template>
         <template #content>
             <SaveNotification ref="saveNotification" />
             <div class="flex flex-col space-y-2">
-                <span class="font-semibold">
-                    Radarr Settings:
-                </span>
+                <span class="font-semibold">Radarr Settings:</span>
                 <InputComponent
                     v-model="radarrUrl"
                     validation-type="url"
@@ -26,9 +22,7 @@
                     @update:validation="(val) => (isValid.radarrApiKey = val)" />
             </div>
             <div class="flex flex-col space-y-2">
-                <span class="font-semibold">
-                    Sonarr Settings:
-                </span>
+                <span class="font-semibold">Sonarr Settings:</span>
                 <InputComponent
                     v-model="sonarrUrl"
                     validation-type="url"
@@ -46,7 +40,8 @@
                     @update:validation="(val) => (isValid.sonarrApiKey = val)" />
             </div>
             <div>
-                No media visible? Try reindexing by starting a sync task <a href="/settings/tasks" class="underline">here</a>
+                No media visible? Try reindexing by starting a sync task
+                <a href="/settings/tasks" class="underline">here</a>
             </div>
         </template>
     </CardComponent>

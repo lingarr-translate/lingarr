@@ -7,7 +7,8 @@
             </span>
         </div>
         <p class="text-xs">
-            AI translation is very costly in terms of pricing. Only use it when you know what you are doing and make sure automation is disabled.
+            AI translation is very costly in terms of pricing. Only use it when you know what you
+            are doing and make sure automation is disabled.
         </p>
 
         <InputComponent
@@ -19,9 +20,7 @@
             error-message="API Key must be {minLength} characters"
             @update:validation="(val) => (apiKeyIsValid = val)" />
 
-        <label class="mb-1 block text-sm">
-            AI Model
-        </label>
+        <label class="mb-1 block text-sm">AI Model</label>
         <SelectComponent
             ref="selectRef"
             v-model:selected="aiModel"

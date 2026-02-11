@@ -1,7 +1,8 @@
 ﻿<template>
     <CardComponent title="Subtitle">
         <template #description>
-            Configure how subtitles are cleaned, and timed to prevent overlaps and remove unwanted formatting.
+            Configure how subtitles are cleaned, and timed to prevent overlaps and remove unwanted
+            formatting.
         </template>
         <template #content>
             <div class="flex flex-col space-y-4">
@@ -10,71 +11,65 @@
                     <span class="font-semibold">
                         Skip translation if subtitles with caption tags exist:
                     </span>
-                    Skip translation if a target subtitle with captions such as Hearing Impaired or Forced already exists.
+                    Skip translation if a target subtitle with captions such as Hearing Impaired or
+                    Forced already exists.
                 </div>
                 <ToggleButton v-model="ignoreCaptions">
-                    <span class="text-primary-content text-sm font-medium">
+                    <span class="text-sm font-medium text-primary-content">
                         {{ ignoreCaptions == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
 
                 <div class="flex flex-col space-x-2">
-                    <span class="font-semibold">
-                        Fix overlapping subtitles:
-                    </span>
-                    Automatically resolves overlapping subtitles by adjusting the timing of the previous, current and next subtitle based on text length.
+                    <span class="font-semibold">Fix overlapping subtitles:</span>
+                    Automatically resolves overlapping subtitles by adjusting the timing of the
+                    previous, current and next subtitle based on text length.
                 </div>
                 <ToggleButton v-model="fixOverlappingSubtitles">
-                    <span class="text-primary-content text-sm font-medium">
+                    <span class="text-sm font-medium text-primary-content">
                         {{ fixOverlappingSubtitles == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
 
                 <div class="flex flex-col space-x-2">
-                    <span class="font-semibold">
-                        Strip subtitle formatting:
-                    </span>
-                    Enable this option to remove all formatting tags (e.g., italics, bold, color, position) from (SRT) subtitles, resulting in plain text subtitles.
+                    <span class="font-semibold">Strip subtitle formatting:</span>
+                    Enable this option to remove all formatting tags (e.g., italics, bold, color,
+                    position) from (SRT) subtitles, resulting in plain text subtitles.
                 </div>
                 <ToggleButton v-model="stripSubtitleFormatting">
-                    <span class="text-primary-content text-sm font-medium">
+                    <span class="text-sm font-medium text-primary-content">
                         {{ stripSubtitleFormatting == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
 
                 <div class="flex flex-col space-x-2">
-                    <span class="font-semibold">
-                        Add translator info
-                    </span>
+                    <span class="font-semibold">Add translator info</span>
                     Add translator info at the beginning of subtitles.
                 </div>
                 <ToggleButton v-model="addTranslatorInfo">
-                    <span class="text-primary-content text-sm font-medium">
+                    <span class="text-sm font-medium text-primary-content">
                         {{ addTranslatorInfo == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
 
                 <div class="flex flex-col space-x-2">
-                    <span class="font-semibold">
-                        Remove language tag
-                    </span>
+                    <span class="font-semibold">Remove language tag</span>
                     Remove language tags (e.g., ".en.") from file names.
                 </div>
                 <ToggleButton v-model="removeLanguageTag">
-                    <span class="text-primary-content text-sm font-medium">
+                    <span class="text-sm font-medium text-primary-content">
                         {{ removeLanguageTag == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
 
                 <div class="flex flex-col space-y-4">
                     <div class="flex flex-col space-x-2">
-                        <span class="font-semibold">
-                            Use subtitle tagging
-                        </span>
-                        Add a custom tag or text to the subtitle file to identify it as translated by Lingarr.
+                        <span class="font-semibold">Use subtitle tagging</span>
+                        Add a custom tag or text to the subtitle file to identify it as translated
+                        by Lingarr.
                     </div>
                     <ToggleButton v-model="useSubtitleTagging">
-                        <span class="text-primary-content text-sm font-medium">
+                        <span class="text-sm font-medium text-primary-content">
                             {{ useSubtitleTagging == 'true' ? 'Enabled' : 'Disabled' }}
                         </span>
                     </ToggleButton>

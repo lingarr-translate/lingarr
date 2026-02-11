@@ -1,6 +1,6 @@
 ﻿<template>
     <div
-        :class="[`${instanceStore.getTheme}`, 'bg-primary text-primary-content flex min-h-screen']">
+        :class="[`${instanceStore.getTheme}`, 'flex min-h-screen bg-primary text-primary-content']">
         <div class="flex w-full flex-col drop-shadow-xl">
             <!-- Main Content -->
             <main class="flex-1">
