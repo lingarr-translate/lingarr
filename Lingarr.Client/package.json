@@ -7,7 +7,7 @@
         "dev": "vite",
         "build": "vue-tsc --noEmit && vite build",
         "preview": "vite preview",
-        "format": "prettier ./src  --write"
+        "format": "oxfmt ./src"
     },
     "dependencies": {
         "@microsoft/signalr": "^10.0.0",
@@ -28,10 +28,8 @@
         "@vitejs/plugin-vue": "^6.0.3",
         "eslint": "9.39.2",
         "eslint-config-prettier": "^10.1.8",
-        "eslint-plugin-prettier": "^5.5.5",
         "eslint-plugin-vue": "^10.7.0",
-        "prettier": "^3.8.1",
-        "prettier-plugin-tailwindcss": "^0.7.2",
+        "oxfmt": "^0.28.0",
         "tailwindcss": "^4.1.17",
         "typescript": "^5.9.3",
         "vite": "^7.3.1",
