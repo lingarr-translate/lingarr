@@ -7,8 +7,17 @@
         label="API key"
         error-message="API Key must be {minLength} characters"
         @update:validation="(val) => (isValid = val)" />
-    <div class="pt-2 text-xs" >
-        Please note that DeepL has <a href="https://developers.deepl.com/docs/resources/usage-limits" class="underline" target="_blank">usage limits</a> and rate limits. A single subtitle file typically contains between 60,000 and 120,000 characters. To avoid exceeding these limits, it's recommended to keep automated translation disabled.
+    <div class="pt-2 text-xs">
+        Please note that DeepL has
+        <a
+            href="https://developers.deepl.com/docs/resources/usage-limits"
+            class="underline"
+            target="_blank">
+            usage limits
+        </a>
+        and rate limits. A single subtitle file typically contains between 60,000 and 120,000
+        characters. To avoid exceeding these limits, it's recommended to keep automated translation
+        disabled.
     </div>
 </template>
 

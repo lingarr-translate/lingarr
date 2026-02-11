@@ -7,12 +7,16 @@
             </p>
         </div>
 
-        <StatusMessage type="success" message="No personal information, file names, or subtitle content is ever collected." />
+        <StatusMessage
+            type="success"
+            message="No personal information, file names, or subtitle content is ever collected." />
 
         <div class="flex flex-col space-y-4">
             <span class="text-sm">Example of telemetry data:</span>
-            <div class="bg-primary rounded-md p-4">
-                <pre class="overflow-x-auto rounded-md p-4 text-xs">{{ JSON.stringify(previewData, null, 2) }}</pre>
+            <div class="rounded-md bg-primary p-4">
+                <pre class="overflow-x-auto rounded-md p-4 text-xs">{{
+                    JSON.stringify(previewData, null, 2)
+                }}</pre>
             </div>
         </div>
     </div>

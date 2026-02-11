@@ -1,23 +1,20 @@
 ﻿<template>
     <CardComponent title="Indexing">
         <template #description>
-            The media indexing schedule controls the iteration with which Lingarr should sync with Sonarr and Radarr.
+            The media indexing schedule controls the iteration with which Lingarr should sync with
+            Sonarr and Radarr.
         </template>
         <template #content>
             <SaveNotification ref="saveNotification" />
             <div class="flex flex-col space-y-2 pb-4">
-                <span class="font-semibold">
-                    Set movie indexer:
-                </span>
+                <span class="font-semibold">Set movie indexer:</span>
                 <InputComponent
                     v-model="movieSchedule"
                     label="Cron format: minute hour day month weekday (e.g., '0 * * * *' for hourly)"
                     :placeholder="'0 * * * *'"
                     validation-type="cron"
                     @update:validation="(val) => (movieScheduleIsValid = val)" />
-                <span class="font-semibold">
-                    Set tv show indexer:
-                </span>
+                <span class="font-semibold">Set tv show indexer:</span>
                 <InputComponent
                     v-model="showSchedule"
                     label="Cron format: minute hour day month weekday (e.g., '0 * * * *' for hourly)"
@@ -30,7 +27,8 @@
 
     <CardComponent title="Automation">
         <template #description>
-            Set up automation. Note that if automation is implemented, you also need to configure the necessary
+            Set up automation. Note that if automation is implemented, you also need to configure
+            the necessary
             <a class="cursor-pointer underline" @click="router.push({ name: 'services-settings' })">
                 services
             </a>
@@ -41,15 +39,13 @@
                 <div class="flex items-center space-x-2">
                     <span>Automated translation:</span>
                     <ToggleButton v-model="automationEnabled">
-                        <span class="text-primary-content text-sm font-medium">
+                        <span class="text-sm font-medium text-primary-content">
                             {{ automationEnabled === 'true' ? 'Enabled' : 'Disabled' }}
                         </span>
                     </ToggleButton>
                 </div>
 
-                <span class="font-semibold">
-                    Set translation schedule:
-                </span>
+                <span class="font-semibold">Set translation schedule:</span>
                 <InputComponent
                     v-model="translationSchedule"
                     label="Cron format: minute hour day month weekday (e.g., '0 * * * *' for hourly)"
@@ -57,9 +53,7 @@
                     validation-type="cron"
                     @update:validation="(val) => (translationScheduleIsValid = val)" />
 
-                <span class="font-semibold">
-                    Limits:
-                </span>
+                <span class="font-semibold">Limits:</span>
                 <InputComponent
                     v-model="maxTranslationsPerRun"
                     input-type="number"
@@ -68,9 +62,7 @@
                     label="Limit the amount of translations per schedule"
                     @update:validation="(val) => (maxTranslationsPerRunIsValid = val)" />
 
-                <span class="font-semibold">
-                    Default file age delay for translation:
-                </span>
+                <span class="font-semibold">Default file age delay for translation:</span>
                 <InputComponent
                     v-model="movieAgeThreshold"
                     input-type="number"

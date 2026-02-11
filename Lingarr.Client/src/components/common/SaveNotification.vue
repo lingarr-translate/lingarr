@@ -1,7 +1,7 @@
 ﻿<template>
     <div
         v-if="isSaved"
-        class="absolute top-2 right-2 flex items-center rounded-full bg-green-500 px-2 py-1 text-xs font-bold text-white">
+        class="absolute right-2 top-2 flex items-center rounded-full bg-green-500 px-2 py-1 text-xs font-bold text-white">
         <svg
             class="mr-1 h-4 w-4"
             viewBox="0 0 24 24"

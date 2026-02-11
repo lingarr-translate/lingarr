@@ -60,7 +60,9 @@
                         </div>
 
                         <ButtonComponent
-                            v-if="onboardingStore.currentStep < lastStep && stepType !== 'telemetry'"
+                            v-if="
+                                onboardingStore.currentStep < lastStep && stepType !== 'telemetry'
+                            "
                             variant="accent"
                             :disabled="loading || !canProceed"
                             :loading="loading"
@@ -199,7 +201,6 @@ const completeSetup = async () => {
         onboardingStore.resetOnboarding()
         await settingStore.applySettingsOnLoad()
         router.push('/')
-
     } catch (err: any) {
         console.error('Onboarding error:', err)
         error.value = err?.data?.message || 'An error occurred during setup. Please try again.'

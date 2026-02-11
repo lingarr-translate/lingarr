@@ -7,10 +7,10 @@
                     :key="release.date"
                     class="group relative pl-6"
                     :class="{ 'pb-8': index !== changelog.length - 1 }">
-                    <div class="absolute top-0 left-0 h-full">
-                        <div class="bg-accent absolute top-0 left-0 -ml-px h-full w-[2px]" />
+                    <div class="absolute left-0 top-0 h-full">
+                        <div class="absolute left-0 top-0 -ml-px h-full w-[2px] bg-accent" />
                         <div
-                            class="border-accent bg-primary absolute top-0 left-0 -ml-2 h-4 w-4 rounded-full border-2" />
+                            class="absolute left-0 top-0 -ml-2 h-4 w-4 rounded-full border-2 border-accent bg-primary" />
                     </div>
 
                     <div class="space-y-3">
@@ -36,7 +36,7 @@
                             </time>
                             <span
                                 v-if="release.version"
-                                class="border-accent bg-primary inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium">
+                                class="inline-flex items-center rounded-full border border-accent bg-primary px-2.5 py-0.5 text-xs font-medium">
                                 v{{ release.version }}
                             </span>
                         </div>
@@ -50,7 +50,7 @@
                                 v-for="(change, changeIndex) in release.changes"
                                 :key="changeIndex"
                                 class="flex items-start">
-                                <span class="bg-accent mt-2 mr-2 h-1 w-1 shrink-0 rounded-full" />
+                                <span class="mr-2 mt-2 h-1 w-1 shrink-0 rounded-full bg-accent" />
                                 <span v-highlight class="flex-1">{{ change }}</span>
                             </li>
                         </ul>

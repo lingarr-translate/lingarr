@@ -29,14 +29,16 @@
                 placeholder: '{contextBefore}',
                 placeholderText: 'insert {contextBefore}',
                 title: 'Context',
-                description: 'Subtitles before the provided subtitle line that can be used as context',
+                description:
+                    'Subtitles before the provided subtitle line that can be used as context',
                 required: false
             },
             {
                 placeholder: '{contextAfter}',
                 placeholderText: 'insert {contextAfter}',
                 title: 'Context',
-                description: 'Subtitles after the provided subtitle line that can be used as context',
+                description:
+                    'Subtitles after the provided subtitle line that can be used as context',
                 required: false
             }
         ]"

@@ -1,6 +1,6 @@
 ﻿<template>
     <div v-if="settingsCompleted === 'true'" class="w-full">
-        <div class="bg-tertiary flex flex-wrap items-center justify-between gap-2 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
             <SearchComponent v-model="filter" />
             <div
                 class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:items-center md:justify-between md:space-x-2">
@@ -35,19 +35,15 @@
 
         <div class="w-full px-4">
             <!-- Shows -->
-            <div class="border-accent grid grid-cols-12 border-b font-bold">
+            <div class="grid grid-cols-12 border-b border-accent font-bold">
                 <div :class="isSelectMode ? 'col-span-7' : 'col-span-8'" class="px-4 py-2">
                     Title
                 </div>
                 <div class="col-span-1 px-4 py-2">
-                    <span class="hidden md:block">
-                        Exclude
-                    </span>
+                    <span class="hidden md:block">Exclude</span>
                     <span class="block md:hidden">⊘</span>
                 </div>
-                <div class="col-span-1 px-4 py-2">
-                    Delay
-                </div>
+                <div class="col-span-1 px-4 py-2">Delay</div>
                 <div class="col-span-2 flex justify-end px-4 py-2">
                     <ReloadComponent @toggle:update="showStore.fetch()" />
                 </div>
@@ -61,7 +57,7 @@
             </div>
             <div v-for="item in shows.items" :key="item.id">
                 <div
-                    class="border-accent grid cursor-pointer grid-cols-12 border-b"
+                    class="grid cursor-pointer grid-cols-12 border-b border-accent"
                     @click="toggleShow(item)">
                     <div
                         :class="isSelectMode ? 'col-span-7' : 'col-span-8'"
@@ -95,9 +91,7 @@
                         class="col-span-1 flex items-center justify-center px-4 py-2"
                         @click.stop>
                         <CheckboxComponent
-                            :model-value="
-                                showStore.selectedShows.some((s) => s.id === item.id)
-                            "
+                            :model-value="showStore.selectedShows.some((s) => s.id === item.id)"
                             @change="showStore.toggleSelect(item)" />
                     </div>
                 </div>
@@ -181,12 +175,14 @@ const toggleSelectMode = () => {
 
 const getSubtitle = (subtitles: ISubtitle[], fileName: string | null) => {
     if (!fileName) return null
-    return subtitles.find(
-        (subtitle: ISubtitle) =>
-            subtitle.fileName.toLocaleLowerCase().includes(fileName.toLocaleLowerCase()) &&
-            subtitle.language &&
-            subtitle.language.trim() !== ''
-    ) ?? null
+    return (
+        subtitles.find(
+            (subtitle: ISubtitle) =>
+                subtitle.fileName.toLocaleLowerCase().includes(fileName.toLocaleLowerCase()) &&
+                subtitle.language &&
+                subtitle.language.trim() !== ''
+        ) ?? null
+    )
 }
 
 const handleTranslate = async (language: ILanguage) => {

@@ -8,7 +8,7 @@
         leave-to-class="opacity-0">
         <div
             v-if="isVisible"
-            class="ring-opacity-5 pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg ring-1 shadow-lg ring-black">
+            class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg shadow-lg ring-1 ring-black ring-opacity-5">
             <div class="p-4">
                 <div class="flex items-start">
                     <div class="shrink-0">

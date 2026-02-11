@@ -1,6 +1,6 @@
 ﻿<template>
-    <div class="bg-secondary w-full p-4">
-        <div class="border-secondary bg-primary text-secondary-content mb-4 border-b-2 font-bold">
+    <div class="w-full bg-secondary p-4">
+        <div class="mb-4 border-b-2 border-secondary bg-primary font-bold text-secondary-content">
             <div class="flex items-center justify-between px-4 py-3">
                 <h1 class="text-xl">System Logs</h1>
                 <div class="flex items-center space-x-3">
@@ -8,7 +8,7 @@
                     <div class="flex items-center space-x-4">
                         <select
                             v-model="filterOptions.logLevel"
-                            class="bg-secondary text-accent-content border-secondary rounded border px-2 py-1 text-sm">
+                            class="rounded border border-secondary bg-secondary px-2 py-1 text-sm text-accent-content">
                             <option value="all">All Levels</option>
                             <option value="information">Information</option>
                             <option value="warning">Warning</option>
@@ -18,18 +18,14 @@
 
                     <div class="flex space-x-2">
                         <button
-                            class="bg-accent hover:bg-accent/80 cursor-pointer rounded px-3 py-1 text-sm font-medium text-white transition"
+                            class="hover:bg-accent/80 cursor-pointer rounded bg-accent px-3 py-1 text-sm font-medium text-white transition"
                             @click="exportLogs">
                             Export
                         </button>
                         <button
                             class="bg-warning hover:bg-warning/80 cursor-pointer rounded px-3 py-1 text-sm font-medium text-white transition"
                             @click="toggleAutoScroll">
-                            {{
-                                autoScroll
-                                    ? 'Disable Auto-scroll'
-                                    : 'Enable Auto-scroll'
-                            }}
+                            {{ autoScroll ? 'Disable Auto-scroll' : 'Enable Auto-scroll' }}
                         </button>
                         <button
                             class="bg-error hover:bg-error/80 cursor-pointer rounded px-3 py-1 text-sm font-medium text-white transition"
@@ -42,24 +38,16 @@
         </div>
 
         <div
-            class="border-secondary bg-primary text-secondary-content grid grid-cols-12 border-b-2 font-bold">
-            <div class="col-span-1 px-4 py-2">
-                Time
-            </div>
-            <div class="col-span-1 px-4 py-2">
-                Level
-            </div>
-            <div class="col-span-3 px-4 py-2">
-                Source
-            </div>
-            <div class="col-span-5 px-4 py-2 md:col-span-7">
-                Message
-            </div>
+            class="grid grid-cols-12 border-b-2 border-secondary bg-primary font-bold text-secondary-content">
+            <div class="col-span-1 px-4 py-2">Time</div>
+            <div class="col-span-1 px-4 py-2">Level</div>
+            <div class="col-span-3 px-4 py-2">Source</div>
+            <div class="col-span-5 px-4 py-2 md:col-span-7">Message</div>
         </div>
 
         <div
             ref="logContainer"
-            class="bg-primary text-accent-content h-[70vh] overflow-y-auto font-mono text-sm">
+            class="h-[70vh] overflow-y-auto bg-primary font-mono text-sm text-accent-content">
             <div v-if="filteredLogs.length === 0" class="flex h-full items-center justify-center">
                 <div class="text-center text-gray-500">
                     <div class="mb-2 text-lg">📋</div>
@@ -91,7 +79,7 @@
 
                 <div
                     v-if="log.stackTrace"
-                    class="border-secondary/30 bg-error/5 ml-6 border-b py-2 pr-4 pl-12 text-xs">
+                    class="border-secondary/30 bg-error/5 ml-6 border-b py-2 pl-12 pr-4 text-xs">
                     <pre class="whitespace-pre-wrap">{{ log.stackTrace }}</pre>
                 </div>
             </div>
@@ -99,7 +87,7 @@
 
         <!-- Footer Stats -->
         <div
-            class="border-secondary bg-primary text-secondary-content mt-4 flex justify-between border-t-2 px-4 py-2 text-sm">
+            class="mt-4 flex justify-between border-t-2 border-secondary bg-primary px-4 py-2 text-sm text-secondary-content">
             <div>Total entries: {{ filteredLogs.length }}</div>
             <div>
                 Auto-scroll:

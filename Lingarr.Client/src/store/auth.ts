@@ -28,7 +28,11 @@ export const useAuthStore = defineStore('auth', {
 
             // new users, password is required
             if (state.isCreating) {
-                if (!state.editPassword || !state.isPasswordValid || !state.isConfirmPasswordValid) {
+                if (
+                    !state.editPassword ||
+                    !state.isPasswordValid ||
+                    !state.isConfirmPasswordValid
+                ) {
                     return false
                 }
                 if (state.editPassword !== state.editConfirmPassword) {
@@ -97,7 +101,7 @@ export const useAuthStore = defineStore('auth', {
                     // Updating a user
                     await services.auth.updateUser(this.editingUserId!, {
                         username: this.editUsername,
-                        password: this.editPassword,
+                        password: this.editPassword
                     })
                     this.success = 'User updated successfully'
                 }
@@ -110,7 +114,9 @@ export const useAuthStore = defineStore('auth', {
                 await this.loadUsers()
             } catch (err: any) {
                 console.error('Error saving user:', err)
-                this.error = err?.data?.message || (this.isCreating ? 'Failed to create user' : 'Failed to update user')
+                this.error =
+                    err?.data?.message ||
+                    (this.isCreating ? 'Failed to create user' : 'Failed to update user')
             } finally {
                 this.loading = false
             }
