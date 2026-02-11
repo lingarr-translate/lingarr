@@ -1,7 +1,7 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { IOnboardingStore } from '@/ts'
 
-export const useOnboardingStore = defineStore('onboarding',{
+export const useOnboardingStore = defineStore('onboarding', {
     state: (): IOnboardingStore => ({
         enableAuth: 'false',
         enableTelemetry: 'false',

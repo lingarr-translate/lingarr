@@ -1,19 +1,18 @@
 ﻿<template>
     <CardComponent title="Subtitle Validation">
         <template #description>
-            Configure validation rules for subtitles. These rules will be applied when processing subtitle files. If a validation fails, the translation will be canceled.
+            Configure validation rules for subtitles. These rules will be applied when processing
+            subtitle files. If a validation fails, the translation will be canceled.
         </template>
         <template #content>
             <div class="flex flex-col space-y-4">
                 <SaveNotification ref="saveNotification" />
 
                 <div class="flex flex-col space-x-2">
-                    <span class="font-semibold">
-                        Enable validation:
-                    </span>
+                    <span class="font-semibold">Enable validation:</span>
                 </div>
                 <ToggleButton v-model="validationEnabled">
-                    <span class="text-primary-content text-sm font-medium">
+                    <span class="text-sm font-medium text-primary-content">
                         {{ validationEnabled == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
@@ -27,25 +26,25 @@
                     <div class="flex flex-wrap gap-2">
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="minDurationMs = '100'">
                             0.2s
                         </button>
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="minDurationMs = '500'">
                             0.5s
                         </button>
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="minDurationMs = '1000'">
                             1s
                         </button>
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="minDurationMs = '1500'">
                             1.5s
                         </button>
@@ -82,25 +81,25 @@
                     <div class="flex flex-wrap gap-2">
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="maxFileSizeBytes = (512 * 1024).toString()">
                             0.5 KB
                         </button>
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="maxFileSizeBytes = (1024 * 1024).toString()">
                             1 MB
                         </button>
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="maxFileSizeBytes = (1.5 * 1024 * 1024).toString()">
                             1.5 MB
                         </button>
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="maxFileSizeBytes = (2 * 1024 * 1024).toString()">
                             2 MB
                         </button>

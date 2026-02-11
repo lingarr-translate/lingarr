@@ -1,6 +1,6 @@
 ﻿<template>
     <div class="w-full">
-        <div class="bg-tertiary flex items-center justify-between gap-2 p-4">
+        <div class="flex items-center justify-between gap-2 bg-tertiary p-4">
             Source mapping
             <div class="flex space-x-4">
                 <button
@@ -14,7 +14,7 @@
         </div>
 
         <div class="w-full px-4">
-            <div class="border-accent hidden border-b font-bold md:grid md:grid-cols-12">
+            <div class="hidden border-b border-accent font-bold md:grid md:grid-cols-12">
                 <div class="col-span-4 px-4 py-2">Source</div>
                 <div class="col-span-4 px-4 py-2">Target</div>
                 <div class="col-span-3 px-4 py-2">Media Type</div>
@@ -23,7 +23,7 @@
             <div
                 v-for="(pair, index) in mappingStore.mappings"
                 :key="`pair-${index}`"
-                class="md:border-accent rounded-lg py-4 shadow-sm md:grid md:grid-cols-12 md:rounded-none md:border-b md:bg-transparent md:p-0 md:shadow-none">
+                class="rounded-lg py-4 shadow-sm md:grid md:grid-cols-12 md:rounded-none md:border-b md:border-accent md:bg-transparent md:p-0 md:shadow-none">
                 <div class="float-right md:hidden">
                     <TimesIcon
                         class="h-5 w-5 cursor-pointer text-red-500 transition duration-300 hover:text-red-600"
@@ -36,7 +36,7 @@
                         :class="{
                             'justify-between': pair.sourcePath
                         }">
-                        <span v-if="pair.sourcePath" class="bg-secondary rounded-md px-2 py-1">
+                        <span v-if="pair.sourcePath" class="rounded-md bg-secondary px-2 py-1">
                             {{ pair.sourcePath }}
                         </span>
 
@@ -57,7 +57,7 @@
                         :class="{
                             'justify-between': pair.destinationPath
                         }">
-                        <span v-if="pair.destinationPath" class="bg-secondary rounded-md px-2 py-1">
+                        <span v-if="pair.destinationPath" class="rounded-md bg-secondary px-2 py-1">
                             {{ pair.destinationPath }}
                         </span>
                         <div

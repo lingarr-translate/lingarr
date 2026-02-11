@@ -4,18 +4,18 @@
         <template #content>
             <div v-for="(item, index) in roadmapItems" :key="index" class="flex justify-center">
                 <div
-                    class="mt-2 mr-4 h-4 w-4"
+                    class="mr-4 mt-2 h-4 w-4"
                     :class="{
                         'brightness-50': item.fade
                     }">
                     <component
                         :is="item.icon"
                         v-if="item.icon"
-                        class="text-primary-content h-4 w-4" />
+                        class="h-4 w-4 text-primary-content" />
                 </div>
                 <div class="grow">
                     <h3
-                        class="text-md text-primary-content font-semibold"
+                        class="text-md font-semibold text-primary-content"
                         :class="{
                             'brightness-50': item.fade
                         }">
@@ -29,7 +29,7 @@
                         {{ item.description }}
                     </p>
                     <p
-                        class="text-tertiary-content mt-1 text-xs"
+                        class="mt-1 text-xs text-tertiary-content"
                         :class="{
                             'brightness-50': item.fade
                         }">

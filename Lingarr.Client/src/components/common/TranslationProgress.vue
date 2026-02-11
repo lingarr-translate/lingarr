@@ -1,9 +1,9 @@
 ﻿<template>
     <div class="relative grow select-none" :title="`${progress}%`">
         <div
-            class="bg-secondary h-2 w-full overflow-hidden rounded-full brightness-125 select-none">
+            class="h-2 w-full select-none overflow-hidden rounded-full bg-secondary brightness-125">
             <div
-                class="h-full rounded-full bg-linear-to-r from-blue-500 to-purple-500 transition-all duration-1000 ease-out select-none"
+                class="bg-linear-to-r h-full select-none rounded-full from-blue-500 to-purple-500 transition-all duration-1000 ease-out"
                 :style="{ width: `${progress}%` }"></div>
         </div>
     </div>

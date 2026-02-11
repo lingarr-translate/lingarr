@@ -15,7 +15,7 @@
             <ValidationIcon
                 :is-valid="isValid"
                 :is-invalid="isInvalid"
-                class="absolute top-3 right-3" />
+                class="absolute right-3 top-3" />
         </div>
         <p v-if="missingPlaceholders.length > 0" class="mt-1 text-sm text-red-600">
             Required placeholders missing: {{ missingPlaceholders.join(' and ') }}

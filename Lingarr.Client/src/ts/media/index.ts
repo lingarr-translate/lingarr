@@ -142,5 +142,5 @@ export type TranslationStatus = (typeof TRANSLATION_STATUS)[keyof typeof TRANSLA
 export enum TRANSLATION_ACTIONS {
     CANCEL,
     REMOVE,
-    RETRY,
+    RETRY
 }

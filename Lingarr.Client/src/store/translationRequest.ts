@@ -5,7 +5,8 @@ import {
     IRequestProgress,
     ITranslationRequest,
     IUseTranslationRequestStore,
-    TRANSLATION_STATUS, TranslationStatus
+    TRANSLATION_STATUS,
+    TranslationStatus
 } from '@/ts'
 import services from '@/services'
 
@@ -85,8 +86,10 @@ export const useTranslationRequestStore = defineStore('translateRequest', {
             this.translationRequests.items = this.translationRequests.items.map(
                 (request: ITranslationRequest) => {
                     if (request.id === requestProgress.id) {
-                        if (completionStatuses.includes(request.status)
-                            && !completionStatuses.includes(requestProgress.status)) {
+                        if (
+                            completionStatuses.includes(request.status) &&
+                            !completionStatuses.includes(requestProgress.status)
+                        ) {
                             return request
                         }
                         return {

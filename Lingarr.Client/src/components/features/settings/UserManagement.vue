@@ -20,15 +20,18 @@
                     <LoaderCircleIcon class="h-8 w-8 animate-spin" />
                 </div>
 
-                <div >
-                    <div class="border-accent grid grid-cols-12 border-b font-bold">
-                        <div class="col-span-7 md:col-span-4 px-4 py-2">Username</div>
-                        <div class="col-span-3 hidden md:block px-4 py-2">Last Login</div>
-                        <div class="col-span-2 md:col-span-5 flex justify-end px-4 py-2">Actions</div>
+                <div>
+                    <div class="grid grid-cols-12 border-b border-accent font-bold">
+                        <div class="col-span-7 px-4 py-2 md:col-span-4">Username</div>
+                        <div class="col-span-3 hidden px-4 py-2 md:block">Last Login</div>
+                        <div class="col-span-2 flex justify-end px-4 py-2 md:col-span-5">
+                            Actions
+                        </div>
                     </div>
                     <div v-if="authStore.isCreatingUser">
-                        <div class="border-accent grid grid-cols-12 border-b hover:bg-accent/5 bg-accent/10">
-                            <div class="col-span-7 md:col-span-4 px-4 py-2 flex items-center">
+                        <div
+                            class="hover:bg-accent/5 bg-accent/10 grid grid-cols-12 border-b border-accent">
+                            <div class="col-span-7 flex items-center px-4 py-2 md:col-span-4">
                                 <div class="w-full">
                                     <InputComponent
                                         id="newUsername"
@@ -40,10 +43,12 @@
                                         @update:validation="authStore.setUsernameValidation" />
                                 </div>
                             </div>
-                            <div class="col-span-3 hidden md:flex items-center px-4 py-2 text-sm text-gray-400">
+                            <div
+                                class="col-span-3 hidden items-center px-4 py-2 text-sm text-gray-400 md:flex">
                                 -
                             </div>
-                            <div class="col-span-2 md:col-span-5 flex items-center justify-end gap-2 px-4 py-2">
+                            <div
+                                class="col-span-2 flex items-center justify-end gap-2 px-4 py-2 md:col-span-5">
                                 <ButtonComponent
                                     variant="accent"
                                     size="xs"
@@ -62,7 +67,7 @@
                                 </ButtonComponent>
                             </div>
                         </div>
-                        <div class="border-accent grid grid-cols-1 border-b bg-accent/5">
+                        <div class="bg-accent/5 grid grid-cols-1 border-b border-accent">
                             <div class="col-span-1 px-4 py-2">
                                 <div class="space-y-2">
                                     <InputComponent
@@ -85,15 +90,17 @@
                                         validation-type="string"
                                         :min-length="4"
                                         error-message="Password must be at least 4 characters long and match"
-                                        @update:validation="authStore.setConfirmPasswordValidation" />
+                                        @update:validation="
+                                            authStore.setConfirmPasswordValidation
+                                        " />
                                 </div>
                             </div>
                         </div>
                     </div>
                     <!-- Existing Users -->
                     <div v-for="user in authStore.users" :key="user.id">
-                        <div class="border-accent grid grid-cols-12 border-b hover:bg-accent/5">
-                            <div class="col-span-7 md:col-span-4 px-4 py-2 flex items-center">
+                        <div class="hover:bg-accent/5 grid grid-cols-12 border-b border-accent">
+                            <div class="col-span-7 flex items-center px-4 py-2 md:col-span-4">
                                 <div v-if="authStore.editingUserId === user.id" class="w-full">
                                     <InputComponent
                                         id="editUsername"
@@ -106,10 +113,12 @@
                                 </div>
                                 <span v-else class="text-sm">{{ user.username }}</span>
                             </div>
-                            <div class="col-span-3 hidden md:flex items-center px-4 py-2 text-sm whitespace-nowrap">
+                            <div
+                                class="col-span-3 hidden items-center whitespace-nowrap px-4 py-2 text-sm md:flex">
                                 {{ user.lastLoginAt ? formatDate(user.lastLoginAt) : 'Never' }}
                             </div>
-                            <div class="col-span-2 md:col-span-5 flex items-center justify-end gap-2 px-4 py-2">
+                            <div
+                                class="col-span-2 flex items-center justify-end gap-2 px-4 py-2 md:col-span-5">
                                 <template v-if="authStore.editingUserId === user.id">
                                     <ButtonComponent
                                         variant="accent"
@@ -147,7 +156,9 @@
                                 </template>
                             </div>
                         </div>
-                        <div v-if="authStore.editingUserId === user.id" class="border-accent grid grid-cols-1 border-b bg-accent/5">
+                        <div
+                            v-if="authStore.editingUserId === user.id"
+                            class="bg-accent/5 grid grid-cols-1 border-b border-accent">
                             <div class="col-span-1 px-4 py-2">
                                 <div class="space-y-2">
                                     <InputComponent
@@ -170,13 +181,17 @@
                                         validation-type="string"
                                         :min-length="4"
                                         error-message="Password must be at least 4 characters long and match"
-                                        @update:validation="authStore.setConfirmPasswordValidation" />
+                                        @update:validation="
+                                            authStore.setConfirmPasswordValidation
+                                        " />
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div if="authStore.users.length === 0 && !authStore.createUser" class="text-center text-gray-400 py-8">
+                    <div
+                        if="authStore.users.length === 0 && !authStore.createUser"
+                        class="py-8 text-center text-gray-400">
                         No users found
                     </div>
                 </div>

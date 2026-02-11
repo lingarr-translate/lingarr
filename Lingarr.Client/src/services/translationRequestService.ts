@@ -81,7 +81,7 @@ const service = (
                 .catch((error: AxiosError) => {
                     reject(error.response)
                 })
-        });
+        })
     }
 })
 

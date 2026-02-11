@@ -7,18 +7,14 @@
             <SaveNotification ref="saveNotification" />
 
             <div class="flex flex-col space-x-2">
-                <span class="font-semibold">
-                    Use batch translation
-                </span>
-                Process multiple subtitle lines together in batches to improve translation efficiency and context awareness. Note that single-line translations with context are still more reliable and of higher quality.
+                <span class="font-semibold">Use batch translation</span>
+                Process multiple subtitle lines together in batches to improve translation
+                efficiency and context awareness. Note that single-line translations with context
+                are still more reliable and of higher quality.
             </div>
             <ToggleButton v-model="useBatchTranslation">
-                <span class="text-primary-content text-sm font-medium">
-                    {{
-                        useBatchTranslation == 'true'
-                            ? 'Enabled'
-                            : 'Disabled'
-                    }}
+                <span class="text-sm font-medium text-primary-content">
+                    {{ useBatchTranslation == 'true' ? 'Enabled' : 'Disabled' }}
                 </span>
             </ToggleButton>
             <InputComponent
@@ -28,9 +24,7 @@
                 @update:validation="(val) => (isValid.maxBatchSize = val)" />
 
             <div class="flex flex-col space-x-2">
-                <span class="font-semibold">
-                    Max translation retries:
-                </span>
+                <span class="font-semibold">Max translation retries:</span>
                 Maximum number of retries per line or batch.
             </div>
             <InputComponent
@@ -39,9 +33,7 @@
                 @update:validation="(val) => (isValid.maxRetries = val)" />
 
             <div class="flex flex-col space-x-2">
-                <span class="font-semibold">
-                    Delay between retries:
-                </span>
+                <span class="font-semibold">Delay between retries:</span>
                 Initial delay before retrying, in seconds.
             </div>
             <InputComponent
@@ -50,9 +42,7 @@
                 @update:validation="(val) => (isValid.retryDelay = val)" />
 
             <div class="flex flex-col space-x-2">
-                <span class="font-semibold">
-                    Retry delay multiplier:
-                </span>
+                <span class="font-semibold">Retry delay multiplier:</span>
                 Factor by which the delay increases after each retry.
             </div>
             <InputComponent

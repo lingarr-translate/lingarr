@@ -1,5 +1,5 @@
 <template>
-    <CardComponent title="Authentication Settings" >
+    <CardComponent title="Authentication Settings">
         <template #description></template>
         <template #content>
             <div class="flex flex-col space-y-4">
@@ -7,12 +7,8 @@
                 <div class="flex items-center space-x-2">
                     <span>Authentication enabled:</span>
                     <ToggleButton v-model="authEnabled">
-                        <span class="text-primary-content text-sm font-medium">
-                            {{
-                                authEnabled === 'true'
-                                    ? "Enabled"
-                                    : "Disabled"
-                            }}
+                        <span class="text-sm font-medium text-primary-content">
+                            {{ authEnabled === 'true' ? 'Enabled' : 'Disabled' }}
                         </span>
                     </ToggleButton>
                 </div>
@@ -46,7 +42,8 @@ const authEnabled = computed({
             try {
                 const hasUsers = await services.auth.hasAnyUsers()
                 if (!hasUsers) {
-                    error.value = 'There are currently no users. Create a user before enabling authentication.'
+                    error.value =
+                        'There are currently no users. Create a user before enabling authentication.'
                     return
                 }
             } catch (err: any) {

@@ -11,7 +11,7 @@
             <div
                 v-if="isVisible"
                 :class="alignmentClass"
-                class="border-accent bg-secondary absolute -top-5 z-50 w-36 transform rounded-sm border px-3 py-1 text-center text-sm shadow-lg">
+                class="absolute -top-5 z-50 w-36 transform rounded-sm border border-accent bg-secondary px-3 py-1 text-center text-sm shadow-lg">
                 {{ tooltip }}
             </div>
         </Transition>

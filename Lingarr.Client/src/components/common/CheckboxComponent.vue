@@ -5,10 +5,10 @@
             type="checkbox"
             :checked="modelValue"
             :disabled="disabled"
-            class="border-accent bg-secondary checked:bg-accent focus:ring-accent relative h-4 w-4 cursor-pointer appearance-none rounded border focus:ring-1 focus:ring-offset-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+            class="relative h-4 w-4 cursor-pointer appearance-none rounded border border-accent bg-secondary checked:bg-accent focus:outline-none focus:ring-1 focus:ring-accent focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50"
             @change="updateValue($event)" />
         <CheckMarkIcon
-            class="text-primary-content pointer-events-none absolute h-4 w-4 fill-none"
+            class="pointer-events-none absolute h-4 w-4 fill-none text-primary-content"
             :class="{ hidden: !modelValue }" />
         <label v-if="label" :for="id" class="ml-2 cursor-pointer">{{ label }}</label>
     </div>

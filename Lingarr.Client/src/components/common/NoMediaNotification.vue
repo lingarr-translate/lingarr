@@ -1,5 +1,5 @@
 ﻿<template>
-    <div class="flex grow flex-col items-center justify-center p-4 gap-4">
+    <div class="flex grow flex-col items-center justify-center gap-4 p-4">
         <MediaEmojiIcon />
         <h2 class="mb-2 text-xl font-semibold">No Media Found</h2>
         <p class="mb-4 max-w-md text-center text-sm">
@@ -13,8 +13,7 @@
                 <li>Wait a few minutes for the application to collect your media</li>
             </ol>
         </div>
-        <ButtonComponent variant="accent"
-                         @click="router.push({ name: 'integration-settings' })">
+        <ButtonComponent variant="accent" @click="router.push({ name: 'integration-settings' })">
             Go to Settings
         </ButtonComponent>
     </div>

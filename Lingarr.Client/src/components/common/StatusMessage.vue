@@ -1,8 +1,5 @@
 <template>
-    <div
-        v-if="message"
-        class="rounded-md border p-4"
-        :class="[borderClass, bgClass]">
+    <div v-if="message" class="rounded-md border p-4" :class="[borderClass, bgClass]">
         <div class="flex items-start">
             <div v-if="showIcon" class="shrink-0">
                 <CheckMarkCircleIcon v-if="type === 'success'" class="h-5 w-5" :class="iconClass" />

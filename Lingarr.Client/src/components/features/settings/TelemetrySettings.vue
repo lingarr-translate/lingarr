@@ -1,30 +1,27 @@
 <template>
     <CardComponent title="Anonymous Telemetry">
         <template #description>
-            Help improve Lingarr by sharing anonymous usage statistics. No personal
-            information, file names, or subtitle content is collected.
+            Help improve Lingarr by sharing anonymous usage statistics. No personal information,
+            file names, or subtitle content is collected.
         </template>
         <template #content>
             <div class="flex flex-col space-y-4">
-
                 <SaveNotification ref="saveNotification" />
                 <div class="flex items-center space-x-2">
-                    <span>
-                        Share anonymous usage statistics:
-                    </span>
+                    <span>Share anonymous usage statistics:</span>
 
                     <ToggleButton v-model="telemetryEnabled">
-                        <span class="text-primary-content text-sm font-medium">
+                        <span class="text-sm font-medium text-primary-content">
                             {{ telemetryEnabled === 'true' ? 'Enabled' : 'Disabled' }}
                         </span>
                     </ToggleButton>
                 </div>
 
-
                 <span class="text-sm">Telemetry that will be sent if enabled:</span>
-                <div class="bg-primary rounded-md p-4">
-                    <pre
-                        class="overflow-x-auto rounded-md p-4 text-xs">{{ JSON.stringify(previewData, null, 2) }}</pre>
+                <div class="rounded-md bg-primary p-4">
+                    <pre class="overflow-x-auto rounded-md p-4 text-xs">{{
+                        JSON.stringify(previewData, null, 2)
+                    }}</pre>
                 </div>
             </div>
         </template>
