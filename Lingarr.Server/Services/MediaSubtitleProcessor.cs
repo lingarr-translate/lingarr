@@ -126,6 +126,12 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
                     }
                 }
 
+                if (!languagesToTranslate.Any())
+                {
+                    await UpdateHash();
+                    return false;
+                }
+
                 foreach (var targetLanguage in languagesToTranslate)
                 {
                     await _translationRequestService.CreateRequest(new TranslateAbleSubtitle
