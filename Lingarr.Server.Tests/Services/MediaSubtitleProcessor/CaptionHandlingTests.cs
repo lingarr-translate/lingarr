@@ -47,8 +47,8 @@ public class CaptionHandlingTests : MediaSubtitleProcessorTestBase
         // Act
         var result = await Processor.ProcessMedia(movie, MediaType.Movie);
 
-        // Assert - Should process because en.forced.srt is the only source available
-        Assert.True(result);
+        // Assert - No translation needed because ro already exists as a regular subtitle
+        Assert.False(result);
         TranslationRequestServiceMock.Verify(
             s => s.CreateRequest(It.Is<TranslateAbleSubtitle>(t =>
                 t.SourceLanguage == "en" &&
