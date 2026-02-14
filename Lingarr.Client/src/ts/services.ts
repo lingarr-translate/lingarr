@@ -83,6 +83,11 @@ export interface ITranslateService {
         target: ILanguage,
         mediaType: MediaType
     ): Promise<T>
+    bulkTranslate<T>(
+        mediaIds: number[],
+        targetLanguage: string,
+        mediaType: MediaType
+    ): Promise<T>
     getLanguages<T>(): Promise<T>
     getModels<T>(): Promise<T>
 }

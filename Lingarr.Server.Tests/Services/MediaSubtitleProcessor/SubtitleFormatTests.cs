@@ -31,7 +31,7 @@ public class SubtitleFormatTests : MediaSubtitleProcessorTestBase
         };
 
         SubtitleServiceMock
-            .Setup(s => s.GetAllSubtitles(It.IsAny<string>()))
+            .Setup(s => s.GetSubtitles(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(subtitles);
 
         SetupStandardSettings();
@@ -68,7 +68,7 @@ public class SubtitleFormatTests : MediaSubtitleProcessorTestBase
         };
 
         SubtitleServiceMock
-            .Setup(s => s.GetAllSubtitles(It.IsAny<string>()))
+            .Setup(s => s.GetSubtitles(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(subtitles);
 
         SetupStandardSettings();
@@ -121,7 +121,7 @@ public class SubtitleFormatTests : MediaSubtitleProcessorTestBase
         };
 
         SubtitleServiceMock
-            .Setup(s => s.GetAllSubtitles(It.IsAny<string>()))
+            .Setup(s => s.GetSubtitles(It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync(subtitles);
 
         SetupStandardSettings();
