@@ -42,6 +42,9 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     {
         if (media.Path == null || media.FileName == null)
         {
+            _logger.LogWarning(
+                "Skipping media processing: Path or FileName is null for {MediaType} with ID {MediaId}",
+                mediaType, media.Id);
             return false;
         }
         
