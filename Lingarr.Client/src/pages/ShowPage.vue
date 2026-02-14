@@ -4,6 +4,10 @@
             <SearchComponent v-model="filter" />
             <div
                 class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:items-center md:justify-between md:space-x-2">
+                <ToggleButton
+                    v-model="navigateToDetails"
+                    size="small"
+                    label="Open details on request" />
                 <ContextMenu
                     v-if="isSelectMode && showStore.selectedShows.length > 0"
                     @select="handleTranslate">
@@ -12,12 +16,8 @@
                     </ButtonComponent>
                 </ContextMenu>
                 <ButtonComponent size="sm" variant="accent" @click="toggleSelectMode">
-                    {{ isSelectMode ? 'Cancel' : 'Select' }}
+                    {{ isSelectMode ? 'Cancel' : 'Translate multiple' }}
                 </ButtonComponent>
-                <ToggleButton
-                    v-model="navigateToDetails"
-                    size="small"
-                    label="Open details on request" />
                 <SortControls
                     v-model="filter"
                     :options="[
@@ -110,13 +110,12 @@
 
 <script setup lang="ts">
 import { ref, Ref, computed, onMounted, ComputedRef } from 'vue'
-import { IFilter, ILanguage, IPagedResult, IShow, ISubtitle, MEDIA_TYPE, SETTINGS } from '@/ts'
+import { IFilter, ILanguage, IPagedResult, IShow, MEDIA_TYPE, SETTINGS } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useInstanceStore } from '@/store/instance'
 import { useSettingStore } from '@/store/setting'
 import { useShowStore } from '@/store/show'
 import { useTranslateStore } from '@/store/translate'
-import services from '@/services'
 import PaginationComponent from '@/components/common/PaginationComponent.vue'
 import SearchComponent from '@/components/common/SearchComponent.vue'
 import CaretButton from '@/components/common/CaretButton.vue'
@@ -173,39 +172,12 @@ const toggleSelectMode = () => {
     }
 }
 
-const getSubtitle = (subtitles: ISubtitle[], fileName: string | null) => {
-    if (!fileName) return null
-    return (
-        subtitles.find(
-            (subtitle: ISubtitle) =>
-                subtitle.fileName.toLocaleLowerCase().includes(fileName.toLocaleLowerCase()) &&
-                subtitle.language &&
-                subtitle.language.trim() !== ''
-        ) ?? null
-    )
-}
-
 const handleTranslate = async (language: ILanguage) => {
-    for (const show of showStore.selectedShows) {
-        for (const season of show.seasons) {
-            if (!season.path) {
-                continue
-            }
-            const subtitles = await services.subtitle.collect<ISubtitle[]>(season.path)
-            for (const episode of season.episodes) {
-                const subtitle = getSubtitle(subtitles, episode.fileName ?? null)
-                if (subtitle) {
-                    await translateStore.translateSubtitle(
-                        episode.id,
-                        subtitle,
-                        subtitle.language,
-                        language,
-                        MEDIA_TYPE.EPISODE
-                    )
-                }
-            }
-        }
-    }
+    await translateStore.bulkTranslate(
+        showStore.selectedShows.map((s) => s.id),
+        language.code,
+        MEDIA_TYPE.SHOW
+    )
     showStore.clearSelection()
     isSelectMode.value = false
 }

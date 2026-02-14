@@ -65,4 +65,22 @@ public interface ISubtitleService
     bool ValidateSubtitle(
         string filePath,
         SubtitleValidationOptions validationOptions);
+
+    /// <summary>
+    /// Gets all subtitles from the given path that match the specified file name.
+    /// </summary>
+    /// <param name="path">The directory path to search for subtitle files.</param>
+    /// <param name="fileName">The media file name to match against subtitle file names.</param>
+    /// <returns>A list of matching subtitle files.</returns>
+    Task<List<Subtitles>> GetSubtitles(string path, string fileName);
+
+    /// <summary>
+    /// Selects the source subtitle from matching subtitles by finding the first available source language
+    /// and selecting the appropriate subtitle file, respecting the ignoreCaptions setting.
+    /// </summary>
+    /// <param name="subtitles">The list of subtitle files to search.</param>
+    /// <param name="sourceCodes">The set of acceptable source language codes.</param>
+    /// <param name="ignoreCaptions">The ignoreCaptions setting value.</param>
+    /// <returns>A <see cref="SelectedSourceSubtitle"/> if a source subtitle was found, null otherwise.</returns>
+    SelectedSourceSubtitle? SelectSourceSubtitle(List<Subtitles> subtitles, HashSet<string> sourceCodes, string ignoreCaptions);
 }

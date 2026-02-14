@@ -9,6 +9,7 @@ using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Jobs;
 using Lingarr.Server.Models;
+using Lingarr.Server.Models.Api;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
 using System.Collections.Concurrent;
@@ -124,11 +125,10 @@ public class TranslationRequestService : ITranslationRequestService
             Status = TranslationStatus.Pending
         };
 
-        return await CreateRequest(translationRequest);
+        return await EnqueueRequest(translationRequest);
     }
 
-    /// <inheritdoc />
-    public async Task<int> CreateRequest(TranslationRequest translationRequest)
+    private async Task<int> EnqueueRequest(TranslationRequest translationRequest)
     {
         // Create a new TranslationRequest to not keep ID and JobID
         var translationRequestCopy = new TranslationRequest
@@ -160,6 +160,123 @@ public class TranslationRequestService : ITranslationRequestService
         return translationRequestCopy.Id;
     }
     
+    /// <inheritdoc />
+    public async Task CreateBulkRequest(BulkTranslateRequest request)
+    {
+        var sourceLanguages = await _settingService.GetSettingAsJson<SourceLanguage>(
+            SettingKeys.Translation.SourceLanguages
+            );
+        var sourceCodes = sourceLanguages.Select(sourceLanguage => sourceLanguage.Code).ToHashSet();
+        var ignoreCaptions = await _settingService.GetSetting(SettingKeys.Translation.IgnoreCaptions) ?? "false";
+
+        switch (request.MediaType)
+        {
+            case MediaType.Movie:
+                var movies = await _dbContext.Movies
+                    .Where(movie => request.MediaIds.Contains(movie.Id))
+                    .ToListAsync();
+
+                foreach (var movie in movies)
+                {
+                    if (movie.Path == null)
+                    {
+                        _logger.LogInformation("Bulk: skipping movie {Id} — path is null", movie.Id);
+                        continue;
+                    }
+                    await ProcessMediaSubtitles(
+                        movie.Path, 
+                        movie.FileName, 
+                        movie.Id, 
+                        MediaType.Movie,
+                        request.TargetLanguage, 
+                        sourceCodes, 
+                        ignoreCaptions);
+                }
+                break;
+
+            case MediaType.Show:
+                var shows = await _dbContext.Shows
+                    .Include(show => show.Seasons)
+                    .ThenInclude(season => season.Episodes)
+                    .Where(show => request.MediaIds.Contains(show.Id))
+                    .ToListAsync();
+
+                foreach (var show in shows)
+                {
+                    foreach (var season in show.Seasons)
+                    {
+                        if (string.IsNullOrEmpty(season.Path))
+                        {
+                            continue;
+                        }
+
+                        foreach (var episode in season.Episodes)
+                        {
+                            if (string.IsNullOrEmpty(episode.FileName) || string.IsNullOrEmpty(episode.Path))
+                            {
+                                continue;
+                            }
+                            await ProcessMediaSubtitles(
+                                season.Path, 
+                                episode.FileName, 
+                                episode.Id, 
+                                MediaType.Episode,
+                                request.TargetLanguage,
+                                sourceCodes, 
+                                ignoreCaptions);
+                        }
+                    }
+                }
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Discovers subtitles for a media item, resolves the source subtitle, and creates a translation request.
+    /// </summary>
+    private async Task ProcessMediaSubtitles(
+        string path, 
+        string? fileName, 
+        int mediaId, 
+        MediaType mediaType,
+        string targetLanguage, 
+        HashSet<string> sourceCodes, 
+        string ignoreCaptions)
+    {
+        if (string.IsNullOrEmpty(fileName))
+        {
+            _logger.LogDebug("Bulk: skipping mediaId {MediaId} — fileName is empty", mediaId);
+            return;
+        }
+
+        var subtitles = await _subtitleService.GetSubtitles(path, fileName);
+        var selected = _subtitleService.SelectSourceSubtitle(subtitles, sourceCodes, ignoreCaptions);
+        if (selected == null)
+        {
+            _logger.LogDebug("Bulk: skipping mediaId {MediaId} — no source subtitle found (sourceCodes: {SourceCodes}, available: {Available})",
+                mediaId, string.Join(", ", sourceCodes),
+                string.Join(", ", subtitles.Select(s => s.Language)));
+            return;
+        }
+
+        if (selected.AvailableLanguages.Contains(targetLanguage.ToLowerInvariant()))
+        {
+            _logger.LogDebug("Bulk: skipping mediaId {MediaId} — target language {Target} already exists",
+                mediaId, targetLanguage);
+            return;
+        }
+
+        await CreateRequest(new TranslateAbleSubtitle
+        {
+            MediaId = mediaId,
+            MediaType = mediaType,
+            SubtitlePath = selected.Subtitle.Path,
+            TargetLanguage = targetLanguage,
+            SourceLanguage = selected.SourceLanguage,
+            SubtitleFormat = selected.Subtitle.Format
+        });
+    }
+
     /// <inheritdoc />
     public async Task<int> GetActiveCount()
     {
@@ -241,7 +358,7 @@ public class TranslationRequestService : ITranslationRequestService
         }
 
 
-        int newTranslationRequestId = await CreateRequest(translationRequest);
+        var newTranslationRequestId = await EnqueueRequest(translationRequest);
         return $"Translation request with id {retryRequest.Id} has been restarted, new job id {newTranslationRequestId}";
     }
     
