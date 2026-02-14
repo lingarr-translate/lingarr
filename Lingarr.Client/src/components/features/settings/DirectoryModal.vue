@@ -61,7 +61,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="space-y-1 text-gray-400 select-none">
+                            <div class="select-none space-y-1 text-gray-400">
                                 <div
                                     v-for="dir in directoryContents"
                                     :key="dir.fullPath"

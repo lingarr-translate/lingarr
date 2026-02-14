@@ -1,15 +1,11 @@
 ﻿<template>
     <div class="bg-secondary p-4">
         <div
-            class="border-secondary bg-primary text-secondary-content grid grid-cols-12 border-b-2 font-bold">
-            <div class="col-span-6 px-4 py-2 md:col-span-3">
-                {{ translate('tvShows.season') }}
-            </div>
+            class="grid grid-cols-12 border-b-2 border-secondary bg-primary font-bold text-secondary-content">
+            <div class="col-span-6 px-4 py-2 md:col-span-3">Season</div>
             <div class="col-span-6 flex justify-between px-4 py-2 md:col-span-8">
-                <span>{{ translate('tvShows.episodes') }}</span>
-                <span class="hidden md:block">
-                    {{ translate('tvShows.exclude') }}
-                </span>
+                <span>Episodes</span>
+                <span class="hidden md:block">Exclude</span>
                 <span class="block md:hidden">⊘</span>
             </div>
         </div>
@@ -17,26 +13,24 @@
         <div
             v-for="season in seasons"
             :key="season.id"
-            class="bg-primary text-accent-content text-sm md:text-base">
+            class="bg-primary text-sm text-accent-content md:text-base">
             <div
                 class="grid grid-cols-12"
                 :class="{ 'cursor-pointer': season.episodes.length }"
                 @click="toggleSeason(season)">
-                <div class="col-span-6 flex items-center px-4 py-2 select-none md:col-span-3">
+                <div class="col-span-6 flex select-none items-center px-4 py-2 md:col-span-3">
                     <CaretButton
                         v-if="season.episodes.length"
                         :is-expanded="expandedSeason?.id !== season.id"
                         class="pr-2" />
                     <div v-else class="w-7" />
-                    <span v-if="season.seasonNumber == 0">
-                        {{ translate('tvShows.specials') }}
-                    </span>
-                    <span v-else>{{ translate('tvShows.season') }} {{ season.seasonNumber }}</span>
+                    <span v-if="season.seasonNumber == 0">Specials</span>
+                    <span v-else>Season {{ season.seasonNumber }}</span>
                 </div>
-                <div class="col-span-6 flex justify-between px-4 py-2 select-none md:col-span-8">
+                <div class="col-span-6 flex select-none justify-between px-4 py-2 md:col-span-8">
                     <span>
                         {{ season.episodes.length }}
-                        {{ translate('tvShows.episodesLine') }}
+                        episodes
                     </span>
                     <span @click.stop>
                         <ToggleButton

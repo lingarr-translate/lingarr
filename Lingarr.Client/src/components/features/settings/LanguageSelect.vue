@@ -2,19 +2,17 @@
     <div class="relative">
         <div
             ref="excludeClickOutside"
-            class="border-accent flex h-12 cursor-pointer items-center justify-between rounded-md border px-4 py-2"
+            class="flex h-12 cursor-pointer items-center justify-between rounded-md border border-accent px-4 py-2"
             @click="toggleDropdown">
-            <span v-if="selectedItems.length === 0" class="text-gray-400">
-                {{ translate('settings.translate.languageSelectPlaceholder') }}
-            </span>
+            <span v-if="selectedItems.length === 0" class="text-gray-400">Select language...</span>
             <div v-else class="flex max-h-12 flex-wrap gap-2 overflow-auto">
                 <span
                     v-for="(item, index) in selectedItems"
                     :key="`${item.code}-${index}`"
                     :data-key="`${item.code}-${index}`"
-                    class="bg-accent text-secondary-content flex cursor-pointer items-center rounded-md px-3 py-1 text-sm font-medium"
+                    class="flex cursor-pointer items-center rounded-md bg-accent px-3 py-1 text-sm font-medium text-secondary-content"
                     @click.stop="removeItem(item)">
-                    <span class="text-accent-content mr-2">{{ item.name }}</span>
+                    <span class="mr-2 text-accent-content">{{ item.name }}</span>
                     <TimesIcon class="mt-0.5 h-4 w-4" />
                 </span>
             </div>
@@ -25,18 +23,14 @@
         <ul
             v-show="isOpen"
             ref="clickOutside"
-            class="border-accent bg-primary absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border shadow-lg">
-            <li v-if="!options?.length" class="p-3">
-                {{ translate('settings.translate.languageSelectTargetNotification') }}
-            </li>
+            class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-accent bg-primary shadow-lg">
+            <li v-if="!options?.length" class="p-3">Select a source language first.</li>
             <li v-else class="flex items-center">
                 <input
                     ref="searchInput"
                     v-model="searchTerm"
-                    class="border-accent relative w-full border-b bg-transparent p-2 outline-hidden"
-                    :placeholder="
-                        translate('settings.translate.selectOrSearchLanguagePlaceholder')
-                    " />
+                    class="outline-hidden relative w-full border-b border-accent bg-transparent p-2"
+                    placeholder="Select or search language" />
 
                 <span
                     v-if="searchTerm"

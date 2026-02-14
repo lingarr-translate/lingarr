@@ -3,14 +3,14 @@
         <!-- Backdrop -->
         <div
             v-if="isOpen"
-            class="bg-opacity-50 fixed inset-0 z-40 bg-black md:hidden"
+            class="fixed inset-0 z-40 bg-black bg-opacity-50 md:hidden"
             @click="isOpen = false"></div>
         <!-- Aside -->
         <aside
             :class="isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
-            class="border-accent bg-secondary fixed top-0 left-0 z-50 flex h-full w-64 flex-col overflow-hidden border-r transition-transform duration-300 ease-in-out md:sticky">
+            class="fixed left-0 top-0 z-50 flex h-full w-64 flex-col overflow-hidden border-r border-accent bg-secondary transition-transform duration-300 ease-in-out md:sticky">
             <TimesIcon
-                class="absolute top-1 right-1 block h-6 w-6 cursor-pointer md:hidden"
+                class="absolute right-1 top-1 block h-6 w-6 cursor-pointer md:hidden"
                 @click="isOpen = false" />
             <div class="flex h-16 items-center justify-center">
                 <h1 class="text-xl font-bold">Lingarr</h1>
@@ -30,7 +30,7 @@
 
                                 <span
                                     v-if="item.route == 'translations' && activeRequests > 0"
-                                    class="bg-accent text-secondary-content absolute -top-1 -right-4 inline-flex items-center justify-center rounded-full px-1 py-0.5 text-xs leading-none font-bold">
+                                    class="absolute -right-4 -top-1 inline-flex items-center justify-center rounded-full bg-accent px-1 py-0.5 text-xs font-bold leading-none text-secondary-content">
                                     {{ activeRequests }}
                                 </span>
                             </div>
@@ -43,11 +43,11 @@
                 <img
                     v-if="instanceStore.getPoster"
                     :src="`/api/image/${instanceStore.getPoster}`"
-                    class="mask-gradient h-full w-full object-cover"
+                    class="h-full w-full object-cover mask-gradient"
                     alt="poster" />
                 <div
                     v-if="instanceStore.getVersion.currentVersion.length"
-                    class="absolute right-0 bottom-0 flex w-full justify-center p-4">
+                    class="absolute bottom-0 right-0 flex w-full justify-center p-4">
                     <BadgeComponent
                         v-if="instanceStore.getVersion.newVersion"
                         classes="text-white border-green-200 bg-green-500/50">
@@ -72,7 +72,7 @@
 
 <script setup lang="ts">
 import { computed, ComputedRef } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useInstanceStore } from '@/store/instance'
 import { useTranslationRequestStore } from '@/store/translationRequest'
 import { MenuItem } from '@/ts'
@@ -86,6 +86,7 @@ import LanguageIcon from '@/components/icons/LanguageIcon.vue'
 
 const translationRequestStore = useTranslationRequestStore()
 const instanceStore = useInstanceStore()
+const router = useRouter()
 const route = useRoute()
 
 const activeRequests: ComputedRef<number> = computed(
@@ -101,23 +102,16 @@ const menuItems: MenuItem[] = [
     { label: 'Dashboard', icon: HomeIcon, route: 'dashboard', children: [] },
     { label: 'Movies', icon: MovieIcon, route: 'movies', children: [] },
     { label: 'TV Shows', icon: ShowIcon, route: 'shows', children: [] },
-    {
-        label: 'Translations',
-        icon: LanguageIcon,
-        route: 'translations',
-        children: []
-    },
+    { label: 'Translations', icon: LanguageIcon, route: 'translations', children: [] },
     {
         label: 'Settings',
         icon: SettingIcon,
         route: 'integration-settings',
-        children: [
-            'integration-settings',
-            'services-settings',
-            'automation-settings',
-            'tasks-settings',
-            'logs-settings'
-        ]
+        children:
+            router
+                .getRoutes()
+                .find((r) => r.name === 'settings')
+                ?.children.map((c) => c.name as string) ?? []
     }
 ]
 

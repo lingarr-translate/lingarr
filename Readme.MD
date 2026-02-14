@@ -46,12 +46,14 @@ Lingarr Docker images are available from multiple registries:
 
 | Registry | Image |
 |----------|-------|
-| Docker Hub | `docker.io/lingarr/lingarr:latest` |
 | GitHub Container Registry | `ghcr.io/lingarr-translate/lingarr:latest` |
-
-Use GHCR if you're experiencing Docker Hub rate limits.
+| Docker Hub | `docker.io/lingarr/lingarr:latest` |
 
 ## Setting up Lingarr
+
+By default, Lingarr uses `MySQL` however, `PostgreSQL` and `SQLite` are also supported. Note that Lingarr starts quickly, if migrations fail, using a `healthcheck` combined with 
+`depends_on` is recommended.
+
 ```yaml
 services:
   lingarr:
@@ -75,7 +77,8 @@ services:
     networks:
       - lingarr
     depends_on:
-      - lingarr-db
+      lingarr-db:
+        condition: service_healthy
 
   lingarr-db:
     image: mariadb:latest
@@ -90,6 +93,11 @@ services:
       - /path/to/db:/var/lib/mysql # define a volume to persist the database
     networks:
       - lingarr
+    healthcheck:
+      test: "mariadb $$MYSQL_DATABASE -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1;'"
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   lingarr:

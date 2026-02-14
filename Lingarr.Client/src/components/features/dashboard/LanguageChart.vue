@@ -6,8 +6,8 @@
             :data="chartData"
             :options="chartOptions"
             class="h-full w-full" />
-        <div v-else class="text-primary-content flex h-full w-full items-center justify-center">
-            {{ translate('statistics.noDataAvailable') }}
+        <div v-else class="flex h-full w-full items-center justify-center text-primary-content">
+            No data available
         </div>
     </div>
 </template>

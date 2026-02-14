@@ -1,6 +1,6 @@
 ﻿<template>
     <div v-if="settingsCompleted === 'true'" class="w-full">
-        <div class="bg-tertiary flex flex-wrap items-center justify-between gap-2 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
             <SearchComponent v-model="filter" />
             <div
                 class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:items-center md:justify-between md:space-x-2">
@@ -35,19 +35,15 @@
 
         <div class="w-full px-4">
             <!-- Shows -->
-            <div class="border-accent grid grid-cols-12 border-b font-bold">
+            <div class="grid grid-cols-12 border-b border-accent font-bold">
                 <div :class="isSelectMode ? 'col-span-7' : 'col-span-8'" class="px-4 py-2">
-                    {{ translate('tvShows.title') }}
+                    Title
                 </div>
                 <div class="col-span-1 px-4 py-2">
-                    <span class="hidden md:block">
-                        {{ translate('tvShows.exclude') }}
-                    </span>
+                    <span class="hidden md:block">Exclude</span>
                     <span class="block md:hidden">⊘</span>
                 </div>
-                <div class="col-span-1 px-4 py-2">
-                    {{ translate('tvShows.ageThreshold') }}
-                </div>
+                <div class="col-span-1 px-4 py-2">Delay</div>
                 <div class="col-span-2 flex justify-end px-4 py-2">
                     <ReloadComponent @toggle:update="showStore.fetch()" />
                 </div>
@@ -61,7 +57,7 @@
             </div>
             <div v-for="item in shows.items" :key="item.id">
                 <div
-                    class="border-accent grid cursor-pointer grid-cols-12 border-b"
+                    class="grid cursor-pointer grid-cols-12 border-b border-accent"
                     @click="toggleShow(item)">
                     <div
                         :class="isSelectMode ? 'col-span-7' : 'col-span-8'"
@@ -78,7 +74,7 @@
                     <div class="col-span-3 flex items-center px-4 py-2" @click.stop>
                         <InputComponent
                             :model-value="item.translationAgeThreshold ?? null"
-                            :placeholder="translate('tvShows.hours')"
+                            placeholder="hours"
                             class="w-14"
                             size="sm"
                             type="number"
@@ -95,9 +91,7 @@
                         class="col-span-1 flex items-center justify-center px-4 py-2"
                         @click.stop>
                         <CheckboxComponent
-                            :model-value="
-                                showStore.selectedShows.some((s) => s.id === item.id)
-                            "
+                            :model-value="showStore.selectedShows.some((s) => s.id === item.id)"
                             @change="showStore.toggleSelect(item)" />
                     </div>
                 </div>
@@ -116,12 +110,13 @@
 
 <script setup lang="ts">
 import { ref, Ref, computed, onMounted, ComputedRef } from 'vue'
-import { IFilter, ILanguage, IPagedResult, IShow, MEDIA_TYPE, SETTINGS } from '@/ts'
+import { IFilter, ILanguage, IPagedResult, IShow, ISubtitle, MEDIA_TYPE, SETTINGS } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useInstanceStore } from '@/store/instance'
 import { useSettingStore } from '@/store/setting'
 import { useShowStore } from '@/store/show'
 import { useTranslateStore } from '@/store/translate'
+import services from '@/services'
 import PaginationComponent from '@/components/common/PaginationComponent.vue'
 import SearchComponent from '@/components/common/SearchComponent.vue'
 import CaretButton from '@/components/common/CaretButton.vue'

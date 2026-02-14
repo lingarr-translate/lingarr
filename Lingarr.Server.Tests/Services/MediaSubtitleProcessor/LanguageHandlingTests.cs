@@ -15,6 +15,59 @@ namespace Lingarr.Server.Tests.Services.MediaSubtitleProcessor;
 public class LanguageHandlingTests : MediaSubtitleProcessorTestBase
 {
     [Fact]
+    public async Task ProcessMedia_AllTargetLanguagesExist_ShouldReturnFalseAndNotCreateRequest()
+    {
+        // Arrange - Movie already has both source (en) and target (ro) subtitles
+        var movie = await CreateTestMovie();
+        var subtitles = new List<Subtitles>
+        {
+            new()
+            {
+                Path = "/movies/test/test.movie.en.srt",
+                FileName = "test.movie.en",
+                Language = "en",
+                Caption = "",
+                Format = ".srt"
+            },
+            new()
+            {
+                Path = "/movies/test/test.movie.ro.srt",
+                FileName = "test.movie.ro",
+                Language = "ro",
+                Caption = "",
+                Format = ".srt"
+            }
+        };
+
+        SubtitleServiceMock
+            .Setup(s => s.GetAllSubtitles(It.IsAny<string>()))
+            .ReturnsAsync(subtitles);
+
+        SetupStandardSettings(); // source=en, target=ro
+
+        // Act
+        var result = await Processor.ProcessMedia(movie, MediaType.Movie);
+
+        // Assert - Should return false since all target languages already exist
+        Assert.False(result);
+        TranslationRequestServiceMock.Verify(
+            s => s.CreateRequest(It.IsAny<TranslateAbleSubtitle>()),
+            Times.Never);
+
+        // Assert - Hash should be persisted so subsequent runs short-circuit
+        Assert.NotNull(movie.MediaHash);
+
+        // Act - Second call should short-circuit via hash match at ProcessMedia line 64
+        var secondResult = await Processor.ProcessMedia(movie, MediaType.Movie);
+
+        // Assert - Still false, and the subtitle processing logic was never reached again
+        Assert.False(secondResult);
+        TranslationRequestServiceMock.Verify(
+            s => s.CreateRequest(It.IsAny<TranslateAbleSubtitle>()),
+            Times.Never);
+    }
+
+    [Fact]
     public async Task ProcessMedia_WithHindiLanguage_ShouldProcessCorrectly()
     {
         // Arrange - Hindi language subtitle (special case where "hi" could be confused with hearing impaired)

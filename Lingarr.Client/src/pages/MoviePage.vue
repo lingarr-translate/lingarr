@@ -1,6 +1,6 @@
 ﻿<template>
     <div v-if="settingsCompleted === 'true'" class="w-full">
-        <div class="bg-tertiary flex flex-wrap items-center justify-between gap-2 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
             <SearchComponent v-model="filter" />
             <div
                 class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:items-center md:justify-between md:space-x-2">
@@ -34,17 +34,13 @@
         </div>
 
         <div class="w-full px-4">
-            <div class="border-accent grid grid-cols-12 border-b font-bold">
+            <div class="grid grid-cols-12 border-b border-accent font-bold">
                 <div :class="isSelectMode ? 'col-span-4' : 'col-span-5'" class="px-4 py-2">
-                    {{ translate('movies.title') }}
+                    Title
                 </div>
-                <div class="col-span-4 px-4 py-2">{{ translate('movies.subtitles') }}</div>
-                <div class="col-span-1 px-4 py-2">
-                    {{ translate('movies.exclude') }}
-                </div>
-                <div class="col-span-1 px-4 py-2">
-                    {{ translate('movies.ageThreshold') }}
-                </div>
+                <div class="col-span-4 px-4 py-2">Subtitles</div>
+                <div class="col-span-1 px-4 py-2">Exclude</div>
+                <div class="col-span-1 px-4 py-2">Delay</div>
                 <div class="col-span-1 flex justify-end px-4 py-2">
                     <ReloadComponent @toggle:update="movieStore.fetch()" />
                 </div>
@@ -57,10 +53,8 @@
                 </div>
             </div>
             <div v-for="item in movies.items" :key="item.id">
-                <div class="border-accent grid grid-cols-12 border-b">
-                    <div
-                        :class="isSelectMode ? 'col-span-4' : 'col-span-5'"
-                        class="px-4 py-2">
+                <div class="grid grid-cols-12 border-b border-accent">
+                    <div :class="isSelectMode ? 'col-span-4' : 'col-span-5'" class="px-4 py-2">
                         {{ item.title }}
                     </div>
                     <div class="col-span-4 flex flex-wrap items-center gap-2 px-4 py-2">
@@ -88,7 +82,7 @@
                     <div class="col-span-2 flex items-center px-4 py-2" @click.stop>
                         <InputComponent
                             :model-value="item?.translationAgeThreshold"
-                            :placeholder="translate('movies.hours')"
+                            placeholder="hours"
                             class="w-14"
                             size="sm"
                             type="number"
@@ -104,9 +98,7 @@
                         v-if="isSelectMode"
                         class="col-span-1 flex items-center justify-center px-4 py-2">
                         <CheckboxComponent
-                            :model-value="
-                                movieStore.selectedMovies.some((m) => m.id === item.id)
-                            "
+                            :model-value="movieStore.selectedMovies.some((m) => m.id === item.id)"
                             @change="movieStore.toggleSelect(item)" />
                     </div>
                 </div>

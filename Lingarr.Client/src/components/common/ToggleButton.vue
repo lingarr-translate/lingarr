@@ -8,7 +8,7 @@
             role="switch"
             :aria-checked="modelValue.toString() === 'true'"
             :class="[
-                'border-accent relative inline-flex shrink-0 cursor-pointer items-center border transition-colors duration-200 ease-in-out',
+                'relative inline-flex shrink-0 cursor-pointer items-center border border-accent transition-colors duration-200 ease-in-out',
                 modelValue.toString() === 'true' ? 'bg-accent/30' : '',
                 size === 'small'
                     ? 'h-[1.17rem] w-[2.08rem] rounded-sm p-0.5'
@@ -18,7 +18,7 @@
             <span
                 aria-hidden="true"
                 :class="[
-                    'bg-accent pointer-events-none inline-block transform ring-0 shadow-sm transition duration-200 ease-in-out',
+                    'pointer-events-none inline-block transform bg-accent shadow-sm ring-0 transition duration-200 ease-in-out',
                     size === 'small' ? 'h-[0.83rem] w-[0.83rem] rounded-sm' : 'h-5 w-5 rounded-md',
                     modelValue.toString() === 'true'
                         ? size === 'small'

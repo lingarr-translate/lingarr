@@ -1,11 +1,11 @@
 ﻿<template>
     <div
         v-if="translateStore.hasLanguagesError"
-        class="border-accent bg-primary mb-4 rounded-md border p-4">
+        class="mb-4 rounded-md border border-accent bg-primary p-4">
         <div class="flex items-start">
             <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="text-accent mt-1 mr-2 h-5 w-5"
+                class="mr-2 mt-1 h-5 w-5 text-accent"
                 viewBox="0 0 20 20"
                 fill="currentColor">
                 <path
@@ -14,20 +14,17 @@
                     clip-rule="evenodd" />
             </svg>
             <div>
-                <p class="text-secondary-content font-medium">
-                    {{ translate('settings.translate.languageLoadErrorTitle') }}
-                </p>
-                <p class="text-secondary-content mt-1 text-sm">
-                    {{ translate('settings.translate.languageLoadErrorDescription') }}
+                <p class="font-medium text-secondary-content">Error retrieving languages</p>
+                <p class="mt-1 text-sm text-secondary-content">
+                    Unknown error occurred while retrieving languages, make sure the api key is set
+                    correctly.
                 </p>
                 <button
-                    class="border-accent hover:bg-accent mt-3 cursor-pointer justify-end rounded border px-3 py-2 transition-colors hover:text-white"
+                    class="mt-3 cursor-pointer justify-end rounded border border-accent px-3 py-2 transition-colors hover:bg-accent hover:text-white"
                     :disabled="translateStore.isLanguagesLoading"
                     @click="retryLoadLanguages">
-                    <span v-if="translateStore.isLanguagesLoading">
-                        {{ translate('common.loading') }}
-                    </span>
-                    <span v-else>{{ translate('common.retry') }}</span>
+                    <span v-if="translateStore.isLanguagesLoading">Loading...</span>
+                    <span v-else>Retry</span>
                 </button>
             </div>
         </div>
@@ -35,29 +32,28 @@
 
     <template v-if="!translateStore.hasLanguagesError">
         <div class="flex flex-col space-x-2">
-            <span class="font-semibold">
-                {{ translate('settings.translate.sourceAndTargetTitle') }}
-            </span>
-            {{ translate('settings.translate.sourceAndTargetDescription') }}
+            <span class="font-semibold">Source and target translation</span>
+            Select a source and target language. Both the source and target are used to request
+            translations.
         </div>
 
         <div v-if="translateStore.isLanguagesLoading" class="py-4">
             <div class="flex items-center space-x-2">
                 <LoaderCircleIcon class="h-5 w-5" />
-                <span>{{ translate('common.loading') }}</span>
+                <span>Loading...</span>
             </div>
         </div>
 
         <template v-else>
             <div>
-                <span>{{ translate('settings.translate.selectSourceDescription') }}</span>
+                <span>Source languages:</span>
                 <LanguageSelect
                     v-model:selected="sourceLanguages"
                     class="w-full"
                     :options="languages" />
             </div>
             <div>
-                <span>{{ translate('settings.translate.selectTargetDescription') }}</span>
+                <span>Target languages:</span>
                 <LanguageSelect
                     v-model:selected="targetLanguages"
                     class="w-full"

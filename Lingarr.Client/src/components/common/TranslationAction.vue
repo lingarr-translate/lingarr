@@ -1,7 +1,7 @@
 ﻿<template>
     <div class="flex items-center gap-2">
         <button
-            class="text-primary-content hover:text-primary-content/50 cursor-pointer transition-colors"
+            class="hover:text-primary-content/50 cursor-pointer text-primary-content transition-colors"
             @click="router.push({ name: 'translation-detail', params: { id: item.id } })">
             <EyeOnIcon class="h-5 w-5" />
         </button>
@@ -9,20 +9,20 @@
             <LoaderCircleIcon v-if="loading" class="h-5 w-5 animate-spin" />
             <button
                 v-else-if="inProgress"
-                class="text-primary-content hover:text-primary-content/50 cursor-pointer transition-colors"
+                class="hover:text-primary-content/50 cursor-pointer text-primary-content transition-colors"
                 @click="executeAction(TRANSLATION_ACTIONS.CANCEL)">
                 <TimesIcon class="h-5 w-5" />
             </button>
             <template v-else-if="removable">
                 <button
                     :disabled="loading"
-                    class="text-primary-content hover:text-primary-content/50 cursor-pointer transition-colors"
+                    class="hover:text-primary-content/50 cursor-pointer text-primary-content transition-colors"
                     @click="executeAction(TRANSLATION_ACTIONS.RETRY)">
                     <RetryIcon class="h-5 w-5" />
                 </button>
                 <button
                     :disabled="loading"
-                    class="text-primary-content hover:text-primary-content/50 cursor-pointer transition-colors"
+                    class="hover:text-primary-content/50 cursor-pointer text-primary-content transition-colors"
                     @click="executeAction(TRANSLATION_ACTIONS.REMOVE)">
                     <TrashIcon class="h-5 w-5" />
                 </button>
@@ -49,14 +49,16 @@ const props = defineProps<{
 
 const loading = ref(false)
 
-const inProgress = computed(() =>
-    props.item.status === TRANSLATION_STATUS.INPROGRESS ||
-    props.item.status === TRANSLATION_STATUS.PENDING
+const inProgress = computed(
+    () =>
+        props.item.status === TRANSLATION_STATUS.INPROGRESS ||
+        props.item.status === TRANSLATION_STATUS.PENDING
 )
 
-const removable = computed(() =>
-    props.item.status !== TRANSLATION_STATUS.PENDING &&
-    props.item.status !== TRANSLATION_STATUS.INPROGRESS
+const removable = computed(
+    () =>
+        props.item.status !== TRANSLATION_STATUS.PENDING &&
+        props.item.status !== TRANSLATION_STATUS.INPROGRESS
 )
 
 const executeAction = async (action: TRANSLATION_ACTIONS) => {

@@ -1,18 +1,18 @@
 ﻿<template>
     <div class="flex w-full justify-center p-4 md:items-center md:justify-between">
         <div class="hidden md:block">
-            {{ translate('common.page') }}
+            Page
             <span class="font-bold">{{ modelValue.pageNumber }}</span>
-            {{ translate('common.of') }}
+            of
             <span class="font-bold">{{ numberOfPages }}</span>
-            {{ translate('common.of') }}
+            of
             <span class="font-bold">{{ totalCount }}</span>
-            {{ translate('common.items') }}
+            items
         </div>
         <div>
             <ul v-if="numberOfPages >= 1" class="flex space-x-1 md:space-x-2">
                 <li
-                    class="text-md border-accent bg-secondary text-primary-content flex h-7 w-8 cursor-pointer items-center justify-center border font-semibold md:h-9 md:w-10 md:text-lg"
+                    class="text-md flex h-7 w-8 cursor-pointer items-center justify-center border border-accent bg-secondary font-semibold text-primary-content md:h-9 md:w-10 md:text-lg"
                     :class="{
                         disabled: modelValue.pageNumber === 1
                     }"
@@ -22,7 +22,7 @@
                 <li
                     v-for="page in pages"
                     :key="page"
-                    class="border-accent text-primary-content flex h-7 w-8 items-center justify-center border text-xs font-semibold md:h-9 md:w-10"
+                    class="flex h-7 w-8 items-center justify-center border border-accent text-xs font-semibold text-primary-content md:h-9 md:w-10"
                     :class="{
                         'cursor-pointer': page !== '...',
                         'bg-secondary': modelValue.pageNumber === page
@@ -31,7 +31,7 @@
                     <span>{{ page }}</span>
                 </li>
                 <li
-                    class="text-md border-accent bg-secondary text-primary-content flex h-7 w-8 cursor-pointer items-center justify-center border font-semibold md:h-9 md:w-10 md:text-lg"
+                    class="text-md flex h-7 w-8 cursor-pointer items-center justify-center border border-accent bg-secondary font-semibold text-primary-content md:h-9 md:w-10 md:text-lg"
                     @click="next">
                     <div>&raquo;</div>
                 </li>

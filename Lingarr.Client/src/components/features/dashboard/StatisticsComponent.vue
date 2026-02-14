@@ -1,6 +1,6 @@
 ﻿<template>
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <CardComponent :title="translate('statistics.mediaOverview')" class="lg:col-span-2">
+        <CardComponent title="Media Overview" class="lg:col-span-2">
             <template #content>
                 <template v-if="loading">
                     <div class="flex h-64 items-center justify-center">
@@ -15,20 +15,20 @@
                 </template>
 
                 <template v-else-if="!statistics">
-                    <div class="text-primary-content flex h-64 items-center justify-center">
-                        {{ translate('statistics.notAvailable') }}
+                    <div class="flex h-64 items-center justify-center text-primary-content">
+                        No statistics available
                     </div>
                 </template>
 
                 <template v-else>
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <StatCard
-                            :title="translate('statistics.movies')"
+                            title="Movies"
                             :total="statistics.totalMovies"
                             :translated="getTranslationCount(MEDIA_TYPE.MOVIE)" />
 
                         <StatCard
-                            :title="translate('statistics.tvShows')"
+                            title="TV Shows"
                             :total="statistics.totalEpisodes"
                             :translated="getTranslationCount(MEDIA_TYPE.EPISODE)" />
                     </div>
@@ -36,36 +36,36 @@
             </template>
         </CardComponent>
 
-        <CardComponent :title="translate('statistics.translationActivity')">
+        <CardComponent title="Translation Activity">
             <template #content>
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
                     <MetricCard
-                        :title="translate('statistics.linesTranslated')"
+                        title="Lines Translated"
                         :value="statistics?.totalLinesTranslated ?? 0" />
 
                     <MetricCard
-                        :title="translate('statistics.filesProcessed')"
+                        title="Files Processed"
                         :value="statistics?.totalFilesTranslated ?? 0" />
 
                     <MetricCard
-                        :title="translate('statistics.charactersTranslated')"
+                        title="Characters Translated"
                         :value="statistics?.totalCharactersTranslated ?? 0"
                         class="xl:col-span-2" />
                 </div>
 
                 <div v-if="translationServices.length" class="mt-4">
-                    <h3 class="text-primary-content mb-4 text-sm font-medium">
-                        {{ translate('statistics.translationServices') }}
+                    <h3 class="mb-4 text-sm font-medium text-primary-content">
+                        Translation Services
                     </h3>
                     <div class="grid grid-cols-2 gap-2 xl:grid-cols-3">
                         <div
                             v-for="[service, count] in translationServices"
                             :key="service"
-                            class="bg-primary rounded-sm p-2">
+                            class="rounded-sm bg-primary p-2">
                             <h4 class="text-primary-content/70 text-xs font-medium">
                                 {{ formatServiceName(service) }}
                             </h4>
-                            <p class="text-primary-content text-lg font-bold">
+                            <p class="text-lg font-bold text-primary-content">
                                 {{ formatNumber(count) }}
                             </p>
                         </div>
@@ -87,18 +87,18 @@
                 </div>
 
                 <div v-if="subtitleLanguages.length" class="mt-4">
-                    <h3 class="text-primary-content mb-2 text-sm font-medium">
-                        {{ translate('statistics.availableSubtitles') }}
+                    <h3 class="mb-2 text-sm font-medium text-primary-content">
+                        Available Subtitles
                     </h3>
                     <div class="grid grid-cols-3 gap-2 md:grid-cols-4 xl:grid-cols-6">
                         <div
                             v-for="[language, count] in subtitleLanguages"
                             :key="language"
-                            class="bg-primary rounded-sm p-2">
+                            class="rounded-sm bg-primary p-2">
                             <h4 class="text-primary-content/70 text-xs font-medium">
                                 {{ language.toUpperCase() }}
                             </h4>
-                            <p class="text-primary-content text-lg font-bold">
+                            <p class="text-lg font-bold text-primary-content">
                                 {{ formatNumber(count) }}
                             </p>
                         </div>
@@ -123,7 +123,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { DailyStatistic, MEDIA_TYPE, Statistics } from '@/ts'
-import { useI18n } from '@/plugins/i18n'
 import services from '@/services'
 import CardComponent from '@/components/common/CardComponent.vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
@@ -131,7 +130,6 @@ import LoaderCircleIcon from '@/components/icons/LoaderCircleIcon.vue'
 import LanguageChart from './LanguageChart.vue'
 import StatCard from './StatCard.vue'
 import MetricCard from './MetricCard.vue'
-const { translate } = useI18n()
 
 const loading = ref(true)
 const resetting = ref(false)
@@ -168,7 +166,7 @@ const fetchStatistics = async () => {
         statistics.value = await services.statistics.getStatistics()
     } catch (err: unknown) {
         if (err instanceof Error) {
-            error.value = err?.message || translate('statistics.failedFetch')
+            error.value = err?.message || 'Failed to fetch statistics'
         }
         console.error('Error fetching statistics:', err)
     } finally {

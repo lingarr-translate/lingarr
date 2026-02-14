@@ -1,20 +1,14 @@
 ﻿<template>
-    <div class="bg-tertiary text-tertiary-content w-full">
-        <div class="border-primary grid grid-cols-12 border-b-2 font-bold">
+    <div class="w-full bg-tertiary text-tertiary-content">
+        <div class="grid grid-cols-12 border-b-2 border-primary font-bold">
             <div class="col-span-1 px-4 py-2">
-                <span class="hidden lg:block">
-                    {{ translate('tvShows.episode') }}
-                </span>
+                <span class="hidden lg:block">Episodes</span>
                 <span class="block lg:hidden">#</span>
             </div>
-            <div class="col-span-7 px-4 py-2 md:col-span-5">
-                {{ translate('tvShows.episodeTitle') }}
-            </div>
+            <div class="col-span-7 px-4 py-2 md:col-span-5">Title</div>
             <div class="col-span-4 flex justify-between py-2 pr-4 md:col-span-5">
-                <span>{{ translate('tvShows.episodeSubtitles') }}</span>
-                <span class="hidden md:block">
-                    {{ translate('tvShows.exclude') }}
-                </span>
+                <span>Subtitles</span>
+                <span class="hidden md:block">Exclude</span>
                 <span class="block md:hidden">⊘</span>
             </div>
         </div>

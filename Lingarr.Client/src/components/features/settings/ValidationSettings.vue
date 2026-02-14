@@ -1,24 +1,19 @@
 ﻿<template>
-    <CardComponent :title="translate('settings.validation.title')">
+    <CardComponent title="Subtitle Validation">
         <template #description>
-            {{ translate('settings.validation.description') }}
+            Configure validation rules for subtitles. These rules will be applied when processing
+            subtitle files. If a validation fails, the translation will be canceled.
         </template>
         <template #content>
             <div class="flex flex-col space-y-4">
                 <SaveNotification ref="saveNotification" />
 
                 <div class="flex flex-col space-x-2">
-                    <span class="font-semibold">
-                        {{ translate('settings.validation.enabled') }}
-                    </span>
+                    <span class="font-semibold">Enable validation:</span>
                 </div>
                 <ToggleButton v-model="validationEnabled">
-                    <span class="text-primary-content text-sm font-medium">
-                        {{
-                            validationEnabled == 'true'
-                                ? translate('common.enabled')
-                                : translate('common.disabled')
-                        }}
+                    <span class="text-sm font-medium text-primary-content">
+                        {{ validationEnabled == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
 
@@ -26,30 +21,30 @@
                     v-if="validationEnabled == 'true'"
                     v-model="minDurationMs"
                     validation-type="number"
-                    :label="translate('settings.validation.minDurationMs')"
+                    label="The minimum time duration in milliseconds that a subtitle must be displayed:"
                     @update:validation="(val) => (isValid.minDurationMs = val)">
                     <div class="flex flex-wrap gap-2">
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="minDurationMs = '100'">
                             0.2s
                         </button>
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="minDurationMs = '500'">
                             0.5s
                         </button>
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="minDurationMs = '1000'">
                             1s
                         </button>
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="minDurationMs = '1500'">
                             1.5s
                         </button>
@@ -60,51 +55,51 @@
                     v-if="validationEnabled == 'true'"
                     v-model="maxDurationSecs"
                     validation-type="number"
-                    :label="translate('settings.validation.maxDurationSecs')"
+                    label="The maximum time duration in seconds that a subtitle can be displayed:"
                     @update:validation="(val) => (isValid.maxDurationSecs = val)" />
 
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="minSubtitleLength"
                     validation-type="number"
-                    :label="translate('settings.validation.minSubtitleLength')"
+                    label="The minimum number of characters that a subtitle must contain:"
                     @update:validation="(val) => (isValid.minSubtitleLength = val)" />
 
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="maxSubtitleLength"
                     validation-type="number"
-                    :label="translate('settings.validation.maxSubtitleLength')"
+                    label="The maximum number of characters that a subtitle can contain:"
                     @update:validation="(val) => (isValid.maxSubtitleLength = val)" />
 
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="maxFileSizeBytes"
                     validation-type="number"
-                    :label="translate('settings.validation.maxFileSizeBytes')"
+                    label="The maximum size of a subtitle file in bytes:"
                     @update:validation="(val) => (isValid.maxFileSizeBytes = val)">
                     <div class="flex flex-wrap gap-2">
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="maxFileSizeBytes = (512 * 1024).toString()">
                             0.5 KB
                         </button>
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="maxFileSizeBytes = (1024 * 1024).toString()">
                             1 MB
                         </button>
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="maxFileSizeBytes = (1.5 * 1024 * 1024).toString()">
                             1.5 MB
                         </button>
                         <button
                             type="button"
-                            class="border-accent hover:bg-accent cursor-pointer rounded border px-2 py-1 text-xs transition-colors hover:text-white"
+                            class="cursor-pointer rounded border border-accent px-2 py-1 text-xs transition-colors hover:bg-accent hover:text-white"
                             @click="maxFileSizeBytes = (2 * 1024 * 1024).toString()">
                             2 MB
                         </button>

@@ -1,46 +1,46 @@
 ﻿<template>
     <div class="flex flex-col space-y-2">
         <p class="text-xs">
-            {{ translate('settings.services.localAiDescriptionPath') }}
-            <span class="bg-primary rounded-md p-1">/v1/chat/completions</span>
-            {{ translate('settings.services.localAiDescriptionOr') }}
-            <span class="bg-primary my-1 inline-block rounded-md p-1">/api/generate</span>
-            {{ translate('settings.services.localAiDescriptionFollow') }}
+            Local AI addresses usually consist of the following path
+            <span class="rounded-md bg-primary p-1">/v1/chat/completions</span>
+            or
+            <span class="my-1 inline-block rounded-md bg-primary p-1">/api/generate</span>
+            and should follow the
             <a
                 href="https://platform.openai.com/docs/api-reference/chat/create"
                 class="underline"
                 target="_blank">
                 Open AI
             </a>
-            {{ translate('settings.services.localAiDescriptionSpecification') }}
+            API specification.
         </p>
 
         <InputComponent
             v-model="address"
             validation-type="url"
-            :placeholder="translate('settings.services.localAiPlaceholder')"
-            :label="translate('settings.services.serviceAddress')"
+            placeholder="http://ollama:11434/v1/chat/completions"
+            label="Address"
             @update:validation="(val) => (isValid.address = val)" />
 
         <InputComponent
             v-model="aiModel"
             validation-type="string"
-            :label="translate('settings.services.aiModel')"
-            :placeholder="translate('settings.services.localAiModelPlaceholder')"
+            label="AI Model"
+            placeholder="aya-expanse"
             @update:validation="(val) => (isValid.model = val)" />
 
         <InputComponent
             v-model="apiKey"
             validation-type="string"
             type="password"
-            :label="translate('settings.services.apiKey')"
+            label="API key"
             @update:validation="(val) => (isValid.apiKey = val)" />
-        <p class="text-xs">{{ translate('settings.services.localAiNotification') }}</p>
+        <p class="text-xs">API key is optional and can be left empty.</p>
 
         <p>
-            {{ translate('settings.services.batchSupportAvailable') }}
+            Batch translation is available for this AI service. Configure batch settings
             <a class="cursor-pointer underline" @click="router.push({ name: 'subtitle-settings' })">
-                {{ translate('settings.services.batchSupportLink') }}
+                here
             </a>
         </p>
     </div>

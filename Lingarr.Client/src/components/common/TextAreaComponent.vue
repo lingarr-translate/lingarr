@@ -15,11 +15,10 @@
             <ValidationIcon
                 :is-valid="isValid"
                 :is-invalid="isInvalid"
-                class="absolute top-3 right-3" />
+                class="absolute right-3 top-3" />
         </div>
         <p v-if="missingPlaceholders.length > 0" class="mt-1 text-sm text-red-600">
-            {{ translate('settings.prompt.missingPlaceholders') }}
-            {{ missingPlaceholders.join(' and ') }}
+            Required placeholders missing: {{ missingPlaceholders.join(' and ') }}
         </p>
         <div class="flex flex-wrap gap-3">
             <PlaceholderButton
@@ -39,9 +38,6 @@ import { computed, ref, nextTick, onMounted } from 'vue'
 import useDebounce from '@/composables/useDebounce'
 import ValidationIcon from '@/components/common/ValidationIcon.vue'
 import PlaceholderButton from '@/components/common/PlaceholderButton.vue'
-import { useI18n } from '@/plugins/i18n'
-const { translate } = useI18n()
-
 interface Placeholder {
     placeholder: string
     placeholderText: string

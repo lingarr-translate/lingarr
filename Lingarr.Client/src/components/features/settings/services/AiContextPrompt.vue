@@ -6,47 +6,39 @@
         :placeholders="[
             {
                 placeholder: '{sourceLanguage}',
-                placeholderText: translate('settings.prompt.insertPlaceholder').format({
-                    placeholder: '{sourceLanguage}'
-                }),
-                title: translate('settings.prompt.placeholders.sourceLanguage.title'),
-                description: translate('settings.prompt.placeholders.sourceLanguage.description'),
+                placeholderText: 'insert {sourceLanguage}',
+                title: 'Source Language',
+                description: 'The language the provided subtitle line is in',
                 required: true
             },
             {
                 placeholder: '{targetLanguage}',
-                placeholderText: translate('settings.prompt.insertPlaceholder').format({
-                    placeholder: '{targetLanguage}'
-                }),
-                title: translate('settings.prompt.placeholders.targetLanguage.title'),
-                description: translate('settings.prompt.placeholders.targetLanguage.description'),
+                placeholderText: 'insert {targetLanguage}',
+                title: 'Target Language',
+                description: 'The language the provided subtitle line needs to be translated to',
                 required: true
             },
             {
                 placeholder: '{lineToTranslate}',
-                placeholderText: translate('settings.prompt.insertPlaceholder').format({
-                    placeholder: '{lineToTranslate}'
-                }),
-                title: translate('settings.prompt.placeholders.lineToTranslate.title'),
-                description: translate('settings.prompt.placeholders.lineToTranslate.description'),
+                placeholderText: 'insert {lineToTranslate}',
+                title: 'Subtitle line',
+                description: 'Subtitle line to translate',
                 required: false
             },
             {
                 placeholder: '{contextBefore}',
-                placeholderText: translate('settings.prompt.insertPlaceholder').format({
-                    placeholder: '{contextBefore}'
-                }),
-                title: translate('settings.prompt.placeholders.contextBefore.title'),
-                description: translate('settings.prompt.placeholders.contextBefore.description'),
+                placeholderText: 'insert {contextBefore}',
+                title: 'Context',
+                description:
+                    'Subtitles before the provided subtitle line that can be used as context',
                 required: false
             },
             {
                 placeholder: '{contextAfter}',
-                placeholderText: translate('settings.prompt.insertPlaceholder').format({
-                    placeholder: '{contextAfter}'
-                }),
-                title: translate('settings.prompt.placeholders.contextAfter.title'),
-                description: translate('settings.prompt.placeholders.contextAfter.description'),
+                placeholderText: 'insert {contextAfter}',
+                title: 'Context',
+                description:
+                    'Subtitles after the provided subtitle line that can be used as context',
                 required: false
             }
         ]"

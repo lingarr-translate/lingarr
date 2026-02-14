@@ -91,7 +91,6 @@ services:
       SERVICE_NAME: mariadb
     networks:
       - lingarr
-    command: mariadbd --sql_mode=""
     healthcheck:
       test: "mariadb $$MYSQL_DATABASE -u$$MYSQL_USER -p$$MYSQL_PASSWORD -e 'SELECT 1;'"
       interval: 10s

@@ -18,7 +18,7 @@
                                 type="text"
                                 autocomplete="username"
                                 placeholder="Enter your username"
-                                class="border-accent w-full rounded-md border bg-transparent px-4 py-2 outline-hidden transition-colors duration-200"
+                                class="outline-hidden w-full rounded-md border border-accent bg-transparent px-4 py-2 transition-colors duration-200"
                                 required />
                         </div>
 
@@ -30,7 +30,7 @@
                                 type="password"
                                 autocomplete="current-password"
                                 placeholder="Enter your password"
-                                class="border-accent w-full rounded-md border bg-transparent px-4 py-2 outline-hidden transition-colors duration-200"
+                                class="outline-hidden w-full rounded-md border border-accent bg-transparent px-4 py-2 transition-colors duration-200"
                                 required />
                         </div>
 
