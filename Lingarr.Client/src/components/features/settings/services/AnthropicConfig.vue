@@ -13,8 +13,8 @@
 
         <InputComponent
             v-model="apiKey"
-            validation-type="string"
-            type="password"
+            :validation-type="INPUT_VALIDATION_TYPE.STRING"
+            :type="INPUT_TYPE.PASSWORD"
             label="API key"
             :min-length="1"
             error-message="API Key must not be empty"
@@ -22,7 +22,7 @@
 
         <InputComponent
             v-model="version"
-            validation-type="string"
+            :validation-type="INPUT_VALIDATION_TYPE.STRING"
             label="Version"
             :min-length="1"
             error-message="Version must not be empty"
@@ -37,26 +37,17 @@
             placeholder="Select model..."
             no-options="errorMessage || 'Loading models...'"
             @fetch-options="loadOptions" />
-
-        <p>
-            Batch translation is available for this AI service. Configure batch settings
-            <a class="cursor-pointer underline" @click="router.push({ name: 'subtitle-settings' })">
-                here
-            </a>
-        </p>
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
-import { SETTINGS } from '@/ts'
+import { SETTINGS, INPUT_TYPE, INPUT_VALIDATION_TYPE } from '@/ts'
 import SelectComponent from '@/components/common/SelectComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
-import { useRouter } from 'vue-router'
 import { useModelOptions } from '@/composables/useModelOptions'
 
-const router = useRouter()
 // @ts-ignore selectRef
 const { options, errorMessage, selectRef, loadOptions } = useModelOptions()
 

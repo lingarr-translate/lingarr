@@ -2,7 +2,7 @@
 import { isValidCron } from 'cron-validator'
 
 type ValidationProps = {
-    validationType: 'number' | 'string' | 'url' | 'cron'
+    validationType?: 'number' | 'string' | 'url' | 'cron'
     minLength?: number
     maxLength?: number
     errorMessage?: string

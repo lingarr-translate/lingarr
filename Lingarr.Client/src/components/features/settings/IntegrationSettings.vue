@@ -7,7 +7,7 @@
                 <span class="font-semibold">Radarr Settings:</span>
                 <InputComponent
                     v-model="radarrUrl"
-                    validation-type="url"
+                    :validation-type="INPUT_VALIDATION_TYPE.URL"
                     label="Address"
                     error-message="Please enter a valid URL (e.g., http://localhost:7878 or https://example.com)"
                     @update:validation="(val) => (isValid.radarrUrl = val)" />
@@ -15,8 +15,8 @@
                     v-model="radarrApiKey"
                     :min-length="32"
                     :max-length="32"
-                    validation-type="string"
-                    type="password"
+                    :validation-type="INPUT_VALIDATION_TYPE.STRING"
+                    :type="INPUT_TYPE.PASSWORD"
                     label="API key"
                     error-message="API Key must be {minLength} characters"
                     @update:validation="(val) => (isValid.radarrApiKey = val)" />
@@ -25,7 +25,7 @@
                 <span class="font-semibold">Sonarr Settings:</span>
                 <InputComponent
                     v-model="sonarrUrl"
-                    validation-type="url"
+                    :validation-type="INPUT_VALIDATION_TYPE.URL"
                     label="Address"
                     error-message="Please enter a valid URL (e.g., http://localhost:8989 or https://example.com)"
                     @update:validation="(val) => (isValid.sonarrUrl = val)" />
@@ -33,8 +33,8 @@
                     v-model="sonarrApiKey"
                     :min-length="32"
                     :max-length="32"
-                    validation-type="string"
-                    type="password"
+                    :validation-type="INPUT_VALIDATION_TYPE.STRING"
+                    :type="INPUT_TYPE.PASSWORD"
                     label="API key"
                     error-message="API Key must be {minLength} characters"
                     @update:validation="(val) => (isValid.sonarrApiKey = val)" />
@@ -51,7 +51,7 @@
 import { computed, ref, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import SaveNotification from '@/components/common/SaveNotification.vue'
-import { SETTINGS } from '@/ts'
+import { INPUT_TYPE, INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 

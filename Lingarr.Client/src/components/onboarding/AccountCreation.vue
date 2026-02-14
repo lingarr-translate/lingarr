@@ -12,7 +12,7 @@
             v-model="username"
             label="Username"
             placeholder="Enter your username"
-            validation-type="string"
+            :validation-type="INPUT_VALIDATION_TYPE.STRING"
             :min-length="2"
             error-message="Username must be at least 2 characters long"
             @update:validation="(valid: boolean) => updateValidation('username', valid)" />
@@ -21,9 +21,9 @@
             id="password"
             v-model="password"
             label="Password"
-            type="password"
+            :validation-type="INPUT_VALIDATION_TYPE.STRING"
+            :type="INPUT_TYPE.PASSWORD"
             placeholder="Enter your password"
-            validation-type="string"
             :min-length="4"
             error-message="Password must be at least 4 characters long and match"
             @update:validation="(valid: boolean) => updateValidation('password', valid)" />
@@ -32,9 +32,9 @@
             id="confirmPassword"
             v-model="confirmPassword"
             label="Confirm Password"
-            type="password"
+            :validation-type="INPUT_VALIDATION_TYPE.STRING"
+            :type="INPUT_TYPE.PASSWORD"
             placeholder="Confirm your password"
-            validation-type="string"
             :min-length="4"
             error-message="Password must be at least 4 characters long and match"
             @update:validation="(valid: boolean) => updateValidation('confirmPassword', valid)" />
@@ -43,6 +43,7 @@
 
 <script setup lang="ts">
 import InputComponent from '@/components/common/InputComponent.vue'
+import { INPUT_TYPE, INPUT_VALIDATION_TYPE } from '@/ts'
 
 const username = defineModel<string>('username', { default: '' })
 const password = defineModel<string>('password', { default: '' })

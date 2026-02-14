@@ -20,7 +20,7 @@
             <InputComponent
                 v-if="useBatchTranslation == 'true'"
                 v-model="maxBatchSize"
-                validation-type="number"
+                :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                 @update:validation="(val) => (isValid.maxBatchSize = val)" />
 
             <div class="flex flex-col space-x-2">
@@ -29,7 +29,7 @@
             </div>
             <InputComponent
                 v-model="maxRetries"
-                validation-type="number"
+                :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                 @update:validation="(val) => (isValid.maxRetries = val)" />
 
             <div class="flex flex-col space-x-2">
@@ -38,7 +38,7 @@
             </div>
             <InputComponent
                 v-model="retryDelay"
-                validation-type="number"
+                :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                 @update:validation="(val) => (isValid.retryDelay = val)" />
 
             <div class="flex flex-col space-x-2">
@@ -47,7 +47,7 @@
             </div>
             <InputComponent
                 v-model="retryDelayMultiplier"
-                validation-type="number"
+                :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                 @update:validation="(val) => (isValid.retryDelayMultiplier = val)" />
         </template>
     </CardComponent>
@@ -56,7 +56,7 @@
 <script setup lang="ts">
 import { computed, ref, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
-import { SETTINGS } from '@/ts'
+import { INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 import InputComponent from '@/components/common/InputComponent.vue'

@@ -1,5 +1,5 @@
 ﻿<template>
-    <form class="relative">
+    <component :is="type === INPUT_TYPE.PASSWORD ? 'form' : 'div'" class="relative">
         <label v-if="label" :for="id" class="mb-1 block text-sm">
             {{ label }}
         </label>
@@ -16,6 +16,7 @@
                 :placeholder="placeholder"
                 @input="handleInput" />
             <ValidationIcon
+                v-if="validationType"
                 :is-valid="isValid"
                 :is-invalid="isInvalid"
                 :size="size"
@@ -33,12 +34,13 @@
                 <EyeOffIcon v-else class="h-5 w-5" />
             </button>
         </div>
-        <p v-if="isInvalid" class="mt-1 text-sm text-red-600" v-html="error" />
-    </form>
+        <p v-if="validationType && isInvalid" class="mt-1 text-sm text-red-600" v-html="error" />
+    </component>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { InputType, INPUT_TYPE, validationType } from '@/ts'
 import useValidation from '@/composables/useValidation'
 import useDebounce from '@/composables/useDebounce'
 import ValidationIcon from '@/components/common/ValidationIcon.vue'
@@ -48,7 +50,7 @@ import EyeOffIcon from '@/components/icons/EyeOffIcon.vue'
 const props = withDefaults(
     defineProps<{
         id?: string
-        type?: string
+        type?: InputType
         label?: string
         modelValue: string | number | null
         minLength?: number
@@ -56,10 +58,12 @@ const props = withDefaults(
         placeholder?: string
         errorMessage?: string
         size?: 'sm' | 'md' | 'lg'
-        validationType: 'number' | 'string' | 'url' | 'cron'
+        validationType?: validationType
+        debounce?: number
     }>(),
     {
-        size: 'md'
+        size: 'md',
+        debounce: 1000
     }
 )
 
@@ -79,19 +83,31 @@ const inputClasses = computed(() => [
         'px-4 py-2': props.size === 'md',
         'px-2 py-0.5 leading-3 text-sm': props.size === 'sm'
     },
-    { 'border-green-500': isValid.value },
-    { 'border-red-500': isInvalid.value },
-    { 'border-accent': !isValid.value && !isInvalid.value },
+    { 'border-green-500': props.validationType && isValid.value },
+    { 'border-red-500': props.validationType && isInvalid.value },
+    { 'border-accent': !props.validationType || (!isValid.value && !isInvalid.value) },
     { 'pr-10': props.type === 'password' }
 ])
 
-const handleInput = useDebounce((event: Event) => {
+const emitValue = (event: Event) => {
     const value = (event.target as HTMLInputElement).value
-    validate(value)
-    emit('update:validation', isValid.value)
+    if (props.validationType) {
+        validate(value)
+        emit('update:validation', isValid.value)
+    }
     emit('update:modelValue', value)
     emit('update:value', value)
-}, 1000)
+}
+
+const debouncedValue = useDebounce(emitValue, props.debounce)
+
+const handleInput = (event: Event) => {
+    if (props.debounce > 0) {
+        debouncedValue(event)
+    } else {
+        emitValue(event)
+    }
+}
 
 const togglePassword = () => {
     showPassword.value = !showPassword.value

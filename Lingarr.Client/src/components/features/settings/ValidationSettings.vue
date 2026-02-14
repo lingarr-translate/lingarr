@@ -20,7 +20,7 @@
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="minDurationMs"
-                    validation-type="number"
+                    :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                     label="The minimum time duration in milliseconds that a subtitle must be displayed:"
                     @update:validation="(val) => (isValid.minDurationMs = val)">
                     <div class="flex flex-wrap gap-2">
@@ -54,28 +54,28 @@
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="maxDurationSecs"
-                    validation-type="number"
+                    :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                     label="The maximum time duration in seconds that a subtitle can be displayed:"
                     @update:validation="(val) => (isValid.maxDurationSecs = val)" />
 
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="minSubtitleLength"
-                    validation-type="number"
+                    :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                     label="The minimum number of characters that a subtitle must contain:"
                     @update:validation="(val) => (isValid.minSubtitleLength = val)" />
 
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="maxSubtitleLength"
-                    validation-type="number"
+                    :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                     label="The maximum number of characters that a subtitle can contain:"
                     @update:validation="(val) => (isValid.maxSubtitleLength = val)" />
 
                 <InputComponent
                     v-if="validationEnabled == 'true'"
                     v-model="maxFileSizeBytes"
-                    validation-type="number"
+                    :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                     label="The maximum size of a subtitle file in bytes:"
                     @update:validation="(val) => (isValid.maxFileSizeBytes = val)">
                     <div class="flex flex-wrap gap-2">
@@ -112,7 +112,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
-import { SETTINGS } from '@/ts'
+import { INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
 import { useSettingStore } from '@/store/setting'
 
 import CardComponent from '@/components/common/CardComponent.vue'
