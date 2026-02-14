@@ -110,13 +110,12 @@
 
 <script setup lang="ts">
 import { ref, Ref, computed, onMounted, ComputedRef } from 'vue'
-import { IFilter, ILanguage, IPagedResult, IShow, ISubtitle, MEDIA_TYPE, SETTINGS } from '@/ts'
+import { IFilter, ILanguage, IPagedResult, IShow, MEDIA_TYPE, SETTINGS } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useInstanceStore } from '@/store/instance'
 import { useSettingStore } from '@/store/setting'
 import { useShowStore } from '@/store/show'
 import { useTranslateStore } from '@/store/translate'
-import services from '@/services'
 import PaginationComponent from '@/components/common/PaginationComponent.vue'
 import SearchComponent from '@/components/common/SearchComponent.vue'
 import CaretButton from '@/components/common/CaretButton.vue'
