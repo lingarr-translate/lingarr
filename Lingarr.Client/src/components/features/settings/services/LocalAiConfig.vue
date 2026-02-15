@@ -17,40 +17,32 @@
 
         <InputComponent
             v-model="address"
-            validation-type="url"
+            :validation-type="INPUT_VALIDATION_TYPE.URL"
             placeholder="http://ollama:11434/v1/chat/completions"
             label="Address"
             @update:validation="(val) => (isValid.address = val)" />
 
         <InputComponent
             v-model="aiModel"
-            validation-type="string"
+            :validation-type="INPUT_VALIDATION_TYPE.STRING"
             label="AI Model"
             placeholder="aya-expanse"
             @update:validation="(val) => (isValid.model = val)" />
 
         <InputComponent
             v-model="apiKey"
-            validation-type="string"
-            type="password"
+            :validation-type="INPUT_VALIDATION_TYPE.STRING"
+            :type="INPUT_TYPE.PASSWORD"
             label="API key"
             @update:validation="(val) => (isValid.apiKey = val)" />
         <p class="text-xs">API key is optional and can be left empty.</p>
-
-        <p>
-            Batch translation is available for this AI service. Configure batch settings
-            <a class="cursor-pointer underline" @click="router.push({ name: 'subtitle-settings' })">
-                here
-            </a>
-        </p>
     </div>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
-import { SETTINGS } from '@/ts'
-import { useRouter } from 'vue-router'
+import { INPUT_TYPE, INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
 import InputComponent from '@/components/common/InputComponent.vue'
 
 const settingsStore = useSettingStore()
@@ -60,7 +52,6 @@ const isValid = reactive({
     model: false,
     apiKey: false
 })
-const router = useRouter()
 
 const aiModel = computed({
     get: () => settingsStore.getSetting(SETTINGS.LOCAL_AI_MODEL) as string,

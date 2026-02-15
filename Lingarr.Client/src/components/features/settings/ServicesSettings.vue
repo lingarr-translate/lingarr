@@ -14,6 +14,35 @@
                     @save="saveNotification?.show()" />
             </div>
 
+            <div
+                v-if="
+                    [
+                        SERVICE_TYPE.ANTHROPIC,
+                        SERVICE_TYPE.DEEPSEEK,
+                        SERVICE_TYPE.GEMINI,
+                        SERVICE_TYPE.LOCALAI,
+                        SERVICE_TYPE.OPENAI
+                    ].includes(
+                        serviceType as 'openai' | 'anthropic' | 'localai' | 'gemini' | 'deepseek'
+                    )
+                ">
+                <div class="flex flex-col gap-4">
+                    <div class="flex flex-col space-x-2">
+                        <span class="font-semibold">
+                            Customize request template and prompts
+                        </span>
+                        Adjust the AI request body, system prompt and context for translations.
+                    </div>
+                    <ButtonComponent
+                        variant="primary"
+                        size="md"
+                        @click="router.push({ name: 'request-template-settings' })">
+                        Open Request Settings
+                        <ArrowRight class="ml-1 mt-1 h-4 w-4" />
+                    </ButtonComponent>
+                </div>
+            </div>
+
             <SourceAndTarget @save="saveNotification?.show()" />
         </template>
     </CardComponent>
@@ -21,6 +50,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useSettingStore } from '@/store/setting'
 import { SETTINGS, SERVICE_TYPE } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
@@ -35,9 +65,12 @@ import LocalAiConfig from '@/components/features/settings/services/LocalAiConfig
 import GeminiConfig from '@/components/features/settings/services/GeminiConfig.vue'
 import DeepSeekConfig from '@/components/features/settings/services/DeepSeekConfig.vue'
 import SourceAndTarget from '@/components/features/settings/SourceAndTarget.vue'
+import ButtonComponent from '@/components/common/ButtonComponent.vue'
+import ArrowRight from '@/components/icons/ArrowRight.vue'
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
+const router = useRouter()
 
 const serviceType = computed({
     get: () => settingsStore.getSetting(SETTINGS.SERVICE_TYPE) as string,

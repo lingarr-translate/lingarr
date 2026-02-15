@@ -6,8 +6,8 @@ using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
-using Lingarr.Server.Services.Translation.Base;
 using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Services.Translation.Base;
 using Lingarr.Server.Models.Batch;
 using Lingarr.Server.Models.Batch.Response;
 
@@ -19,7 +19,9 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
     private string? _prompt;
     private string? _model;
     private string? _apiKey;
+    private string? _requestTemplate;
     private readonly HttpClient _httpClient;
+    private readonly IRequestTemplateService _requestTemplateService;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
@@ -35,10 +37,12 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
         ISettingService settings,
         ILogger<OpenAiService> logger,
         LanguageCodeService languageCodeService,
+        IRequestTemplateService requestTemplateService,
         HttpClient? httpClient = null)
         : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
     {
         _httpClient = httpClient ?? new HttpClient();
+        _requestTemplateService = requestTemplateService;
     }
 
     /// <summary>
@@ -61,10 +65,10 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.OpenAi.Model,
                 SettingKeys.Translation.OpenAi.ApiKey,
+                SettingKeys.Translation.OpenAi.RequestTemplate,
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiContextPrompt,
                 SettingKeys.Translation.AiContextPromptEnabled,
-                SettingKeys.Translation.CustomAiParameters,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
@@ -73,6 +77,9 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
 
             _model = settings[SettingKeys.Translation.OpenAi.Model];
             _apiKey = settings[SettingKeys.Translation.OpenAi.ApiKey];
+            _requestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.OpenAi.RequestTemplate])
+                ? settings[SettingKeys.Translation.OpenAi.RequestTemplate]
+                : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.OpenAi.RequestTemplate);
             _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey))
@@ -87,7 +94,6 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
             };
             _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
             _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
-            _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
 
             var requestTimeout = int.TryParse(settings[SettingKeys.Translation.RequestTimeout],
                 out var timeOut)
@@ -137,27 +143,15 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
             try
             {
                 var requestUrl = $"{_endpoint}chat/completions";
-                var requestBody = new Dictionary<string, object>
+                var placeholders = new Dictionary<string, string>
                 {
                     ["model"] = _model!,
-                    ["messages"] = new[]
-                    {
-                        new Dictionary<string, string>
-                        {
-                            ["role"] = "system",
-                            ["content"] = _prompt!
-                        },
-                        new Dictionary<string, string>
-                        {
-                            ["role"] = "user",
-                            ["content"] = text
-                        }
-                    }
+                    ["systemPrompt"] = _prompt!,
+                    ["userMessage"] = text
                 };
-
-                requestBody = AddCustomParameters(requestBody);
+                var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
                 var requestContent = new StringContent(
-                    JsonSerializer.Serialize(requestBody),
+                    bodyJson,
                     Encoding.UTF8,
                     "application/json");
 
@@ -328,18 +322,6 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
             },
             ["response_format"] = responseFormat
         };
-
-        // Add custom parameters but exclude response_format to avoid conflicts
-        if (_customParameters is { Count: > 0 })
-        {
-            foreach (var param in _customParameters)
-            {
-                if (param.Key != "response_format")
-                {
-                    requestBody[param.Key] = param.Value;
-                }
-            }
-        }
 
         var requestContent = new StringContent(
             JsonSerializer.Serialize(requestBody),

@@ -1,18 +1,11 @@
 ﻿<template>
-    <CardComponent title="System & Context Prompts">
+    <CardComponent title="Context Prompt">
         <template #description>
-            Define custom instructions (system prompt) and an optional context prompt to control AI
-            response logic.
+            Define custom instructions to be included in the {userMessage} as context
         </template>
         <template #content>
             <div class="flex flex-col space-y-4">
                 <SaveNotification ref="saveNotification" />
-                <div class="flex flex-col space-x-2">
-                    <span class="font-semibold">System prompt</span>
-                    Define the AI’s behavior and tone by setting global instructions.
-                </div>
-                <AiSystemPrompt @save="saveNotification?.show()" />
-
                 <div v-if="useBatchTranslation == 'false'" class="space-y-4">
                     <div class="flex flex-col space-x-2">
                         <span class="font-semibold">Enable context prompt:</span>
@@ -34,15 +27,15 @@
                     <InputComponent
                         v-if="aiContextPromptEnabled == 'true'"
                         v-model="contextBefore"
-                        type="number"
-                        validation-type="number"
+                        :type="INPUT_TYPE.NUMBER"
+                        :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                         label="Context before"
                         @update:validation="(val) => (isValid.contextBefore = val)" />
                     <InputComponent
                         v-if="aiContextPromptEnabled == 'true'"
                         v-model="contextAfter"
-                        type="number"
-                        validation-type="number"
+                        :type="INPUT_TYPE.NUMBER"
+                        :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                         label="Context after"
                         @update:validation="(val) => (isValid.contextAfter = val)" />
                 </div>
@@ -57,9 +50,8 @@
 <script setup lang="ts">
 import { computed, ref, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
-import { SETTINGS } from '@/ts'
+import { INPUT_TYPE, INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
-import AiSystemPrompt from '@/components/features/settings/services/AiSystemPrompt.vue'
 import AiContextPrompt from '@/components/features/settings/services/AiContextPrompt.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 import ToggleButton from '@/components/common/ToggleButton.vue'

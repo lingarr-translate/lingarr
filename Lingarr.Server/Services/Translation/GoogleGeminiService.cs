@@ -7,8 +7,8 @@ using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Integrations.Translation;
-using Lingarr.Server.Services.Translation.Base;
 using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Services.Translation.Base;
 using Lingarr.Server.Models.Batch;
 using Lingarr.Server.Models.Batch.Response;
 
@@ -18,9 +18,11 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
 {
     private readonly string? _endpoint = "https://generativelanguage.googleapis.com/v1beta";
     private readonly HttpClient _httpClient;
+    private readonly IRequestTemplateService _requestTemplateService;
     private string? _model;
     private string? _apiKey;
     private string? _prompt;
+    private string? _requestTemplate;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
@@ -36,10 +38,12 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         ISettingService settings,
         HttpClient httpClient,
         ILogger<GoogleGeminiService> logger,
-        LanguageCodeService languageCodeService)
+        LanguageCodeService languageCodeService,
+        IRequestTemplateService requestTemplateService)
         : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
     {
         _httpClient = httpClient;
+        _requestTemplateService = requestTemplateService;
     }
 
     /// <summary>
@@ -62,10 +66,10 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.Gemini.Model,
                 SettingKeys.Translation.Gemini.ApiKey,
+                SettingKeys.Translation.Gemini.RequestTemplate,
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiContextPrompt,
                 SettingKeys.Translation.AiContextPromptEnabled,
-                SettingKeys.Translation.CustomAiParameters,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
@@ -73,6 +77,9 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             ]);
             _apiKey = settings[SettingKeys.Translation.Gemini.ApiKey];
             _model = settings[SettingKeys.Translation.Gemini.Model];
+            _requestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.Gemini.RequestTemplate])
+                ? settings[SettingKeys.Translation.Gemini.RequestTemplate]
+                : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.Gemini.RequestTemplate);
             _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey))
@@ -87,7 +94,6 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             };
             _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
             _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
-            _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
 
             var requestTimeout = int.TryParse(settings[SettingKeys.Translation.RequestTimeout],
                 out var timeOut)
@@ -170,46 +176,16 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
     private async Task<string> TranslateWithGeminiApi(string? message, CancellationToken cancellationToken)
     {
         var endpoint = $"{_endpoint}/models/{_model}:generateContent?key={_apiKey}";
-        var requestBody = new Dictionary<string, object>
+        var placeholders = new Dictionary<string, string>
         {
-            ["systemInstruction"] = new
-            {
-                parts = new[]
-                {
-                    new
-                    {
-                        text = _prompt
-                    }
-                }
-            },
-            ["contents"] = new[]
-            {
-                new
-                {
-                    parts = new[]
-                    {
-                        new
-                        {
-                            text = message
-                        }
-                    }
-                }
-            }
+            ["model"] = _model!,
+            ["systemPrompt"] = _prompt!,
+            ["userMessage"] = message ?? string.Empty
         };
-
-        if (_customParameters is { Count: > 0 })
-        {
-            var generationConfig = new Dictionary<string, object>();
-            foreach (var param in _customParameters)
-            {
-                generationConfig[param.Key] = param.Value;
-            }
-
-            requestBody["generationConfig"] = generationConfig;
-        }
+        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
 
         var content = new StringContent(
-            JsonSerializer.Serialize(requestBody),
+            bodyJson,
             Encoding.UTF8,
             "application/json");
 
@@ -415,18 +391,6 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                 }
             }
         };
-
-        if (_customParameters is { Count: > 0 })
-        {
-            var generationConfig = (Dictionary<string, object>)requestBody["generationConfig"];
-            foreach (var param in _customParameters)
-            {
-                if (param.Key != "response_mime_type" && param.Key != "response_schema")
-                {
-                    generationConfig[param.Key] = param.Value;
-                }
-            }
-        }
 
         var content = new StringContent(
             JsonSerializer.Serialize(requestBody),

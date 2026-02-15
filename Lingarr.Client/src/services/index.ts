@@ -13,6 +13,7 @@ import { directoryService } from '@/services/directoryService'
 import { statisticsService } from '@/services/statisticsService'
 import { telemetryService } from '@/services/telemetryService'
 import { logsService } from '@/services/logsService'
+import { requestTemplateService } from '@/services/requestTemplateService'
 
 axios.interceptors.response.use(
     (response) => response,
@@ -48,7 +49,8 @@ const services = (axios: AxiosStatic): Services => ({
     directory: directoryService(axios),
     statistics: statisticsService(axios),
     logs: logsService(),
-    telemetry: telemetryService(axios)
+    telemetry: telemetryService(axios),
+    requestTemplate: requestTemplateService(axios)
 })
 
 export default services(axios)

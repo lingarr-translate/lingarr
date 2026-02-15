@@ -28,6 +28,7 @@ export interface Services {
     statistics: IStatisticsService
     logs: ILogsService
     telemetry: ITelemetryService
+    requestTemplate: IRequestTemplateService
 }
 
 export interface IAuthService {
@@ -135,4 +136,8 @@ export interface ILogsService {
 
 export interface ITelemetryService {
     preview<T>(): Promise<T>
+}
+
+export interface IRequestTemplateService {
+    getDefaults<T>(): Promise<T>
 }

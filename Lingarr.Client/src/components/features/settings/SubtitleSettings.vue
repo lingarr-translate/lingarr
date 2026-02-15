@@ -76,7 +76,7 @@
                     <InputComponent
                         v-if="useSubtitleTagging == 'true'"
                         v-model="subtitleTag"
-                        validation-type="string"
+                        :validation-type="INPUT_VALIDATION_TYPE.STRING"
                         label="Subtitle tag"
                         @update:validation="(val) => (isValid.subtitleTag = val)" />
                 </div>
@@ -87,7 +87,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
-import { SETTINGS } from '@/ts'
+import { INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
 import { useSettingStore } from '@/store/setting'
 
 import CardComponent from '@/components/common/CardComponent.vue'

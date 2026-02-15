@@ -129,9 +129,11 @@ public class LibreService : BaseLanguageService
         var response = await _httpClient.PostAsync($"{_apiUrl}/translate", content, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}", await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new TranslationException("Translation using LibreTranslate failed.");
+            _logger.LogError("Response Content: {ResponseContent}", responseBody);
+            throw new TranslationException(
+                $"LibreTranslate translation failed with status {response.StatusCode} ({response.ReasonPhrase}): {responseBody}");
         }
 
         var result = await response.Content.ReadFromJsonAsync<TranslationResponse>();

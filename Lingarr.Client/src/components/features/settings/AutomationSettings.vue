@@ -12,14 +12,14 @@
                     v-model="movieSchedule"
                     label="Cron format: minute hour day month weekday (e.g., '0 * * * *' for hourly)"
                     :placeholder="'0 * * * *'"
-                    validation-type="cron"
+                    :validation-type="INPUT_VALIDATION_TYPE.CRON"
                     @update:validation="(val) => (movieScheduleIsValid = val)" />
                 <span class="font-semibold">Set tv show indexer:</span>
                 <InputComponent
                     v-model="showSchedule"
                     label="Cron format: minute hour day month weekday (e.g., '0 * * * *' for hourly)"
                     :placeholder="'0 * * * *'"
-                    validation-type="cron"
+                    :validation-type="INPUT_VALIDATION_TYPE.CRON"
                     @update:validation="(val) => (showScheduleIsValid = val)" />
             </div>
         </template>
@@ -50,14 +50,14 @@
                     v-model="translationSchedule"
                     label="Cron format: minute hour day month weekday (e.g., '0 * * * *' for hourly)"
                     :placeholder="'0 * * * *'"
-                    validation-type="cron"
+                    :validation-type="INPUT_VALIDATION_TYPE.CRON"
                     @update:validation="(val) => (translationScheduleIsValid = val)" />
 
                 <span class="font-semibold">Limits:</span>
                 <InputComponent
                     v-model="maxTranslationsPerRun"
-                    input-type="number"
-                    validation-type="number"
+                    :type="INPUT_TYPE.NUMBER"
+                    :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                     :min-length="0"
                     label="Limit the amount of translations per schedule"
                     @update:validation="(val) => (maxTranslationsPerRunIsValid = val)" />
@@ -65,15 +65,15 @@
                 <span class="font-semibold">Default file age delay for translation:</span>
                 <InputComponent
                     v-model="movieAgeThreshold"
-                    input-type="number"
-                    validation-type="number"
+                    :type="INPUT_TYPE.NUMBER"
+                    :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                     :min-length="0"
                     label="Movie file age delay in 'hours'"
                     @update:validation="(val) => (movieAgeThresholdIsValid = val)" />
                 <InputComponent
                     v-model="showAgeThreshold"
-                    input-type="number"
-                    validation-type="number"
+                    :type="INPUT_TYPE.NUMBER"
+                    :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                     :min-length="0"
                     label="TV Show file age delay in 'hours'"
                     @update:validation="(val) => (showAgeThresholdIsValid = val)" />
@@ -86,7 +86,7 @@
 import { computed, ref } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import { useRouter } from 'vue-router'
-import { SETTINGS } from '@/ts'
+import { INPUT_TYPE, INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 import ToggleButton from '@/components/common/ToggleButton.vue'

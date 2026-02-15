@@ -85,8 +85,8 @@
                             placeholder="hours"
                             class="w-14"
                             size="sm"
-                            type="number"
-                            validation-type="number"
+                            :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
+                            :type="INPUT_TYPE.NUMBER"
                             @update:value="
                                 (value) => {
                                     item.translationAgeThreshold = value
@@ -116,7 +116,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, ComputedRef } from 'vue'
-import { IFilter, ILanguage, IMovie, IPagedResult, MEDIA_TYPE, SETTINGS } from '@/ts'
+import { IFilter, ILanguage, IMovie, INPUT_TYPE, INPUT_VALIDATION_TYPE, IPagedResult, MEDIA_TYPE, SETTINGS } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useMovieStore } from '@/store/movie'
 import { useSettingStore } from '@/store/setting'
