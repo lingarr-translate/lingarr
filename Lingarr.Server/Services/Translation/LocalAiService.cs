@@ -16,9 +16,12 @@ namespace Lingarr.Server.Services.Translation;
 public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTranslationService
 {
     private readonly HttpClient _httpClient;
+    private readonly IRequestTemplateService _requestTemplateService;
     private string? _model;
     private string? _endpoint;
     private string? _prompt;
+    private string? _chatRequestTemplate;
+    private string? _generateRequestTemplate;
     private Dictionary<string, string> _replacements;
     private bool _isChatEndpoint;
     private bool _initialized;
@@ -36,10 +39,12 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         ISettingService settings,
         HttpClient httpClient,
         ILogger<LocalAiService> logger,
-        LanguageCodeService languageCodeService)
+        LanguageCodeService languageCodeService,
+        IRequestTemplateService requestTemplateService)
         : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
     {
         _httpClient = httpClient;
+        _requestTemplateService = requestTemplateService;
     }
 
     /// <summary>
@@ -63,10 +68,11 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 SettingKeys.Translation.LocalAi.Model,
                 SettingKeys.Translation.LocalAi.Endpoint,
                 SettingKeys.Translation.LocalAi.ApiKey,
+                SettingKeys.Translation.LocalAi.ChatRequestTemplate,
+                SettingKeys.Translation.LocalAi.GenerateRequestTemplate,
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiContextPrompt,
                 SettingKeys.Translation.AiContextPromptEnabled,
-                SettingKeys.Translation.CustomAiParameters,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
@@ -74,6 +80,12 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             ]);
             _model = settings[SettingKeys.Translation.LocalAi.Model];
             _endpoint = settings[SettingKeys.Translation.LocalAi.Endpoint];
+            _chatRequestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.LocalAi.ChatRequestTemplate])
+                ? settings[SettingKeys.Translation.LocalAi.ChatRequestTemplate]
+                : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.LocalAi.ChatRequestTemplate);
+            _generateRequestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.LocalAi.GenerateRequestTemplate])
+                ? settings[SettingKeys.Translation.LocalAi.GenerateRequestTemplate]
+                : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.LocalAi.GenerateRequestTemplate);
             _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_endpoint))
@@ -88,7 +100,6 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             };
             _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
             _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
-            _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
             _isChatEndpoint = _endpoint.TrimEnd('/').EndsWith("completions", StringComparison.OrdinalIgnoreCase);
 
             var requestTimeout = int.TryParse(settings[SettingKeys.Translation.RequestTimeout],
@@ -318,18 +329,6 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             ["response_format"] = responseFormat
         };
 
-        // Add custom parameters but exclude response_format to avoid conflicts
-        if (_customParameters is { Count: > 0 })
-        {
-            foreach (var param in _customParameters)
-            {
-                if (param.Key != "response_format")
-                {
-                    requestBody[param.Key] = param.Value;
-                }
-            }
-        }
-
         var requestContent = new StringContent(
             JsonSerializer.Serialize(requestBody),
             Encoding.UTF8,
@@ -405,7 +404,6 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             ["messages"] = messages
         };
 
-        requestBody = AddCustomParameters(requestBody);
         var requestContent = new StringContent(
             JsonSerializer.Serialize(requestBody),
             Encoding.UTF8,
@@ -474,8 +472,6 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             ["prompt"] = batchPrompt + JsonSerializer.Serialize(subtitleBatch),
             ["stream"] = false
         };
-        requestData = AddCustomParameters(requestData);
-
         var content = new StringContent(JsonSerializer.Serialize(requestData),
             Encoding.UTF8, "application/json");
 
@@ -529,15 +525,16 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
 
     private async Task<string> TranslateWithGenerateApi(string text, CancellationToken cancellationToken)
     {
-        var requestData = new Dictionary<string, object>
+        var placeholders = new Dictionary<string, string>
         {
             ["model"] = _model!,
-            ["prompt"] = _prompt + "\n\n" + text,
-            ["stream"] = false
+            ["systemPrompt"] = _prompt!,
+            ["userMessage"] = text
         };
-        requestData = AddCustomParameters(requestData);
+        var bodyJson = _requestTemplateService.BuildRequestBody(_generateRequestTemplate!, placeholders);
 
-        var content = new StringContent(JsonSerializer.Serialize(requestData),
+
+        var content = new StringContent(bodyJson,
             Encoding.UTF8, "application/json");
 
         var response = await _httpClient.PostAsync(_endpoint, content, cancellationToken);
@@ -562,20 +559,16 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
 
     private async Task<string> TranslateWithChatApi(string? text, CancellationToken cancellationToken)
     {
-        var messages = new[]
-        {
-            new { role = "system", content = _prompt },
-            new { role = "user", content = text }
-        };
-
-        var requestBody = new Dictionary<string, object>
+        var placeholders = new Dictionary<string, string>
         {
             ["model"] = _model!,
-            ["messages"] = messages
+            ["systemPrompt"] = _prompt!,
+            ["userMessage"] = text ?? string.Empty
         };
-        requestBody = AddCustomParameters(requestBody);
+        var bodyJson = _requestTemplateService.BuildRequestBody(_chatRequestTemplate!, placeholders);
 
-        var content = new StringContent(JsonSerializer.Serialize(requestBody),
+
+        var content = new StringContent(bodyJson,
             Encoding.UTF8, "application/json");
 
         var response = await _httpClient.PostAsync(_endpoint, content, cancellationToken);

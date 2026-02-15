@@ -11,7 +11,7 @@
                 :id="id"
                 autocomplete="off"
                 :value="modelValue"
-                :type="type == 'password' ? (showPassword ? 'text' : 'password') : type"
+                :type="type == INPUT_TYPE.PASSWORD ? (showPassword ? 'text' : 'password') : type"
                 :class="inputClasses"
                 :placeholder="placeholder"
                 @input="handleInput" />
@@ -21,12 +21,12 @@
                 :is-invalid="isInvalid"
                 :size="size"
                 :class="{
-                    'pr-10': type === 'password',
+                    'pr-10': type === INPUT_TYPE.PASSWORD,
                     'pr-3': size === 'md',
                     'pr-1': size === 'sm'
                 }" />
             <button
-                v-if="type === 'password'"
+                v-if="type === INPUT_TYPE.PASSWORD"
                 type="button"
                 class="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3"
                 @click="togglePassword">
@@ -40,7 +40,7 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { InputType, INPUT_TYPE, validationType } from '@/ts'
+import { InputType, INPUT_TYPE, InputValidationType } from '@/ts'
 import useValidation from '@/composables/useValidation'
 import useDebounce from '@/composables/useDebounce'
 import ValidationIcon from '@/components/common/ValidationIcon.vue'
@@ -58,7 +58,7 @@ const props = withDefaults(
         placeholder?: string
         errorMessage?: string
         size?: 'sm' | 'md' | 'lg'
-        validationType?: validationType
+        validationType?: InputValidationType
         debounce?: number
     }>(),
     {

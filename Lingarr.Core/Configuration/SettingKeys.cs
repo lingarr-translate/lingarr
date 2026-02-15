@@ -20,6 +20,7 @@ public static class SettingKeys
         {
             public const string Model = "openai_model";
             public const string ApiKey = "openai_api_key";
+            public const string RequestTemplate = "openai_request_template";
         }
 
         public static class Anthropic
@@ -27,6 +28,7 @@ public static class SettingKeys
             public const string Model = "anthropic_model";
             public const string ApiKey = "anthropic_api_key";
             public const string Version = "anthropic_version";
+            public const string RequestTemplate = "anthropic_request_template";
         }
 
         public static class LocalAi
@@ -34,6 +36,8 @@ public static class SettingKeys
             public const string Model = "local_ai_model";
             public const string Endpoint = "local_ai_endpoint";
             public const string ApiKey = "local_ai_api_key";
+            public const string ChatRequestTemplate = "local_ai_chat_request_template";
+            public const string GenerateRequestTemplate = "local_ai_generate_request_template";
         }
 
         public static class DeepL
@@ -45,12 +49,14 @@ public static class SettingKeys
         {
             public const string Model = "gemini_model";
             public const string ApiKey = "gemini_api_key";
+            public const string RequestTemplate = "gemini_request_template";
         }
 
         public static class DeepSeek
         {
             public const string Model = "deepseek_model";
             public const string ApiKey = "deepseek_api_key";
+            public const string RequestTemplate = "deepseek_request_template";
         }
 
         public static class LibreTranslate
@@ -62,7 +68,6 @@ public static class SettingKeys
         public const string SourceLanguages = "source_languages";
         public const string TargetLanguages = "target_languages";
         public const string AiPrompt = "ai_prompt";
-        public const string CustomAiParameters = "custom_ai_parameters";
         public const string AiContextPromptEnabled = "ai_context_prompt_enabled";
         public const string AiContextPrompt = "ai_context_prompt";
         public const string AiContextBefore = "ai_context_before";

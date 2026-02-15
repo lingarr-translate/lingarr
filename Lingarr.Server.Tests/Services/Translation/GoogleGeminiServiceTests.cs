@@ -40,11 +40,13 @@ public class GoogleGeminiServiceTests
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
 
         var languageCodeService = new LanguageCodeService(NullLogger<LanguageCodeService>.Instance);
+        var requestTemplateService = new RequestTemplateService();
         _service = new GoogleGeminiService(
             _settingsMock.Object,
             _httpClient,
             _loggerMock.Object,
-            languageCodeService);
+            languageCodeService,
+            requestTemplateService);
     }
 
     [Fact]
@@ -58,7 +60,7 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.AiPrompt, "Translate this." },
             { SettingKeys.Translation.AiContextPrompt, "Context." },
             { SettingKeys.Translation.AiContextPromptEnabled, "false" },
-            { SettingKeys.Translation.CustomAiParameters, "[]" },
+            { SettingKeys.Translation.Gemini.RequestTemplate, "" },
             { SettingKeys.Translation.RequestTimeout, "30" },
             { SettingKeys.Translation.MaxRetries, "3" },
             { SettingKeys.Translation.RetryDelay, "1000" },
@@ -141,7 +143,7 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.AiPrompt, "Translate this." },
             { SettingKeys.Translation.AiContextPrompt, "Context." },
             { SettingKeys.Translation.AiContextPromptEnabled, "false" },
-            { SettingKeys.Translation.CustomAiParameters, "[]" },
+            { SettingKeys.Translation.Gemini.RequestTemplate, "" },
             { SettingKeys.Translation.RequestTimeout, "30" },
             { SettingKeys.Translation.MaxRetries, "3" },
             { SettingKeys.Translation.RetryDelay, "1000" },
@@ -223,7 +225,7 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.AiPrompt, "Translate the following subtitles to Spanish. Return JSON." },
             { SettingKeys.Translation.AiContextPrompt, "" },
             { SettingKeys.Translation.AiContextPromptEnabled, "false" },
-            { SettingKeys.Translation.CustomAiParameters, "[]" },
+            { SettingKeys.Translation.Gemini.RequestTemplate, "" },
             { SettingKeys.Translation.RequestTimeout, "120" },
             { SettingKeys.Translation.MaxRetries, "3" },
             { SettingKeys.Translation.RetryDelay, "1000" },
@@ -238,11 +240,13 @@ public class GoogleGeminiServiceTests
 
         var realHttpClient = new HttpClient();
         var languageCodeService = new LanguageCodeService(NullLogger<LanguageCodeService>.Instance);
+        var requestTemplateService2 = new RequestTemplateService();
         var service = new GoogleGeminiService(
             _settingsMock.Object,
             realHttpClient,
             _loggerMock.Object,
-            languageCodeService
+            languageCodeService,
+            requestTemplateService2
         );
 
         // Create a LARGE batch similar to the bug report (150 items to trigger truncation)
@@ -431,7 +435,7 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.AiPrompt, "Prompt" },
             { SettingKeys.Translation.AiContextPrompt, "" },
             { SettingKeys.Translation.AiContextPromptEnabled, "false" },
-            { SettingKeys.Translation.CustomAiParameters, "[]" },
+            { SettingKeys.Translation.Gemini.RequestTemplate, "" },
             { SettingKeys.Translation.RequestTimeout, "5" },
             { SettingKeys.Translation.MaxRetries, "3" },
             { SettingKeys.Translation.RetryDelay, "1" }, // Short delay for fast tests

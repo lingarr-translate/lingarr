@@ -12,6 +12,12 @@
         --tertiary-content: #c0c8d2;
         --accent: #466e8c;
         --accent-content: #c0c8d2;
+
+        /* Syntax highlighting */
+        --syntax-key: #7eb8da;
+        --syntax-string: #a8d4a0;
+        --syntax-number: #e0a870;
+        --syntax-keyword: #c4a0d8;
     }
 }
 
@@ -24,6 +30,10 @@
     --tertiary-content: #586e75;
     --accent: #268bd2;
     --accent-content: #f5efdc;
+    --syntax-key: #268bd2;
+    --syntax-string: #2aa198;
+    --syntax-number: #cb4b16;
+    --syntax-keyword: #6c71c4;
 }
 
 .solarized-dark {
@@ -35,6 +45,10 @@
     --tertiary-content: #fdf6e3;
     --accent: #2aa198;
     --accent-content: #fdf6e3;
+    --syntax-key: #268bd2;
+    --syntax-string: #2aa198;
+    --syntax-number: #cb4b16;
+    --syntax-keyword: #6c71c4;
 }
 
 .dracula {
@@ -46,6 +60,10 @@
     --tertiary-content: #f8f8f2;
     --accent: #bd93f9;
     --accent-content: #f8f8f2;
+    --syntax-key: #8be9fd;
+    --syntax-string: #50fa7b;
+    --syntax-number: #ffb86c;
+    --syntax-keyword: #ff79c6;
 }
 
 .nord {
@@ -57,6 +75,10 @@
     --tertiary-content: #d8dee9;
     --accent: #5e81ac;
     --accent-content: #e5e9f0;
+    --syntax-key: #81a1c1;
+    --syntax-string: #a3be8c;
+    --syntax-number: #d08770;
+    --syntax-keyword: #b48ead;
 }
 
 .monokai {
@@ -68,6 +90,10 @@
     --tertiary-content: #f8f8f2;
     --accent: #66d9ef;
     --accent-content: #f8f8f2;
+    --syntax-key: #66d9ef;
+    --syntax-string: #a6e22e;
+    --syntax-number: #ae81ff;
+    --syntax-keyword: #f92672;
 }
 
 .cyberpunk-neon {
@@ -79,6 +105,10 @@
     --tertiary-content: #ff00ff;
     --accent: #ff0084;
     --accent-content: #ffff00;
+    --syntax-key: #00ffff;
+    --syntax-string: #39ff14;
+    --syntax-number: #ffff00;
+    --syntax-keyword: #ff00ff;
 }
 
 .material-dark {
@@ -90,6 +120,10 @@
     --tertiary-content: #ffffff;
     --accent: #03a9f4;
     --accent-content: #ffffff;
+    --syntax-key: #82b1ff;
+    --syntax-string: #c3e88d;
+    --syntax-number: #f78c6c;
+    --syntax-keyword: #c792ea;
 }
 
 .horizon {
@@ -101,6 +135,10 @@
     --tertiary-content: #fff5f5;
     --accent: #f472b6;
     --accent-content: #fff5f5;
+    --syntax-key: #f472b6;
+    --syntax-string: #fab795;
+    --syntax-number: #e95678;
+    --syntax-keyword: #b877db;
 }
 
 .gruvbox {
@@ -112,6 +150,10 @@
     --tertiary-content: #ebdbb2;
     --accent: #fb4934;
     --accent-content: #ebdbb2;
+    --syntax-key: #83a598;
+    --syntax-string: #b8bb26;
+    --syntax-number: #fe8019;
+    --syntax-keyword: #d3869b;
 }
 
 .gotham {
@@ -123,6 +165,10 @@
     --tertiary-content: #c5c8c6;
     --accent: #5e81ac;
     --accent-content: #d6d8d6;
+    --syntax-key: #599cab;
+    --syntax-string: #99d1ce;
+    --syntax-number: #d26937;
+    --syntax-keyword: #919ba0;
 }
 
 *::-webkit-scrollbar {

@@ -27,7 +27,7 @@
             :options="options"
             :load-on-open="true"
             placeholder="Select model..."
-            no-options="errorMessage || 'Loading models...'"
+            :no-options="errorMessage || 'Loading models...'"
             @fetch-options="loadOptions" />
     </div>
 </template>

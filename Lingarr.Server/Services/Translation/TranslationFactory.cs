@@ -68,35 +68,40 @@ public class TranslationFactory : ITranslationServiceFactory
             "openai" => new OpenAiService(
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<ILogger<OpenAiService>>(),
-                languageCodeService
+                languageCodeService,
+                _serviceProvider.GetRequiredService<IRequestTemplateService>()
             ),
 
             "anthropic" => new AnthropicService(
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<HttpClient>(),
                 _serviceProvider.GetRequiredService<ILogger<AnthropicService>>(),
-                languageCodeService
+                languageCodeService,
+                _serviceProvider.GetRequiredService<IRequestTemplateService>()
             ),
 
             "localai" => new LocalAiService(
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<HttpClient>(),
                 _serviceProvider.GetRequiredService<ILogger<LocalAiService>>(),
-                languageCodeService
+                languageCodeService,
+                _serviceProvider.GetRequiredService<IRequestTemplateService>()
             ),
 
             "deepseek" => new DeepSeekService(
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<HttpClient>(),
                 _serviceProvider.GetRequiredService<ILogger<DeepSeekService>>(),
-                languageCodeService
+                languageCodeService,
+                _serviceProvider.GetRequiredService<IRequestTemplateService>()
             ),
 
             "gemini" => new GoogleGeminiService(
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<HttpClient>(),
                 _serviceProvider.GetRequiredService<ILogger<GoogleGeminiService>>(),
-                languageCodeService
+                languageCodeService,
+                _serviceProvider.GetRequiredService<IRequestTemplateService>()
             ),
 
             _ => throw new ArgumentException("Unsupported translation service type", nameof(serviceType))

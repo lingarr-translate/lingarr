@@ -13,4 +13,4 @@ export const INPUT_VALIDATION_TYPE = {
     CRON: 'cron'
 } as const
 
-export type inputValidationType = (typeof INPUT_VALIDATION_TYPE)[keyof typeof INPUT_VALIDATION_TYPE]
+export type InputValidationType = (typeof INPUT_VALIDATION_TYPE)[keyof typeof INPUT_VALIDATION_TYPE]
