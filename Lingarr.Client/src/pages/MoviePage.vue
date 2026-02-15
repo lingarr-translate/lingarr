@@ -18,6 +18,22 @@
                 <ButtonComponent size="sm" variant="accent" @click="toggleSelectMode">
                     {{ isSelectMode ? 'Cancel' : 'Translate multiple' }}
                 </ButtonComponent>
+                <ButtonComponent
+                    size="sm"
+                    variant="accent"
+                    @click="movieStore.includeAll(MEDIA_TYPE.MOVIE, true)">
+                    Include All
+                </ButtonComponent>
+                <ButtonComponent
+                    size="sm"
+                    variant="accent"
+                    @click="movieStore.includeAll(MEDIA_TYPE.MOVIE, false)">
+                    Exclude All
+                </ButtonComponent>
+                <span class="text-sm text-accent-content">
+                    {{ movieStore.includeSummary.included }}/{{ movieStore.includeSummary.total }}
+                    included
+                </span>
                 <SortControls
                     v-model="filter"
                     :options="[
@@ -39,7 +55,10 @@
                     Title
                 </div>
                 <div class="col-span-4 px-4 py-2">Subtitles</div>
-                <div class="col-span-1 px-4 py-2">Exclude</div>
+                <div class="col-span-1 px-4 py-2">
+                    <span class="hidden md:block">Include</span>
+                    <span class="block md:hidden">✓</span>
+                </div>
                 <div class="col-span-1 px-4 py-2">Delay</div>
                 <div class="col-span-1 flex justify-end px-4 py-2">
                     <ReloadComponent @toggle:update="movieStore.fetch()" />
@@ -75,9 +94,16 @@
                     </div>
                     <div class="col-span-1 flex flex-wrap items-center gap-2 px-4 py-2">
                         <ToggleButton
-                            v-model="item.excludeFromTranslation"
+                            v-model="item.includeInTranslation"
                             size="small"
-                            @toggle:update="() => movieStore.exclude(MEDIA_TYPE.MOVIE, item.id)" />
+                            @toggle:update="
+                                () =>
+                                    movieStore.include(
+                                        MEDIA_TYPE.MOVIE,
+                                        item.id,
+                                        item.includeInTranslation
+                                    )
+                            " />
                     </div>
                     <div class="col-span-2 flex items-center px-4 py-2" @click.stop>
                         <InputComponent

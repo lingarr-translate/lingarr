@@ -1,4 +1,5 @@
 ﻿using Lingarr.Core.Entities;
+using Lingarr.Core.Enum;
 using Lingarr.Server.Attributes;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
@@ -74,12 +75,49 @@ public class MediaController : ControllerBase
     
     /// <summary>
     /// Toggles the exclusion status of a specified media item from translation.
+    /// Kept for backward compatibility. Prefer using the include endpoint.
     /// </summary>
     /// <param name="request">The request object containing the media type and id.</param>
     [HttpPost("exclude")]
     public async Task<ActionResult<PagedResult<Show>>> Exclude([FromBody] ExcludeRequest request)
     {
         var value = await _mediaService.Exclude(request.MediaType, request.Id);
+        return Ok(value);
+    }
+    
+    /// <summary>
+    /// Sets the include status of a specified media item for translation.
+    /// When include is true, the item will be eligible for translation.
+    /// When include is false, the item will be excluded from translation.
+    /// </summary>
+    /// <param name="request">The request object containing the media type, id, and include status.</param>
+    [HttpPost("include")]
+    public async Task<ActionResult> SetInclude([FromBody] IncludeRequest request)
+    {
+        var value = await _mediaService.SetInclude(request.MediaType, request.Id, request.Include);
+        return Ok(value);
+    }
+    
+    /// <summary>
+    /// Sets the include status of all media items of a given type for translation.
+    /// For shows, this cascades to all seasons and episodes.
+    /// </summary>
+    /// <param name="request">The request object containing the media type and include status.</param>
+    [HttpPost("includeAll")]
+    public async Task<ActionResult> SetIncludeAll([FromBody] IncludeAllRequest request)
+    {
+        var value = await _mediaService.SetIncludeAll(request.MediaType, request.Include);
+        return Ok(value);
+    }
+    
+    /// <summary>
+    /// Gets a summary of how many items of a given type are included for translation.
+    /// </summary>
+    /// <param name="mediaType">The type of media (Movie or Show).</param>
+    [HttpGet("includeSummary")]
+    public async Task<ActionResult<IncludeSummary>> GetIncludeSummary([FromQuery] MediaType mediaType)
+    {
+        var value = await _mediaService.GetIncludeSummary(mediaType);
         return Ok(value);
     }
     

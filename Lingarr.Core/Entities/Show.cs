@@ -8,6 +8,6 @@ public class Show : BaseEntity
     public required DateTime? DateAdded { get; set; }
     public List<Image> Images { get; set; } = new();
     public List<Season> Seasons { get; set; } = new();
-    public bool ExcludeFromTranslation { get; set; }
+    public bool IncludeInTranslation { get; set; } = true;
     public int? TranslationAgeThreshold { get; set; }
 }

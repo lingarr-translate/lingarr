@@ -3,6 +3,7 @@ using Lingarr.Core.Enum;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
 
+
 namespace Lingarr.Server.Interfaces.Services;
 
 /// <summary>
@@ -72,6 +73,7 @@ public interface IMediaService
 
     /// <summary>
     /// Toggles the exclusion status of a media item from translation.
+    /// Kept for backward compatibility.
     /// </summary>
     /// <param name="mediaType">The type of media (Movie, Show, Season, or Episode).</param>
     /// <param name="id">The unique identifier of the media item.</param>
@@ -81,6 +83,33 @@ public interface IMediaService
     /// - false if the item was not found or an error occurred
     /// </returns>
     Task<bool> Exclude(MediaType mediaType, int id);
+
+    /// <summary>
+    /// Sets the include status of a media item for translation.
+    /// When include is true, the item will be translated (IncludeInTranslation = true).
+    /// When include is false, the item will not be translated (IncludeInTranslation = false).
+    /// </summary>
+    /// <param name="mediaType">The type of media (Movie, Show, Season, or Episode).</param>
+    /// <param name="id">The unique identifier of the media item.</param>
+    /// <param name="include">Whether to include the item for translation.</param>
+    /// <returns>True if the operation succeeded, false otherwise.</returns>
+    Task<bool> SetInclude(MediaType mediaType, int id, bool include);
+
+    /// <summary>
+    /// Sets the include status of all media items of a given type for translation.
+    /// For Show type, cascades to all seasons and their episodes.
+    /// </summary>
+    /// <param name="mediaType">The type of media (Movie or Show).</param>
+    /// <param name="include">Whether to include all items for translation.</param>
+    /// <returns>True if the operation succeeded, false otherwise.</returns>
+    Task<bool> SetIncludeAll(MediaType mediaType, bool include);
+
+    /// <summary>
+    /// Gets a summary of how many items are included for translation.
+    /// </summary>
+    /// <param name="mediaType">The type of media (Movie or Show).</param>
+    /// <returns>An IncludeSummary with included count and total count.</returns>
+    Task<IncludeSummary> GetIncludeSummary(MediaType mediaType);
 
     /// <summary>
     /// Sets the amount of hours a media file needs to exist before translation is initiated.

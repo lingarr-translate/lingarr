@@ -17,7 +17,8 @@ export const useMovieStore = defineStore('movie', {
             pageNumber: 1
         },
         selectedMovies: [],
-        selectAll: false
+        selectAll: false,
+        includeSummary: { included: 0, total: 0 }
     }),
     getters: {
         getFilter: (state: IUseMovieStore): IFilter => state.filter,
@@ -45,9 +46,21 @@ export const useMovieStore = defineStore('movie', {
                 this.filter.sortBy,
                 this.filter.isAscending
             )
+            await this.fetchIncludeSummary()
+        },
+        async fetchIncludeSummary() {
+            this.includeSummary = await services.media.includeSummary('Movie')
         },
         async exclude(type: MediaType, id: number) {
             await services.media.exclude(type, id)
+        },
+        async include(type: MediaType, id: number, include: boolean) {
+            await services.media.include(type, id, include)
+            await this.fetchIncludeSummary()
+        },
+        async includeAll(type: MediaType, include: boolean) {
+            await services.media.includeAll(type, include)
+            await this.fetch()
         },
         async updateThreshold(type: MediaType, id: number, hours: string) {
             await services.media.threshold(type, id, hours)
