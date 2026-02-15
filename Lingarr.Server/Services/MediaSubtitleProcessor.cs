@@ -7,6 +7,7 @@ using Lingarr.Server.Interfaces;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.FileSystem;
+using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Services;
 
@@ -128,6 +129,24 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
                 return false;
             }
         }
+        
+        // Exclude languages that already have a pending, in-progress, or completed translation request
+        // to prevent duplicate translations (see: https://github.com/lingarr-translate/lingarr/issues/312)
+        var activeStatuses = new[]
+        {
+            TranslationStatus.Pending,
+            TranslationStatus.InProgress,
+            TranslationStatus.Completed
+        };
+        var existingLanguages = await _dbContext.TranslationRequests
+            .Where(r => r.MediaId == _media.Id
+                        && r.MediaType == _mediaType
+                        && activeStatuses.Contains(r.Status))
+            .Select(r => r.TargetLanguage)
+            .Distinct()
+            .ToListAsync();
+
+        languagesToTranslate = languagesToTranslate.Except(existingLanguages);
         
         if (!languagesToTranslate.Any())
         {
