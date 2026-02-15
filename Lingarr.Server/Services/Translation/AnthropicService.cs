@@ -167,10 +167,13 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                             null, response.StatusCode);
                     }
 
-                    _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-                    _logger.LogError("Response Content: {ResponseContent}",
-                        await response.Content.ReadAsStringAsync(cancellationToken: linked.Token));
-                    throw new TranslationException("Translation using Anthropic failed.");
+                    var responseContent = await response.Content.ReadAsStringAsync(cancellationToken: linked.Token);
+                    _logger.LogError(
+                        "Anthropic API request failed with status {StatusCode}: {ResponseContent}",
+                        response.StatusCode, 
+                        responseContent);
+                    throw new TranslationException(
+                        $"Anthropic API request failed with status {response.StatusCode}: {responseContent}");
                 }
 
                 var responseBody = await response.Content.ReadAsStringAsync(linked.Token);
@@ -336,10 +339,13 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                     null, response.StatusCode);
             }
 
-            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}",
-                await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new TranslationException("Batch translation using Anthropic failed.");
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError(
+                "Anthropic batch API request failed with status {StatusCode}: {ResponseContent}",
+                response.StatusCode, 
+                responseContent);
+            throw new TranslationException(
+                $"Anthropic batch API request failed with status {response.StatusCode}: {responseContent}");
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
