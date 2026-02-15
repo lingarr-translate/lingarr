@@ -164,11 +164,12 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                             $"OpenAI returned {response.StatusCode}", null, response.StatusCode);
                     }
 
-                    _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-                    _logger.LogError("Response Content: {ResponseContent}",
-                        await response.Content.ReadAsStringAsync(cancellationToken: linked.Token));
+                    var responseContent = await response.Content.ReadAsStringAsync(cancellationToken: linked.Token);
+                    _logger.LogError(
+                        "OpenAI API request failed with status {StatusCode}: {ResponseContent}",
+                        response.StatusCode, responseContent);
                     throw new TranslationException(
-                        $"Translation using OpenAI failed with status code {response.StatusCode}.");
+                        $"OpenAI API request failed with status {response.StatusCode}: {responseContent}");
                 }
 
                 var completionResponse =
@@ -339,10 +340,12 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                     null, response.StatusCode);
             }
 
-            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}",
-                await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new TranslationException("Batch translation using OpenAI API failed.");
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError(
+                "OpenAI batch API request failed with status {StatusCode}: {ResponseContent}",
+                response.StatusCode, responseContent);
+            throw new TranslationException(
+                $"OpenAI batch API request failed with status {response.StatusCode}: {responseContent}");
         }
 
         var completionResponse = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(cancellationToken);

@@ -193,10 +193,15 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}",
-                await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new HttpRequestException("Translation using Gemini API failed.", null, response.StatusCode);
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError(
+                "Gemini API request failed with status {StatusCode}: {ResponseContent}",
+                response.StatusCode, 
+                responseContent);
+            throw new HttpRequestException(
+                $"Gemini API request failed with status {response.StatusCode}: {responseContent}",
+                null, 
+                response.StatusCode);
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -400,11 +405,15 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         var response = await _httpClient.PostAsync(endpoint, content, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}",
-                await response.Content.ReadAsStringAsync(cancellationToken)
-            );
-            throw new HttpRequestException("Translation using Gemini API failed.", null, response.StatusCode);
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError(
+                "Gemini batch API request failed with status {StatusCode}: {ResponseContent}",
+                response.StatusCode, 
+                responseContent);
+            throw new HttpRequestException(
+                $"Gemini batch API request failed with status {response.StatusCode}: {responseContent}",
+                null, 
+                response.StatusCode);
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
