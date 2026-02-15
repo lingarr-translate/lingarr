@@ -337,10 +337,13 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         var response = await _httpClient.PostAsync(_endpoint, requestContent, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}",
-                await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new TranslationException("Batch translation using LocalAI structured output failed.");
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError(
+                "LocalAI structured output batch request failed with status {StatusCode}: {ResponseContent}",
+                response.StatusCode, 
+                responseContent);
+            throw new TranslationException(
+                $"LocalAI structured output batch request failed with status {response.StatusCode}: {responseContent}");
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -412,10 +415,13 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         var response = await _httpClient.PostAsync(_endpoint, requestContent, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}",
-                await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new TranslationException("Batch translation using LocalAI JSON parsing failed.");
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError(
+                "LocalAI JSON parsing batch request failed with status {StatusCode}: {ResponseContent}",
+                response.StatusCode, 
+                responseContent);
+            throw new TranslationException(
+                $"LocalAI JSON parsing batch request failed with status {response.StatusCode}: {responseContent}");
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -478,10 +484,12 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         var response = await _httpClient.PostAsync(_endpoint, content, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}",
-                await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new TranslationException("Batch translation using Local AI generate API failed.");
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError(
+                "LocalAI generate API batch request failed with status {StatusCode}: {ResponseContent}",
+                response.StatusCode, responseContent);
+            throw new TranslationException(
+                $"LocalAI generate API batch request failed with status {response.StatusCode}: {responseContent}");
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -540,10 +548,12 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         var response = await _httpClient.PostAsync(_endpoint, content, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}",
-                await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new TranslationException("Translation using Local AI failed.");
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError(
+                "LocalAI generate API request failed with status {StatusCode}: {ResponseContent}",
+                response.StatusCode, responseContent);
+            throw new TranslationException(
+                $"LocalAI generate API request failed with status {response.StatusCode}: {responseContent}");
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -575,10 +585,14 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}",
-                await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new TranslationResponseException("Translation using chat API failed.");
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError(
+                "LocalAI chat API request to {Endpoint} failed with status {StatusCode}: {ResponseContent}",
+                _endpoint, 
+                response.StatusCode, 
+                responseContent);
+            throw new TranslationResponseException(
+                $"LocalAI chat API request failed with status {response.StatusCode}: {responseContent}");
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);

@@ -130,10 +130,13 @@ public class DeepSeekService : BaseLanguageService
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Response Status Code: {StatusCode}", response.StatusCode);
-            _logger.LogError("Response Content: {ResponseContent}",
-                await response.Content.ReadAsStringAsync(cancellationToken));
-            throw new TranslationException("Translation using DeepSeek API failed.");
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError(
+                "DeepSeek API request failed with status {StatusCode}: {ResponseContent}",
+                response.StatusCode, 
+                responseContent);
+            throw new TranslationException(
+                $"DeepSeek API request failed with status {response.StatusCode}: {responseContent}");
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
