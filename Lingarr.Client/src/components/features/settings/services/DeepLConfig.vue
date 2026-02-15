@@ -1,8 +1,8 @@
 ﻿<template>
     <InputComponent
         v-model="deepLApiKey"
-        validation-type="string"
-        type="password"
+        :validation-type="INPUT_VALIDATION_TYPE.STRING"
+        :type="INPUT_TYPE.PASSWORD"
         :min-length="1"
         label="API key"
         error-message="API Key must be {minLength} characters"
@@ -24,7 +24,7 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 import { useSettingStore } from '@/store/setting'
-import { SETTINGS } from '@/ts'
+import { INPUT_TYPE, SETTINGS, INPUT_VALIDATION_TYPE } from '@/ts'
 import InputComponent from '@/components/common/InputComponent.vue'
 
 const isValid = ref(false)

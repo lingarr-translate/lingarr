@@ -37,7 +37,7 @@
                                         id="newUsername"
                                         v-model="authStore.editUsername"
                                         placeholder="Username"
-                                        validation-type="string"
+                                        :validation-type="INPUT_VALIDATION_TYPE.STRING"
                                         :min-length="2"
                                         error-message="Username must be at least 2 characters long"
                                         @update:validation="authStore.setUsernameValidation" />
@@ -73,10 +73,10 @@
                                     <InputComponent
                                         id="newPassword"
                                         v-model="authStore.editPassword"
-                                        type="password"
+                                        :validation-type="INPUT_VALIDATION_TYPE.STRING"
+                                        :type="INPUT_TYPE.PASSWORD"
                                         label="Password (required)"
                                         placeholder="Enter password"
-                                        validation-type="string"
                                         :min-length="4"
                                         error-message="Password must be at least 4 characters long and match"
                                         @update:validation="authStore.setPasswordValidation" />
@@ -84,10 +84,10 @@
                                     <InputComponent
                                         id="newConfirmPassword"
                                         v-model="authStore.editConfirmPassword"
-                                        type="password"
+                                        :validation-type="INPUT_VALIDATION_TYPE.STRING"
+                                        :type="INPUT_TYPE.PASSWORD"
                                         label="Confirm Password (required)"
                                         placeholder="Confirm your password"
-                                        validation-type="string"
                                         :min-length="4"
                                         error-message="Password must be at least 4 characters long and match"
                                         @update:validation="
@@ -106,7 +106,7 @@
                                         id="editUsername"
                                         v-model="authStore.editUsername"
                                         placeholder="Username"
-                                        validation-type="string"
+                                        :validation-type="INPUT_VALIDATION_TYPE.STRING"
                                         :min-length="2"
                                         error-message="Username must be at least 2 characters long"
                                         @update:validation="authStore.setUsernameValidation" />
@@ -164,10 +164,10 @@
                                     <InputComponent
                                         id="editPassword"
                                         v-model="authStore.editPassword"
-                                        type="password"
+                                        :validation-type="INPUT_VALIDATION_TYPE.STRING"
+                                        :type="INPUT_TYPE.PASSWORD"
                                         label="New Password (optional)"
                                         placeholder="Leave blank to keep current password"
-                                        validation-type="string"
                                         :min-length="4"
                                         error-message="Password must be at least 4 characters long and match"
                                         @update:validation="authStore.setPasswordValidation" />
@@ -175,10 +175,10 @@
                                     <InputComponent
                                         id="editConfirmPassword"
                                         v-model="authStore.editConfirmPassword"
-                                        type="password"
+                                        :validation-type="INPUT_VALIDATION_TYPE.STRING"
+                                        :type="INPUT_TYPE.PASSWORD"
                                         label="Confirm New Password (optional)"
                                         placeholder="Confirm your new password"
-                                        validation-type="string"
                                         :min-length="4"
                                         error-message="Password must be at least 4 characters long and match"
                                         @update:validation="
@@ -202,7 +202,7 @@
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
-import { IUser } from '@/ts'
+import { INPUT_TYPE, INPUT_VALIDATION_TYPE, IUser } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'

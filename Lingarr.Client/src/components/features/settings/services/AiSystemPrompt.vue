@@ -34,7 +34,7 @@ const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])
 
 const aiPrompt = computed({
-    get: () => settingsStore.getSetting(SETTINGS.AI_PROMPT) as string,
+    get: () => (settingsStore.getSetting(SETTINGS.AI_PROMPT) as string) ?? '',
     set: (newValue: string) => {
         settingsStore.updateSetting(SETTINGS.AI_PROMPT, newValue, isValid.value)
         if (isValid.value) {

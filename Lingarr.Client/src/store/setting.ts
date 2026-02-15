@@ -1,12 +1,5 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import {
-    IUseSettingStore,
-    ISettings,
-    SETTINGS,
-    ILanguage,
-    SERVICE_TYPE,
-    ICustomAiParams
-} from '@/ts'
+import { IUseSettingStore, ISettings, SETTINGS, ILanguage } from '@/ts'
 import services from '@/services'
 import { useTranslateStore } from '@/store/translate'
 import { useInstanceStore } from '@/store/instance'
@@ -20,8 +13,7 @@ export const useSettingStore = defineStore('setting', {
             return {
                 ...state.settings,
                 source_languages: JSON.parse(state.settings.source_languages as string),
-                target_languages: JSON.parse(state.settings.target_languages as string),
-                custom_ai_parameters: JSON.parse(state.settings.custom_ai_parameters as string)
+                target_languages: JSON.parse(state.settings.target_languages as string)
             }
         },
         getSetting: (state: IUseSettingStore) => (key: keyof ISettings) => state.settings[key]
@@ -44,22 +36,6 @@ export const useSettingStore = defineStore('setting', {
                     await this.saveSetting(key, JSON.stringify(value))
                 } else {
                     await this.saveSetting(key, value as string)
-                }
-                // When Anthropic is selected the max_tokens parameter is required
-                if (key === SETTINGS.SERVICE_TYPE && value === SERVICE_TYPE.ANTHROPIC) {
-                    const maxTokensExists = this.settings.custom_ai_parameters as ICustomAiParams[]
-
-                    if (!maxTokensExists.some((param) => param.key === 'max_tokens')) {
-                        const updatedParams = [
-                            ...this.settings.custom_ai_parameters,
-                            { key: 'max_tokens', value: '1024' }
-                        ]
-                        this.storeSetting(SETTINGS.CUSTOM_AI_PARAMETERS, updatedParams)
-                        await this.saveSetting(
-                            SETTINGS.CUSTOM_AI_PARAMETERS,
-                            JSON.stringify(updatedParams)
-                        )
-                    }
                 }
                 if (key === SETTINGS.SERVICE_TYPE) {
                     // When a new service is selected we check if all selected languages is still valid
@@ -124,8 +100,7 @@ export const useSettingStore = defineStore('setting', {
             this.settings = {
                 ...settings,
                 source_languages: JSON.parse(settings.source_languages as string),
-                target_languages: JSON.parse(settings.target_languages as string),
-                custom_ai_parameters: JSON.parse(settings.custom_ai_parameters as string)
+                target_languages: JSON.parse(settings.target_languages as string)
             }
 
             instanceStore.storeTheme(settings.theme)

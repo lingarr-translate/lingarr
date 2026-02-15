@@ -16,10 +16,12 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
 {
     private readonly string? _endpoint = "https://api.anthropic.com/v1";
     private readonly HttpClient _httpClient;
+    private readonly IRequestTemplateService _requestTemplateService;
     private string? _model;
     private string? _prompt;
     private string? _apiKey;
     private string? _version;
+    private string? _requestTemplate;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
@@ -34,10 +36,12 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
     public AnthropicService(ISettingService settings,
         HttpClient httpClient,
         ILogger<AnthropicService> logger,
-        LanguageCodeService languageCodeService)
+        LanguageCodeService languageCodeService,
+        IRequestTemplateService requestTemplateService)
         : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
     {
         _httpClient = httpClient;
+        _requestTemplateService = requestTemplateService;
     }
 
     /// <summary>
@@ -61,10 +65,10 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 SettingKeys.Translation.Anthropic.Model,
                 SettingKeys.Translation.Anthropic.ApiKey,
                 SettingKeys.Translation.Anthropic.Version,
+                SettingKeys.Translation.Anthropic.RequestTemplate,
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiContextPrompt,
                 SettingKeys.Translation.AiContextPromptEnabled,
-                SettingKeys.Translation.CustomAiParameters,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
@@ -73,6 +77,9 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             _model = settings[SettingKeys.Translation.Anthropic.Model];
             _apiKey = settings[SettingKeys.Translation.Anthropic.ApiKey];
             _version = settings[SettingKeys.Translation.Anthropic.Version];
+            _requestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.Anthropic.RequestTemplate])
+                ? settings[SettingKeys.Translation.Anthropic.RequestTemplate]
+                : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.Anthropic.RequestTemplate);
             _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey) || string.IsNullOrEmpty(_version))
@@ -87,7 +94,6 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             };
             _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
             _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
-            _customParameters = PrepareCustomParameters(settings, SettingKeys.Translation.CustomAiParameters);
             
             var requestTimeout = int.TryParse(settings[SettingKeys.Translation.RequestTimeout],
                 out var timeOut)
@@ -137,20 +143,16 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         {
             try
             {
-                var requestBody = new Dictionary<string, object>
+                var placeholders = new Dictionary<string, string>
                 {
                     ["model"] = _model!,
-                    ["system"] = _prompt!,
-                    ["messages"] = new[]
-                    {
-                        new { role = "user", content = text }
-                    }
+                    ["systemPrompt"] = _prompt!,
+                    ["userMessage"] = text
                 };
-                
-                requestBody = AddCustomParameters(requestBody);
+                var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
                 var content = new StringContent(
-                    JsonSerializer.Serialize(requestBody), 
-                    Encoding.UTF8, 
+                    bodyJson,
+                    Encoding.UTF8,
                     "application/json"
                 );
 
@@ -318,18 +320,6 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 }
             }
         };
-
-        // Add custom parameters but exclude tool-related ones
-        if (_customParameters is { Count: > 0 })
-        {
-            foreach (var param in _customParameters)
-            {
-                if (param.Key != "tools" && param.Key != "tool_choice")
-                {
-                    requestBody[param.Key] = param.Value;
-                }
-            }
-        }
 
         var content = new StringContent(
             JsonSerializer.Serialize(requestBody),

@@ -13,8 +13,8 @@
 
         <InputComponent
             v-model="apiKey"
-            validation-type="string"
-            type="password"
+            :validation-type="INPUT_VALIDATION_TYPE.STRING"
+            :type="INPUT_TYPE.PASSWORD"
             label="API key"
             :min-length="1"
             error-message="API Key must be {minLength} characters"
@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useSettingStore } from '@/store/setting'
-import { SETTINGS } from '@/ts'
+import { INPUT_TYPE, SETTINGS, INPUT_VALIDATION_TYPE } from '@/ts'
 import SelectComponent from '@/components/common/SelectComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 import { useModelOptions } from '@/composables/useModelOptions'

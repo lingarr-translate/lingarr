@@ -1,14 +1,14 @@
 <template>
     <InputComponent
         v-model="libreTranslateUrl"
-        validation-type="url"
+        :validation-type="INPUT_VALIDATION_TYPE.URL"
         label="Address"
         error-message="Please enter a valid URL (e.g., http://localhost:3000 or https://api.example.com)"
         @update:validation="(val) => (isValid = val)" />
     <InputComponent
         v-model="libreTranslateApiKey"
-        validation-type="string"
-        type="password"
+        :validation-type="INPUT_VALIDATION_TYPE.STRING"
+        :type="INPUT_TYPE.PASSWORD"
         label="API key"
         error-message="API Key must not be empty"
         @update:validation="(val) => (isValid = val)" />
@@ -18,7 +18,7 @@
 import { computed, ref } from 'vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 import { useSettingStore } from '@/store/setting'
-import { SETTINGS } from '@/ts'
+import { INPUT_TYPE, INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
 
 const isValid = ref(false)
 const settingsStore = useSettingStore()
