@@ -9,7 +9,7 @@
                     size="small"
                     label="Open details on request" />
                 <div class="flex items-center gap-2">
-                    <span class="text-sm">{{ translate('movies.includeAll') }}:</span>
+                    <span class="text-sm">Include all:</span>
                     <ToggleButton
                         :model-value="movieStore.includeSummary.allIncluded"
                         size="small"
@@ -40,7 +40,7 @@
                             value: 'DateAdded'
                         },
                         {
-                            label: translate('common.sortByIncluded'),
+                            label: 'Sort by Included',
                             value: 'ExcludeFromTranslation'
                         }
                     ]" />
@@ -50,14 +50,14 @@
         <div class="w-full px-4">
             <div class="grid grid-cols-12 border-b border-accent font-bold">
                 <div :class="isSelectMode ? 'col-span-4' : 'col-span-5'" class="px-4 py-2">
-                    {{ translate('movies.title') }}
+                    Title
                 </div>
-                <div class="col-span-4 px-4 py-2">{{ translate('movies.subtitles') }}</div>
+                <div class="col-span-4 px-4 py-2">Subtitles</div>
                 <div class="col-span-1 px-4 py-2">
-                    {{ translate('movies.include') }}
+                    Include
                 </div>
                 <div class="col-span-1 px-4 py-2">
-                    {{ translate('movies.ageThreshold') }}
+                    Age threshold
                 </div>
                 <div class="col-span-1 flex justify-end px-4 py-2">
                     <ReloadComponent @toggle:update="movieStore.fetch()" />

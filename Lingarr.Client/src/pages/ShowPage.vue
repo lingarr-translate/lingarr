@@ -9,7 +9,7 @@
                     size="small"
                     label="Open details on request" />
                 <div class="flex items-center gap-2">
-                    <span class="text-sm">{{ translate('tvShows.includeAll') }}:</span>
+                    <span class="text-sm">Include all:</span>
                     <ToggleButton
                         :model-value="showStore.includeSummary.allIncluded"
                         size="small"
@@ -55,7 +55,7 @@
                 </div>
                 <div class="col-span-1 px-4 py-2">
                     <span class="hidden md:block">
-                        {{ translate('tvShows.include') }}
+                        Include
                     </span>
                     <span class="block md:hidden">✓</span>
                 </div>
