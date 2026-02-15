@@ -18,6 +18,22 @@
                 <ButtonComponent size="sm" variant="accent" @click="toggleSelectMode">
                     {{ isSelectMode ? 'Cancel' : 'Translate multiple' }}
                 </ButtonComponent>
+                <ButtonComponent
+                    size="sm"
+                    variant="accent"
+                    @click="showStore.includeAll(MEDIA_TYPE.SHOW, true)">
+                    Include All
+                </ButtonComponent>
+                <ButtonComponent
+                    size="sm"
+                    variant="accent"
+                    @click="showStore.includeAll(MEDIA_TYPE.SHOW, false)">
+                    Exclude All
+                </ButtonComponent>
+                <span class="text-sm text-accent-content">
+                    {{ showStore.includeSummary.included }}/{{ showStore.includeSummary.total }}
+                    included
+                </span>
                 <SortControls
                     v-model="filter"
                     :options="[
@@ -40,8 +56,8 @@
                     Title
                 </div>
                 <div class="col-span-1 px-4 py-2">
-                    <span class="hidden md:block">Exclude</span>
-                    <span class="block md:hidden">⊘</span>
+                    <span class="hidden md:block">Include</span>
+                    <span class="block md:hidden">✓</span>
                 </div>
                 <div class="col-span-1 px-4 py-2">Delay</div>
                 <div class="col-span-2 flex justify-end px-4 py-2">
@@ -67,9 +83,16 @@
                     </div>
                     <div class="col-span-1 flex items-center px-4 py-2" @click.stop>
                         <ToggleButton
-                            v-model="item.excludeFromTranslation"
+                            v-model="item.includeInTranslation"
                             size="small"
-                            @toggle:update="() => showStore.exclude(MEDIA_TYPE.SHOW, item.id)" />
+                            @toggle:update="
+                                () =>
+                                    showStore.include(
+                                        MEDIA_TYPE.SHOW,
+                                        item.id,
+                                        item.includeInTranslation
+                                    )
+                            " />
                     </div>
                     <div class="col-span-3 flex items-center px-4 py-2" @click.stop>
                         <InputComponent

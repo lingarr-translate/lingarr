@@ -11,5 +11,5 @@ public class Season : BaseEntity
     public int ShowId { get; set; }
     [ForeignKey(nameof(ShowId))]
     public required Show Show { get; set; }
-    public bool ExcludeFromTranslation { get; set; }
+    public bool IncludeInTranslation { get; set; } = true;
 }

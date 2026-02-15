@@ -147,7 +147,7 @@ public class AutomatedTranslationJob
         _logger.LogInformation("Movie Translation job initiated");
 
         var movies = await _dbContext.Movies
-            .Where(movie => !movie.ExcludeFromTranslation)
+            .Where(movie => movie.IncludeInTranslation)
             .OrderBy(movie => movie.Id)
             .ToListAsync();
 
@@ -226,16 +226,16 @@ public class AutomatedTranslationJob
         _logger.LogInformation("Show Translation job initiated");
 
         var shows = await _dbContext.Shows
-            .Where(show => !show.ExcludeFromTranslation)
+            .Where(show => show.IncludeInTranslation)
             .ToListAsync();
 
         var seasons = await _dbContext.Seasons
-            .Where(season => shows.Select(s => s.Id).Contains(season.ShowId) && !season.ExcludeFromTranslation)
+            .Where(season => shows.Select(s => s.Id).Contains(season.ShowId) && season.IncludeInTranslation)
             .ToListAsync();
 
         var episodes = await _dbContext.Episodes
             .Where(episode =>
-                seasons.Select(s => s.Id).Contains(episode.SeasonId) && !episode.ExcludeFromTranslation)
+                seasons.Select(s => s.Id).Contains(episode.SeasonId) && episode.IncludeInTranslation)
             .OrderBy(e => e.Id)
             .ToListAsync();
 

@@ -5,8 +5,8 @@
             <div class="col-span-6 px-4 py-2 md:col-span-3">Season</div>
             <div class="col-span-6 flex justify-between px-4 py-2 md:col-span-8">
                 <span>Episodes</span>
-                <span class="hidden md:block">Exclude</span>
-                <span class="block md:hidden">⊘</span>
+                <span class="hidden md:block">Include</span>
+                <span class="block md:hidden">✓</span>
             </div>
         </div>
         <!-- Seasons -->
@@ -34,10 +34,15 @@
                     </span>
                     <span @click.stop>
                         <ToggleButton
-                            v-model="season.excludeFromTranslation"
+                            v-model="season.includeInTranslation"
                             size="small"
                             @toggle:update="
-                                () => showStore.exclude(MEDIA_TYPE.SEASON, season.id)
+                                () =>
+                                    showStore.include(
+                                        MEDIA_TYPE.SEASON,
+                                        season.id,
+                                        season.includeInTranslation
+                                    )
                             " />
                     </span>
                 </div>
