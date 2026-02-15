@@ -197,7 +197,6 @@ const handleTranslate = async (language: ILanguage) => {
     showStore.clearSelection()
     isSelectMode.value = false
 }
-}
 
 const handleIncludeToggle = async (show: IShow) => {
     const currentlyIncluded = !show.excludeFromTranslation
