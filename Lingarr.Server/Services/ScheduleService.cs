@@ -94,6 +94,15 @@ public class ScheduleService : IScheduleService
             Cron.Daily,
             new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
+        _logger.LogInformation("Cleaning up orphaned processing jobs.");
+        var monitor = JobStorage.Current.GetMonitoringApi();
+        var processingJobs = monitor.ProcessingJobs(0, int.MaxValue);
+        foreach (var job in processingJobs)
+        {
+            BackgroundJob.Delete(job.Key);
+            _logger.LogWarning("Cleaned up orphaned processing job {JobId}", job.Key);
+        }
+
         _logger.LogInformation("Starting pending translation requests.");
         await translationRequestService.ResumeTranslationRequests();
     }
