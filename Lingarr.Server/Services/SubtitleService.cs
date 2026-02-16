@@ -60,8 +60,9 @@ public class SubtitleService : ISubtitleService
                 }
 
                 // Then look for language in remaining parts
-                var languagePart = parts.FirstOrDefault(p => TryGetLanguageByPart(p, out var code));
-                if (languagePart != null && TryGetLanguageByPart(languagePart, out var languageCode))
+                // Handle hyphen-tag suffixes (e.g. "bg-lingarr") by stripping the tag before detection
+                var languagePart = parts.FirstOrDefault(p => TryGetLanguageByPart(StripHyphenTag(p), out _));
+                if (languagePart != null && TryGetLanguageByPart(StripHyphenTag(languagePart), out var languageCode))
                 {
                     language = languageCode;
                     parts.Remove(languagePart);
@@ -136,8 +137,8 @@ public class SubtitleService : ISubtitleService
             reversedParts.RemoveAt(captionIndex);
         }
 
-        // Extract language
-        int languageIndex = reversedParts.FindIndex(part => TryGetLanguageByPart(part, out _));
+        // Extract language (handle hyphen-tag suffixes like "bg-lingarr")
+        int languageIndex = reversedParts.FindIndex(part => TryGetLanguageByPart(StripHyphenTag(part), out _));
         if (languageIndex != -1)
         {
             reversedParts.RemoveAt(languageIndex);
@@ -155,21 +156,26 @@ public class SubtitleService : ISubtitleService
         var baseParts = reversedParts.AsEnumerable().Reverse().ToList();
         var newParts = new List<string>(baseParts);
         
+        // Build language segment: join language code and tag with a hyphen
+        // so other applications can still parse the language (e.g. "bg-lingarr")
         if (targetLanguageCode != null)
         {
-            newParts.Add(targetLanguageCode.ToLowerInvariant());
+            var languageSegment = targetLanguageCode.ToLowerInvariant();
+            if (!string.IsNullOrEmpty(subtitleTag))
+            {
+                languageSegment += "-" + subtitleTag.ToLowerInvariant();
+            }
+            newParts.Add(languageSegment);
+        }
+        else if (!string.IsNullOrEmpty(subtitleTag))
+        {
+            newParts.Add(subtitleTag.ToLowerInvariant());
         }
 
         // Add caption if present
         if (!string.IsNullOrEmpty(caption))
         {
             newParts.Add(caption);
-        }
-        
-        // Add tag if provided
-        if (!string.IsNullOrEmpty(subtitleTag))
-        {
-            newParts.Add(subtitleTag.ToLowerInvariant());
         }
         
         // Build new file name and path
@@ -599,6 +605,26 @@ public class SubtitleService : ISubtitleService
         var readingTime = (int)(wordCount * 1000 / wordsPerSecond);
         var optimalTime = readingTime + 500;
         return Math.Max(minDuration, Math.Min(optimalTime, maxDuration));
+    }
+
+    /// <summary>
+    /// Strips a hyphen-delimited tag suffix from a filename part.
+    /// For example, "bg-lingarr" becomes "bg", "pt-BR" stays "pt-BR" (since it's a valid language code).
+    /// Only strips the last hyphen segment if the base part is a valid language code.
+    /// </summary>
+    private string StripHyphenTag(string part)
+    {
+        var hyphenIndex = part.LastIndexOf('-');
+        if (hyphenIndex <= 0) return part;
+        
+        var basePart = part[..hyphenIndex];
+        // Only strip if the base is a valid language code and the full part is not
+        if (_languageCodeService.Validate(basePart) && !_languageCodeService.Validate(part))
+        {
+            return basePart;
+        }
+        
+        return part;
     }
 
     /// <summary>
