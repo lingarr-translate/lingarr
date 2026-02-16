@@ -1,4 +1,4 @@
-﻿export * from './auth'
+export * from './auth'
 export * from './instance'
 export * from './onboarding'
 export * from './setting'

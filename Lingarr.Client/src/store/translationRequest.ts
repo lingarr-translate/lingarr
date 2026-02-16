@@ -1,4 +1,4 @@
-﻿import { acceptHMRUpdate, defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 import {
     IFilter,
     IPagedResult,

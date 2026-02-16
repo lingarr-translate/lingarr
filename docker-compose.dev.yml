@@ -30,8 +30,8 @@ services:
 #      - DB_CONNECTION=postgresql
 #      - DB_HOST=Lingarr.Postgres
 #      - DB_PORT=5432
-#      - DB_DATABASE=lingarr
-#      - DB_USERNAME=lingarr
+#      - DB_DATABASE=Lingarr
+#      - DB_USERNAME=Lingarr
 #      - DB_PASSWORD=Secret1234
       
       - SERVICE_TYPE=libretranslate
@@ -111,15 +111,15 @@ services:
 #    container_name: Lingarr.Postgres
 #    restart: unless-stopped
 #    environment:
-#      POSTGRES_DB: lingarr
-#      POSTGRES_USER: lingarr
+#      POSTGRES_DB: Lingarr
+#      POSTGRES_USER: Lingarr
 #      POSTGRES_PASSWORD: Secret1234
 #    ports:
 #      - "5432:5432"
 #    networks:
 #      - lingarr
 #    healthcheck:
-#      test: ["CMD-SHELL", "pg_isready -U lingarr -d lingarr"]
+#      test: ["CMD-SHELL", "pg_isready -U Lingarr -d Lingarr"]
 #      interval: 10s
 #      timeout: 5s
 #      retries: 5

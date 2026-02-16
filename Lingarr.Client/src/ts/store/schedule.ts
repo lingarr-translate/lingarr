@@ -1,4 +1,4 @@
-﻿export interface IUseScheduleStore {
+export interface IUseScheduleStore {
     recurringJobs: IRecurringJob[]
 }
 

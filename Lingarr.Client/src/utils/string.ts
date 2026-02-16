@@ -1,3 +1,4 @@
+// oxlint-disable-next-line no-unused-vars - global String prototype
 interface String {
     /**
      * Adds query parameters to the string URL.

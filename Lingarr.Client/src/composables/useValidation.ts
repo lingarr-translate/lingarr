@@ -1,4 +1,4 @@
-﻿import { ref, computed } from 'vue'
+import { ref, computed } from 'vue'
 import { isValidCron } from 'cron-validator'
 
 type ValidationProps = {
@@ -32,7 +32,7 @@ export default function useValidation(props: ValidationProps) {
                       `Length must be between ${min} and ${max === Infinity ? '∞' : max}`
                 break
             case 'url':
-                const urlPattern = /^(http:\/\/|https:\/\/)[\w\-]+(\.[\w\-]+)*(:\d+)?(\/.*)?$/
+                const urlPattern = /^(http:\/\/|https:\/\/)[\w-]+(\.[\w-]+)*(:\d+)?(\/.*)?$/
                 isValid.value = urlPattern.test(value)
                 error.value = isValid.value ? '' : props.errorMessage || 'Invalid URL'
                 break

@@ -66,8 +66,8 @@ export function useTemplatePreview(props: TemplatePreviewProps) {
             /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g,
             (match) => {
                 let cssVar = '--syntax-number'
-                if (/^"/.test(match)) {
-                    cssVar = /:$/.test(match) ? '--syntax-key' : '--syntax-string'
+                if (match.startsWith('"')) {
+                    cssVar = match.endsWith(':') ? '--syntax-key' : '--syntax-string'
                 } else if (/true|false|null/.test(match)) {
                     cssVar = '--syntax-keyword'
                 }

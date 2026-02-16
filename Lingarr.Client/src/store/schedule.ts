@@ -1,4 +1,4 @@
-﻿import { acceptHMRUpdate, defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 import { IUseScheduleStore, IRecurringJob } from '@/ts'
 import services from '@/services'
 

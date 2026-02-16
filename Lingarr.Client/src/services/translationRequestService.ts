@@ -1,4 +1,4 @@
-﻿import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
+import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
 import { ITranslationRequest, ITranslationRequestService } from '@/ts'
 
 const service = (
