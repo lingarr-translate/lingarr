@@ -425,6 +425,152 @@ public class GoogleGeminiServiceTests
         Assert.IsType<HttpRequestException>(ex.InnerException);
     }
 
+    [Theory]
+    [InlineData("null_candidates")]
+    [InlineData("empty_candidates")]
+    [InlineData("null_parts")]
+    public async Task TranslateAsync_ShouldRetry_WhenEmptyResponse(string emptyResponseType)
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var emptyContent = JsonSerializer.Serialize(GetEmptyGeminiResponse(emptyResponseType));
+        var successResponse = new { candidates = new[] { new { content = new { parts = new[] { new { text = "Translated Text" } } } } } };
+        var successContent = JsonSerializer.Serialize(successResponse);
+
+        _httpMessageHandlerMock.Protected().SetupSequence<Task<HttpResponseMessage>>(
+            "SendAsync",
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>()
+        )
+        .ReturnsAsync(new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(emptyContent, Encoding.UTF8, "application/json")
+        })
+        .ReturnsAsync(new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(successContent, Encoding.UTF8, "application/json")
+        });
+
+        // Act
+        var result = await _service.TranslateAsync("Source Text", "en", "es", null, null, CancellationToken.None);
+
+        // Assert
+        Assert.Equal("Translated Text", result);
+
+        _loggerMock.Verify(
+            x => x.Log(
+                LogLevel.Warning,
+                It.IsAny<EventId>(),
+                It.Is<It.IsAnyType>((v, t) => v.ToString()!.Contains("Retrying")),
+                It.IsAny<Exception>(),
+                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Theory]
+    [InlineData("null_candidates")]
+    [InlineData("empty_candidates")]
+    [InlineData("null_parts")]
+    public async Task TranslateBatchAsync_ShouldRetry_WhenEmptyResponse(string emptyResponseType)
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var batch = new List<BatchSubtitleItem> { new() { Position = 1, Line = "Hello" } };
+        var emptyContent = JsonSerializer.Serialize(GetEmptyGeminiResponse(emptyResponseType));
+        var successBatchResponse = new { candidates = new[] { new { content = new { parts = new[] { new { text = "[{\"position\":1,\"line\":\"Hola\"}]" } } } } } };
+        var successContent = JsonSerializer.Serialize(successBatchResponse);
+
+        _httpMessageHandlerMock.Protected().SetupSequence<Task<HttpResponseMessage>>(
+            "SendAsync",
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>()
+        )
+        .ReturnsAsync(new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(emptyContent, Encoding.UTF8, "application/json")
+        })
+        .ReturnsAsync(new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(successContent, Encoding.UTF8, "application/json")
+        });
+
+        // Act
+        var result = await _service.TranslateBatchAsync(batch, "en", "es", CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Hola", result[1]);
+    }
+
+    [Theory]
+    [InlineData("null_candidates")]
+    [InlineData("empty_candidates")]
+    [InlineData("null_parts")]
+    public async Task TranslateAsync_ShouldThrow_WhenEmptyResponseRetriesExhausted(string emptyResponseType)
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var emptyContent = JsonSerializer.Serialize(GetEmptyGeminiResponse(emptyResponseType));
+
+        _httpMessageHandlerMock.Protected().Setup<Task<HttpResponseMessage>>(
+            "SendAsync",
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>()
+        )
+        .ReturnsAsync(new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(emptyContent, Encoding.UTF8, "application/json")
+        });
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<TranslationException>(
+            () => _service.TranslateAsync("Source Text", "en", "es", null, null, CancellationToken.None));
+
+        Assert.Contains("Retry limit reached", ex.Message);
+    }
+
+    [Theory]
+    [InlineData("null_candidates")]
+    [InlineData("empty_candidates")]
+    [InlineData("null_parts")]
+    public async Task TranslateBatchAsync_ShouldThrow_WhenEmptyResponseRetriesExhausted(string emptyResponseType)
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var batch = new List<BatchSubtitleItem> { new() { Position = 1, Line = "Hello" } };
+        var emptyContent = JsonSerializer.Serialize(GetEmptyGeminiResponse(emptyResponseType));
+
+        _httpMessageHandlerMock.Protected().Setup<Task<HttpResponseMessage>>(
+            "SendAsync",
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>()
+        )
+        .ReturnsAsync(new HttpResponseMessage
+        {
+            StatusCode = HttpStatusCode.OK,
+            Content = new StringContent(emptyContent, Encoding.UTF8, "application/json")
+        });
+
+        // Act & Assert
+        var ex = await Assert.ThrowsAsync<TranslationException>(
+            () => _service.TranslateBatchAsync(batch, "en", "es", CancellationToken.None));
+
+        Assert.Contains("Retry limit reached", ex.Message);
+    }
+
     // Helper to keep the tests clean
     private Dictionary<string, string> GetDefaultSettings()
     {
@@ -440,6 +586,17 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.MaxRetries, "3" },
             { SettingKeys.Translation.RetryDelay, "1" }, // Short delay for fast tests
             { SettingKeys.Translation.RetryDelayMultiplier, "1" }
+        };
+    }
+
+    private static object GetEmptyGeminiResponse(string type)
+    {
+        return type switch
+        {
+            "null_candidates" => new { },
+            "empty_candidates" => new { candidates = Array.Empty<object>() },
+            "null_parts" => new { candidates = new[] { new { content = new { parts = Array.Empty<object>() } } } },
+            _ => throw new ArgumentException($"Unknown empty response type: {type}")
         };
     }
 }
