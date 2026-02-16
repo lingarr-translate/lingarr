@@ -126,10 +126,10 @@ public class M0001_InitialCreate : Migration
             .WithColumn("total_movies").AsInt32().NotNullable().WithDefaultValue(0)
             .WithColumn("total_episodes").AsInt32().NotNullable().WithDefaultValue(0)
             .WithColumn("total_subtitles").AsInt32().NotNullable().WithDefaultValue(0)
-            .WithColumn("translations_by_media_type_json").AsCustom("TEXT").NotNullable().WithDefaultValue("{}")
-            .WithColumn("translations_by_service_json").AsCustom("TEXT").NotNullable().WithDefaultValue("{}")
-            .WithColumn("subtitles_by_language_json").AsCustom("TEXT").NotNullable().WithDefaultValue("{}")
-            .WithColumn("translations_by_model_json").AsCustom("TEXT").NotNullable().WithDefaultValue("{}")
+            .WithColumn("translations_by_media_type_json").AsCustom("TEXT").NotNullable()
+            .WithColumn("translations_by_service_json").AsCustom("TEXT").NotNullable()
+            .WithColumn("subtitles_by_language_json").AsCustom("TEXT").NotNullable()
+            .WithColumn("translations_by_model_json").AsCustom("TEXT").NotNullable()
             .WithColumn("created_at").AsDateTime().NotNullable()
             .WithColumn("updated_at").AsDateTime().NotNullable();
 

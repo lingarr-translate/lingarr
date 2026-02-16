@@ -15,5 +15,5 @@ public class CustomVersionTableMetaData : IVersionTableMetaData
     public string UniqueIndexName => "ux_version";
     public string AppliedOnColumnName => "applied_on";
     public string DescriptionColumnName => "description";
-    public bool CreateWithPrimaryKey => true;
+    public bool CreateWithPrimaryKey => false;
 }

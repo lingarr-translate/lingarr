@@ -36,6 +36,7 @@
   </Project>
   <Project Path="Lingarr.Core/Lingarr.Core.csproj" />
   <Project Path="Lingarr.Migrations/Lingarr.Migrations.csproj" />
+  <Project Path="Lingarr.Migrations.Tests/Lingarr.Migrations.Tests.csproj" />
   <Project Path="Lingarr.Server.Tests/Lingarr.Server.Tests.csproj" />
   <Project Path="Lingarr.Server/Lingarr.Server.csproj" />
 </Solution>

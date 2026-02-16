@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <IsPackable>false</IsPackable>
+        <IsTestProject>true</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" />
+        <PackageReference Include="xunit" />
+        <PackageReference Include="xunit.runner.visualstudio" />
+        <PackageReference Include="Testcontainers" />
+        <PackageReference Include="Testcontainers.MySql" />
+        <PackageReference Include="Testcontainers.PostgreSql" />
+        <PackageReference Include="Microsoft.Data.Sqlite" />
+        <PackageReference Include="MySqlConnector" />
+        <PackageReference Include="Npgsql" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Lingarr.Migrations\Lingarr.Migrations.csproj" />
+    </ItemGroup>
+
+</Project>
