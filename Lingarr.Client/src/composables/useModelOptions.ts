@@ -1,4 +1,4 @@
-﻿import { ref } from 'vue'
+import { ref } from 'vue'
 import { LabelValue, SelectComponentExpose, TranslateModelsResponse } from '@/ts'
 import { delay } from '@/utils/delay'
 import services from '@/services'

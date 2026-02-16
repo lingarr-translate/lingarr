@@ -1,4 +1,4 @@
-﻿export const INPUT_TYPE = {
+export const INPUT_TYPE = {
     TEXT: 'text',
     NUMBER: 'number',
     PASSWORD: 'password'

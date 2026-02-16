@@ -1,4 +1,4 @@
-﻿import { ISubtitle } from '@/ts'
+import { ISubtitle } from '@/ts'
 
 interface IBaseEntity {
     id: number

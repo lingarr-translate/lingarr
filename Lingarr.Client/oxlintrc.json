@@ -1,0 +1,15 @@
+{
+    "$schema": "https://raw.githubusercontent.com/nicolo-ribaudo/oxc-project/refs/heads/nicolo/json-schema/npm/oxlint/configuration_schema.json",
+    "plugins": ["typescript", "vue"],
+    "categories": {
+        "correctness": "error",
+        "suspicious": "warn",
+        "pedantic": "off",
+        "style": "off",
+        "nursery": "off"
+    },
+    "rules": {
+        "vue/multi-word-component-names": "off"
+    },
+    "ignorePatterns": ["dist/**", "node_modules/**"]
+}

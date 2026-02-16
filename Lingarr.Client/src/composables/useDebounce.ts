@@ -1,4 +1,4 @@
-﻿export const useDebounce = <T extends (...args: never[]) => void>(
+export const useDebounce = <T extends (...args: never[]) => void>(
     fn: T,
     delay: number
 ): ((...args: Parameters<T>) => void) => {

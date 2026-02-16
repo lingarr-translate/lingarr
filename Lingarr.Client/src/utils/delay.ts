@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Creates a promise that resolves after a specified delay
  * @param ms - The delay duration in milliseconds
  */

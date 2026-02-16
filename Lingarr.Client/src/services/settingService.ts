@@ -1,4 +1,4 @@
-﻿import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
+import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
 import { ISettingService, ISettings } from '@/ts'
 
 const service = (http: AxiosStatic, resource = '/api/setting'): ISettingService => ({
