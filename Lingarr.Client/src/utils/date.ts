@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Formats a date string into a more readable format.
  * @example
  * formatDate("2025-01-01") // "1 Jan 2025"

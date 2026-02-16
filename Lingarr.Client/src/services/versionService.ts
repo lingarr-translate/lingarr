@@ -1,4 +1,4 @@
-﻿import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
+import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
 import { IVersionService } from '@/ts'
 
 const service = (http: AxiosStatic, resource = '/api/version'): IVersionService => ({

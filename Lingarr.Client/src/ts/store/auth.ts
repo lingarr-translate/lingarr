@@ -1,4 +1,4 @@
-﻿export interface IAuthStore {
+export interface IAuthStore {
     users: IUser[]
     loading: boolean
     error: string
