@@ -111,7 +111,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             return false;
         }
 
-        var languagesToTranslate = targetLanguages.Except(selected.AvailableLanguages);
+        var languagesToTranslate = targetLanguages.Except(selected.AvailableLanguages).ToList();
         if (ignoreCaptions == "true")
         {
             var targetLanguagesWithCaptions = subtitles
@@ -130,24 +130,21 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             }
         }
         
-        // Exclude languages that already have a pending, in-progress, or completed translation request
-        // to prevent duplicate translations (see: https://github.com/lingarr-translate/lingarr/issues/312)
         var activeStatuses = new[]
         {
             TranslationStatus.Pending,
             TranslationStatus.InProgress,
             TranslationStatus.Completed
         };
-        var existingLanguages = await _dbContext.TranslationRequests
-            .Where(r => r.MediaId == _media.Id
-                        && r.MediaType == _mediaType
-                        && activeStatuses.Contains(r.Status))
-            .Select(r => r.TargetLanguage)
+        var existingTranslationRequests = await _dbContext.TranslationRequests
+            .Where(translationRequest => translationRequest.MediaId == _media.Id
+                                         && translationRequest.MediaType == _mediaType
+                                         && activeStatuses.Contains(translationRequest.Status))
+            .Select(translationRequest => translationRequest.TargetLanguage)
             .Distinct()
             .ToListAsync();
 
-        languagesToTranslate = languagesToTranslate.Except(existingLanguages);
-        
+        languagesToTranslate = languagesToTranslate.Except(existingTranslationRequests).ToList();
         if (!languagesToTranslate.Any())
         {
             await UpdateHash();
