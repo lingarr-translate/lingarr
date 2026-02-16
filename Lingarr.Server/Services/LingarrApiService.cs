@@ -77,7 +77,6 @@ public class LingarrApiService : ILingarrApiService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error fetching latest version");
             return null;
         }
     }
@@ -101,15 +100,15 @@ public class LingarrApiService : ILingarrApiService
             request.Headers.Add("X-Signature", signature);
             var response = await httpClient.SendAsync(request);
 
-            if (!response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode)
             {
-                _logger.LogWarning("Telemetry submission failed: {Status} - {Response}",
-                    response.StatusCode,
-                    await response.Content.ReadAsStringAsync());
-                return false;
+                return true;
             }
+            _logger.LogWarning("Telemetry submission failed: {Status} - {Response}",
+                response.StatusCode,
+                await response.Content.ReadAsStringAsync());
+            return false;
 
-            return true;
         }
         catch (Exception ex)
         {
