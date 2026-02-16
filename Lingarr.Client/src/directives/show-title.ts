@@ -1,4 +1,4 @@
-﻿export default {
+export default {
     mounted(el: HTMLElement) {
         const text = el.textContent
         const originalClasses = el.className

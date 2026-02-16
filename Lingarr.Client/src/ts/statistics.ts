@@ -1,4 +1,4 @@
-﻿export interface Statistics {
+export interface Statistics {
     totalLinesTranslated: number
     totalFilesTranslated: number
     totalCharactersTranslated: number

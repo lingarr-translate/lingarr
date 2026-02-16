@@ -1,4 +1,4 @@
-﻿export interface LabelValue {
+export interface LabelValue {
     label: string
     value: string
 }

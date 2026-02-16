@@ -1,4 +1,4 @@
-﻿export interface IOnboardingStore {
+export interface IOnboardingStore {
     enableAuth: string
     enableTelemetry: string
     username: string
