@@ -7,57 +7,61 @@ public class M0004_AlterStringsToText : Migration
 {
     public override void Up()
     {
-        // Settings
-        Alter.Column("value").OnTable("settings").AsCustom("TEXT").NotNullable();
+        // SQLite already uses TEXT affinity for string columns, so these alterations
+        // are only needed for MySQL (VARCHAR→TEXT) and PostgreSQL.
 
-        // Movies
-        Alter.Column("title").OnTable("movies").AsCustom("TEXT").NotNullable();
-        Alter.Column("file_name").OnTable("movies").AsCustom("TEXT").Nullable();
-        Alter.Column("path").OnTable("movies").AsCustom("TEXT").Nullable();
-        Alter.Column("media_hash").OnTable("movies").AsCustom("TEXT").Nullable();
+        AlterToText("settings", "value");
 
-        // Shows
-        Alter.Column("title").OnTable("shows").AsCustom("TEXT").NotNullable();
-        Alter.Column("path").OnTable("shows").AsCustom("TEXT").NotNullable();
+        AlterToText("movies", "title");
+        AlterToText("movies", "file_name", nullable: true);
+        AlterToText("movies", "path", nullable: true);
+        AlterToText("movies", "media_hash", nullable: true);
 
-        // Seasons
-        Alter.Column("path").OnTable("seasons").AsCustom("TEXT").Nullable();
+        AlterToText("shows", "title");
+        AlterToText("shows", "path");
 
-        // Episodes
-        Alter.Column("title").OnTable("episodes").AsCustom("TEXT").NotNullable();
-        Alter.Column("file_name").OnTable("episodes").AsCustom("TEXT").Nullable();
-        Alter.Column("path").OnTable("episodes").AsCustom("TEXT").Nullable();
-        Alter.Column("media_hash").OnTable("episodes").AsCustom("TEXT").Nullable();
+        AlterToText("seasons", "path", nullable: true);
 
-        // Images
-        Alter.Column("type").OnTable("images").AsCustom("TEXT").NotNullable();
-        Alter.Column("path").OnTable("images").AsCustom("TEXT").NotNullable();
+        AlterToText("episodes", "title");
+        AlterToText("episodes", "file_name", nullable: true);
+        AlterToText("episodes", "path", nullable: true);
+        AlterToText("episodes", "media_hash", nullable: true);
 
-        // Path mappings
-        Alter.Column("source_path").OnTable("path_mappings").AsCustom("TEXT").NotNullable();
-        Alter.Column("destination_path").OnTable("path_mappings").AsCustom("TEXT").NotNullable();
+        AlterToText("images", "type");
+        AlterToText("images", "path");
 
-        // Translation requests
-        Alter.Column("job_id").OnTable("translation_requests").AsCustom("TEXT").Nullable();
-        Alter.Column("title").OnTable("translation_requests").AsCustom("TEXT").NotNullable();
-        Alter.Column("source_language").OnTable("translation_requests").AsCustom("TEXT").NotNullable();
-        Alter.Column("target_language").OnTable("translation_requests").AsCustom("TEXT").NotNullable();
-        Alter.Column("subtitle_to_translate").OnTable("translation_requests").AsCustom("TEXT").Nullable();
-        Alter.Column("translated_subtitle").OnTable("translation_requests").AsCustom("TEXT").Nullable();
+        AlterToText("path_mappings", "source_path");
+        AlterToText("path_mappings", "destination_path");
 
-        // Statistics
-        Alter.Column("translations_by_media_type_json").OnTable("statistics").AsCustom("TEXT").NotNullable();
-        Alter.Column("translations_by_service_json").OnTable("statistics").AsCustom("TEXT").NotNullable();
-        Alter.Column("subtitles_by_language_json").OnTable("statistics").AsCustom("TEXT").NotNullable();
-        Alter.Column("translations_by_model_json").OnTable("statistics").AsCustom("TEXT").NotNullable();
+        AlterToText("translation_requests", "job_id", nullable: true);
+        AlterToText("translation_requests", "title");
+        AlterToText("translation_requests", "source_language");
+        AlterToText("translation_requests", "target_language");
+        AlterToText("translation_requests", "subtitle_to_translate", nullable: true);
+        AlterToText("translation_requests", "translated_subtitle", nullable: true);
 
-        // Users
-        Alter.Column("username").OnTable("users").AsCustom("TEXT").NotNullable();
-        Alter.Column("password_hash").OnTable("users").AsCustom("TEXT").NotNullable();
+        AlterToText("statistics", "translations_by_media_type_json");
+        AlterToText("statistics", "translations_by_service_json");
+        AlterToText("statistics", "subtitles_by_language_json");
+        AlterToText("statistics", "translations_by_model_json");
+
+        AlterToText("users", "username");
+        AlterToText("users", "password_hash");
     }
 
     public override void Down()
     {
         //
+    }
+
+    private void AlterToText(string table, string column, bool nullable = false)
+    {
+        var alter = IfDatabase("mysql", "postgres")
+            .Alter.Column(column).OnTable(table).AsCustom("TEXT");
+
+        if (nullable)
+            alter.Nullable();
+        else
+            alter.NotNullable();
     }
 }
