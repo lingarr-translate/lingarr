@@ -11,7 +11,8 @@ import {
     ILoginRequest,
     IApiKeyResponse,
     IUser,
-    IUpdateUserRequest
+    IUpdateUserRequest,
+    IIncludeSummary
 } from '@/ts'
 
 export interface Services {
@@ -58,6 +59,9 @@ export interface IMediaService {
         ascending: boolean
     ): Promise<T>
     exclude<T>(mediaType: MediaType, id: number): Promise<T>
+    include<T>(mediaType: MediaType, id: number, include: boolean): Promise<T>
+    includeAll<T>(mediaType: MediaType, include: boolean): Promise<T>
+    includeSummary(mediaType: MediaType): Promise<IIncludeSummary>
     threshold<T>(mediaType: MediaType, id: number, hours: string): Promise<T>
 }
 
