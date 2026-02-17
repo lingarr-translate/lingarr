@@ -144,20 +144,21 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             {
                 return await TranslateWithGeminiApi(text, linked.Token);
             }
-            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
+            catch (Exception ex) when (IsTransientError(ex))
             {
                 if (attempt == _maxRetries)
                 {
-                    _logger.LogError(ex, "Max retries exhausted ({StatusCode}) for text: {Text}", ex.StatusCode, text);
-                    throw new TranslationException($"Retry limit reached after {ex.StatusCode}.", ex);
+                    _logger.LogError(ex, "Max retries exhausted for text: {Text}", text);
+                    throw new TranslationException("Retry limit reached.", ex);
                 }
 
-                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
+                var jitter = TimeSpan.FromMilliseconds(Random.Shared.Next(0, (int)(delay.TotalMilliseconds * 0.5)));
+                await Task.Delay(delay + jitter, linked.Token).ConfigureAwait(false);
                 delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
 
                 _logger.LogWarning(
-                    "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
-                    "Gemini", ex.StatusCode, delay, attempt, _maxRetries);
+                    "{ServiceName} transient error: {Message}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    "Gemini", ex.Message, delay, attempt, _maxRetries);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -316,20 +317,25 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             {
                 return await TranslateBatchWithGeminiApi(subtitleBatch, linked.Token);
             }
-            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
+            catch (Exception ex) when (IsTransientError(ex))
             {
                 if (attempt == _maxRetries)
                 {
-                    _logger.LogError(ex, "Max retries exhausted ({StatusCode}) for batch translation", ex.StatusCode);
-                    throw new TranslationException($"Retry limit reached after {ex.StatusCode}.", ex);
+                    _logger.LogError(ex, "Max retries exhausted for batch translation");
+                    throw new TranslationException("Retry limit reached.", ex);
                 }
 
-                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
+                var jitter = TimeSpan.FromMilliseconds(Random.Shared.Next(0, (int)(delay.TotalMilliseconds * 0.5)));
+                await Task.Delay(delay + jitter, linked.Token).ConfigureAwait(false);
                 delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
 
                 _logger.LogWarning(
-                    "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
-                    "Gemini", ex.StatusCode, delay, attempt, _maxRetries);
+                    "{ServiceName} transient error: {Message}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    "Gemini", ex.Message, delay, attempt, _maxRetries);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex)
             {
@@ -465,6 +471,10 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             throw new TranslationException("Failed to parse translated subtitles", ex);
         }
     }
+
+    private static bool IsTransientError(Exception ex) =>
+        (ex is HttpRequestException httpEx && httpEx.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable) ||
+        (ex is TranslationException txEx && txEx.Message.Contains("Invalid or empty response"));
 
     private static string TryRepairJson(string json)
     {
