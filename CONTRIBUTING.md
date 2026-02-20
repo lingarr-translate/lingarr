@@ -3,6 +3,44 @@
 Thank you for your interest in contributing to Lingarr!   
 This document provides guidelines and instructions for contributing to the project.
 
+### General Guidelines
+- Lingarr welcomes suggestions for improving these standards. Please provide feedback through issues or discussions.
+- **AI assisted** coding is welcome, however:
+  - Contributors must understand and be able to explain all submitted code
+  - Low-effort, unreviewed, or fully generated changes ("AI slop") will be rejected
+  - Do not include AI co-author tags in commits (e.g. `Co-authored-by: `); pull requests containing them will be rejected
+
+### Backend Guidelines
+- Follow C# coding conventions
+- Use async/await for asynchronous operations
+- Implement proper error handling
+- Document public APIs using XML comments
+- Use dependency injection where appropriate
+
+### Frontend Guidelines
+- Follow Vue.js best practices
+- Use TypeScript for type safety
+- Implement responsive designs
+- Use Tailwind CSS for styling
+- Follow the existing component structure
+
+### Code Style
+- Use meaningful variable and function names
+- Keep functions focused and concise
+- Write self-documenting code
+- Include comments for complex logic
+- Follow the existing project structure
+
+## Creating Pull Requests
+
+1. Select an issue to work on and comment to avoid duplicate effort
+2. Ensure your code follows the project's coding standards
+3. Update documentation as needed
+4. Write clear commit messages following [Conventional Commits](https://www.conventionalcommits.org/)
+5. Push your changes to your fork
+6. Create a Pull Request with a clear title and description
+7. Wait for review and address any feedback
+
 ## Development Setup
 
 ### Prerequisites
@@ -66,46 +104,6 @@ To build and push the Docker image (if logged into a Docker registry):
 ```powershell
 ./build-and-push.ps1 -Tag dev
 ```
-
-## Creating Pull Requests
-
-1. Select an issue to work on and comment to avoid duplicate effort 
-2. Ensure your code follows the project's coding standards 
-3. Update documentation as needed 
-4. Write clear commit messages following [Conventional Commits](https://www.conventionalcommits.org/) 
-5. Push your changes to your fork 
-6. Create a Pull Request with a clear title and description 
-7. Wait for review and address any feedback
-
-## Development Guidelines
-Lingarr welcomes suggestions for improving these standards. Please provide feedback through issues or discussions.
-
-### General Guidelines
-- Discuss significant changes with project maintainers before implementing (via Discord, issues, or discussions)
-- **AI assisted** coding is welcome, however:
-    - Contributors must understand and be able to explain all submitted code
-    - Low-effort, unreviewed, or fully generated changes ("AI slop") will be rejected
-
-### Backend Guidelines
-- Follow C# coding conventions
-- Use async/await for asynchronous operations
-- Implement proper error handling
-- Document public APIs using XML comments
-- Use dependency injection where appropriate
-
-### Frontend Guidelines
-- Follow Vue.js best practices
-- Use TypeScript for type safety
-- Implement responsive designs
-- Use Tailwind CSS for styling
-- Follow the existing component structure
-
-### Code Style
-- Use meaningful variable and function names
-- Keep functions focused and concise
-- Write self-documenting code
-- Include comments for complex logic
-- Follow the existing project structure
 
 ## Database Migrations
 
