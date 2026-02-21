@@ -19,18 +19,38 @@
                 Add Property
             </ButtonComponent>
         </div>
+        <div
+            class="border-accent/20 mt-3 flex flex-wrap gap-3 border-t pt-3"
+            @mousedown.prevent>
+            <PlaceholderButton
+                v-for="item in placeholders"
+                :key="item.placeholder"
+                :placeholder="item.placeholder"
+                :placeholder-text="item.placeholderText"
+                :title="item.title"
+                :description="item.description"
+                @insert="insertPlaceholder" />
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import { nextTick } from 'vue'
 import { useJsonTree } from '@/composables/useJsonTree'
 import JsonTreeNode from './JsonTreeNode.vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
+import PlaceholderButton from '@/components/common/PlaceholderButton.vue'
 import PlusIcon from '@/components/icons/PlusIcon.vue'
 import StatusMessage from '@/components/common/StatusMessage.vue'
 
-const { modelValue } = defineProps<{
+const props = defineProps<{
     modelValue: string
+    placeholders: {
+        placeholder: string
+        placeholderText: string
+        title: string
+        description: string
+    }[]
 }>()
 
 const emit = defineEmits<{
@@ -47,5 +67,23 @@ const {
     watchModelValue
 } = useJsonTree(emit)
 
-watchModelValue(() => modelValue)
+watchModelValue(() => props.modelValue)
+
+function insertPlaceholder(placeholder: string) {
+    const element = document.activeElement as HTMLInputElement | null
+    if (!element || element.tagName !== 'INPUT') {
+        return
+    }
+
+    const start = element.selectionStart ?? element.value.length
+    const end = element.selectionEnd ?? element.value.length
+    element.value = element.value.substring(0, start) + placeholder + element.value.substring(end)
+    element.dispatchEvent(new Event('input', { bubbles: true }))
+
+    nextTick(() => {
+        element.focus()
+        const newPos = start + placeholder.length
+        element.setSelectionRange(newPos, newPos)
+    })
+}
 </script>

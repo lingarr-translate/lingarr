@@ -73,7 +73,8 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
-                SettingKeys.Translation.RetryDelayMultiplier
+                SettingKeys.Translation.RetryDelayMultiplier,
+                SettingKeys.Translation.LanguageCodeFormat
             ]);
             _apiKey = settings[SettingKeys.Translation.Gemini.ApiKey];
             _model = settings[SettingKeys.Translation.Gemini.Model];
@@ -87,11 +88,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                 throw new InvalidOperationException("Gemini API key or model is not configured.");
             }
 
-            _replacements = new Dictionary<string, string>
-            {
-                ["sourceLanguage"] = GetFullLanguageName(sourceLanguage),
-                ["targetLanguage"] = GetFullLanguageName(targetLanguage)
-            };
+            SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
             _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
             _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
 
@@ -180,7 +177,9 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         {
             ["model"] = _model!,
             ["systemPrompt"] = _prompt!,
-            ["userMessage"] = message ?? string.Empty
+            ["userMessage"] = message ?? string.Empty,
+            ["sourceLanguage"] = _replacements["sourceLanguage"],
+            ["targetLanguage"] = _replacements["targetLanguage"]
         };
         var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
 

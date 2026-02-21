@@ -60,7 +60,8 @@ public class DeepSeekService : BaseLanguageService
                 SettingKeys.Translation.DeepSeek.RequestTemplate,
                 SettingKeys.Translation.AiContextPromptEnabled,
                 SettingKeys.Translation.AiContextPrompt,
-                SettingKeys.Translation.AiPrompt
+                SettingKeys.Translation.AiPrompt,
+                SettingKeys.Translation.LanguageCodeFormat
             ]);
             _model = settings[SettingKeys.Translation.DeepSeek.Model];
             _apiKey = settings[SettingKeys.Translation.DeepSeek.ApiKey];
@@ -74,11 +75,7 @@ public class DeepSeekService : BaseLanguageService
                 throw new InvalidOperationException("DeepSeek API key or model is not configured.");
             }
 
-            _replacements = new Dictionary<string, string>
-            {
-                ["sourceLanguage"] = GetFullLanguageName(sourceLanguage),
-                ["targetLanguage"] = GetFullLanguageName(targetLanguage)
-            };
+            SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
             _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
             _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
             
@@ -116,7 +113,9 @@ public class DeepSeekService : BaseLanguageService
         {
             ["model"] = _model!,
             ["systemPrompt"] = _prompt!,
-            ["userMessage"] = text ?? string.Empty
+            ["userMessage"] = text ?? string.Empty,
+            ["sourceLanguage"] = _replacements["sourceLanguage"],
+            ["targetLanguage"] = _replacements["targetLanguage"]
         };
         var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
 

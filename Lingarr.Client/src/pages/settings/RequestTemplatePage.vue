@@ -21,7 +21,10 @@
 </template>
 
 <script setup lang="ts">
+import { computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { SETTINGS, SERVICE_TYPE } from '@/ts'
+import { useSettingStore } from '@/store/setting'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import ArrowLeft from '@/components/icons/ArrowLeft.vue'
 import RequestTemplate from '@/components/features/settings/template/RequestTemplate.vue'
@@ -29,4 +32,25 @@ import SystemPrompt from '@/components/features/settings/SystemPrompt.vue'
 import ContextPrompt from '@/components/features/settings/ContextPrompt.vue'
 
 const router = useRouter()
+const settingsStore = useSettingStore()
+
+const AI_TEMPLATE_SERVICES = new Set<string>([
+    SERVICE_TYPE.OPENAI,
+    SERVICE_TYPE.ANTHROPIC,
+    SERVICE_TYPE.LOCALAI,
+    SERVICE_TYPE.GEMINI,
+    SERVICE_TYPE.DEEPSEEK,
+])
+
+const serviceType = computed(() => (settingsStore.getSetting(SETTINGS.SERVICE_TYPE) as string) ?? '')
+
+watch(
+    serviceType,
+    (type) => {
+        if (type && !AI_TEMPLATE_SERVICES.has(type)) {
+            router.push({ name: 'services-settings' })
+        }
+    },
+    { immediate: true }
+)
 </script>

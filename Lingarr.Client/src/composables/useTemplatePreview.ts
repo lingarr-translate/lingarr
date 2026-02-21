@@ -11,6 +11,10 @@ export function useTemplatePreview(props: TemplatePreviewProps) {
     const settingsStore = useSettingStore()
 
     const sampleValues = computed(() => {
+        const useLanguageCodes = settingsStore.getSetting(SETTINGS.LANGUAGE_CODE_FORMAT) === 'true'
+        const sourceLang = useLanguageCodes ? 'en' : 'English'
+        const targetLang = useLanguageCodes ? 'nl' : 'Dutch'
+
         const prompt = settingsStore.getSetting(SETTINGS.AI_PROMPT) as string || 'Translate from English to Dutch'
 
         let userMessage = 'The answer to the ultimate question of life, the universe, and everything is 42.'
@@ -20,9 +24,11 @@ export function useTemplatePreview(props: TemplatePreviewProps) {
         return {
             model: props.serviceType || 'aya-expanse',
             systemPrompt: prompt
-                .replace('{sourceLanguage}', 'English')
-                .replace('{targetLanguage}', 'Dutch'),
-            userMessage: userMessage
+                .replace('{sourceLanguage}', sourceLang)
+                .replace('{targetLanguage}', targetLang),
+            userMessage: userMessage,
+            sourceLanguage: sourceLang,
+            targetLanguage: targetLang
         }
     })
 
@@ -32,6 +38,8 @@ export function useTemplatePreview(props: TemplatePreviewProps) {
         result = result.replace(/\{model\}/g, escapeJsonValue(vals.model))
         result = result.replace(/\{systemPrompt\}/g, escapeJsonValue(vals.systemPrompt))
         result = result.replace(/\{userMessage\}/g, escapeJsonValue(vals.userMessage))
+        result = result.replace(/\{sourceLanguage\}/g, escapeJsonValue(vals.sourceLanguage))
+        result = result.replace(/\{targetLanguage\}/g, escapeJsonValue(vals.targetLanguage))
         return result
     }
 
