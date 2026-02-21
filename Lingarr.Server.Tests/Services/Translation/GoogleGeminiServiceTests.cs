@@ -64,7 +64,8 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.RequestTimeout, "30" },
             { SettingKeys.Translation.MaxRetries, "3" },
             { SettingKeys.Translation.RetryDelay, "1000" },
-            { SettingKeys.Translation.RetryDelayMultiplier, "2" }
+            { SettingKeys.Translation.RetryDelayMultiplier, "2" },
+            { SettingKeys.Translation.LanguageCodeFormat, "false" }
         };
 
         _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>()))
@@ -147,7 +148,8 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.RequestTimeout, "30" },
             { SettingKeys.Translation.MaxRetries, "3" },
             { SettingKeys.Translation.RetryDelay, "1000" },
-            { SettingKeys.Translation.RetryDelayMultiplier, "2" }
+            { SettingKeys.Translation.RetryDelayMultiplier, "2" },
+            { SettingKeys.Translation.LanguageCodeFormat, "false" }
         };
 
         _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>()))
@@ -229,7 +231,8 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.RequestTimeout, "120" },
             { SettingKeys.Translation.MaxRetries, "3" },
             { SettingKeys.Translation.RetryDelay, "1000" },
-            { SettingKeys.Translation.RetryDelayMultiplier, "2" }
+            { SettingKeys.Translation.RetryDelayMultiplier, "2" },
+            { SettingKeys.Translation.LanguageCodeFormat, "false" }
         };
 
         _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>()))
@@ -439,7 +442,8 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.RequestTimeout, "5" },
             { SettingKeys.Translation.MaxRetries, "3" },
             { SettingKeys.Translation.RetryDelay, "1" }, // Short delay for fast tests
-            { SettingKeys.Translation.RetryDelayMultiplier, "1" }
+            { SettingKeys.Translation.RetryDelayMultiplier, "1" },
+            { SettingKeys.Translation.LanguageCodeFormat, "false" }
         };
     }
 }
