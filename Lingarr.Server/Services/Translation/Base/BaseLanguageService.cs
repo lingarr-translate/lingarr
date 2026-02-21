@@ -96,6 +96,16 @@ public abstract class BaseLanguageService : BaseTranslationService
         return await Task.FromResult(new ModelsResponse());
     }
     
+    protected void SetLanguageReplacements(string sourceLanguage, string targetLanguage, string languageCodeFormatSetting)
+    {
+        var useLanguageCodes = languageCodeFormatSetting == "true";
+        _replacements = new Dictionary<string, string>
+        {
+            ["sourceLanguage"] = useLanguageCodes ? sourceLanguage : GetFullLanguageName(sourceLanguage),
+            ["targetLanguage"] = useLanguageCodes ? targetLanguage : GetFullLanguageName(targetLanguage)
+        };
+    }
+    
     /// <summary>
     /// Converts a language code to its full culture name in English.
     /// </summary>

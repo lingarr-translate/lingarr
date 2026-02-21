@@ -76,7 +76,8 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
-                SettingKeys.Translation.RetryDelayMultiplier
+                SettingKeys.Translation.RetryDelayMultiplier,
+                SettingKeys.Translation.LanguageCodeFormat
             ]);
             _model = settings[SettingKeys.Translation.LocalAi.Model];
             _endpoint = settings[SettingKeys.Translation.LocalAi.Endpoint];
@@ -93,11 +94,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 throw new InvalidOperationException("Local AI service requires both endpoint address and model name to be configured in settings.");
             }
 
-            _replacements = new Dictionary<string, string>
-            {
-                ["sourceLanguage"] = GetFullLanguageName(sourceLanguage),
-                ["targetLanguage"] = GetFullLanguageName(targetLanguage)
-            };
+            SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
             _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
             _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
             _isChatEndpoint = _endpoint.TrimEnd('/').EndsWith("completions", StringComparison.OrdinalIgnoreCase);
@@ -537,7 +534,9 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         {
             ["model"] = _model!,
             ["systemPrompt"] = _prompt!,
-            ["userMessage"] = text
+            ["userMessage"] = text,
+            ["sourceLanguage"] = _replacements["sourceLanguage"],
+            ["targetLanguage"] = _replacements["targetLanguage"]
         };
         var bodyJson = _requestTemplateService.BuildRequestBody(_generateRequestTemplate!, placeholders);
 
@@ -573,7 +572,9 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         {
             ["model"] = _model!,
             ["systemPrompt"] = _prompt!,
-            ["userMessage"] = text ?? string.Empty
+            ["userMessage"] = text ?? string.Empty,
+            ["sourceLanguage"] = _replacements["sourceLanguage"],
+            ["targetLanguage"] = _replacements["targetLanguage"]
         };
         var bodyJson = _requestTemplateService.BuildRequestBody(_chatRequestTemplate!, placeholders);
 

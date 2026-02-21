@@ -86,6 +86,7 @@ public static class SettingKeys
         public const string RetryDelay = "retry_delay";
         public const string RetryDelayMultiplier = "retry_delay_multiplier";
         public const string NavigateToDetailsOnRequest = "navigate_to_details_on_request";
+        public const string LanguageCodeFormat = "language_code_format";
     }
 
     public static class Automation

@@ -72,7 +72,8 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
-                SettingKeys.Translation.RetryDelayMultiplier
+                SettingKeys.Translation.RetryDelayMultiplier,
+                SettingKeys.Translation.LanguageCodeFormat
             ]);
 
             _model = settings[SettingKeys.Translation.OpenAi.Model];
@@ -87,11 +88,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                 throw new InvalidOperationException("OpenAI API key or model is not configured.");
             }
 
-            _replacements = new Dictionary<string, string>
-            {
-                ["sourceLanguage"] = GetFullLanguageName(sourceLanguage),
-                ["targetLanguage"] = GetFullLanguageName(targetLanguage)
-            };
+            SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
             _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
             _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
 
@@ -147,7 +144,9 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                 {
                     ["model"] = _model!,
                     ["systemPrompt"] = _prompt!,
-                    ["userMessage"] = text
+                    ["userMessage"] = text,
+                    ["sourceLanguage"] = _replacements["sourceLanguage"],
+                    ["targetLanguage"] = _replacements["targetLanguage"]
                 };
                 var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
                 var requestContent = new StringContent(

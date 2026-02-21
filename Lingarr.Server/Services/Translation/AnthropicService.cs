@@ -72,7 +72,8 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
-                SettingKeys.Translation.RetryDelayMultiplier
+                SettingKeys.Translation.RetryDelayMultiplier,
+                SettingKeys.Translation.LanguageCodeFormat
             ]);
             _model = settings[SettingKeys.Translation.Anthropic.Model];
             _apiKey = settings[SettingKeys.Translation.Anthropic.ApiKey];
@@ -87,11 +88,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 throw new InvalidOperationException("Anthropic API key, model or version is not configured.");
             }
 
-            _replacements = new Dictionary<string, string>
-            {
-                ["sourceLanguage"] = GetFullLanguageName(sourceLanguage),
-                ["targetLanguage"] = GetFullLanguageName(targetLanguage)
-            };
+            SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
             _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
             _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
             
@@ -147,7 +144,9 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 {
                     ["model"] = _model!,
                     ["systemPrompt"] = _prompt!,
-                    ["userMessage"] = text
+                    ["userMessage"] = text,
+                    ["sourceLanguage"] = _replacements["sourceLanguage"],
+                    ["targetLanguage"] = _replacements["targetLanguage"]
                 };
                 var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
                 var content = new StringContent(

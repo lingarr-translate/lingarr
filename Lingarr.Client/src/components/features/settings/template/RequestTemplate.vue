@@ -41,6 +41,15 @@
                     </div>
                 </div>
 
+                <div class="flex items-center gap-2">
+                    <span class="font-semibold text-sm">Language format:</span>
+                    <ToggleButton v-model="languageCodeFormat">
+                        <span class="text-sm font-medium text-primary-content">
+                            {{ languageCodeFormat === 'true' ? 'Code (en)' : 'Name (English)' }}
+                        </span>
+                    </ToggleButton>
+                </div>
+
                 <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
                     <div>
                         <Transition name="fade" mode="out-in">
@@ -48,6 +57,7 @@
                                 v-if="mode === 'builder'"
                                 key="builder"
                                 :model-value="templateValue"
+                                :placeholders="placeholderItems"
                                 @update:model-value="onTemplateChange" />
                             <TextAreaComponent
                                 v-else
@@ -76,6 +86,7 @@ import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import CardComponent from '@/components/common/CardComponent.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 import TextAreaComponent from '@/components/common/TextAreaComponent.vue'
+import ToggleButton from '@/components/common/ToggleButton.vue'
 import JsonTreeBuilder from './JsonTreeBuilder.vue'
 import JsonPreview from './JsonPreview.vue'
 
@@ -103,10 +114,30 @@ const placeholderItems = [
         placeholderText: 'insert {userMessage}',
         title: 'User Message',
         description: 'The subtitle text that needs to be translated'
+    },
+    {
+        placeholder: '{sourceLanguage}',
+        placeholderText: 'insert {sourceLanguage}',
+        title: 'Source Language',
+        description: 'The full name of the source language (e.g. English)'
+    },
+    {
+        placeholder: '{targetLanguage}',
+        placeholderText: 'insert {targetLanguage}',
+        title: 'Target Language',
+        description: 'The full name of the target language (e.g. Dutch)'
     }
 ]
 
 const serviceType = computed(() => (settingsStore.getSetting(SETTINGS.SERVICE_TYPE) as string) ?? '')
+
+const languageCodeFormat = computed({
+    get: (): string => (settingsStore.getSetting(SETTINGS.LANGUAGE_CODE_FORMAT) as string) ?? 'false',
+    set: (value: string) => {
+        settingsStore.updateSetting(SETTINGS.LANGUAGE_CODE_FORMAT, value, true)
+        saveNotification.value?.show()
+    }
+})
 
 const templateMap: Record<string, keyof ISettings> = {
     [SERVICE_TYPE.OPENAI]: SETTINGS.OPENAI_REQUEST_TEMPLATE,
@@ -134,7 +165,9 @@ const activeTemplateKey = computed((): keyof ISettings | '' => {
 })
 
 const templateValue = computed(() => {
-    if (!activeTemplateKey.value) return '{}'
+    if (!activeTemplateKey.value) {
+        return '{}'
+    }
     return (settingsStore.getSetting(activeTemplateKey.value) as string) || '{}'
 })
 
@@ -158,14 +191,18 @@ const debouncedSave = useDebounce((key: keyof ISettings, value: string) => {
 
 function onTemplateChange(value: string) {
     const key = activeTemplateKey.value
-    if (!key) return
+    if (!key) {
+        return
+    }
     debouncedSave(key, value)
 }
 
 function onJsonInput(value: string) {
     jsonText.value = value
     const key = activeTemplateKey.value
-    if (!key) return
+    if (!key) {
+        return
+    }
     try {
         const parsed = JSON.parse(value)
         const compact = JSON.stringify(parsed)
