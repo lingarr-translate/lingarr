@@ -34,7 +34,7 @@ import ContextPrompt from '@/components/features/settings/ContextPrompt.vue'
 const router = useRouter()
 const settingsStore = useSettingStore()
 
-const AI_TEMPLATE_SERVICES = new Set([
+const AI_TEMPLATE_SERVICES = new Set<string>([
     SERVICE_TYPE.OPENAI,
     SERVICE_TYPE.ANTHROPIC,
     SERVICE_TYPE.LOCALAI,
