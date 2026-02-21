@@ -61,7 +61,12 @@ cd lingarr
 git remote add upstream https://github.com/lingarr-translate/lingarr.git
 ```
 
-4. Create a new branch for your feature or bugfix following [Conventional Commits](https://www.conventionalcommits.org/):
+4. Enable the pre-commit hooks (runs lint within the client container + tests before each commit):
+```bash
+git config core.hooksPath .githooks
+```
+
+5. Create a new branch for your feature or bugfix following [Conventional Commits](https://www.conventionalcommits.org/):
 ```bash
 git checkout -b feat/your-feature-name
 # or
@@ -79,6 +84,18 @@ The project is organized into several key components:
 - `Lingarr.Migrations.MySQL/`: MySQL database migrations
 
 ## Building and Testing
+
+### Running Tests
+```bash
+dotnet test
+```
+
+Frontend lint:
+```bash
+cd Lingarr.Client && npm run lint
+```
+
+These run automatically on each commit if you enabled the pre-commit hooks (step 4 above).
 
 ### Development
 Navigate to the root directory and start up the project:
@@ -98,22 +115,42 @@ The frontend supports hot reload while the backend needs to be rebuilt each time
 | sonarr     | http://localhost:8989                         |
 | radarr     | http://localhost:7878                         |
 
-
-### Docker Build
-To build and push the Docker image (if logged into a Docker registry):
-```powershell
-./build-and-push.ps1 -Tag dev
-```
-
 ## Database Migrations
 
+Lingarr uses [FluentMigrator](https://fluentmigrator.github.io/) with a single shared migration project (`Lingarr.Migrations`) that supports SQLite, MySQL, and PostgreSQL.
+
 ### Creating New Migrations
-Use the provided PowerShell script to create migrations:
-```powershell
-./create-migrations.ps1 -MigrationName "YourMigrationName"
+Add a new file to `Lingarr.Migrations/Migrations/` following the naming convention:
+
+```
+M{NNNN}_{MigrationName}.cs
 ```
 
-This will create migrations for both SQLite and MySQL providers.
+Example — `M0006_AddMyTable.cs`:
+```csharp
+using FluentMigrator;
+
+namespace Lingarr.Migrations.Migrations;
+
+[Migration(6)]
+public class M0006_AddMyTable : Migration
+{
+    public override void Up()
+    {
+        Create.Table("my_table")
+            .WithColumn("id").AsInt32().PrimaryKey().Identity()
+            .WithColumn("name").AsCustom("TEXT").NotNullable();
+    }
+
+    public override void Down()
+    {
+        Delete.Table("my_table");
+    }
+}
+```
+
+- The `[Migration(N)]` version number must be unique and sequential
+- Always implement `Down()` to make migrations reversible
 
 ### Applying Migrations
 Migrations are automatically applied when the application starts.

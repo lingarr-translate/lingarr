@@ -21,6 +21,9 @@
     <File Path=".github/dependabot.yml" />
     <File Path=".github/FUNDING.yml" />
   </Folder>
+  <Folder Name="/Lingarr.Root/.githooks/">
+    <File Path=".githooks/pre-commit" />
+  </Folder>
   <Folder Name="/Lingarr.Root/.github/ISSUE_TEMPLATE/">
     <File Path=".github/ISSUE_TEMPLATE/bug_report.yml" />
     <File Path=".github/ISSUE_TEMPLATE/config.yml" />

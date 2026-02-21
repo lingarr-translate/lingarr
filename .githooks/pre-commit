@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+echo "Running frontend lint..."
+docker exec Lingarr.Client npm run lint
+
+echo "Running backend tests..."
+dotnet test Lingarr.slnx --verbosity quiet
