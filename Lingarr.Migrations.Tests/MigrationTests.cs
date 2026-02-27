@@ -31,7 +31,7 @@ public class MigrationTests
             RunMigrations(connectionString, "sqlite");
 
             await using var connection = new SqliteConnection(connectionString);
-            await connection.OpenAsync();
+            await connection.OpenAsync(TestContext.Current.CancellationToken);
             Assert.Equal(System.Data.ConnectionState.Open, connection.State);
         }
         finally
@@ -47,13 +47,13 @@ public class MigrationTests
         await using var container = new MySqlBuilder()
             .WithImage("mysql:latest")
             .Build();
-        await container.StartAsync();
+        await container.StartAsync(TestContext.Current.CancellationToken);
 
         var connectionString = container.GetConnectionString();
         RunMigrations(connectionString, "mysql");
 
         await using var connection = new MySqlConnection(connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
         Assert.Equal(System.Data.ConnectionState.Open, connection.State);
     }
 
@@ -63,13 +63,13 @@ public class MigrationTests
         await using var container = new PostgreSqlBuilder()
             .WithImage("postgres:latest")
             .Build();
-        await container.StartAsync();
+        await container.StartAsync(TestContext.Current.CancellationToken);
 
         var connectionString = container.GetConnectionString();
         RunMigrations(connectionString, "postgres");
 
         await using var connection = new NpgsqlConnection(connectionString);
-        await connection.OpenAsync();
+        await connection.OpenAsync(TestContext.Current.CancellationToken);
         Assert.Equal(System.Data.ConnectionState.Open, connection.State);
     }
 }

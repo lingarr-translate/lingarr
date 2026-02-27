@@ -66,6 +66,8 @@ export interface ISettingService {
     getSettings<T>(keys: string[]): Promise<T>
     setSetting(key: string, value: string): Promise<void>
     setSettings(keys: ISettings): Promise<void>
+    getEncryptedSettings<T>(keys: string[]): Promise<T>
+    setEncryptedSetting(key: string, value: string): Promise<void>
 }
 
 export interface ISubtitleService {

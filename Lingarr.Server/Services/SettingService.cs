@@ -13,8 +13,9 @@ public class SettingService : ISettingService
 {
     private readonly LingarrDbContext _dbContext;
     private readonly ILogger<ISettingService> _logger;
+    private readonly IEncryptionService _encryptionService;
     public event SettingChangedHandler SettingChanged;
-    
+
     private readonly IMemoryCache _cache;
     private readonly MemoryCacheEntryOptions _cacheOptions;
 
@@ -22,16 +23,18 @@ public class SettingService : ISettingService
         LingarrDbContext dbContext,
         ILogger<ISettingService> logger,
         IMemoryCache memoryCache,
-        SettingChangedListener settingChangedListener)
+        SettingChangedListener settingChangedListener,
+        IEncryptionService encryptionService)
     {
         _dbContext = dbContext;
         _logger = logger;
         _cache = memoryCache;
-        
+        _encryptionService = encryptionService;
+
         _cacheOptions = new MemoryCacheEntryOptions()
             .SetAbsoluteExpiration(TimeSpan.FromHours(1))
             .SetSlidingExpiration(TimeSpan.FromMinutes(30));
-        
+
         SettingChanged += settingChangedListener.OnSettingChanged;
         SettingChanged += InvalidateCacheForSetting;
     }
@@ -137,7 +140,7 @@ public class SettingService : ISettingService
         OnSettingChange(setting.Key);
         return true;
     }
-    
+
     /// <inheritdoc />
     public async Task<bool> SetSettings(Dictionary<string, string> settings)
     {
@@ -164,5 +167,36 @@ public class SettingService : ISettingService
             OnSettingChange(setting.Key);
         }
         return true;
+    }
+    
+    /// <inheritdoc />
+    public async Task<bool> SetEncryptedSetting(string key, string value)
+    {
+        return await SetSetting(key, _encryptionService.Encrypt(value));
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> GetEncryptedSetting(string key)
+    {
+        var value = await GetSetting(key);
+        if (!string.IsNullOrEmpty(value))
+        {
+            return _encryptionService.Decrypt(value);
+        }
+        return value;
+    }
+
+    /// <inheritdoc />
+    public async Task<Dictionary<string, string>> GetEncryptedSettings(IEnumerable<string> keys)
+    {
+        var settings = await GetSettings(keys);
+        
+        var decrypted = new Dictionary<string, string>();
+        foreach (var setting in settings)
+        {
+            decrypted[setting.Key] = _encryptionService.Decrypt(setting.Value);
+        }
+
+        return decrypted;
     }
 }

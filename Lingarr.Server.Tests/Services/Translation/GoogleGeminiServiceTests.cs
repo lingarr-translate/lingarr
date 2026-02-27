@@ -18,7 +18,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Moq.Protected;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Lingarr.Server.Tests.Services.Translation;
 

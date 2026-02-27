@@ -54,4 +54,26 @@ public interface ISettingService
     /// <exception cref="JsonException">Thrown when the JSON is invalid or cannot be deserialized to List{T}.</exception>
     /// <exception cref="KeyNotFoundException">Thrown when the specified key does not exist in the settings.</exception>
     Task<List<T>> GetSettingAsJson<T>(string key) where T : class;
+
+    /// <summary>
+    /// Encrypts and stores a single setting value.
+    /// </summary>
+    /// <param name="key">The key of the setting to store.</param>
+    /// <param name="value">The plaintext value to encrypt and store.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result is <c>true</c> if the update was successful, <c>false</c> otherwise.</returns>
+    Task<bool> SetEncryptedSetting(string key, string value);
+
+    /// <summary>
+    /// Retrieves and decrypts a single setting value.
+    /// </summary>
+    /// <param name="key">The key of the setting to retrieve.</param>
+    /// <returns>The decrypted plaintext value, or <c>null</c> if the key is not found or the value cannot be decrypted.</returns>
+    Task<string?> GetEncryptedSetting(string key);
+
+    /// <summary>
+    /// Retrieves and decrypts multiple setting values.
+    /// </summary>
+    /// <param name="keys">An enumerable collection of keys for the settings to retrieve.</param>
+    /// <returns>A dictionary of decrypted values. Keys whose values cannot be decrypted are returned as empty string.</returns>
+    Task<Dictionary<string, string>> GetEncryptedSettings(IEnumerable<string> keys);
 }

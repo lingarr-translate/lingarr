@@ -60,7 +60,6 @@ export const SETTINGS = {
     RETRY_DELAY: 'retry_delay',
     RETRY_DELAY_MULTIPLIER: 'retry_delay_multiplier',
     AUTH_ENABLED: 'auth_enabled',
-    API_KEY: 'api_key',
     ONBOARDING_COMPLETED: 'onboarding_completed',
     TELEMETRY_ENABLED: 'telemetry_enabled',
     NAVIGATE_TO_DETAILS_ON_REQUEST: 'navigate_to_details_on_request',
@@ -130,7 +129,6 @@ export interface ISettings {
     retry_delay: string
     retry_delay_multiplier: string
     auth_enabled: string
-    api_key: string
     onboarding_completed: string
     telemetry_enabled: string
     navigate_to_details_on_request: string
@@ -140,6 +138,15 @@ export interface ISettings {
     local_ai_generate_request_template: string
     deepseek_request_template: string
     gemini_request_template: string
+}
+
+
+export const ENCRYPTED_SETTINGS = {
+    API_KEY: 'api_key',
+} as const
+
+export interface IEncryptedSettings {
+    api_key: string
 }
 
 export const SERVICE_TYPE = {

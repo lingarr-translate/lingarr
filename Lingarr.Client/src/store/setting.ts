@@ -1,12 +1,13 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { IUseSettingStore, ISettings, SETTINGS, ILanguage } from '@/ts'
+import { IUseSettingStore, ISettings, SETTINGS, ENCRYPTED_SETTINGS, IEncryptedSettings, ILanguage } from '@/ts'
 import services from '@/services'
 import { useTranslateStore } from '@/store/translate'
 import { useInstanceStore } from '@/store/instance'
 
 export const useSettingStore = defineStore('setting', {
     state: (): IUseSettingStore => ({
-        settings: {} as ISettings
+        settings: {} as ISettings,
+        encrypted_settings: {} as IEncryptedSettings
     }),
     getters: {
         getSettings: (state: IUseSettingStore): ISettings => {
@@ -16,7 +17,8 @@ export const useSettingStore = defineStore('setting', {
                 target_languages: JSON.parse(state.settings.target_languages as string)
             }
         },
-        getSetting: (state: IUseSettingStore) => (key: keyof ISettings) => state.settings[key]
+        getSetting: (state: IUseSettingStore) => (key: keyof ISettings) => state.settings[key],
+        getEncryptedSetting: (state: IUseSettingStore) => (key: keyof IEncryptedSettings) => state.encrypted_settings[key]
     },
     actions: {
         async updateSetting(
@@ -86,6 +88,14 @@ export const useSettingStore = defineStore('setting', {
                 }
             }
         },
+        async updateEncryptedSetting(
+            key: keyof IEncryptedSettings,
+            value: string
+        )
+        {
+            this.encrypted_settings[key] = value
+            await services.setting.setEncryptedSetting(key, value)
+        },
         storeSetting(key: keyof ISettings, value: string | boolean | unknown[]) {
             this.settings[key] = value as never
         },
@@ -95,13 +105,17 @@ export const useSettingStore = defineStore('setting', {
 
         async applySettingsOnLoad(): Promise<void> {
             const instanceStore = useInstanceStore()
-            const settings = await services.setting.getSettings<ISettings>(Object.values(SETTINGS))
+            const [settings, encryptedSettings] = await Promise.all([
+                services.setting.getSettings<ISettings>(Object.values(SETTINGS)),
+                services.setting.getEncryptedSettings<IEncryptedSettings>(Object.values(ENCRYPTED_SETTINGS))
+            ])
 
             this.settings = {
                 ...settings,
                 source_languages: JSON.parse(settings.source_languages as string),
                 target_languages: JSON.parse(settings.target_languages as string)
             }
+            this.encrypted_settings = encryptedSettings
 
             instanceStore.storeTheme(settings.theme)
         }
