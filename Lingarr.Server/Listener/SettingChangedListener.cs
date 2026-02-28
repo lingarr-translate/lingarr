@@ -136,7 +136,8 @@ public class SettingChangedListener
                     });
 
                     await settingService.SetSetting(SettingKeys.Integration.RadarrSettingsCompleted, "true");
-                    BackgroundJob.Schedule<SyncMovieJob>(job => job.Execute(), TimeSpan.FromMinutes(1));
+                    scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>()
+                        .Schedule<SyncMovieJob>(job => job.Execute(), TimeSpan.FromMinutes(1));
                     break;
                 case "Sonarr":
                     _logger.LogInformation(
@@ -149,41 +150,44 @@ public class SettingChangedListener
                     });
 
                     await settingService.SetSetting(SettingKeys.Integration.SonarrSettingsCompleted, "true");
-                    BackgroundJob.Schedule<SyncShowJob>(job => job.Execute(), TimeSpan.FromMinutes(1));
+                    scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>()
+                        .Schedule<SyncShowJob>(job => job.Execute(), TimeSpan.FromMinutes(1));
                     break;
                 case "Automation":
                     _logger.LogInformation(
                         $"Settings changed for |Green|{jobName}|/Green|. Automation has been |Orange|modified|/Orange|.");
+                    var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
                     if (settings[SettingKeys.Automation.AutomationEnabled] == "true")
                     {
                         var translationSchedule =
                             await settingService.GetSetting(SettingKeys.Automation.TranslationSchedule);
-                        RecurringJob.RemoveIfExists("AutomatedTranslationJob");
-                        RecurringJob.AddOrUpdate<AutomatedTranslationJob>(
+                        recurringJobManager.RemoveIfExists("AutomatedTranslationJob");
+                        recurringJobManager.AddOrUpdate<AutomatedTranslationJob>(
                             "AutomatedTranslationJob",
                             job => job.Execute(),
                             translationSchedule);
                     }
                     else
                     {
-                        RecurringJob.RemoveIfExists("AutomatedTranslationJob");
+                        recurringJobManager.RemoveIfExists("AutomatedTranslationJob");
                     }
 
                     break;
                 case "Telemetry":
                     _logger.LogInformation(
                         $"Settings changed for |Green|{jobName}|/Green|. Telemetry has been |Orange|modified|/Orange|.");
+                    var telemetryJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
                     if (settings[SettingKeys.Telemetry.TelemetryEnabled] == "true")
                     {
-                        RecurringJob.RemoveIfExists("TelemetryJob");
-                        RecurringJob.AddOrUpdate<TelemetryJob>(
+                        telemetryJobManager.RemoveIfExists("TelemetryJob");
+                        telemetryJobManager.AddOrUpdate<TelemetryJob>(
                             "TelemetryJob",
                             job => job.Execute(),
                             "0 9 * * 5");
                     }
                     else
                     {
-                        RecurringJob.RemoveIfExists("TelemetryJob");
+                        telemetryJobManager.RemoveIfExists("TelemetryJob");
                     }
 
                     break;
@@ -221,11 +225,12 @@ public class SettingChangedListener
                     break;
 
                 case "Schedule":
-                    RecurringJob.AddOrUpdate<SyncMovieJob>(
+                    var scheduleJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+                    scheduleJobManager.AddOrUpdate<SyncMovieJob>(
                         "SyncMovieJob",
                         job => job.Execute(),
                         settings[SettingKeys.Automation.MovieSchedule]);
-                    RecurringJob.AddOrUpdate<SyncShowJob>(
+                    scheduleJobManager.AddOrUpdate<SyncShowJob>(
                         "SyncShowJob",
                         job => job.Execute(),
                         settings[SettingKeys.Automation.ShowSchedule]);
