@@ -18,7 +18,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
 using Moq.Protected;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace Lingarr.Server.Tests.Services.Translation;
 
@@ -38,6 +37,9 @@ public class GoogleGeminiServiceTests
         _loggerMock = new Mock<ILogger<GoogleGeminiService>>();
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
+
+        _settingsMock.Setup(settingService => settingService.GetEncryptedSetting(It.IsAny<string>()))
+            .ReturnsAsync("test-api-key");
 
         var languageCodeService = new LanguageCodeService(NullLogger<LanguageCodeService>.Instance);
         var requestTemplateService = new RequestTemplateService();

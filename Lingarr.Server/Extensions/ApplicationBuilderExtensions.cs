@@ -1,7 +1,9 @@
 using Hangfire;
 using Lingarr.Core;
+using Lingarr.Core.Configuration;
 using Lingarr.Migrations;
 using Lingarr.Server.Hubs;
+using Lingarr.Server.Interfaces.Services;
 
 namespace Lingarr.Server.Extensions;
 
@@ -11,6 +13,7 @@ public static class ApplicationBuilderExtensions
     {
         app.MapHubs();
         await app.ApplyMigrations();
+        await app.MigrateApiKeyEncryption();
 
         if (app.Environment.IsDevelopment())
         {
@@ -55,6 +58,43 @@ public static class ApplicationBuilderExtensions
         }
 
         return Task.CompletedTask;
+    }
+
+    private static async Task MigrateApiKeyEncryption(this WebApplication app)
+    {
+        string[] apiKeys =
+        [
+            SettingKeys.Authentication.ApiKey,
+            SettingKeys.Integration.RadarrApiKey,
+            SettingKeys.Integration.SonarrApiKey,
+            SettingKeys.Translation.OpenAi.ApiKey,
+            SettingKeys.Translation.Anthropic.ApiKey,
+            SettingKeys.Translation.Gemini.ApiKey,
+            SettingKeys.Translation.DeepSeek.ApiKey,
+            SettingKeys.Translation.DeepL.DeeplApiKey,
+            SettingKeys.Translation.LibreTranslate.ApiKey,
+            SettingKeys.Translation.LocalAi.ApiKey,
+        ];
+
+        using var scope = app.Services.CreateScope();
+        var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
+        var encryptionService = scope.ServiceProvider.GetRequiredService<IEncryptionService>();
+
+        foreach (var key in apiKeys)
+        {
+            var value = await settingService.GetSetting(key);
+            if (string.IsNullOrEmpty(value)) continue;
+
+            try
+            {
+                encryptionService.Decrypt(value);
+            }
+            catch
+            {
+                await settingService.SetEncryptedSetting(key, value);
+                Console.WriteLine($"Migrated '{key}' to encrypted storage.");
+            }
+        }
     }
 
     private static void ConfigureSpa(this WebApplication app)

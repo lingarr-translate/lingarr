@@ -51,7 +51,7 @@
 import { computed, ref, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import SaveNotification from '@/components/common/SaveNotification.vue'
-import { INPUT_TYPE, INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
+import { INPUT_TYPE, INPUT_VALIDATION_TYPE, SETTINGS, ENCRYPTED_SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 
@@ -65,18 +65,18 @@ const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
 
 const radarrApiKey = computed({
-    get: (): string => settingsStore.getSetting(SETTINGS.RADARR_API_KEY) as string,
+    get: (): string => settingsStore.getEncryptedSetting(ENCRYPTED_SETTINGS.RADARR_API_KEY) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.RADARR_API_KEY, newValue, isValid.radarrApiKey)
+        settingsStore.updateEncryptedSetting(ENCRYPTED_SETTINGS.RADARR_API_KEY, newValue, isValid.radarrApiKey)
         if (isValid.radarrApiKey) {
             saveNotification.value?.show()
         }
     }
 })
 const sonarrApiKey = computed({
-    get: (): string => settingsStore.getSetting(SETTINGS.SONARR_API_KEY) as string,
+    get: (): string => settingsStore.getEncryptedSetting(ENCRYPTED_SETTINGS.SONARR_API_KEY) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.SONARR_API_KEY, newValue, isValid.sonarrApiKey)
+        settingsStore.updateEncryptedSetting(ENCRYPTED_SETTINGS.SONARR_API_KEY, newValue, isValid.sonarrApiKey)
         if (isValid.sonarrApiKey) {
             saveNotification.value?.show()
         }

@@ -18,7 +18,7 @@
 import { computed, ref } from 'vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 import { useSettingStore } from '@/store/setting'
-import { INPUT_TYPE, INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
+import { INPUT_TYPE, INPUT_VALIDATION_TYPE, SETTINGS, ENCRYPTED_SETTINGS } from '@/ts'
 
 const isValid = ref(false)
 const settingsStore = useSettingStore()
@@ -34,9 +34,9 @@ const libreTranslateUrl = computed({
     }
 })
 const libreTranslateApiKey = computed({
-    get: (): string => settingsStore.getSetting(SETTINGS.LIBRETRANSLATE_API_KEY) as string,
+    get: (): string => settingsStore.getEncryptedSetting(ENCRYPTED_SETTINGS.LIBRETRANSLATE_API_KEY) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.LIBRETRANSLATE_API_KEY, newValue, isValid.value)
+        settingsStore.updateEncryptedSetting(ENCRYPTED_SETTINGS.LIBRETRANSLATE_API_KEY, newValue, isValid.value)
         if (isValid.value) {
             emit('save')
         }

@@ -48,6 +48,20 @@ const service = (http: AxiosStatic, resource = '/api/setting'): ISettingService 
                     reject(error.response)
                 })
         })
+    },
+    getEncryptedSettings<T>(keys: string[]): Promise<T> {
+        return new Promise((resolve, reject) => {
+            http.post(`${resource}/multiple/encrypted/get`, keys)
+                .then((response: AxiosResponse<T>) => resolve(response.data))
+                .catch((error: AxiosError) => reject(error.response))
+        })
+    },
+    setEncryptedSetting(key: string, value: string): Promise<void> {
+        return new Promise((resolve, reject) => {
+            http.post(`${resource}/encrypted`, { Key: key, Value: value })
+                .then(() => resolve())
+                .catch((error: AxiosError) => reject(error.response))
+        })
     }
 })
 

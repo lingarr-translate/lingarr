@@ -46,11 +46,10 @@ public class LibreService : BaseLanguageService
             if (_initialized) return;
 
             var settings = await _settings.GetSettings([
-                SettingKeys.Translation.LibreTranslate.Url,
-                SettingKeys.Translation.LibreTranslate.ApiKey
+                SettingKeys.Translation.LibreTranslate.Url
             ]);
-            _apiUrl = settings[SettingKeys.Translation.LibreTranslate.Url] ?? "http://libretranslate:5000";
-            settings.TryGetValue(SettingKeys.Translation.LibreTranslate.ApiKey, out _apiKey);
+            _apiUrl = settings[SettingKeys.Translation.LibreTranslate.Url];
+            _apiKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.LibreTranslate.ApiKey);
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
             _initialized = true;

@@ -20,12 +20,13 @@ public class IntegrationSettingsProvider : IIntegrationSettingsProvider
     /// <inheritdoc />
     public async Task<IntegrationSettings?> GetSettings(IntegrationSettingKeys settingKeys)
     {
-        var settings = await _settingService.GetSettings([ settingKeys.Url, settingKeys.ApiKey ]);
-        
+        var url = await _settingService.GetSetting(settingKeys.Url);
+        var apiKey = await _settingService.GetEncryptedSetting(settingKeys.ApiKey);
+
         var variables = new Dictionary<string, string?>
         {
-            { "Url", settings.TryGetValue(settingKeys.Url, out var url) ? url : string.Empty},
-            { "ApiKey", settings.TryGetValue(settingKeys.ApiKey, out var apiKey) ? apiKey : string.Empty }
+            { "Url", url },
+            { "ApiKey", apiKey }
         };
 
         var missingVariables = variables.Where(kv => string.IsNullOrEmpty(kv.Value)).Select(kv => kv.Key).ToList();

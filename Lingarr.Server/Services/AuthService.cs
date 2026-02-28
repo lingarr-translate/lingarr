@@ -1,4 +1,4 @@
-﻿using Lingarr.Core.Configuration;
+using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Server.Interfaces.Services;
@@ -34,7 +34,9 @@ public class AuthService : IAuthService
         {
             var parts = passwordHash.Split(':');
             if (parts.Length != 2)
+            {
                 return false;
+            }
 
             var salt = Convert.FromBase64String(parts[0]);
             var storedHash = parts[1];
@@ -77,11 +79,15 @@ public class AuthService : IAuthService
     public async Task<bool> ValidateApiKey(string apiKey)
     {
         if (string.IsNullOrWhiteSpace(apiKey))
+        {
             return false;
+        }
 
-        var storedApiKey = await _settingService.GetSetting(SettingKeys.Authentication.ApiKey);
+        var storedApiKey = await _settingService.GetEncryptedSetting(SettingKeys.Authentication.ApiKey);
         if (string.IsNullOrWhiteSpace(storedApiKey))
+        {
             return false;
+        }
 
         return apiKey == storedApiKey;
     }

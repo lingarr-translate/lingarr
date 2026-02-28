@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useSettingStore } from '@/store/setting'
-import { INPUT_TYPE, SETTINGS, INPUT_VALIDATION_TYPE } from '@/ts'
+import { INPUT_TYPE, SETTINGS, INPUT_VALIDATION_TYPE, ENCRYPTED_SETTINGS } from '@/ts'
 import SelectComponent from '@/components/common/SelectComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 import { useModelOptions } from '@/composables/useModelOptions'
@@ -58,9 +58,9 @@ const aiModel = computed({
 })
 
 const apiKey = computed({
-    get: () => settingsStore.getSetting(SETTINGS.DEEPSEEK_API_KEY) as string,
+    get: () => settingsStore.getEncryptedSetting(ENCRYPTED_SETTINGS.DEEPSEEK_API_KEY) as string,
     set: (newValue: string) => {
-        settingsStore.updateSetting(SETTINGS.DEEPSEEK_API_KEY, newValue, apiKeyIsValid.value)
+        settingsStore.updateEncryptedSetting(ENCRYPTED_SETTINGS.DEEPSEEK_API_KEY, newValue, apiKeyIsValid.value)
         if (apiKeyIsValid.value) {
             emit('save')
         }

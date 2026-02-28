@@ -26,6 +26,7 @@ using Lingarr.Server.Services.Sync;
 using Lingarr.Server.Services.Translation;
 using Lingarr.Migrations;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 
@@ -136,6 +137,10 @@ public static class ServiceCollectionExtensions
     private static void ConfigureServices(this WebApplicationBuilder builder)
     {
         // Register auth
+        builder.Services.AddDataProtection().PersistKeysToFileSystem(new DirectoryInfo(
+            Environment.GetEnvironmentVariable("ENCRYPTION_KEYS")?.ToLower() ?? "/app/config/keys"
+            ));
+        builder.Services.AddSingleton<IEncryptionService, EncryptionService>();
         builder.Services.AddScoped<IAuthService, AuthService>();
 
         builder.Services.AddScoped<ISettingService, SettingService>();

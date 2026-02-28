@@ -174,5 +174,10 @@ public class AutomatedTranslationJobTests
         public Task<bool> SetSettings(Dictionary<string, string> settings) => Task.FromResult(true);
 
         public Task<List<T>> GetSettingAsJson<T>(string key) where T : class => Task.FromResult(new List<T>());
+        public Task<bool> SetEncryptedSetting(string key, string value)=> Task.FromResult(true);
+
+        public Task<string?> GetEncryptedSetting(string key) => Task.FromResult<string?>(null);
+
+        public Task<Dictionary<string, string>> GetEncryptedSettings(IEnumerable<string> keys) => Task.FromResult(new Dictionary<string, string>());
     }
 }

@@ -56,7 +56,6 @@ public class DeepSeekService : BaseLanguageService
 
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.DeepSeek.Model,
-                SettingKeys.Translation.DeepSeek.ApiKey,
                 SettingKeys.Translation.DeepSeek.RequestTemplate,
                 SettingKeys.Translation.AiContextPromptEnabled,
                 SettingKeys.Translation.AiContextPrompt,
@@ -64,7 +63,7 @@ public class DeepSeekService : BaseLanguageService
                 SettingKeys.Translation.LanguageCodeFormat
             ]);
             _model = settings[SettingKeys.Translation.DeepSeek.Model];
-            _apiKey = settings[SettingKeys.Translation.DeepSeek.ApiKey];
+            _apiKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.DeepSeek.ApiKey);
             _requestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.DeepSeek.RequestTemplate])
                 ? settings[SettingKeys.Translation.DeepSeek.RequestTemplate]
                 : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.DeepSeek.RequestTemplate);
@@ -152,7 +151,7 @@ public class DeepSeekService : BaseLanguageService
     /// <inheritdoc />
     public override async Task<ModelsResponse> GetModels()
     {
-        _apiKey = await _settings.GetSetting(
+        _apiKey = await _settings.GetEncryptedSetting(
             SettingKeys.Translation.DeepSeek.ApiKey
         );
 

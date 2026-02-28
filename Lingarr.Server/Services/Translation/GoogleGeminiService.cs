@@ -65,7 +65,6 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
 
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.Gemini.Model,
-                SettingKeys.Translation.Gemini.ApiKey,
                 SettingKeys.Translation.Gemini.RequestTemplate,
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiContextPrompt,
@@ -76,7 +75,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                 SettingKeys.Translation.RetryDelayMultiplier,
                 SettingKeys.Translation.LanguageCodeFormat
             ]);
-            _apiKey = settings[SettingKeys.Translation.Gemini.ApiKey];
+            _apiKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.Gemini.ApiKey);
             _model = settings[SettingKeys.Translation.Gemini.Model];
             _requestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.Gemini.RequestTemplate])
                 ? settings[SettingKeys.Translation.Gemini.RequestTemplate]
@@ -220,7 +219,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
     public override async Task<ModelsResponse> GetModels()
     {
         var supportedGenerationMethods = new List<string> { "generateMessage", "generateContent", "generateText" };
-        var apiKey = await _settings.GetSetting(
+        var apiKey = await _settings.GetEncryptedSetting(
             SettingKeys.Translation.Gemini.ApiKey
         );
 

@@ -36,7 +36,7 @@
                         </p>
                         <code
                             class="block break-all rounded bg-gray-800 p-3 font-mono text-xs text-green-400">
-                            curl -H "X-Api-Key: {{ apiKey }}" http://lingarr:9876/api/endpoint
+                            curl -H "X-Api-Key: {{ apiKey || 'API-KEY' }}" http://lingarr:9876/api/endpoint
                         </code>
                     </div>
                 </div>
@@ -47,12 +47,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { ENCRYPTED_SETTINGS, SETTINGS } from '@/ts'
+import { useSettingStore } from '@/store/setting'
+import services from '@/services'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import CardComponent from '@/components/common/CardComponent.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
-import services from '@/services'
-import { useSettingStore } from '@/store/setting'
-import { SETTINGS } from '@/ts'
 
 const settingsStore = useSettingStore()
 const { title } = defineProps<{
@@ -71,15 +71,15 @@ const authEnabled = computed({
 })
 
 const apiKey = computed({
-    get: () => settingsStore.getSetting(SETTINGS.API_KEY) as string,
+get: () => settingsStore.getEncryptedSetting(ENCRYPTED_SETTINGS.API_KEY),
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.API_KEY, newValue.toString(), true)
+        settingsStore.updateEncryptedSetting(ENCRYPTED_SETTINGS.API_KEY, newValue.toString())
         saveNotification.value?.show()
     }
 })
 
 const generateApiKey = async () => {
     const response = await services.auth.generateApiKey()
-    await settingsStore.updateSetting(SETTINGS.API_KEY, response.apiKey, true)
+    await settingsStore.updateEncryptedSetting(ENCRYPTED_SETTINGS.API_KEY, response.apiKey)
 }
 </script>

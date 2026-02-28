@@ -2,9 +2,7 @@ import { ILanguage } from '@/ts/language'
 import { ILocale, ITheme } from '@/ts/store'
 
 export const SETTINGS = {
-    RADARR_API_KEY: 'radarr_api_key',
     RADARR_URL: 'radarr_url',
-    SONARR_API_KEY: 'sonarr_api_key',
     SONARR_URL: 'sonarr_url',
     SOURCE_LANGUAGES: 'source_languages',
     TARGET_LANGUAGES: 'target_languages',
@@ -12,25 +10,18 @@ export const SETTINGS = {
     RADARR_SETTINGS_COMPLETED: 'radarr_settings_completed',
     SERVICE_TYPE: 'service_type',
     LIBRETRANSLATE_URL: 'libretranslate_url',
-    LIBRETRANSLATE_API_KEY: 'libretranslate_api_key',
-    DEEPL_API_KEY: 'deepl_api_key',
     SHOW_SCHEDULE: 'show_schedule',
     MOVIE_SCHEDULE: 'movie_schedule',
     MAX_TRANSLATIONS_PER_RUN: 'max_translations_per_run',
     AUTOMATION_ENABLED: 'automation_enabled',
     TRANSLATION_SCHEDULE: 'translation_schedule',
     OPENAI_MODEL: 'openai_model',
-    OPENAI_API_KEY: 'openai_api_key',
     ANTHROPIC_MODEL: 'anthropic_model',
-    ANTHROPIC_API_KEY: 'anthropic_api_key',
     ANTHROPIC_VERSION: 'anthropic_version',
     LOCAL_AI_ENDPOINT: 'local_ai_endpoint',
     LOCAL_AI_MODEL: 'local_ai_model',
-    LOCAL_AI_API_KEY: 'local_ai_api_key',
     GEMINI_MODEL: 'gemini_model',
-    GEMINI_API_KEY: 'gemini_api_key',
     DEEPSEEK_MODEL: 'deepseek_model',
-    DEEPSEEK_API_KEY: 'deepseek_api_key',
     AI_PROMPT: 'ai_prompt',
     THEME: 'theme',
     LOCALE: 'locale',
@@ -60,7 +51,6 @@ export const SETTINGS = {
     RETRY_DELAY: 'retry_delay',
     RETRY_DELAY_MULTIPLIER: 'retry_delay_multiplier',
     AUTH_ENABLED: 'auth_enabled',
-    API_KEY: 'api_key',
     ONBOARDING_COMPLETED: 'onboarding_completed',
     TELEMETRY_ENABLED: 'telemetry_enabled',
     NAVIGATE_TO_DETAILS_ON_REQUEST: 'navigate_to_details_on_request',
@@ -74,14 +64,10 @@ export const SETTINGS = {
 } as const
 
 export interface ISettings {
-    radarr_api_key: string
     radarr_url: string
-    sonarr_api_key: string
     sonarr_url: string
     service_type: string
     libretranslate_url: string
-    libretranslate_api_key: string
-    deepl_api_key: string
     show_schedule: string
     movie_schedule: string
     max_translations_per_run: string
@@ -92,17 +78,12 @@ export interface ISettings {
     sonarr_settings_completed: string
     radarr_settings_completed: string
     openai_model: string
-    openai_api_key: string
     anthropic_model: string
-    anthropic_api_key: string
     anthropic_version: string
     local_ai_endpoint: string
     local_ai_model: string
-    local_ai_api_key: string
     gemini_model: string
-    gemini_api_key: string
     deepseek_model: string
-    deepseek_api_key: string
     ai_prompt: string
     movie_age_threshold: string
     show_age_threshold: string
@@ -131,7 +112,6 @@ export interface ISettings {
     retry_delay: string
     retry_delay_multiplier: string
     auth_enabled: string
-    api_key: string
     onboarding_completed: string
     telemetry_enabled: string
     navigate_to_details_on_request: string
@@ -142,6 +122,33 @@ export interface ISettings {
     deepseek_request_template: string
     gemini_request_template: string
     language_code_format: string
+}
+
+
+export const ENCRYPTED_SETTINGS = {
+    API_KEY: 'api_key',
+    RADARR_API_KEY: 'radarr_api_key',
+    SONARR_API_KEY: 'sonarr_api_key',
+    OPENAI_API_KEY: 'openai_api_key',
+    ANTHROPIC_API_KEY: 'anthropic_api_key',
+    GEMINI_API_KEY: 'gemini_api_key',
+    DEEPSEEK_API_KEY: 'deepseek_api_key',
+    DEEPL_API_KEY: 'deepl_api_key',
+    LIBRETRANSLATE_API_KEY: 'libretranslate_api_key',
+    LOCAL_AI_API_KEY: 'local_ai_api_key',
+} as const
+
+export interface IEncryptedSettings {
+    api_key: string
+    radarr_api_key: string
+    sonarr_api_key: string
+    openai_api_key: string
+    anthropic_api_key: string
+    gemini_api_key: string
+    deepseek_api_key: string
+    deepl_api_key: string
+    libretranslate_api_key: string
+    local_ai_api_key: string
 }
 
 export const SERVICE_TYPE = {

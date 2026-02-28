@@ -50,13 +50,12 @@ public class DeepLService : BaseTranslationService
             if (_initialized) return;
 
             var settings = await _settings.GetSettings([
-                SettingKeys.Translation.DeepL.DeeplApiKey,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
                 SettingKeys.Translation.RetryDelayMultiplier
             ]);
 
-            var authKey = settings[SettingKeys.Translation.DeepL.DeeplApiKey];
+            var authKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.DeepL.DeeplApiKey);
             if (string.IsNullOrWhiteSpace(authKey))
             {
                 throw new InvalidOperationException("DeepL failed, please validate the API key.");

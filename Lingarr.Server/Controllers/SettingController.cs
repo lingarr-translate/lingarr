@@ -82,4 +82,30 @@ public class SettingController : ControllerBase
 
         return BadRequest("Some settings were not found or could not be updated.");
     }
+
+    /// <summary>
+    /// Encrypts and stores a single sensitive setting value.
+    /// </summary>
+    /// <param name="setting">The setting object containing the key and plaintext value to encrypt and store.</param>
+    /// <returns>Returns an HTTP 200 OK response if the setting was stored; otherwise an HTTP 400 Bad Request.</returns>
+    [HttpPost("encrypted")]
+    public async Task<ActionResult> SetEncryptedSetting([FromBody] Setting setting)
+    {
+        var success = await _settingService.SetEncryptedSetting(setting.Key, setting.Value);
+        return success ? Ok() : BadRequest("Setting could not be updated.");
+    }
+
+    /// <summary>
+    /// Retrieves and decrypts sensitive settings values.
+    /// Returns an empty string for keys not found or that contain a non-decryptable value.
+    /// </summary>
+    /// <param name="keys">A list of setting keys to retrieve and decrypt.</param>
+    /// <returns>Returns an HTTP 200 OK response with a dictionary of decrypted setting values.</returns>
+    [HttpPost("multiple/encrypted/get")]
+    public async Task<ActionResult<Dictionary<string, string>>> GetEncryptedSettings(
+        [FromBody] IEnumerable<string> keys)
+    {
+        var settings = await _settingService.GetEncryptedSettings(keys);
+        return Ok(settings);
+    }
 }

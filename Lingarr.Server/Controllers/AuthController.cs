@@ -189,7 +189,7 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ApiKeyResponse>> GenerateNewApiKey()
     {
         var apiKey = _authService.GenerateApiKey();
-        await _settingService.SetSetting(SettingKeys.Authentication.ApiKey, apiKey);
+        await _settingService.SetEncryptedSetting(SettingKeys.Authentication.ApiKey, apiKey);
         return Ok(new ApiKeyResponse
         {
             ApiKey = apiKey

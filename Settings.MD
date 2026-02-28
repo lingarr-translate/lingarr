@@ -21,9 +21,10 @@ These settings can be configured as environment variables to persist configurati
 
 ### **Authentication Configuration**
 
-| **Environment Variable** | **Description**                    |
-|--------------------------|------------------------------------|
-| `AUTH_ENABLED`             | Enables or disables authentication. |
+| **Environment Variable** | **Description**                                                                  |
+|--------------------------|----------------------------------------------------------------------------------|
+| `AUTH_ENABLED`           | Enables or disables authentication.                                              |
+| `ENCRYPTION_KEYS`        | The path for storing encryption keys, stored by default in the config directory. |
 
 ---
 
@@ -31,7 +32,7 @@ These settings can be configured as environment variables to persist configurati
 
 | **Environment Variable** | **Description**                                                                 |
 |--------------------------|---------------------------------------------------------------------------------|
-| `TELEMETRY_ENABLED`             | Opt-in for anonymized telemetry to help other Lingarr users, defaults to false. |
+| `TELEMETRY_ENABLED`      | Opt-in for anonymized telemetry to help other Lingarr users, defaults to false. |
 
 ---
 
