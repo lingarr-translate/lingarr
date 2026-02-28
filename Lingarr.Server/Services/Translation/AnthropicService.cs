@@ -63,7 +63,6 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
 
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.Anthropic.Model,
-                SettingKeys.Translation.Anthropic.ApiKey,
                 SettingKeys.Translation.Anthropic.Version,
                 SettingKeys.Translation.Anthropic.RequestTemplate,
                 SettingKeys.Translation.AiPrompt,
@@ -75,7 +74,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 SettingKeys.Translation.RetryDelayMultiplier
             ]);
             _model = settings[SettingKeys.Translation.Anthropic.Model];
-            _apiKey = settings[SettingKeys.Translation.Anthropic.ApiKey];
+            _apiKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.Anthropic.ApiKey);
             _version = settings[SettingKeys.Translation.Anthropic.Version];
             _requestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.Anthropic.RequestTemplate])
                 ? settings[SettingKeys.Translation.Anthropic.RequestTemplate]
@@ -100,7 +99,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 ? timeOut
                 : 5;
             _httpClient.Timeout = TimeSpan.FromMinutes(requestTimeout);
-            _httpClient.DefaultRequestHeaders.Add("x-api-key", settings[SettingKeys.Translation.Anthropic.ApiKey]);
+            _httpClient.DefaultRequestHeaders.Add("x-api-key", _apiKey);
             _httpClient.DefaultRequestHeaders.Add("anthropic-version",
                 settings[SettingKeys.Translation.Anthropic.Version]);
 
@@ -405,12 +404,10 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
     /// <inheritdoc />
     public override async Task<ModelsResponse> GetModels()
     {
-        var settings = await _settings.GetSettings([
-            SettingKeys.Translation.Anthropic.ApiKey,
-            SettingKeys.Translation.Anthropic.Version
-        ]);
+        var apiKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.Anthropic.ApiKey);
+        var version = await _settings.GetSetting(SettingKeys.Translation.Anthropic.Version);
 
-        if (string.IsNullOrEmpty(settings[SettingKeys.Translation.Anthropic.ApiKey]))
+        if (string.IsNullOrEmpty(apiKey))
         {
             return new ModelsResponse
             {
@@ -418,7 +415,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             };
         }
 
-        if (string.IsNullOrEmpty(settings[SettingKeys.Translation.Anthropic.Version]))
+        if (string.IsNullOrEmpty(version))
         {
             return new ModelsResponse
             {
@@ -431,8 +428,8 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         try
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-            request.Headers.Add("x-api-key", settings[SettingKeys.Translation.Anthropic.ApiKey]);
-            request.Headers.Add("anthropic-version", settings[SettingKeys.Translation.Anthropic.Version]);
+            request.Headers.Add("x-api-key", apiKey);
+            request.Headers.Add("anthropic-version", version);
 
             var response = await _httpClient.SendAsync(request);
 

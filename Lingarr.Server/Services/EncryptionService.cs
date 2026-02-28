@@ -12,6 +12,22 @@ public class EncryptionService : IEncryptionService
         _protector = provider.CreateProtector("Lingarr");
     }
 
-    public string Encrypt(string value) => _protector.Protect(value);
-    public string Decrypt(string value) => _protector.Unprotect(value);
+    public string Encrypt(string value) => string.IsNullOrEmpty(value) ? value : _protector.Protect(value);
+
+    public string Decrypt(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return value;
+        }
+
+        try
+        {
+            return _protector.Unprotect(value);
+        }
+        catch (System.Security.Cryptography.CryptographicException)
+        {
+            return value;
+        }
+    }
 }

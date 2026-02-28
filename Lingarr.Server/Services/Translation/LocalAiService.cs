@@ -67,7 +67,6 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.LocalAi.Model,
                 SettingKeys.Translation.LocalAi.Endpoint,
-                SettingKeys.Translation.LocalAi.ApiKey,
                 SettingKeys.Translation.LocalAi.ChatRequestTemplate,
                 SettingKeys.Translation.LocalAi.GenerateRequestTemplate,
                 SettingKeys.Translation.AiPrompt,
@@ -110,8 +109,8 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            if (settings.TryGetValue(SettingKeys.Translation.LocalAi.ApiKey, out var apiKey) &&
-                !string.IsNullOrEmpty(apiKey))
+            var apiKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.LocalAi.ApiKey);
+            if (!string.IsNullOrEmpty(apiKey))
             {
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
             }

@@ -64,7 +64,6 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
 
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.OpenAi.Model,
-                SettingKeys.Translation.OpenAi.ApiKey,
                 SettingKeys.Translation.OpenAi.RequestTemplate,
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiContextPrompt,
@@ -76,7 +75,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
             ]);
 
             _model = settings[SettingKeys.Translation.OpenAi.Model];
-            _apiKey = settings[SettingKeys.Translation.OpenAi.ApiKey];
+            _apiKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.OpenAi.ApiKey);
             _requestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.OpenAi.RequestTemplate])
                 ? settings[SettingKeys.Translation.OpenAi.RequestTemplate]
                 : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.OpenAi.RequestTemplate);
@@ -384,7 +383,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
     /// <inheritdoc />
     public override async Task<ModelsResponse> GetModels()
     {
-        var apiKey = await _settings.GetSetting(
+        var apiKey = await _settings.GetEncryptedSetting(
             SettingKeys.Translation.OpenAi.ApiKey
         );
 

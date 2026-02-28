@@ -190,7 +190,7 @@ public class SettingService : ISettingService
     public async Task<Dictionary<string, string>> GetEncryptedSettings(IEnumerable<string> keys)
     {
         var settings = await GetSettings(keys);
-        
+
         var decrypted = new Dictionary<string, string>();
         foreach (var setting in settings)
         {

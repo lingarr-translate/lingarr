@@ -42,7 +42,7 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
-import { INPUT_TYPE, INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
+import { INPUT_TYPE, INPUT_VALIDATION_TYPE, SETTINGS, ENCRYPTED_SETTINGS } from '@/ts'
 import InputComponent from '@/components/common/InputComponent.vue'
 
 const settingsStore = useSettingStore()
@@ -64,9 +64,9 @@ const aiModel = computed({
 })
 
 const apiKey = computed({
-    get: () => settingsStore.getSetting(SETTINGS.LOCAL_AI_API_KEY) as string,
+    get: () => settingsStore.getEncryptedSetting(ENCRYPTED_SETTINGS.LOCAL_AI_API_KEY) as string,
     set: (newValue: string) => {
-        settingsStore.updateSetting(SETTINGS.LOCAL_AI_API_KEY, newValue, isValid.apiKey)
+        settingsStore.updateEncryptedSetting(ENCRYPTED_SETTINGS.LOCAL_AI_API_KEY, newValue, isValid.apiKey)
         if (isValid.apiKey) {
             emit('save')
         }

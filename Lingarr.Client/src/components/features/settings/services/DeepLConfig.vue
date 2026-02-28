@@ -24,7 +24,7 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue'
 import { useSettingStore } from '@/store/setting'
-import { INPUT_TYPE, SETTINGS, INPUT_VALIDATION_TYPE } from '@/ts'
+import { INPUT_TYPE, INPUT_VALIDATION_TYPE, ENCRYPTED_SETTINGS } from '@/ts'
 import InputComponent from '@/components/common/InputComponent.vue'
 
 const isValid = ref(false)
@@ -32,9 +32,9 @@ const settingsStore = useSettingStore()
 const emit = defineEmits(['save'])
 
 const deepLApiKey = computed({
-    get: (): string => settingsStore.getSetting(SETTINGS.DEEPL_API_KEY) as string,
+    get: (): string => settingsStore.getEncryptedSetting(ENCRYPTED_SETTINGS.DEEPL_API_KEY) as string,
     set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.DEEPL_API_KEY, newValue, isValid.value)
+        settingsStore.updateEncryptedSetting(ENCRYPTED_SETTINGS.DEEPL_API_KEY, newValue, isValid.value)
         if (isValid.value) {
             emit('save')
         }

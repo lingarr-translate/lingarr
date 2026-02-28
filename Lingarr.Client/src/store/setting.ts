@@ -90,11 +90,13 @@ export const useSettingStore = defineStore('setting', {
         },
         async updateEncryptedSetting(
             key: keyof IEncryptedSettings,
-            value: string
-        )
-        {
+            value: string,
+            isValid: boolean = true
+        ): Promise<void> {
             this.encrypted_settings[key] = value
-            await services.setting.setEncryptedSetting(key, value)
+            if (isValid) {
+                await services.setting.setEncryptedSetting(key, value)
+            }
         },
         storeSetting(key: keyof ISettings, value: string | boolean | unknown[]) {
             this.settings[key] = value as never
