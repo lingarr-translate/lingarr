@@ -38,6 +38,9 @@ public class GoogleGeminiServiceTests
         _httpMessageHandlerMock = new Mock<HttpMessageHandler>();
         _httpClient = new HttpClient(_httpMessageHandlerMock.Object);
 
+        _settingsMock.Setup(settingService => settingService.GetEncryptedSetting(It.IsAny<string>()))
+            .ReturnsAsync("test-api-key");
+
         var languageCodeService = new LanguageCodeService(NullLogger<LanguageCodeService>.Instance);
         var requestTemplateService = new RequestTemplateService();
         _service = new GoogleGeminiService(
