@@ -130,6 +130,29 @@ public class TranslationRequestService : ITranslationRequestService
 
     private async Task<int> EnqueueRequest(TranslationRequest translationRequest)
     {
+        if (translationRequest.SubtitleToTranslate != null)
+        {
+            var existing = await _dbContext.TranslationRequests
+                .Where(activeRequest =>
+                    activeRequest.SubtitleToTranslate == translationRequest.SubtitleToTranslate &&
+                    activeRequest.TargetLanguage == translationRequest.TargetLanguage &&
+                    new[]
+                        {
+                            TranslationStatus.Pending, 
+                            TranslationStatus.InProgress
+                        }.Contains(activeRequest.Status))
+                .Select(activeRequest => new { activeRequest.Id })
+                .FirstOrDefaultAsync();
+
+            if (existing != null)
+            {
+                _logger.LogInformation(
+                    "Duplicate translation request skipped for '{Subtitle}' -> '{Language}' (existing id {Id}).",
+                    translationRequest.SubtitleToTranslate, translationRequest.TargetLanguage, existing.Id);
+                return existing.Id;
+            }
+        }
+
         // Create a new TranslationRequest to not keep ID and JobID
         var translationRequestCopy = new TranslationRequest
         {
