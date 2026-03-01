@@ -5,7 +5,7 @@
             @click="router.push({ name: 'translation-detail', params: { id: item.id } })">
             <EyeOnIcon class="h-5 w-5" />
         </button>
-        <div class="flex w-[3rem] items-center gap-2">
+        <div class="flex w-12 items-center gap-2">
             <LoaderCircleIcon v-if="loading" class="h-5 w-5 animate-spin" />
             <button
                 v-else-if="inProgress"
