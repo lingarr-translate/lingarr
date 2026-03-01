@@ -22,7 +22,6 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
     private string? _prompt;
     private string? _chatRequestTemplate;
     private string? _generateRequestTemplate;
-    private Dictionary<string, string> _replacements;
     private bool _isChatEndpoint;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
