@@ -5,7 +5,7 @@ namespace Lingarr.Core;
 public static class LingarrVersion
 {
     public const string Name = "Lingarr";
-    public const string Number = "1.0.7";
+    public const string Number = "1.0.8";
 
     public static async Task<VersionInfo> CheckForUpdates(object? lingarrApiService = null)
     {
