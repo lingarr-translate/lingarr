@@ -1,22 +1,35 @@
 ﻿<template>
     <CardComponent title="Translation Request">
         <template #description>
-            Modify translation request settings by changing batch size or retry options.
+            Modify translation request settings by changing retry options or batch size if available in the service.
         </template>
         <template #content>
             <SaveNotification ref="saveNotification" />
 
-            <div class="flex flex-col space-x-2">
-                <span class="font-semibold">Use batch translation</span>
-                Process multiple subtitle lines together in batches to improve translation
-                efficiency and context awareness. Note that single-line translations with context
-                are still more reliable and of higher quality.
-            </div>
-            <ToggleButton v-model="useBatchTranslation">
-                <span class="text-sm font-medium text-primary-content">
-                    {{ useBatchTranslation == 'true' ? 'Enabled' : 'Disabled' }}
-                </span>
-            </ToggleButton>
+            <template
+                v-if="
+                [
+                    SERVICE_TYPE.ANTHROPIC,
+                    SERVICE_TYPE.DEEPSEEK,
+                    SERVICE_TYPE.GEMINI,
+                    SERVICE_TYPE.LOCALAI,
+                    SERVICE_TYPE.OPENAI
+                ].includes(
+                    serviceType as 'openai' | 'anthropic' | 'localai' | 'gemini' | 'deepseek'
+                )
+            ">
+                <div class="flex flex-col space-x-2">
+                    <span class="font-semibold">Use batch translation</span>
+                    Process multiple subtitle lines together in batches to improve translation
+                    efficiency and context awareness. Note that single-line translations with context
+                    are still more reliable and of higher quality.
+                </div>
+                <ToggleButton v-model="useBatchTranslation">
+                    <span class="text-sm font-medium text-primary-content">
+                        {{ useBatchTranslation == 'true' ? 'Enabled' : 'Disabled' }}
+                    </span>
+                </ToggleButton>
+            </template>
             <InputComponent
                 v-if="useBatchTranslation == 'true'"
                 v-model="maxBatchSize"
@@ -56,7 +69,7 @@
 <script setup lang="ts">
 import { computed, ref, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
-import { INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
+import { INPUT_VALIDATION_TYPE, SERVICE_TYPE, SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
@@ -70,6 +83,7 @@ const isValid = reactive({
     retryDelay: true,
     retryDelayMultiplier: true
 })
+const serviceType = computed(() => settingsStore.getSetting(SETTINGS.SERVICE_TYPE))
 
 const useBatchTranslation = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.USE_BATCH_TRANSLATION) as string,

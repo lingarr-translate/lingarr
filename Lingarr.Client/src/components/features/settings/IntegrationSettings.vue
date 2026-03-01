@@ -65,7 +65,7 @@ const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
 
 const radarrApiKey = computed({
-    get: (): string => settingsStore.getEncryptedSetting(ENCRYPTED_SETTINGS.RADARR_API_KEY) as string,
+    get: (): string | null => settingsStore.getEncryptedSetting(ENCRYPTED_SETTINGS.RADARR_API_KEY) ?? null,
     set: (newValue: string): void => {
         settingsStore.updateEncryptedSetting(ENCRYPTED_SETTINGS.RADARR_API_KEY, newValue, isValid.radarrApiKey)
         if (isValid.radarrApiKey) {
@@ -74,7 +74,7 @@ const radarrApiKey = computed({
     }
 })
 const sonarrApiKey = computed({
-    get: (): string => settingsStore.getEncryptedSetting(ENCRYPTED_SETTINGS.SONARR_API_KEY) as string,
+    get: (): string | null => settingsStore.getEncryptedSetting(ENCRYPTED_SETTINGS.SONARR_API_KEY) ?? null,
     set: (newValue: string): void => {
         settingsStore.updateEncryptedSetting(ENCRYPTED_SETTINGS.SONARR_API_KEY, newValue, isValid.sonarrApiKey)
         if (isValid.sonarrApiKey) {
@@ -83,7 +83,7 @@ const sonarrApiKey = computed({
     }
 })
 const radarrUrl = computed({
-    get: (): string => settingsStore.getSetting(SETTINGS.RADARR_URL) as string,
+    get: (): string | null => (settingsStore.getSetting(SETTINGS.RADARR_URL) as string) ?? null,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.RADARR_URL, newValue, isValid.radarrUrl)
         if (isValid.radarrUrl) {
@@ -92,7 +92,7 @@ const radarrUrl = computed({
     }
 })
 const sonarrUrl = computed({
-    get: (): string => settingsStore.getSetting(SETTINGS.SONARR_URL) as string,
+    get: (): string | null => (settingsStore.getSetting(SETTINGS.SONARR_URL) as string) ?? null,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.SONARR_URL, newValue, isValid.sonarrUrl)
         if (isValid.sonarrUrl) {
