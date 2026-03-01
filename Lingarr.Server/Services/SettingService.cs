@@ -89,19 +89,20 @@ public class SettingService : ISettingService
             }
         }
 
-        if (keysToFetch.Any())
+        if (!keysToFetch.Any())
         {
-            var dbSettings = await _dbContext.Settings
-                .Where(s => keysToFetch.Contains(s.Key))
-                .ToListAsync();
-            
-            foreach (var setting in dbSettings)
-            {
-                result[setting.Key] = setting.Value;
-                _cache.Set(setting.Key, setting.Value, _cacheOptions);
-            }
+            return result;
         }
-        
+        var dbSettings = await _dbContext.Settings
+            .Where(s => keysToFetch.Contains(s.Key))
+            .ToListAsync();
+            
+        foreach (var setting in dbSettings)
+        {
+            result[setting.Key] = setting.Value;
+            _cache.Set(setting.Key, setting.Value, _cacheOptions);
+        }
+
         return result;
     }
 

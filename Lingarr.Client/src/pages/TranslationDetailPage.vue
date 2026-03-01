@@ -163,7 +163,9 @@ const latestPosition = ref<number>(0)
 const reversedLines = computed(() => (detail.value ? [...detail.value.lines].reverse() : []))
 
 const showProgress = computed(() => {
-    if (!detail.value) return false
+    if (!detail.value) {
+        return false
+    }
     const status = detail.value.status
     return (
         (status === TRANSLATION_STATUS.INPROGRESS && progress.value > 0) ||

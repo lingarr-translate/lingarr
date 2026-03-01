@@ -521,7 +521,7 @@ public class TranslationRequestService : ITranslationRequestService
 
             // Add TranslationRequest
             _dbContext.TranslationRequests.Add(translationRequest);
-            await _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync(cancellationToken);
             await _eventService.LogEvent(translationRequest.Id, TranslationStatus.InProgress);
             await UpdateActiveCount();
 
