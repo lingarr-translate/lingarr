@@ -8,8 +8,8 @@
             <div class="col-span-7 px-4 py-2 md:col-span-5">Title</div>
             <div class="col-span-4 flex justify-between py-2 pr-4 md:col-span-5">
                 <span>Subtitles</span>
-                <span class="hidden md:block">Exclude</span>
-                <span class="block md:hidden">⊘</span>
+                <span class="hidden md:block">Include</span>
+                <span class="block md:hidden">✓</span>
             </div>
         </div>
         <div v-for="episode in episodes" :key="episode.id" class="grid grid-cols-12">
@@ -37,9 +37,16 @@
                 </div>
                 <div class="col-span-1 px-1 py-2 md:col-span-1">
                     <ToggleButton
-                        v-model="episode.excludeFromTranslation"
+                        v-model="episode.includeInTranslation"
                         size="small"
-                        @toggle:update="() => showStore.exclude(MEDIA_TYPE.EPISODE, episode.id)" />
+                        @toggle:update="
+                            () =>
+                                showStore.include(
+                                    MEDIA_TYPE.EPISODE,
+                                    episode.id,
+                                    episode.includeInTranslation
+                                )
+                        " />
                 </div>
             </div>
         </div>
