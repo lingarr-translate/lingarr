@@ -430,6 +430,93 @@ public class GoogleGeminiServiceTests
         Assert.IsType<HttpRequestException>(ex.InnerException);
     }
 
+    [Fact]
+    public async Task TranslateBatchAsync_ShouldMergeDuplicatePositions_WhenOneLineIsEmpty()
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var batch = new List<BatchSubtitleItem> { new() { Position = 89, Line = "Naše láska." } };
+
+        // Gemini returns two entries for position 89: an empty line and the actual content
+        var responseJson = "[{\"position\":89,\"line\":\"\"},{\"position\":89,\"line\":\"Our love.\"}]";
+        var geminiResponse = new { candidates = new[] { new { content = new { parts = new[] { new { text = responseJson } } } } } };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(JsonSerializer.Serialize(geminiResponse), Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var result = await _service.TranslateBatchAsync(batch, "en", "es", CancellationToken.None);
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("Our love.", result[89]);
+    }
+
+    [Fact]
+    public async Task TranslateBatchAsync_ShouldMergeDuplicatePositions_WhenBothLinesHaveContent()
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var batch = new List<BatchSubtitleItem> { new() { Position = 89, Line = "Naše láska. Je krásná." } };
+
+        // Gemini splits the two lines into separate entries for the same position
+        var responseJson = "[{\"position\":89,\"line\":\"Our love.\"},{\"position\":89,\"line\":\"It is beautiful.\"}]";
+        var geminiResponse = new { candidates = new[] { new { content = new { parts = new[] { new { text = responseJson } } } } } };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(JsonSerializer.Serialize(geminiResponse), Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var result = await _service.TranslateBatchAsync(batch, "en", "es", CancellationToken.None);
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("Our love.\nIt is beautiful.", result[89]);
+    }
+
+    [Fact]
+    public async Task TranslateBatchAsync_ShouldMergeDuplicatePositions_WhenJsonIsRepaired()
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var batch = new List<BatchSubtitleItem> { new() { Position = 89, Line = "Naše láska. Je krásná." } };
+
+        // Truncated JSON that also contains duplicate positions
+        var truncatedJson = "[{\"position\":89,\"line\":\"Our love.\"},{\"position\":89,\"line\":\"It is beautiful.\"},{\"position\":90,\"line\":\"Trun";
+        var geminiResponse = new { candidates = new[] { new { content = new { parts = new[] { new { text = truncatedJson } } } } } };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(JsonSerializer.Serialize(geminiResponse), Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var result = await _service.TranslateBatchAsync(batch, "en", "es", CancellationToken.None);
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("Our love.\nIt is beautiful.", result[89]);
+    }
+
     // Helper to keep the tests clean
     private Dictionary<string, string> GetDefaultSettings()
     {

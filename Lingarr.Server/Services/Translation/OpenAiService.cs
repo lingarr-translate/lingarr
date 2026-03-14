@@ -368,9 +368,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                 throw new TranslationException("Failed to deserialize translated subtitles");
             }
 
-            return translatedItems
-                .GroupBy(item => item.Position)
-                .ToDictionary(group => group.Key, group => group.First().Line);
+            return MergeByPosition(translatedItems);
         }
         catch (JsonException ex)
         {

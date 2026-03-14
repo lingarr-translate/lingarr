@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
+using Lingarr.Server.Models.Batch.Response;
 
 namespace Lingarr.Server.Services.Translation.Base;
 
@@ -96,6 +97,13 @@ public abstract class BaseLanguageService : BaseTranslationService
         return await Task.FromResult(new ModelsResponse());
     }
     
+    private protected static Dictionary<int, string> MergeByPosition(List<StructuredBatchResponse> items) =>
+        items
+            .GroupBy(item => item.Position)
+            .ToDictionary(
+                group => group.Key,
+                group => string.Join("\n", group.Select(i => i.Line).Where(l => !string.IsNullOrWhiteSpace(l))));
+
     protected void SetLanguageReplacements(string sourceLanguage, string targetLanguage, string languageCodeFormatSetting)
     {
         var useLanguageCodes = languageCodeFormatSetting == "true";
