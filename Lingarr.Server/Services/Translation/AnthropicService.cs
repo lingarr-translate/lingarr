@@ -376,22 +376,15 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
 
         try
         {
-            var translatedItems = new List<StructuredBatchResponse>();
-            foreach (var translation in translationsProperty.EnumerateArray())
-            {
-                var position = translation.GetProperty("position").GetInt32();
-                var line = translation.GetProperty("line").GetString() ?? string.Empty;
-
-                translatedItems.Add(new StructuredBatchResponse
+            var translatedItems = translationsProperty.EnumerateArray()
+                .Select(t => new StructuredBatchResponse
                 {
-                    Position = position,
-                    Line = line
-                });
-            }
+                    Position = t.GetProperty("position").GetInt32(),
+                    Line = t.GetProperty("line").GetString() ?? string.Empty
+                })
+                .ToList();
 
-            return translatedItems
-                .GroupBy(item => item.Position)
-                .ToDictionary(group => group.Key, group => group.First().Line);
+            return MergeByPosition(translatedItems);
         }
         catch (Exception ex)
         {

@@ -432,9 +432,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                 throw new TranslationException("Failed to deserialize translated subtitles");
             }
 
-            return translatedItems
-                .GroupBy(item => item.Position)
-                .ToDictionary(group => group.Key, group => group.First().Line);
+            return MergeByPosition(translatedItems);
         }
 
         catch (JsonException ex)
@@ -448,9 +446,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                     if (translatedItems != null)
                     {
                         _logger.LogWarning("Successfully repaired the truncated JSON response from Gemini. Please verify the result.");
-                        return translatedItems
-                            .GroupBy(item => item.Position)
-                            .ToDictionary(group => group.Key, group => group.First().Line);
+                        return MergeByPosition(translatedItems);
                     }
                 }
             }

@@ -367,9 +367,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 throw new TranslationException("Failed to deserialize translated subtitles");
             }
 
-            return translatedItems
-                .GroupBy(item => item.Position)
-                .ToDictionary(group => group.Key, group => group.First().Line);
+            return MergeByPosition(translatedItems);
         }
         catch (JsonException ex)
         {
@@ -449,9 +447,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 throw new TranslationException("Failed to deserialize translated subtitles from JSON parsing");
             }
 
-            return translatedItems
-                .GroupBy(item => item.Position)
-                .ToDictionary(group => group.Key, group => group.First().Line);
+            return MergeByPosition(translatedItems);
         }
         catch (JsonException ex)
         {
@@ -515,9 +511,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 throw new TranslationException("Failed to deserialize translated subtitles from generate API");
             }
 
-            return translatedItems
-                .GroupBy(item => item.Position)
-                .ToDictionary(group => group.Key, group => group.First().Line);
+            return MergeByPosition(translatedItems);
         }
         catch (JsonException ex)
         {

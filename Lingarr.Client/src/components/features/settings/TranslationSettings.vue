@@ -30,6 +30,11 @@
                     </span>
                 </ToggleButton>
             </template>
+
+            <div class="flex flex-col space-x-2">
+                <span class="font-semibold">Batch size:</span>
+                Amount of subtitle lines in a single batch.
+            </div>
             <InputComponent
                 v-if="useBatchTranslation == 'true'"
                 v-model="maxBatchSize"
