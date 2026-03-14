@@ -74,18 +74,6 @@ public class MediaController : ControllerBase
     }
     
     /// <summary>
-    /// Toggles the exclusion status of a specified media item from translation.
-    /// Kept for backward compatibility. Prefer using the include endpoint.
-    /// </summary>
-    /// <param name="request">The request object containing the media type and id.</param>
-    [HttpPost("exclude")]
-    public async Task<ActionResult<PagedResult<Show>>> Exclude([FromBody] ExcludeRequest request)
-    {
-        var value = await _mediaService.Exclude(request.MediaType, request.Id);
-        return Ok(value);
-    }
-    
-    /// <summary>
     /// Sets the include status of a specified media item for translation.
     /// When include is true, the item will be eligible for translation.
     /// When include is false, the item will be excluded from translation.
@@ -103,7 +91,7 @@ public class MediaController : ControllerBase
     /// For shows, this cascades to all seasons and episodes.
     /// </summary>
     /// <param name="request">The request object containing the media type and include status.</param>
-    [HttpPost("includeAll")]
+    [HttpPost("include/all")]
     public async Task<ActionResult> SetIncludeAll([FromBody] IncludeAllRequest request)
     {
         var value = await _mediaService.SetIncludeAll(request.MediaType, request.Include);
@@ -114,7 +102,7 @@ public class MediaController : ControllerBase
     /// Gets a summary of how many items of a given type are included for translation.
     /// </summary>
     /// <param name="mediaType">The type of media (Movie or Show).</param>
-    [HttpGet("includeSummary")]
+    [HttpGet("include/summary")]
     public async Task<ActionResult<IncludeSummary>> GetIncludeSummary([FromQuery] MediaType mediaType)
     {
         var value = await _mediaService.GetIncludeSummary(mediaType);

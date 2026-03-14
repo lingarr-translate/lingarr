@@ -58,7 +58,6 @@ export interface IMediaService {
         sortBy: string,
         ascending: boolean
     ): Promise<T>
-    exclude<T>(mediaType: MediaType, id: number): Promise<T>
     include<T>(mediaType: MediaType, id: number, include: boolean): Promise<T>
     includeAll<T>(mediaType: MediaType, include: boolean): Promise<T>
     includeSummary(mediaType: MediaType): Promise<IIncludeSummary>

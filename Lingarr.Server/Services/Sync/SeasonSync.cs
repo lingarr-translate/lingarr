@@ -28,7 +28,7 @@ public class SeasonSync : ISeasonSync
     }
 
     /// <inheritdoc />
-    public async Task<Season> SyncSeason(Show show, SonarrShow sonarrShow, SonarrSeason season)
+    public async Task<Season> SyncSeason(Show show, SonarrShow sonarrShow, SonarrSeason season, bool defaultInclude = true)
     {
         var seasonPath = await GetSeasonPath(sonarrShow, season);
         
@@ -42,7 +42,8 @@ public class SeasonSync : ISeasonSync
             {
                 SeasonNumber = season.SeasonNumber,
                 Path = seasonPath,
-                Show = show
+                Show = show,
+                IncludeInTranslation = defaultInclude
             };
             show.Seasons.Add(seasonEntity);
         }

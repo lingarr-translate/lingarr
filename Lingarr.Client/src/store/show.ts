@@ -41,9 +41,6 @@ export const useShowStore = defineStore('show', {
         async fetchIncludeSummary() {
             this.includeSummary = await services.media.includeSummary('Show')
         },
-        async exclude(type: MediaType, id: number) {
-            await services.media.exclude(type, id)
-        },
         async include(type: MediaType, id: number, include: boolean) {
             await services.media.include(type, id, include)
             await this.fetchIncludeSummary()

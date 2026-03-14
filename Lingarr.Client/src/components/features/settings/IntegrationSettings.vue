@@ -20,6 +20,13 @@
                     label="API key"
                     error-message="API Key must be {minLength} characters"
                     @update:validation="(val) => (isValid.radarrApiKey = val)" />
+                <div class="flex items-center space-x-2">
+                    <ToggleButton v-model="radarrDefaultInclude">
+                        <span class="text-sm font-medium text-primary-content">
+                            Include new imports by default
+                        </span>
+                    </ToggleButton>
+                </div>
             </div>
             <div class="flex flex-col space-y-2">
                 <span class="font-semibold">Sonarr Settings:</span>
@@ -38,6 +45,13 @@
                     label="API key"
                     error-message="API Key must be {minLength} characters"
                     @update:validation="(val) => (isValid.sonarrApiKey = val)" />
+                <div class="flex items-center space-x-2">
+                    <ToggleButton v-model="sonarrDefaultInclude">
+                        <span class="text-sm font-medium text-primary-content">
+                            Include new imports by default
+                        </span>
+                    </ToggleButton>
+                </div>
             </div>
             <div>
                 No media visible? Try reindexing by starting a sync task
@@ -54,6 +68,7 @@ import SaveNotification from '@/components/common/SaveNotification.vue'
 import { INPUT_TYPE, INPUT_VALIDATION_TYPE, SETTINGS, ENCRYPTED_SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
+import ToggleButton from '@/components/common/ToggleButton.vue'
 
 const isValid = reactive({
     radarrUrl: false,
@@ -98,6 +113,20 @@ const sonarrUrl = computed({
         if (isValid.sonarrUrl) {
             saveNotification.value?.show()
         }
+    }
+})
+const radarrDefaultInclude = computed({
+    get: (): string => (settingsStore.getSetting(SETTINGS.RADARR_DEFAULT_INCLUDE) as string),
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.RADARR_DEFAULT_INCLUDE, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+const sonarrDefaultInclude = computed({
+    get: (): string => (settingsStore.getSetting(SETTINGS.SONARR_DEFAULT_INCLUDE) as string),
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.SONARR_DEFAULT_INCLUDE, newValue, true)
+        saveNotification.value?.show()
     }
 })
 </script>

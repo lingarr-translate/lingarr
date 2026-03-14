@@ -9,15 +9,17 @@ public interface IMovieSyncService
     /// Synchronizes multiple movies from Radarr
     /// </summary>
     /// <param name="movies">The list of Radarr movies to sync</param>
+    /// <param name="defaultInclude">Whether new movies should be included in translation by default</param>
     /// <returns>A task representing the asynchronous operation</returns>
-    Task SyncMovies(List<RadarrMovie> movies);
+    Task SyncMovies(List<RadarrMovie> movies, bool defaultInclude);
 
     /// <summary>
     /// Synchronizes a movie from Radarr
     /// </summary>
     /// <param name="movie">The Radarr movie to sync</param>
+    /// <param name="defaultInclude">Whether new movies should be included in translation by default</param>
     /// <returns>A task representing the asynchronous operation</returns>
-    Task<Movie?> SyncMovie(RadarrMovie movie);
+    Task<Movie?> SyncMovie(RadarrMovie movie, bool defaultInclude);
 
     /// <summary>
     /// Removes movies that no longer exist in Radarr

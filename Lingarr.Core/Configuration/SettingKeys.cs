@@ -6,8 +6,10 @@ public static class SettingKeys
     {
         public const string RadarrUrl = "radarr_url";
         public const string RadarrApiKey = "radarr_api_key";
+        public const string RadarrDefaultInclude = "radarr_default_include";
         public const string SonarrUrl = "sonarr_url";
         public const string SonarrApiKey = "sonarr_api_key";
+        public const string SonarrDefaultInclude = "sonarr_default_include";
         public const string RadarrSettingsCompleted = "radarr_settings_completed";
         public const string SonarrSettingsCompleted = "sonarr_settings_completed";
     }

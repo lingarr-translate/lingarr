@@ -2,8 +2,8 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
-using Lingarr.Core.Entities;
 using System.Net.Http;
 using Lingarr.Server.Interfaces.Services.Integration;
 using Lingarr.Server.Interfaces.Services;
@@ -60,6 +60,10 @@ public class MediaServiceTests
             });
 
         var showSyncServiceMock = new Mock<IShowSyncService>();
+        var settingMock = new Mock<ISettingService>();
+        settingMock
+            .Setup(s => s.GetSetting(SettingKeys.Integration.SonarrDefaultInclude))
+            .ReturnsAsync("true");
 
         var mediaService = new MediaService(context,
             subtitleMock.Object,
@@ -67,6 +71,7 @@ public class MediaServiceTests
             showSyncServiceMock.Object,
             radarrMock.Object,
             movieSyncMock.Object,
+            settingMock.Object,
             logger);
 
         // Act
@@ -75,7 +80,7 @@ public class MediaServiceTests
         // Assert
         sonarrMock.Verify(s => s.GetEpisode(150), Times.Once);
         sonarrMock.Verify(s => s.GetShows(), Times.Once);
-        showSyncServiceMock.Verify(s => s.SyncShows(It.IsAny<List<Lingarr.Server.Models.Integrations.SonarrShow>>()), Times.Once);
+        showSyncServiceMock.Verify(s => s.SyncShows(It.IsAny<List<Lingarr.Server.Models.Integrations.SonarrShow>>(), It.IsAny<bool>()), Times.Once);
         Assert.Equal(0, result);
     }
 }

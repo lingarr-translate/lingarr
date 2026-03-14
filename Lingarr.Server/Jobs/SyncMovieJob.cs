@@ -1,4 +1,5 @@
 ﻿using Hangfire;
+using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Enum;
 using Lingarr.Server.Filters;
@@ -15,6 +16,7 @@ public class SyncMovieJob
     private readonly ILogger<SyncMovieJob> _logger;
     private readonly IScheduleService _scheduleService;
     private readonly IMovieSyncService _movieSyncService;
+    private readonly ISettingService _settingService;
     private readonly LingarrDbContext _dbContext;
 
     public SyncMovieJob(
@@ -22,12 +24,14 @@ public class SyncMovieJob
         ILogger<SyncMovieJob> logger,
         IScheduleService scheduleService,
         IMovieSyncService movieSyncService,
+        ISettingService settingService,
         LingarrDbContext dbContext)
     {
         _radarrService = radarrService;
         _logger = logger;
         _scheduleService = scheduleService;
         _movieSyncService = movieSyncService;
+        _settingService = settingService;
         _dbContext = dbContext;
     }
 
@@ -48,9 +52,10 @@ public class SyncMovieJob
 
             _logger.LogInformation("Fetched {Count} movies from Radarr", movies.Count());
 
+            var defaultInclude = await _settingService.GetSetting(SettingKeys.Integration.RadarrDefaultInclude) == "true";
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-            await _movieSyncService.SyncMovies(movies);
+            await _movieSyncService.SyncMovies(movies, defaultInclude);
             await _movieSyncService.RemoveNonExistentMovies(movies.Select(m => m.Id));
 
             await transaction.CommitAsync();

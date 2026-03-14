@@ -41,6 +41,7 @@ public class MediaServiceIncludeTests : IDisposable
             new Mock<IShowSyncService>().Object,
             new Mock<IRadarrService>().Object,
             new Mock<IMovieSyncService>().Object,
+            new Mock<ISettingService>().Object,
             NullLogger<MediaService>.Instance);
     }
 

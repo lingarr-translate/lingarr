@@ -48,20 +48,6 @@ const service = (http: AxiosStatic, resource = '/api/media'): IMediaService => (
                 })
         })
     },
-    exclude<T>(mediaType: MediaType, id: number): Promise<T> {
-        return new Promise((resolve, reject) => {
-            http.post(`${resource}/exclude`, {
-                mediaType: mediaType,
-                id: id
-            })
-                .then((response: AxiosResponse<T>) => {
-                    resolve(response.data)
-                })
-                .catch((error: AxiosError) => {
-                    reject(error.response)
-                })
-        })
-    },
     include<T>(mediaType: MediaType, id: number, include: boolean): Promise<T> {
         return new Promise((resolve, reject) => {
             http.post(`${resource}/include`, {
@@ -79,7 +65,7 @@ const service = (http: AxiosStatic, resource = '/api/media'): IMediaService => (
     },
     includeAll<T>(mediaType: MediaType, include: boolean): Promise<T> {
         return new Promise((resolve, reject) => {
-            http.post(`${resource}/includeAll`, {
+            http.post(`${resource}/include/all`, {
                 mediaType: mediaType,
                 include: include
             })
@@ -94,7 +80,7 @@ const service = (http: AxiosStatic, resource = '/api/media'): IMediaService => (
     includeSummary(mediaType: MediaType): Promise<IIncludeSummary> {
         return new Promise((resolve, reject) => {
             http.get(
-                `${resource}/includeSummary`.addParams({
+                `${resource}/include/summary`.addParams({
                     mediaType: mediaType
                 })
             )

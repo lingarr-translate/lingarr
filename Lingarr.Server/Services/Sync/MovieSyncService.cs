@@ -24,13 +24,13 @@ public class MovieSyncService : IMovieSyncService
     }
 
     /// <inheritdoc />
-    public async Task SyncMovies(List<RadarrMovie> movies)
+    public async Task SyncMovies(List<RadarrMovie> movies, bool defaultInclude)
     {
         var processedCount = 0;
-        
+
         foreach (var movie in movies)
         {
-            await _movieSync.SyncMovie(movie);
+            await _movieSync.SyncMovie(movie, defaultInclude);
             processedCount++;
 
             if (processedCount % BatchSize == 0)
@@ -46,9 +46,9 @@ public class MovieSyncService : IMovieSyncService
     }
 
     /// <inheritdoc />
-    public async Task<Movie?> SyncMovie(RadarrMovie movie)
+    public async Task<Movie?> SyncMovie(RadarrMovie movie, bool defaultInclude)
     {
-        var movieEntity = await _movieSync.SyncMovie(movie);
+        var movieEntity = await _movieSync.SyncMovie(movie, defaultInclude);
         await _dbContext.SaveChangesAsync();
 
         if (movieEntity != null)

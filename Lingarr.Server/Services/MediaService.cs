@@ -1,4 +1,5 @@
-﻿using Lingarr.Core.Data;
+﻿using Lingarr.Core.Configuration;
+using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
 using Lingarr.Server.Models;
@@ -18,14 +19,16 @@ public class MediaService : IMediaService
     private readonly IShowSyncService _showSyncService;
     private readonly IRadarrService _radarrService;
     private readonly IMovieSyncService _movieSyncService;
+    private readonly ISettingService _settingService;
     private readonly ILogger<MediaService> _logger;
 
-    public MediaService(LingarrDbContext dbContext, 
+    public MediaService(LingarrDbContext dbContext,
         ISubtitleService subtitleService,
         ISonarrService sonarrService,
         IShowSyncService showSyncService,
         IRadarrService radarrService,
         IMovieSyncService movieSyncService,
+        ISettingService settingService,
         ILogger<MediaService> logger)
     {
         _dbContext = dbContext;
@@ -34,6 +37,7 @@ public class MediaService : IMediaService
         _showSyncService = showSyncService;
         _radarrService = radarrService;
         _movieSyncService = movieSyncService;
+        _settingService = settingService;
         _logger = logger;
     }
     
@@ -111,6 +115,7 @@ public class MediaService : IMediaService
         {
             return movie.Id;
         }
+        var defaultInclude = await _settingService.GetSetting(SettingKeys.Integration.RadarrDefaultInclude) == "true";
 
         // Movie not found, maybe out of sync.
         // Sync the movie
@@ -123,7 +128,7 @@ public class MediaService : IMediaService
                 return 0;
             }
 
-            var movieEntity = await _movieSyncService.SyncMovie(movieFetched);
+            var movieEntity = await _movieSyncService.SyncMovie(movieFetched, defaultInclude);
             if (movieEntity == null)
             {
                 // Movie had no file
@@ -153,6 +158,7 @@ public class MediaService : IMediaService
         {
             return episode.Id;
         }
+        var defaultInclude = await _settingService.GetSetting(SettingKeys.Integration.SonarrDefaultInclude) == "true";
 
         // Episode not found, maybe out of sync.
         // Sync the show
@@ -171,7 +177,7 @@ public class MediaService : IMediaService
                 return 0;
             }
 
-            var show = await _showSyncService.SyncShow(episodeFetched.Show);
+            var show = await _showSyncService.SyncShow(episodeFetched.Show, defaultInclude);
             // Find the episode id or return 0 if not found
             return show.Seasons
                 .SelectMany(s => s.Episodes)
@@ -188,7 +194,7 @@ public class MediaService : IMediaService
                 var shows = await _sonarrService.GetShows();
                 if (shows != null && shows.Any())
                 {
-                    await _showSyncService.SyncShows(shows);
+                    await _showSyncService.SyncShows(shows, defaultInclude);
                     // Try to find the episode again after resync
                     var matchedEpisode = await _dbContext.Episodes.Where(s => s.SonarrId == episodeNumber).FirstOrDefaultAsync();
                     if (matchedEpisode != null)
@@ -251,70 +257,6 @@ public class MediaService : IMediaService
             PageNumber = pageNumber,
             PageSize = pageSize
         };
-    }
-    
-    /// <inheritdoc />
-    public async Task<bool> Exclude(
-        MediaType mediaType,
-        int id)
-    {
-        try
-        {
-            switch (mediaType)
-            {
-                case MediaType.Movie:
-                    var movie = await _dbContext.Movies.FindAsync(id);
-                    if (movie != null)
-                    {
-                        movie.IncludeInTranslation = !movie.IncludeInTranslation;
-                        await _dbContext.SaveChangesAsync();
-                        return true;
-                    }
-                    break;
-
-                case MediaType.Show:
-                    var show = await _dbContext.Shows.FindAsync(id);
-                    if (show != null)
-                    {
-                        show.IncludeInTranslation = !show.IncludeInTranslation;
-                        await _dbContext.SaveChangesAsync();
-                        return true;
-                    }
-                    break;
-
-                case MediaType.Season:
-                    var season = await _dbContext.Seasons.FindAsync(id);
-                    if (season != null)
-                    {
-                        season.IncludeInTranslation = !season.IncludeInTranslation;
-                        await _dbContext.SaveChangesAsync();
-                        return true;
-                    }
-                    break;
-
-                case MediaType.Episode:
-                    var episode = await _dbContext.Episodes.FindAsync(id);
-                    if (episode != null)
-                    {
-                        episode.IncludeInTranslation = !episode.IncludeInTranslation;
-                        await _dbContext.SaveChangesAsync();
-                        return true;
-                    }
-                    break;
-
-                default:
-                    _logger.LogWarning("Unsupported media type: {MediaType}", mediaType);
-                    return false;
-            }
-
-            _logger.LogWarning("Media item not found. Type: {MediaType}, Id: {Id}", mediaType, id);
-            return false;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error excluding media item. Type: {MediaType}, Id: {Id}", mediaType, id);
-            return false;
-        }
     }
     
     /// <inheritdoc />
