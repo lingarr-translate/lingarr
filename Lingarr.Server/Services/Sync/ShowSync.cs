@@ -20,7 +20,7 @@ public class ShowSync : IShowSync
     }
 
     /// <inheritdoc />
-    public async Task<Show> SyncShow(SonarrShow sonarrShow)
+    public async Task<Show> SyncShow(SonarrShow sonarrShow, bool defaultInclude = true)
     {
         var showEntity = await _dbContext.Shows
             .Include(s => s.Images)
@@ -34,7 +34,8 @@ public class ShowSync : IShowSync
                 SonarrId = sonarrShow.Id,
                 Title = sonarrShow.Title,
                 Path = sonarrShow.Path,
-                DateAdded = !string.IsNullOrEmpty(sonarrShow.Added) ? DateTime.Parse(sonarrShow.Added) : DateTime.UtcNow
+                DateAdded = !string.IsNullOrEmpty(sonarrShow.Added) ? DateTime.Parse(sonarrShow.Added) : DateTime.UtcNow,
+                IncludeInTranslation = defaultInclude
             };
             _dbContext.Shows.Add(showEntity);
         }

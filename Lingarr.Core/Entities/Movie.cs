@@ -11,6 +11,6 @@ public class Movie : BaseEntity, IMedia
     public string? MediaHash { get; set; } = string.Empty;
     public required DateTime? DateAdded { get; set; }
     public List<Image> Images { get; set; } = new();
-    public bool ExcludeFromTranslation { get; set; }
+    public bool IncludeInTranslation { get; set; } = true;
     public int? TranslationAgeThreshold { get; set; }
 }

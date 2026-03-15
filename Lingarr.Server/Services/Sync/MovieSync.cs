@@ -27,7 +27,7 @@ public class MovieSync : IMovieSync
     }
 
     /// <inheritdoc />
-    public async Task<Movie?> SyncMovie(RadarrMovie movie)
+    public async Task<Movie?> SyncMovie(RadarrMovie movie, bool defaultInclude = true)
     {
         if (!movie.HasFile)
         {
@@ -52,7 +52,8 @@ public class MovieSync : IMovieSync
                 Title = movie.Title,
                 DateAdded = DateTime.Parse(movie.Added),
                 FileName = Path.GetFileNameWithoutExtension(moviePath),
-                Path = Path.GetDirectoryName(moviePath) ?? string.Empty
+                Path = Path.GetDirectoryName(moviePath) ?? string.Empty,
+                IncludeInTranslation = defaultInclude
             };
             _dbContext.Movies.Add(movieEntity);
         }

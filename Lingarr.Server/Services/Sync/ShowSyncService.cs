@@ -9,7 +9,7 @@ namespace Lingarr.Server.Services.Sync;
 public class ShowSyncService : IShowSyncService
 {
     private const int BatchSize = 100;
-    
+
     private readonly LingarrDbContext _dbContext;
     private readonly IShowSync _showSync;
     private readonly ISeasonSync _seasonSync;
@@ -31,20 +31,20 @@ public class ShowSyncService : IShowSyncService
     }
 
     /// <inheritdoc />
-    public async Task SyncShows(List<SonarrShow> shows)
+    public async Task SyncShows(List<SonarrShow> shows, bool defaultInclude)
     {
         var processedCount = 0;
-        
+
         foreach (var show in shows)
         {
-            var showEntity = await _showSync.SyncShow(show);
+            var showEntity = await _showSync.SyncShow(show, defaultInclude);
 
             foreach (var season in show.Seasons)
             {
-                var seasonEntity = await _seasonSync.SyncSeason(showEntity, show, season);
-                await _episodeSync.SyncEpisodes(show, seasonEntity);
+                var seasonEntity = await _seasonSync.SyncSeason(showEntity, show, season, defaultInclude);
+                await _episodeSync.SyncEpisodes(show, seasonEntity, defaultInclude);
             }
-            
+
             processedCount++;
 
             if (processedCount % BatchSize == 0)
@@ -60,14 +60,14 @@ public class ShowSyncService : IShowSyncService
     }
 
     /// <inheritdoc />
-    public async Task<Show> SyncShow(SonarrShow show)
+    public async Task<Show> SyncShow(SonarrShow show, bool defaultInclude)
     {
-        var showEntity = await _showSync.SyncShow(show);
+        var showEntity = await _showSync.SyncShow(show, defaultInclude);
 
         foreach (var season in show.Seasons)
         {
-            var seasonEntity = await _seasonSync.SyncSeason(showEntity, show, season);
-            await _episodeSync.SyncEpisodes(show, seasonEntity);
+            var seasonEntity = await _seasonSync.SyncSeason(showEntity, show, season, defaultInclude);
+            await _episodeSync.SyncEpisodes(show, seasonEntity, defaultInclude);
         }
 
         await _dbContext.SaveChangesAsync();

@@ -60,7 +60,9 @@ export const SETTINGS = {
     LOCAL_AI_GENERATE_REQUEST_TEMPLATE: 'local_ai_generate_request_template',
     DEEPSEEK_REQUEST_TEMPLATE: 'deepseek_request_template',
     GEMINI_REQUEST_TEMPLATE: 'gemini_request_template',
-    LANGUAGE_CODE_FORMAT: 'language_code_format'
+    LANGUAGE_CODE_FORMAT: 'language_code_format',
+    RADARR_DEFAULT_INCLUDE: 'radarr_default_include',
+    SONARR_DEFAULT_INCLUDE: 'sonarr_default_include'
 } as const
 
 export interface ISettings {
@@ -122,6 +124,8 @@ export interface ISettings {
     deepseek_request_template: string
     gemini_request_template: string
     language_code_format: string
+    radarr_default_include: string
+    sonarr_default_include: string
 }
 
 

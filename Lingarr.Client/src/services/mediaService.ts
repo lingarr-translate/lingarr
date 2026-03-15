@@ -1,5 +1,5 @@
 import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
-import { IMediaService, MediaType } from '@/ts'
+import { IMediaService, IIncludeSummary, MediaType } from '@/ts'
 
 const service = (http: AxiosStatic, resource = '/api/media'): IMediaService => ({
     movies<T>(
@@ -48,13 +48,43 @@ const service = (http: AxiosStatic, resource = '/api/media'): IMediaService => (
                 })
         })
     },
-    exclude<T>(mediaType: MediaType, id: number): Promise<T> {
+    include<T>(mediaType: MediaType, id: number, include: boolean): Promise<T> {
         return new Promise((resolve, reject) => {
-            http.post(`${resource}/exclude`, {
+            http.post(`${resource}/include`, {
                 mediaType: mediaType,
-                id: id
+                id: id,
+                include: include
             })
                 .then((response: AxiosResponse<T>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
+    },
+    includeAll<T>(mediaType: MediaType, include: boolean): Promise<T> {
+        return new Promise((resolve, reject) => {
+            http.post(`${resource}/include/all`, {
+                mediaType: mediaType,
+                include: include
+            })
+                .then((response: AxiosResponse<T>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
+    },
+    includeSummary(mediaType: MediaType): Promise<IIncludeSummary> {
+        return new Promise((resolve, reject) => {
+            http.get(
+                `${resource}/include/summary`.addParams({
+                    mediaType: mediaType
+                })
+            )
+                .then((response: AxiosResponse<IIncludeSummary>) => {
                     resolve(response.data)
                 })
                 .catch((error: AxiosError) => {

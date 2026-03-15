@@ -20,7 +20,7 @@ public class EpisodeSync : IEpisodeSync
     }
 
     /// <inheritdoc />
-    public async Task SyncEpisodes(SonarrShow show, Season season)
+    public async Task SyncEpisodes(SonarrShow show, Season season, bool defaultInclude = true)
     {
         var episodes = await _sonarrService.GetEpisodes(show.Id, season.SeasonNumber);
         if (episodes == null) return;
@@ -32,8 +32,8 @@ public class EpisodeSync : IEpisodeSync
                 episodePathResult?.EpisodeFile.Path ?? string.Empty,
                 MediaType.Show
             );
-            
-            SyncEpisode(episode, episodePath, season, episodePathResult?.EpisodeFile.DateAdded);
+
+            SyncEpisode(episode, episodePath, season, episodePathResult?.EpisodeFile.DateAdded, defaultInclude);
         }
 
         RemoveNonExistentEpisodes(season, episodes);
@@ -46,7 +46,7 @@ public class EpisodeSync : IEpisodeSync
     /// <param name="episodePath">The converted and mapped file path for the episode</param>
     /// <param name="season">The season entity that owns this episode</param>
     /// <param name="dateAdded">The date the episode file was added</param>
-    private static void SyncEpisode(SonarrEpisode episode, string episodePath, Season season, DateTime? dateAdded)
+    private static void SyncEpisode(SonarrEpisode episode, string episodePath, Season season, DateTime? dateAdded, bool defaultInclude = true)
     {
         var episodeEntity = season.Episodes.FirstOrDefault(se => se.SonarrId == episode.Id);
         if (episodeEntity == null)
@@ -59,7 +59,8 @@ public class EpisodeSync : IEpisodeSync
                 FileName = Path.GetFileNameWithoutExtension(episodePath),
                 Path = Path.GetDirectoryName(episodePath),
                 Season = season,
-                DateAdded = dateAdded
+                DateAdded = dateAdded,
+                IncludeInTranslation = defaultInclude
             };
             season.Episodes.Add(episodeEntity);
         }

@@ -1,4 +1,5 @@
 ﻿using Hangfire;
+using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Enum;
 using Lingarr.Server.Filters;
@@ -16,19 +17,22 @@ public class SyncShowJob
     private readonly ILogger<SyncShowJob> _logger;
     private readonly IScheduleService _scheduleService;
     private readonly IShowSyncService _showSyncService;
+    private readonly ISettingService _settingService;
 
     public SyncShowJob(
         LingarrDbContext dbContext,
         ISonarrService sonarrService,
         ILogger<SyncShowJob> logger,
         IScheduleService scheduleService,
-        IShowSyncService showSyncService)
+        IShowSyncService showSyncService,
+        ISettingService settingService)
     {
         _dbContext = dbContext;
         _sonarrService = sonarrService;
         _logger = logger;
         _scheduleService = scheduleService;
         _showSyncService = showSyncService;
+        _settingService = settingService;
     }
 
     [DisableConcurrentExecution(timeoutInSeconds: 5 * 60)]
@@ -48,9 +52,10 @@ public class SyncShowJob
 
             _logger.LogInformation("Fetched {ShowCount} shows from Sonarr", shows.Count);
 
+            var defaultInclude = await _settingService.GetSetting(SettingKeys.Integration.SonarrDefaultInclude) == "true";
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-            await _showSyncService.SyncShows(shows);
+            await _showSyncService.SyncShows(shows, defaultInclude);
             await _showSyncService.RemoveNonExistentShows(shows.Select(s => s.Id).ToHashSet());
 
             await transaction.CommitAsync();
