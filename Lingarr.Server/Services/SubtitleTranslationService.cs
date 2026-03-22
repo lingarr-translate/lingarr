@@ -1,6 +1,5 @@
 ﻿using Lingarr.Core.Entities;
 using Lingarr.Server.Exceptions;
-using Lingarr.Server.Extensions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models;
@@ -12,7 +11,6 @@ namespace Lingarr.Server.Services;
 
 public class SubtitleTranslationService
 {
-    private const int MaxLineLength = 42;
     private int _lastProgression = -1;
     private readonly ITranslationService _translationService;
     private readonly IProgressService? _progressService;
@@ -80,8 +78,7 @@ public class SubtitleTranslationService
                     },
                     cancellationToken);
             }
-            // Rebuild lines based on max length
-            subtitle.TranslatedLines = translated.SplitIntoLines(MaxLineLength);
+            subtitle.TranslatedLines = [translated];
 
             await _progressService!.EmitLine(translationRequest, subtitle.Position, subtitleLine, translated);
 
@@ -234,8 +231,7 @@ public class SubtitleTranslationService
                     translated = SubtitleFormatterService.RemoveMarkup(translated);
                 }
 
-                // Rebuild lines based on max length
-                subtitle.TranslatedLines = translated.SplitIntoLines(MaxLineLength);
+                subtitle.TranslatedLines = [translated];
             }
             else
             {
