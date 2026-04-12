@@ -30,6 +30,7 @@ public class TranslationRequestService : ITranslationRequestService
     private readonly ISettingService _settingService;
     private readonly ISubtitleService _subtitleService;
     private readonly ITranslationRequestEventService _eventService;
+    private readonly ITranslationConcurrencyGate _concurrencyGate;
     private readonly ILogger<TranslationRequestService> _logger;
     private static readonly ConcurrentDictionary<int, CancellationTokenSource> _asyncTranslationJobs = new();
 
@@ -44,6 +45,7 @@ public class TranslationRequestService : ITranslationRequestService
         ISettingService settingService,
         ISubtitleService subtitleService,
         ITranslationRequestEventService eventService,
+        ITranslationConcurrencyGate concurrencyGate,
         ILogger<TranslationRequestService> logger)
     {
         _dbContext = dbContext;
@@ -56,6 +58,7 @@ public class TranslationRequestService : ITranslationRequestService
         _settingService = settingService;
         _subtitleService = subtitleService;
         _eventService = eventService;
+        _concurrencyGate = concurrencyGate;
         _logger = logger;
     }
 
@@ -529,6 +532,10 @@ public class TranslationRequestService : ITranslationRequestService
 
         try
         {
+            // Respect the shared MAX_CONCURRENT_JOBS limit so API-triggered translations
+            // share the same gate as Hangfire-triggered ones.
+            using var _ = await _concurrencyGate.AcquireAsync(cancellationToken);
+
             BatchTranslatedLine[]? results;
             // Get Translation Settings
             var settings = await _settingService.GetSettings([

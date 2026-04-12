@@ -148,6 +148,7 @@ public static class ServiceCollectionExtensions
 
         builder.Services.AddHostedService<ScheduleInitializationService>();
         builder.Services.AddSingleton<IScheduleService, ScheduleService>();
+        builder.Services.AddSingleton<ITranslationConcurrencyGate, TranslationConcurrencyGate>();
 
         builder.Services.AddScoped<IImageService, ImageService>();
         builder.Services.AddScoped<IIntegrationService, IntegrationService>();

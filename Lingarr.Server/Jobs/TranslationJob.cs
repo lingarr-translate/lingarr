@@ -26,6 +26,7 @@ public class TranslationJob
     private readonly ITranslationServiceFactory _translationServiceFactory;
     private readonly ITranslationRequestService _translationRequestService;
     private readonly ITranslationRequestEventService _eventService;
+    private readonly ITranslationConcurrencyGate _concurrencyGate;
 
     public TranslationJob(
         ILogger<TranslationJob> logger,
@@ -37,7 +38,8 @@ public class TranslationJob
         IStatisticsService statisticsService,
         ITranslationServiceFactory translationServiceFactory,
         ITranslationRequestService translationRequestService,
-        ITranslationRequestEventService eventService)
+        ITranslationRequestEventService eventService,
+        ITranslationConcurrencyGate concurrencyGate)
     {
         _logger = logger;
         _settings = settings;
@@ -49,6 +51,7 @@ public class TranslationJob
         _translationServiceFactory = translationServiceFactory;
         _translationRequestService = translationRequestService;
         _eventService = eventService;
+        _concurrencyGate = concurrencyGate;
     }
 
     [AutomaticRetry(Attempts = 0)]
@@ -62,6 +65,10 @@ public class TranslationJob
 
         try
         {
+            // Respect the shared MAX_CONCURRENT_JOBS limit so Hangfire-triggered translations
+            // share the same gate as API-triggered ones.
+            using var _ = await _concurrencyGate.AcquireAsync(cancellationToken);
+
             await _scheduleService.UpdateJobState(jobName, JobStatus.Processing.GetDisplayName());
             cancellationToken.ThrowIfCancellationRequested();
 
