@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 using System.Text;
 using Lingarr.Server.Services.Subtitle;
@@ -242,7 +243,7 @@ Format: Layer,Start,End,Style,Name,MarginL,MarginR,MarginV,Effect,Text
     public void ParseStream_NonSeekableStream_ThrowsArgumentException()
     {
         var stream = new NonSeekableStream();
-        var ex = Assert.Throws<ArgumentException>(() => _parser.ParseStream(stream, Encoding.UTF.UTF8));
+        var ex = Assert.Throws<ArgumentException>(() => _parser.ParseStream(stream, Encoding.UTF8));
         Assert.Contains("seekable", ex.Message);
     }
 
