@@ -203,6 +203,12 @@ public class SsaParser : ISubtitleParser
             ssaDialogue.Name = dialogueParts[columnIndexes["Name"]].Trim();
         }
 
+        // Skip lines where every text line is empty after cleanup (e.g. pure SVG vector drawings)
+        if (plaintextLines.All(line => string.IsNullOrEmpty(line)))
+        {
+            return null;
+        }
+
         return new SubtitleItem
         {
             StartTime = startTime,
