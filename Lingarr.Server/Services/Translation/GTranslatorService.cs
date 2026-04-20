@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Net;
 using GTranslate.Translators;
 using Lingarr.Core.Configuration;
@@ -9,6 +10,7 @@ namespace Lingarr.Server.Services.Translation;
 
 public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
 {
+    private const int MicrosoftTranslatorMaxCharacters = 1000;
     private readonly T _translator;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
@@ -78,9 +80,37 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
     {
         await InitializeAsync();
 
-        using var retry = new CancellationTokenSource();
-        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
 
+        var segments = GetTranslationSegments(text);
+        if (segments.Count > 1)
+        {
+            _logger.LogWarning(
+                "Splitting Microsoft Translator input into {SegmentCount} chunks because the line length {Length} exceeds the {Limit}-character limit.",
+                segments.Count,
+                text.Length,
+                MicrosoftTranslatorMaxCharacters);
+        }
+
+        var translatedSegments = new List<string>(segments.Count);
+        foreach (var segment in segments)
+        {
+            translatedSegments.Add(await TranslateSegmentAsync(
+                segment,
+                sourceLanguage,
+                targetLanguage,
+                linked.Token));
+        }
+
+        return string.Join(" ", translatedSegments.Where(segment => !string.IsNullOrWhiteSpace(segment)));
+    }
+
+    private async Task<string> TranslateSegmentAsync(
+        string text,
+        string sourceLanguage,
+        string targetLanguage,
+        CancellationToken cancellationToken)
+    {
         var delay = _retryDelay;
         for (var attempt = 1; attempt <= _maxRetries + 1; attempt++)
         {
@@ -90,7 +120,7 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
                         text,
                         targetLanguage,
                         sourceLanguage)
-                    .WaitAsync(linked.Token)
+                    .WaitAsync(cancellationToken)
                     .ConfigureAwait(false);
 
                 return result.Translation;
@@ -107,7 +137,7 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
                     "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
                     "GTranslator", ex.StatusCode, delay, attempt, _maxRetries);
 
-                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
+                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
                 delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -122,5 +152,21 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
         }
 
         throw new TranslationException("Translation failed after maximum retry attempts.");
+    }
+
+    private static List<string> GetTranslationSegments(string text)
+    {
+        if (!IsMicrosoftTranslator() || text.Length <= MicrosoftTranslatorMaxCharacters)
+        {
+            return [text];
+        }
+
+        return TranslationTextChunker.Split(text, MicrosoftTranslatorMaxCharacters);
+    }
+
+    private static bool IsMicrosoftTranslator()
+    {
+        return typeof(T) == typeof(MicrosoftTranslator) ||
+               typeof(T).Name == nameof(MicrosoftTranslator);
     }
 }
