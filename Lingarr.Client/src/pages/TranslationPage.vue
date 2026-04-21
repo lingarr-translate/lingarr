@@ -59,7 +59,7 @@
             <div
                 v-for="item in translationRequests.items"
                 :key="item.id"
-                class="rounded-lg py-4 shadow-sm md:grid md:grid-cols-12 md:rounded-none md:border-b md:border-accent md:bg-transparent md:p-0 md:shadow-none">
+                class="rounded-lg py-4 shadow-sm transition-colors hover:bg-accent/5 md:grid md:grid-cols-12 md:rounded-none md:border-b md:border-accent md:bg-transparent md:p-0 md:shadow-none">
                 <div class="deletable float-right md:hidden">
                     <TranslationAction
                         :item="item"
