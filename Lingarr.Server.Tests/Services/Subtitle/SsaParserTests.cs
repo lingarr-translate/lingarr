@@ -115,13 +115,13 @@ Dialogue: 0,0:00:01.00,0:00:04.00,Default,,0,0,0,,{\b}Bold{\b0} text
     // ===== SVG vector drawing lines — skip behavior =====
 
     /// <summary>
-    /// Lines that contain only SVG vector drawing commands (no readable text)
-    /// should be skipped entirely — not passed to translation as garbage.
-    /// Example: karaoke sign overlays in anime where the text field is
-    /// a Bezier path like "m 0 0 b 8 22 b 4 18".
+    /// Lines that contain only SVG vector drawing commands should be kept
+    /// in the parsed output with empty PlaintextLines. The downstream
+    /// translation guard skips empty plaintext, while the original Lines
+    /// (carrying the vector path the renderer needs) survive to the writer.
     /// </summary>
     [Fact]
-    public void ParseStream_BareVectorDrawingLine_SkipsLine()
+    public void ParseStream_BareVectorDrawingLine_KeepsEntryWithEmptyPlaintext()
     {
         var ass = @"[Script Info]
 Title: Test
@@ -138,17 +138,17 @@ Dialogue: 0,0:00:05.00,0:00:08.00,Default,,0,0,0,,Real dialogue text
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(ass));
         var items = _parser.ParseStream(stream, Encoding.UTF8);
 
-        // Pure vector line skipped; only the real dialogue remains
-        Assert.Single(items);
-        Assert.Equal("Real dialogue text", items[0].PlaintextLines[0]);
+        Assert.Equal(2, items.Count);
+        Assert.Equal(string.Empty, items[0].PlaintextLines[0]);
+        Assert.Equal("Real dialogue text", items[1].PlaintextLines[0]);
     }
 
     /// <summary>
-    /// Lines with {\pN} drawing-mode tags wrapping vector data should be skipped.
-    /// These are typically Signs/OP/ED overlays in anime.
+    /// Lines with {\pN} drawing-mode tags wrapping vector data should be kept
+    /// but have empty plaintext (Signs/OP/ED overlays in anime).
     /// </summary>
     [Fact]
-    public void ParseStream_DrawingModeVectorLine_SkipsLine()
+    public void ParseStream_DrawingModeVectorLine_KeepsEntryWithEmptyPlaintext()
     {
         var ass = @"[Script Info]
 Title: Test
@@ -165,9 +165,9 @@ Dialogue: 0,0:00:05.00,0:00:08.00,Default,,0,0,0,,Actual subtitle
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(ass));
         var items = _parser.ParseStream(stream, Encoding.UTF8);
 
-        // Drawing line skipped; only real subtitle remains
-        Assert.Single(items);
-        Assert.Equal("Actual subtitle", items[0].PlaintextLines[0]);
+        Assert.Equal(2, items.Count);
+        Assert.Equal(string.Empty, items[0].PlaintextLines[0]);
+        Assert.Equal("Actual subtitle", items[1].PlaintextLines[0]);
     }
 
     /// <summary>
@@ -195,10 +195,12 @@ Dialogue: 0,0:00:01.00,0:00:04.00,Default,,0,0,0,,{\p1}m 0 0{\p0} Meeting at 9 A
     }
 
     /// <summary>
-    /// Multiple dialogue lines in a single entry, all pure vectors — skip.
+    /// Multiple dialogue lines in a single entry, all pure vectors — entry is
+    /// kept with empty PlaintextLines (translation skipped downstream, renderer
+    /// still receives the original vector path).
     /// </summary>
     [Fact]
-    public void ParseStream_AllLinesPureVector_SkipsEntry()
+    public void ParseStream_AllLinesPureVector_KeepsEntryWithEmptyPlaintext()
     {
         var ass = @"[Script Info]
 Title: Test
@@ -215,8 +217,9 @@ Dialogue: 0,0:00:01.00,0:00:04.00,Default,,0,0,0,,m 0 0 l 10 10\Nm 20 20 l 30 30
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(ass));
         var items = _parser.ParseStream(stream, Encoding.UTF8);
 
-        // All lines pure vectors → entry skipped
-        Assert.Empty(items);
+        Assert.Single(items);
+        Assert.Equal(2, items[0].PlaintextLines.Count);
+        Assert.All(items[0].PlaintextLines, p => Assert.Equal(string.Empty, p));
     }
 
     // ===== Error handling =====
@@ -275,9 +278,10 @@ Dialogue: 0,0:01:30.50,0:01:45.75,Default,,0,0,0,,Timing test
     [Fact]
     public void ParseStream_WrapStyleNone_RecognizesBackslashN()
     {
+        // WrapStyle 2 = None in SsaWrapStyle; only this style splits lowercase \n
         var ass = @"[Script Info]
 Title: Test
-WrapStyle: 0
+WrapStyle: 2
 
 [V4+ Styles]
 Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0
@@ -291,6 +295,31 @@ Dialogue: 0,0:00:01.00,0:00:04.00,Default,,0,0,0,,Line one\nLine two
 
         Assert.Single(items);
         Assert.Equal(2, items[0].PlaintextLines.Count);
+    }
+
+    // ===== Layer-omitted fallback (older Aegisub output) =====
+
+    [Fact]
+    public void ParseStream_LayerOmittedDialogue_Parses()
+    {
+        // Older Aegisub/FFmpeg outputs write Dialogue lines without the Layer
+        // column. Parser must treat "Text at column N-1" as a fallback so these
+        // files don't error with "No valid subtitles".
+        var ass = @"[Script Info]
+Title: Test
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1,0,2,10,10,10,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0:00:01.00,0:00:04.00,Default,,0,0,0,,Hello from legacy Aegisub
+";
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(ass));
+        var items = _parser.ParseStream(stream, Encoding.UTF8);
+        Assert.Single(items);
+        Assert.Equal("Hello from legacy Aegisub", items[0].PlaintextLines[0]);
     }
 
     // ===== Helper =====

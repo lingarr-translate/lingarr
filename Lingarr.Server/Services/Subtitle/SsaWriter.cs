@@ -51,20 +51,20 @@ public class SsaWriter : ISubtitleWriter
             await writer.WriteLineAsync("YCbCr Matrix: None");
         }
 
-        if (format?.Styles.Any() == true)
+        if (stripSubtitleFormatting)
         {
-            if (!stripSubtitleFormatting)
+            // TranslationJob clears format.Styles when stripping, so always
+            // emit a minimal Default style — otherwise Dialogue lines reference
+            // an undefined style.
+            await writer.WriteLineAsync("[V4+ Styles]");
+            await writer.WriteLineAsync("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding");
+            await writer.WriteLineAsync("Style: Default,Roboto Medium,26,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1.3,0,2,20,20,23,1");
+        }
+        else if (format?.Styles.Any() == true)
+        {
+            foreach (var line in format.Styles)
             {
-                foreach (var line in format.Styles)
-                {
-                    await writer.WriteLineAsync(line);
-                }
-            }
-            else
-            {
-                await writer.WriteLineAsync("[V4+ Styles]");
-                await writer.WriteLineAsync("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding");
-                await writer.WriteLineAsync("Style: Default,Roboto Medium,26,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1.3,0,2,20,20,23,1");
+                await writer.WriteLineAsync(line);
             }
         }
         
@@ -79,7 +79,9 @@ public class SsaWriter : ISubtitleWriter
             var dialogue = item.SsaDialogue ?? new SsaDialogue();
             
             // Use original lines (with markup) or translated lines if available
-            var linesToUse = item.TranslatedLines.Any() ? item.TranslatedLines : item.Lines;
+            var linesToUse = item.TranslatedLines.Any(l => !string.IsNullOrEmpty(l))
+                ? item.TranslatedLines
+                : item.Lines;
                 
             // Join lines according to wrap style
             var text = JoinLinesByWrapStyle(linesToUse, item.SsaFormat?.WrapStyle ?? SsaWrapStyle.None);
