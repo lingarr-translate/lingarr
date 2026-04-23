@@ -542,6 +542,27 @@ public class TranslationRequestService : ITranslationRequestService
                 serviceType
             );
 
+            // Skip if an active content-translation row for this media+target already exists.
+            var existingId = await _dbContext.TranslationRequests
+                .Where(r => r.MediaId == translationRequest.MediaId
+                         && r.MediaType == translationRequest.MediaType
+                         && r.Title == translationRequest.Title
+                         && r.SourceLanguage == translationRequest.SourceLanguage
+                         && r.TargetLanguage == translationRequest.TargetLanguage
+                         && (r.Status == TranslationStatus.Pending || r.Status == TranslationStatus.InProgress))
+                .Select(r => (int?)r.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (existingId != null)
+            {
+                _logger.LogInformation(
+                    "Duplicate content-translation request skipped for mediaId {MediaId} ({MediaType}) '{Title}' {Src}->{Tgt} (existing id {Id}).",
+                    translationRequest.MediaId, translationRequest.MediaType,
+                    translationRequest.Title,
+                    translationRequest.SourceLanguage, translationRequest.TargetLanguage, existingId.Value);
+                return Array.Empty<BatchTranslatedLine>();
+            }
+
             // Add TranslationRequest
             _dbContext.TranslationRequests.Add(translationRequest);
             await _dbContext.SaveChangesAsync(cancellationToken);
@@ -679,10 +700,18 @@ public class TranslationRequestService : ITranslationRequestService
         }
         catch (TaskCanceledException ex)
         {
-            translationRequest.CompletedAt = DateTime.UtcNow;
+            // ExecuteUpdateAsync bypasses change-tracking so a concurrent write cannot abort this save.
+            var now = DateTime.UtcNow;
+            await _dbContext.TranslationRequests
+                .Where(r => r.Id == translationRequest.Id)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(r => r.Status, TranslationStatus.Cancelled)
+                    .SetProperty(r => r.ErrorMessage, ex.Message)
+                    .SetProperty(r => r.CompletedAt, (DateTime?)now)
+                    .SetProperty(r => r.UpdatedAt, now));
+            translationRequest.CompletedAt = now;
             translationRequest.Status = TranslationStatus.Cancelled;
             translationRequest.ErrorMessage = ex.Message;
-            await _dbContext.SaveChangesAsync();
             await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Cancelled, ex.Message);
             await UpdateActiveCount();
             await _progressService.Emit(translationRequest, 0);
@@ -691,11 +720,19 @@ public class TranslationRequestService : ITranslationRequestService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error translating subtitle content");
-            translationRequest.CompletedAt = DateTime.UtcNow;
+            var now = DateTime.UtcNow;
+            await _dbContext.TranslationRequests
+                .Where(r => r.Id == translationRequest.Id)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(r => r.Status, TranslationStatus.Failed)
+                    .SetProperty(r => r.ErrorMessage, ex.Message)
+                    .SetProperty(r => r.StackTrace, ex.ToString())
+                    .SetProperty(r => r.CompletedAt, (DateTime?)now)
+                    .SetProperty(r => r.UpdatedAt, now));
+            translationRequest.CompletedAt = now;
             translationRequest.Status = TranslationStatus.Failed;
             translationRequest.ErrorMessage = ex.Message;
             translationRequest.StackTrace = ex.ToString();
-            await _dbContext.SaveChangesAsync();
             await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Failed, ex.Message);
             await UpdateActiveCount();
             await _progressService.Emit(translationRequest, 0);
@@ -737,9 +774,15 @@ public class TranslationRequestService : ITranslationRequestService
     {
         await _statisticsService.UpdateTranslationStatisticsFromLines(translationRequest, serviceType, translationService.ModelName, results);
 
-        translationRequest.CompletedAt = DateTime.UtcNow;
+        var now = DateTime.UtcNow;
+        await _dbContext.TranslationRequests
+            .Where(r => r.Id == translationRequest.Id)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(r => r.Status, TranslationStatus.Completed)
+                .SetProperty(r => r.CompletedAt, (DateTime?)now)
+                .SetProperty(r => r.UpdatedAt, now), cancellationToken);
+        translationRequest.CompletedAt = now;
         translationRequest.Status = TranslationStatus.Completed;
-        await _dbContext.SaveChangesAsync(cancellationToken);
         await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Completed);
         await UpdateActiveCount();
         await _progressService.Emit(translationRequest, 100); // Tells the frontend to update translation request to a finished state
