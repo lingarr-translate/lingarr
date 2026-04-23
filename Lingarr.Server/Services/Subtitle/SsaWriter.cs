@@ -53,12 +53,25 @@ public class SsaWriter : ISubtitleWriter
 
         if (stripSubtitleFormatting)
         {
-            // TranslationJob clears format.Styles when stripping, so always
-            // emit a minimal Default style — otherwise Dialogue lines reference
-            // an undefined style.
+            // Always emit [V4+ Styles] — otherwise Dialogue lines reference an
+            // undefined style. Prefer the source's own Default so fansub
+            // sizing/font choices survive; fall back to a generic Roboto
+            // Medium scaled to PlayResY.
             await writer.WriteLineAsync("[V4+ Styles]");
             await writer.WriteLineAsync("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding");
-            await writer.WriteLineAsync("Style: Default,Roboto Medium,26,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1.3,0,2,20,20,23,1");
+
+            var sourceDefault = format?.Styles.FirstOrDefault(line =>
+                line.TrimStart().StartsWith("Style: Default,", StringComparison.OrdinalIgnoreCase));
+
+            if (sourceDefault != null)
+            {
+                await writer.WriteLineAsync(sourceDefault);
+            }
+            else
+            {
+                var fontsize = ComputeFallbackFontsize(format);
+                await writer.WriteLineAsync($"Style: Default,Roboto Medium,{fontsize},&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1.3,0,2,20,20,23,1");
+            }
         }
         else if (format?.Styles.Any() == true)
         {
@@ -106,5 +119,24 @@ public class SsaWriter : ISubtitleWriter
         }
             
         await writer.FlushAsync();
+    }
+
+    private static int ComputeFallbackFontsize(SsaFormat? format)
+    {
+        // SSA's default PlayResY when unspecified is 288. Scaling fontsize by
+        // ~1/15 of PlayResY tracks typical fansub sizing across canvases
+        // (~19 at 288, ~32 at 480, ~48 at 720, ~72 at 1080).
+        var playResY = 288;
+        var line = format?.ScriptInfo.FirstOrDefault(l =>
+            l.TrimStart().StartsWith("PlayResY:", StringComparison.OrdinalIgnoreCase));
+        if (line != null)
+        {
+            var value = line.Split(':', 2)[1].Trim();
+            if (int.TryParse(value, out var y) && y > 0)
+            {
+                playResY = y;
+            }
+        }
+        return Math.Max(16, playResY / 15);
     }
 }

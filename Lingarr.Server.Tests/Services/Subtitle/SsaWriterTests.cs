@@ -17,9 +17,9 @@ public class SsaWriterTests
     [Fact]
     public async Task WriteStreamAsync_StripFormatting_EmitsDefaultStyleEvenWithEmptyStyles()
     {
-        // TranslationJob clears format.Styles before writing when stripping is on.
-        // The writer must still emit [V4+ Styles] + "Style: Default" so Dialogue
-        // lines referencing "Default" are not dangling.
+        // Even when no source styles exist, the writer must emit
+        // [V4+ Styles] + "Style: Default" so Dialogue lines referencing
+        // "Default" are not dangling.
         var item = new SubtitleItem
         {
             StartTime = 1000,
@@ -87,5 +87,65 @@ public class SsaWriterTests
         var output = Encoding.UTF8.GetString(ms.ToArray());
 
         Assert.Contains("{\\p1}m 0 0 l 10 10{\\p0}", output);
+    }
+
+    [Fact]
+    public async Task WriteStreamAsync_StripFormatting_PreservesSourceDefaultStyle()
+    {
+        // Fansubs declare their own Default style (e.g. Open Sans 55 at
+        // PlayResY=720). Stripping should preserve it verbatim rather than
+        // replacing with a generic fallback that renders too small.
+        var item = new SubtitleItem
+        {
+            StartTime = 0,
+            EndTime = 1000,
+            Lines = new() { "Hi" },
+            PlaintextLines = new() { "Hi" },
+            TranslatedLines = new() { "مرحبا" },
+            SsaFormat = new SsaFormat
+            {
+                ScriptInfo = new() { "[Script Info]", "PlayResY: 720" },
+                Styles = new()
+                {
+                    "[V4+ Styles]",
+                    "Style: Default,Open Sans,55,&H00EEEEEE,&H00FFFFFF,&H002A2A2A,&HB4000000,-1,0,0,0,100,100,0,0,1,3.25,0,2,90,90,30,1",
+                    "Style: Alt,Open Sans,40,&H00FFFFFF"
+                }
+            }
+        };
+
+        using var ms = new MemoryStream();
+        await new SsaWriter().WriteStreamAsync(ms, new[] { item }, stripSubtitleFormatting: true);
+        var output = Encoding.UTF8.GetString(ms.ToArray());
+
+        Assert.Contains("Style: Default,Open Sans,55,", output);
+        Assert.DoesNotContain("Roboto Medium", output);
+    }
+
+    [Fact]
+    public async Task WriteStreamAsync_StripFormatting_ScalesFallbackFontsizeToPlayResY()
+    {
+        // When the source has no Default style, the generic Roboto fallback
+        // must scale fontsize by PlayResY so it reads at a sensible size on
+        // high-res canvases (~48 at 720, ~72 at 1080) rather than a fixed 26.
+        var item = new SubtitleItem
+        {
+            StartTime = 0,
+            EndTime = 1000,
+            Lines = new() { "Hi" },
+            PlaintextLines = new() { "Hi" },
+            TranslatedLines = new() { "مرحبا" },
+            SsaFormat = new SsaFormat
+            {
+                ScriptInfo = new() { "[Script Info]", "PlayResY: 720" },
+                Styles = new() { "[V4+ Styles]", "Style: Alt,Arial,30,&H00FFFFFF" }
+            }
+        };
+
+        using var ms = new MemoryStream();
+        await new SsaWriter().WriteStreamAsync(ms, new[] { item }, stripSubtitleFormatting: true);
+        var output = Encoding.UTF8.GetString(ms.ToArray());
+
+        Assert.Contains("Style: Default,Roboto Medium,48,", output);
     }
 }
