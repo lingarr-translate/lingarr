@@ -525,7 +525,9 @@ public class SubtitleService : ISubtitleService
             EndTime = (int)(introDuration * 1000),
             Lines = [introText],
             PlaintextLines = [introText],
-            TranslatedLines = [introText]
+            TranslatedLines = [introText],
+            // SsaWriter reads items[0].SsaFormat for the header — carry it over.
+            SsaFormat = translatedSubtitles.FirstOrDefault()?.SsaFormat
         };
 
         translatedSubtitles.Insert(0, introSubtitle);

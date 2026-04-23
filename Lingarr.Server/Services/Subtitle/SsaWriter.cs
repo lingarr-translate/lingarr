@@ -51,20 +51,33 @@ public class SsaWriter : ISubtitleWriter
             await writer.WriteLineAsync("YCbCr Matrix: None");
         }
 
-        if (format?.Styles.Any() == true)
+        if (stripSubtitleFormatting)
         {
-            if (!stripSubtitleFormatting)
+            // Always emit [V4+ Styles] — otherwise Dialogue lines reference an
+            // undefined style. Prefer the source's own Default so fansub
+            // sizing/font choices survive; fall back to a generic Roboto
+            // Medium scaled to PlayResY.
+            await writer.WriteLineAsync("[V4+ Styles]");
+            await writer.WriteLineAsync("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding");
+
+            var sourceDefault = format?.Styles.FirstOrDefault(line =>
+                line.TrimStart().StartsWith("Style: Default,", StringComparison.OrdinalIgnoreCase));
+
+            if (sourceDefault != null)
             {
-                foreach (var line in format.Styles)
-                {
-                    await writer.WriteLineAsync(line);
-                }
+                await writer.WriteLineAsync(sourceDefault);
             }
             else
             {
-                await writer.WriteLineAsync("[V4+ Styles]");
-                await writer.WriteLineAsync("Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding");
-                await writer.WriteLineAsync("Style: Default,Roboto Medium,26,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1.3,0,2,20,20,23,1");
+                var fontsize = ComputeFallbackFontsize(format);
+                await writer.WriteLineAsync($"Style: Default,Roboto Medium,{fontsize},&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,1.3,0,2,20,20,23,1");
+            }
+        }
+        else if (format?.Styles.Any() == true)
+        {
+            foreach (var line in format.Styles)
+            {
+                await writer.WriteLineAsync(line);
             }
         }
         
@@ -79,7 +92,9 @@ public class SsaWriter : ISubtitleWriter
             var dialogue = item.SsaDialogue ?? new SsaDialogue();
             
             // Use original lines (with markup) or translated lines if available
-            var linesToUse = item.TranslatedLines.Any() ? item.TranslatedLines : item.Lines;
+            var linesToUse = item.TranslatedLines.Any(l => !string.IsNullOrEmpty(l))
+                ? item.TranslatedLines
+                : item.Lines;
                 
             // Join lines according to wrap style
             var text = JoinLinesByWrapStyle(linesToUse, item.SsaFormat?.WrapStyle ?? SsaWrapStyle.None);
@@ -104,5 +119,24 @@ public class SsaWriter : ISubtitleWriter
         }
             
         await writer.FlushAsync();
+    }
+
+    private static int ComputeFallbackFontsize(SsaFormat? format)
+    {
+        // SSA's default PlayResY when unspecified is 288. Scaling fontsize by
+        // ~1/15 of PlayResY tracks typical fansub sizing across canvases
+        // (~19 at 288, ~32 at 480, ~48 at 720, ~72 at 1080).
+        var playResY = 288;
+        var line = format?.ScriptInfo.FirstOrDefault(l =>
+            l.TrimStart().StartsWith("PlayResY:", StringComparison.OrdinalIgnoreCase));
+        if (line != null)
+        {
+            var value = line.Split(':', 2)[1].Trim();
+            if (int.TryParse(value, out var y) && y > 0)
+            {
+                playResY = y;
+            }
+        }
+        return Math.Max(16, playResY / 15);
     }
 }
