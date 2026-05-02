@@ -1,6 +1,6 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import services from '@/services'
-import { IFilter, IUseShowStore, IPagedResult, IShow, MediaType } from '@/ts'
+import { IFilter, IUseShowStore, IPagedResult, IShow, MEDIA_TYPE, MediaType } from '@/ts'
 
 export const useShowStore = defineStore('show', {
     state: (): IUseShowStore => ({
@@ -43,6 +43,29 @@ export const useShowStore = defineStore('show', {
         },
         async include(type: MediaType, id: number, include: boolean) {
             await services.media.include(type, id, include)
+            if (type === MEDIA_TYPE.SHOW) {
+                const show = this.shows.items.find((s) => s.id === id)
+                if (show) {
+                    show.includeInTranslation = include
+                    show.seasons?.forEach((season) => {
+                        season.includeInTranslation = include
+                        season.episodes?.forEach((episode) => {
+                            episode.includeInTranslation = include
+                        })
+                    })
+                }
+            } else if (type === MEDIA_TYPE.SEASON) {
+                for (const show of this.shows.items) {
+                    const season = show.seasons?.find((s) => s.id === id)
+                    if (season) {
+                        season.includeInTranslation = include
+                        season.episodes?.forEach((episode) => {
+                            episode.includeInTranslation = include
+                        })
+                        break
+                    }
+                }
+            }
             await this.fetchIncludeSummary()
         },
         async includeAll(type: MediaType, include: boolean) {
