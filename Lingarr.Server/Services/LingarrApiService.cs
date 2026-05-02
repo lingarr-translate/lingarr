@@ -77,6 +77,7 @@ public class LingarrApiService : ILingarrApiService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to fetch latest version from Lingarr API");
             return null;
         }
     }
@@ -112,6 +113,7 @@ public class LingarrApiService : ILingarrApiService
         }
         catch (Exception ex)
         {
+            _logger.LogError(ex, "Failed to submit telemetry to Lingarr API");
             return false;
         }
     }
