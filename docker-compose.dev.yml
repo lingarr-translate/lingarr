@@ -20,19 +20,19 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     
-      - DB_CONNECTION=mysql
-      - DB_HOST=Lingarr.Mysql
-      - DB_PORT=3306
-      - DB_DATABASE=Lingarr
-      - DB_USERNAME=Lingarr
-      - DB_PASSWORD=Secret1234
-
-#      - DB_CONNECTION=postgresql
-#      - DB_HOST=Lingarr.Postgres
-#      - DB_PORT=5432
+#      - DB_CONNECTION=mysql
+#      - DB_HOST=Lingarr.Mysql
+#      - DB_PORT=3306
 #      - DB_DATABASE=Lingarr
 #      - DB_USERNAME=Lingarr
 #      - DB_PASSWORD=Secret1234
+
+      - DB_CONNECTION=postgresql
+      - DB_HOST=Lingarr.Postgres
+      - DB_PORT=5432
+      - DB_DATABASE=Lingarr
+      - DB_USERNAME=Lingarr
+      - DB_PASSWORD=Secret1234
       
       - SERVICE_TYPE=libretranslate
       - LIBRE_TRANSLATE_URL=http://libretranslate:5000
@@ -50,7 +50,7 @@ services:
     networks:
       - lingarr
     depends_on:
-      Lingarr.Mysql:
+      Lingarr.Postgres:
         condition: service_healthy
 
   Lingarr.Client:
@@ -106,23 +106,23 @@ services:
       timeout: 5s
       retries: 5
 
-#  Lingarr.Postgres:
-#    image: postgres:16-alpine
-#    container_name: Lingarr.Postgres
-#    restart: unless-stopped
-#    environment:
-#      POSTGRES_DB: Lingarr
-#      POSTGRES_USER: Lingarr
-#      POSTGRES_PASSWORD: Secret1234
-#    ports:
-#      - "5432:5432"
-#    networks:
-#      - lingarr
-#    healthcheck:
-#      test: ["CMD-SHELL", "pg_isready -U Lingarr -d Lingarr"]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
+  Lingarr.Postgres:
+    image: postgres:16-alpine
+    container_name: Lingarr.Postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: Lingarr
+      POSTGRES_USER: Lingarr
+      POSTGRES_PASSWORD: Secret1234
+    ports:
+      - "5432:5432"
+    networks:
+      - lingarr
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U Lingarr -d Lingarr"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
       
   Lingarr.PHPMyAdmin:
     image: phpmyadmin/phpmyadmin:5.0.1

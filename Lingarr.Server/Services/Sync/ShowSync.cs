@@ -1,4 +1,5 @@
-﻿using Lingarr.Core.Data;
+﻿using System.Globalization;
+using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Server.Interfaces.Services.Sync;
 using Lingarr.Server.Models.Integrations;
@@ -34,7 +35,7 @@ public class ShowSync : IShowSync
                 SonarrId = sonarrShow.Id,
                 Title = sonarrShow.Title,
                 Path = sonarrShow.Path,
-                DateAdded = !string.IsNullOrEmpty(sonarrShow.Added) ? DateTime.Parse(sonarrShow.Added) : DateTime.UtcNow,
+                DateAdded = !string.IsNullOrEmpty(sonarrShow.Added) ? DateTime.Parse(sonarrShow.Added, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal) : DateTime.UtcNow,
                 IncludeInTranslation = defaultInclude
             };
             _dbContext.Shows.Add(showEntity);
@@ -43,7 +44,7 @@ public class ShowSync : IShowSync
         {
             showEntity.Title = sonarrShow.Title;
             showEntity.Path = sonarrShow.Path;
-            showEntity.DateAdded = !string.IsNullOrEmpty(sonarrShow.Added) ? DateTime.Parse(sonarrShow.Added) : DateTime.UtcNow;
+            showEntity.DateAdded = !string.IsNullOrEmpty(sonarrShow.Added) ? DateTime.Parse(sonarrShow.Added, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal) : DateTime.UtcNow;
         }
 
         if (sonarrShow.Images?.Any() == true)
