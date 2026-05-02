@@ -27,9 +27,9 @@
         "@vitejs/plugin-vue": "^6.0.6",
         "oxfmt": "^0.47.0",
         "oxlint": "^1.62.0",
-        "tailwindcss": "^4.1.18",
-        "typescript": "^5.9.3",
-        "vite": "^7.3.2",
+        "tailwindcss": "^4.2.4",
+        "typescript": "^6.0.3",
+        "vite": "^8.0.10",
         "vue-tsc": "^3.2.7"
     }
 }
