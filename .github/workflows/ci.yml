@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop, fix/**, feat/** ]
+    branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
 
@@ -17,7 +17,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x'
+        dotnet-version: '10.0.x'
     
     - name: Restore dependencies
       run: dotnet restore Lingarr.slnx
@@ -38,7 +38,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '9.0.x'
+        dotnet-version: '10.0.x'
 
     - name: Restore dependencies
       run: dotnet restore Lingarr.Migrations.Tests/Lingarr.Migrations.Tests.csproj

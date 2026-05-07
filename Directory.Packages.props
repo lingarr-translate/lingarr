@@ -5,23 +5,21 @@
   <ItemGroup>
     <!-- Auth -->
     <PackageVersion Include="BCrypt.Net-Next" Version="4.1.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.7" />
     <!-- .NET -->
-    <PackageVersion Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.9" />
-    <PackageVersion Include="Microsoft.AspNetCore.SpaProxy" Version="9.0.15" />
-    <PackageVersion Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="9.0.15" />
+    <PackageVersion Include="Microsoft.AspNetCore.SpaProxy" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="10.0.7" />
     <PackageVersion Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="9.0.6" />
-    <PackageVersion Include="System.Net.Http.Json" Version="9.0.15" />
     <!-- EF Core -->
-    <PackageVersion Include="EFCore.NamingConventions" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="9.0.15" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.15" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="9.0.15" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.15" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.15" />
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
-    <PackageVersion Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+    <PackageVersion Include="EFCore.NamingConventions" Version="10.0.1" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.7" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.7" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <PackageVersion Include="Microting.EntityFrameworkCore.MySql" Version="10.0.7" />
     <!-- FluentMigrator -->
     <PackageVersion Include="FluentMigrator" Version="8.0.1" />
     <PackageVersion Include="FluentMigrator.Extensions.Postgres" Version="8.0.1" />
