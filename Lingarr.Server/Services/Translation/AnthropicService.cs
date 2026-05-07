@@ -176,8 +176,32 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
 
                 var responseBody = await response.Content.ReadAsStringAsync(linked.Token);
                 var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
-                var subtitleLine = jsonResponse.GetProperty("content")[0].GetProperty("text").GetString();
-                return subtitleLine ?? throw new InvalidOperationException();
+
+                if (!jsonResponse.TryGetProperty("content", out var contentArray) ||
+                    contentArray.GetArrayLength() == 0)
+                {
+                    throw new TranslationException("Invalid response format from Anthropic API.");
+                }
+
+                JsonElement? textContent = null;
+                foreach (var contentItem in contentArray.EnumerateArray())
+                {
+                    if (!contentItem.TryGetProperty("type", out var typeProperty) ||
+                        typeProperty.GetString() != "text")
+                    {
+                        continue;
+                    }
+                    textContent = contentItem;
+                    break;
+                }
+
+                if (!textContent.HasValue ||
+                    !textContent.Value.TryGetProperty("text", out var textProperty))
+                {
+                    throw new TranslationException("Text block not found in Anthropic response.");
+                }
+
+                return textProperty.GetString() ?? throw new InvalidOperationException();
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {
