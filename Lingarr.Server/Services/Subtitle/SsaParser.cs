@@ -96,6 +96,7 @@ public class SsaParser : ISubtitleParser
                         if (dialogue != null)
                         {
                             dialogue.SsaFormat = ssaFormat;
+                            dialogue.Position = items.Count + 1;
                             items.Add(dialogue);
                         }
                     }

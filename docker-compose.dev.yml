@@ -20,19 +20,19 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
     
-#      - DB_CONNECTION=mysql
-#      - DB_HOST=Lingarr.Mysql
-#      - DB_PORT=3306
-#      - DB_DATABASE=Lingarr
-#      - DB_USERNAME=Lingarr
-#      - DB_PASSWORD=Secret1234
-
-      - DB_CONNECTION=postgresql
-      - DB_HOST=Lingarr.Postgres
-      - DB_PORT=5432
+      - DB_CONNECTION=mysql
+      - DB_HOST=Lingarr.Mysql
+      - DB_PORT=3306
       - DB_DATABASE=Lingarr
       - DB_USERNAME=Lingarr
       - DB_PASSWORD=Secret1234
+
+#      - DB_CONNECTION=postgresql
+#      - DB_HOST=Lingarr.Postgres
+#      - DB_PORT=5432
+#      - DB_DATABASE=Lingarr
+#      - DB_USERNAME=Lingarr
+#      - DB_PASSWORD=Secret1234
       
       - SERVICE_TYPE=libretranslate
       - LIBRE_TRANSLATE_URL=http://libretranslate:5000
