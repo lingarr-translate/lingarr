@@ -33,10 +33,7 @@
     <File Path=".github/workflows/docker-build.yml" />
     <File Path=".github/workflows/pr-comment.yml" />
   </Folder>
-  <Project Path="Lingarr.Client/Lingarr.Client.esproj">
-    <Build Solution="Release|Any CPU" />
-    <Deploy Solution="Release|Any CPU" />
-  </Project>
+  <Project Path="Lingarr.Client/Lingarr.Client.njsproj" />
   <Project Path="Lingarr.Core/Lingarr.Core.csproj" />
   <Project Path="Lingarr.Migrations/Lingarr.Migrations.csproj" />
   <Project Path="Lingarr.Migrations.Tests/Lingarr.Migrations.Tests.csproj" />
