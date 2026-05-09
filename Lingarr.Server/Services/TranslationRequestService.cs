@@ -806,7 +806,7 @@ public class TranslationRequestService : ITranslationRequestService
 
         var totalLines = translateAbleSubtitleContent.Lines.Count;
         var totalBatches = (int)Math.Ceiling((double)totalLines / maxBatchSize);
-        var processedBatches = 1;
+        var processedBatches = 0;
 
         foreach (var item in translateAbleSubtitleContent.Lines)
         {
@@ -844,6 +844,10 @@ public class TranslationRequestService : ITranslationRequestService
                 translationRequest,
                 translateAbleSubtitleContent.SourceLanguage, translateAbleSubtitleContent.TargetLanguage,
                 stripSubtitleFormatting, results, cancellationToken);
+
+            processedBatches++;
+            var progress = (int)Math.Round((double)processedBatches * 100 / totalBatches);
+            await _progressService.Emit(translationRequest, progress);
         }
 
         return results.ToArray();
