@@ -177,10 +177,15 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 var responseBody = await response.Content.ReadAsStringAsync(linked.Token);
                 var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
 
+                var stopReason = jsonResponse.TryGetProperty("stop_reason", out var stopReasonProperty)
+                    ? stopReasonProperty.GetString()
+                    : null;
+
                 if (!jsonResponse.TryGetProperty("content", out var contentArray) ||
                     contentArray.GetArrayLength() == 0)
                 {
-                    throw new TranslationException("Invalid response format from Anthropic API.");
+                    throw new TranslationException(
+                        $"Anthropic returned no content (stop_reason: {stopReason ?? "unknown"}).");
                 }
 
                 JsonElement? textContent = null;
@@ -198,7 +203,8 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 if (!textContent.HasValue ||
                     !textContent.Value.TryGetProperty("text", out var textProperty))
                 {
-                    throw new TranslationException("Text block not found in Anthropic response.");
+                    throw new TranslationException(
+                        $"Anthropic response contained no text block (stop_reason: {stopReason ?? "unknown"}).");
                 }
 
                 return textProperty.GetString() ?? throw new InvalidOperationException();
