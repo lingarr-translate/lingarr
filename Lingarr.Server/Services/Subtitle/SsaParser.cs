@@ -33,30 +33,11 @@ public class SsaParser : ISubtitleParser
         string? line;
         while ((line = reader.ReadLine()) != null)
         {
-            // Handle section changes
             if (line.StartsWith("["))
             {
                 currentSection = line;
-                switch (currentSection)
-                {
-                    case SCRIPT_INFO_SECTION:
-                        ssaFormat.ScriptInfo.Add(line);
-                        break;
-                    case V4_PLUS_STYLES_SECTION:
-                        ssaFormat.Styles.Add(line);
-                        break;
-                    case V4_STYLES_SECTION:
-                        ssaFormat.Styles.Add(line);
-                        break;
-                    case EVENTS_SECTION:
-                        ssaFormat.EventsFormat.Add(line);
-                        break;
-                }
-
-                continue;
             }
 
-            // Store original section content
             switch (currentSection)
             {
                 case SCRIPT_INFO_SECTION:
@@ -69,16 +50,17 @@ public class SsaParser : ISubtitleParser
                             ssaFormat.WrapStyle = (SsaWrapStyle)wrapStyleInt;
                         }
                     }
-
                     break;
                 case V4_PLUS_STYLES_SECTION:
-                    ssaFormat.Styles.Add(line);
-                    break;
                 case V4_STYLES_SECTION:
                     ssaFormat.Styles.Add(line);
                     break;
                 case EVENTS_SECTION:
-                    if (line.StartsWith("Format:"))
+                    if (line == EVENTS_SECTION)
+                    {
+                        ssaFormat.EventsFormat.Add(line);
+                    }
+                    else if (line.StartsWith("Format:"))
                     {
                         ssaFormat.EventsFormat.Add(line);
                         var columns = line.Substring(7).Split(',')
@@ -96,10 +78,10 @@ public class SsaParser : ISubtitleParser
                         if (dialogue != null)
                         {
                             dialogue.SsaFormat = ssaFormat;
+                            dialogue.Position = items.Count + 1;
                             items.Add(dialogue);
                         }
                     }
-
                     break;
             }
         }
@@ -116,19 +98,14 @@ public class SsaParser : ISubtitleParser
     {
         return wrapStyle switch
         {
-            // Smart wrapping modes only recognize \N as line breaks
-            SsaWrapStyle.Smart or SsaWrapStyle.SmartWideLowerLine => 
+            // Smart and end-of-line wrapping only recognize \N as line breaks
+            SsaWrapStyle.Smart or SsaWrapStyle.SmartWideLowerLine or SsaWrapStyle.EndOfLine =>
                 text.Split(["\\N"], StringSplitOptions.None).ToList(),
-            
-            // End-of-line wrapping only recognizes \N as line breaks
-            SsaWrapStyle.EndOfLine => 
-                text.Split(["\\N"], StringSplitOptions.None).ToList(),
-            
-            // No wrapping mode recognizes both \N and \n as line breaks
-            SsaWrapStyle.None => 
+
+            // No-wrap mode recognizes both \N and \n as line breaks
+            SsaWrapStyle.None =>
                 Regex.Split(text, @"\\N|\\n").ToList(),
-            
-            // Default case for any undefined wrap styles
+
             _ => [text]
         };
     }

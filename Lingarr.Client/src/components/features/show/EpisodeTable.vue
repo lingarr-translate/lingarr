@@ -12,7 +12,7 @@
                 <span class="block md:hidden">✓</span>
             </div>
         </div>
-        <div v-for="episode in episodes" :key="episode.id" class="grid grid-cols-12">
+        <div v-for="episode in episodes" :key="episode.id" class="grid grid-cols-12 transition-colors hover:bg-accent/5">
             <div class="col-span-1 px-4 py-2">
                 {{ episode.episodeNumber }}
             </div>

@@ -277,16 +277,40 @@ public class MediaService : IMediaService
                     break;
 
                 case MediaType.Show:
-                    var showCount = await _dbContext.Shows
-                        .Where(s => s.Id == id)
-                        .ExecuteUpdateAsync(s => s.SetProperty(sh => sh.IncludeInTranslation, include));
+                    int showCount;
+                    await using (var showTransaction = await _dbContext.Database.BeginTransactionAsync())
+                    {
+                        showCount = await _dbContext.Shows
+                            .Where(s => s.Id == id)
+                            .ExecuteUpdateAsync(s => s.SetProperty(sh => sh.IncludeInTranslation, include));
+
+                        await _dbContext.Seasons
+                            .Where(se => se.ShowId == id)
+                            .ExecuteUpdateAsync(s => s.SetProperty(se => se.IncludeInTranslation, include));
+
+                        await _dbContext.Episodes
+                            .Where(ep => _dbContext.Seasons.Any(se => se.Id == ep.SeasonId && se.ShowId == id))
+                            .ExecuteUpdateAsync(s => s.SetProperty(ep => ep.IncludeInTranslation, include));
+
+                        await showTransaction.CommitAsync();
+                    }
                     if (showCount > 0) return true;
                     break;
 
                 case MediaType.Season:
-                    var seasonCount = await _dbContext.Seasons
-                        .Where(s => s.Id == id)
-                        .ExecuteUpdateAsync(s => s.SetProperty(se => se.IncludeInTranslation, include));
+                    int seasonCount;
+                    await using (var seasonTransaction = await _dbContext.Database.BeginTransactionAsync())
+                    {
+                        seasonCount = await _dbContext.Seasons
+                            .Where(s => s.Id == id)
+                            .ExecuteUpdateAsync(s => s.SetProperty(se => se.IncludeInTranslation, include));
+
+                        await _dbContext.Episodes
+                            .Where(ep => ep.SeasonId == id)
+                            .ExecuteUpdateAsync(s => s.SetProperty(ep => ep.IncludeInTranslation, include));
+
+                        await seasonTransaction.CommitAsync();
+                    }
                     if (seasonCount > 0) return true;
                     break;
 

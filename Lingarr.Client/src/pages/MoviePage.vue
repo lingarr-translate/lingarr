@@ -72,7 +72,7 @@
                 </div>
             </div>
             <div v-for="item in movies.items" :key="item.id">
-                <div class="grid grid-cols-12 border-b border-accent">
+                <div class="grid grid-cols-12 border-b border-accent transition-colors hover:bg-accent/5">
                     <div :class="isSelectMode ? 'col-span-4' : 'col-span-5'" class="px-4 py-2">
                         {{ item.title }}
                     </div>

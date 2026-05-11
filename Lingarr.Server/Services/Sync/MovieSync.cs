@@ -1,4 +1,5 @@
-﻿using Lingarr.Core.Data;
+﻿using System.Globalization;
+using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
 using Lingarr.Server.Interfaces.Services.Sync;
@@ -50,7 +51,7 @@ public class MovieSync : IMovieSync
             {
                 RadarrId = movie.Id,
                 Title = movie.Title,
-                DateAdded = DateTime.Parse(movie.Added),
+                DateAdded = DateTime.Parse(movie.Added, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal),
                 FileName = Path.GetFileNameWithoutExtension(moviePath),
                 Path = Path.GetDirectoryName(moviePath) ?? string.Empty,
                 IncludeInTranslation = defaultInclude
@@ -60,7 +61,7 @@ public class MovieSync : IMovieSync
         else
         {
             movieEntity.Title = movie.Title;
-            movieEntity.DateAdded = DateTime.Parse(movie.Added);
+            movieEntity.DateAdded = DateTime.Parse(movie.Added, CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal);
             movieEntity.FileName = Path.GetFileNameWithoutExtension(moviePath);
             movieEntity.Path = Path.GetDirectoryName(moviePath) ?? string.Empty;
         }

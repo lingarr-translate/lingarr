@@ -51,7 +51,7 @@ public class SubtitleTranslationService
         var iteration = 0;
         var totalSubtitles = subtitles.Count;
 
-        for (var index = 0; index < subtitles.Count; index++)
+        for (var index = 0; index < totalSubtitles; index++)
         {
             var subtitle = subtitles[index];
 
@@ -282,11 +282,11 @@ public class SubtitleTranslationService
     /// <param name="total">The total number of subtitles in the request.</param>
     private async Task EmitProgress(TranslationRequest request, int iteration, int total)
     {
-        int progress = (int)Math.Round((double)iteration * 100 / total);
+        var progress = (int)Math.Round((double)iteration * 100 / total);
 
         if (progress != _lastProgression)
         {
-            _logger.LogDebug($"Progress: {progress}% (Subtitle {iteration} of {total})");
+            _logger.LogInformation($"Progress: {progress}% (Subtitle {iteration} of {total})");
             await _progressService!.Emit(request, progress);
             _lastProgression = progress;
         }

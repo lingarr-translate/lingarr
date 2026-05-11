@@ -180,7 +180,7 @@ public class TranslationJob
 
                 translatedSubtitles = await translator.TranslateSubtitlesBatch(
                     subtitles,
-                    translationRequest,
+                    request,
                     stripSubtitleFormatting,
                     maxSize,
                     cancellationToken);

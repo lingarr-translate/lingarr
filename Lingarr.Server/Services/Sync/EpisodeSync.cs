@@ -48,6 +48,7 @@ public class EpisodeSync : IEpisodeSync
     /// <param name="dateAdded">The date the episode file was added</param>
     private static void SyncEpisode(SonarrEpisode episode, string episodePath, Season season, DateTime? dateAdded, bool defaultInclude = true)
     {
+        var utcDateAdded = DateToUtc(dateAdded);
         var episodeEntity = season.Episodes.FirstOrDefault(se => se.SonarrId == episode.Id);
         if (episodeEntity == null)
         {
@@ -59,7 +60,7 @@ public class EpisodeSync : IEpisodeSync
                 FileName = Path.GetFileNameWithoutExtension(episodePath),
                 Path = Path.GetDirectoryName(episodePath),
                 Season = season,
-                DateAdded = dateAdded,
+                DateAdded = utcDateAdded,
                 IncludeInTranslation = defaultInclude
             };
             season.Episodes.Add(episodeEntity);
@@ -70,9 +71,17 @@ public class EpisodeSync : IEpisodeSync
             episodeEntity.Title = episode.Title;
             episodeEntity.FileName = Path.GetFileNameWithoutExtension(episodePath);
             episodeEntity.Path = Path.GetDirectoryName(episodePath);
-            episodeEntity.DateAdded = dateAdded;
+            episodeEntity.DateAdded = utcDateAdded;
         }
     }
+
+    private static DateTime? DateToUtc(DateTime? value) => value?.Kind switch
+    {
+        null => null,
+        DateTimeKind.Utc => value,
+        DateTimeKind.Local => value.Value.ToUniversalTime(),
+        _ => DateTime.SpecifyKind(value.Value, DateTimeKind.Utc)
+    };
 
     /// <summary>
     /// Removes episodes from the season that no longer exist in Sonarr
