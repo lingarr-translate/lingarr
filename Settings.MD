@@ -1,6 +1,17 @@
 ## Settings
 These settings can be configured as environment variables to persist configurations across reinstallations.
 
+### **General Configuration**
+
+| **Environment Variable**   | **Description**                                                                                                                               |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| `BASE_PATH`                | Optional URL prefix to host Lingarr under a sub-path (e.g., behind a reverse proxy). Example: `/lingarr`. Leave unset to serve from the root. |
+| `MAX_CONCURRENT_JOBS`      | Maximum number of Hangfire worker threads processing jobs in parallel. Defaults to the framework default when unset.                          |
+| `SQLITE_DB_PATH`           | Path to the SQLite database file used when `DB_CONNECTION` is `sqlite`. Defaults to `local.db` within `/app/config/`.                         |
+| `DB_HANGFIRE_SQLITE_PATH`  | Path to the SQLite database file used by the Hangfire job store. Defaults to `/app/config/Hangfire.db`.                                       |
+
+---
+
 ### **Radarr Configuration**
 
 | **Environment Variable** | **Description**                                                                 |

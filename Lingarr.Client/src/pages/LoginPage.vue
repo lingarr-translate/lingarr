@@ -79,7 +79,7 @@ const handleLogin = async () => {
             password: password.value
         })
 
-        router.push('/')
+        router.replace({ name: 'dashboard' })
     } catch (err: any) {
         console.error('Login error:', err)
         error.value = err?.data?.message || 'Invalid username or password'

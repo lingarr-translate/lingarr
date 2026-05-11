@@ -11,6 +11,14 @@ public static class ApplicationBuilderExtensions
 {
     public static async Task Configure(this WebApplication app)
     {
+        var basePath = (Environment.GetEnvironmentVariable("BASE_PATH") ?? "").TrimEnd('/');
+        if (!string.IsNullOrEmpty(basePath))
+        {
+            app.UsePathBase(basePath);
+        }
+
+        app.UseRouting();
+
         app.MapHubs();
         await app.ApplyMigrations();
         await app.MigrateApiKeyEncryption();
@@ -33,7 +41,7 @@ public static class ApplicationBuilderExtensions
         app.UseAuthentication();
         app.MapControllers();
         app.UseStaticFiles();
-        app.ConfigureSpa();
+        app.ConfigureSpa(basePath);
     }
 
     private static void MapHubs(this WebApplication app)
@@ -97,20 +105,24 @@ public static class ApplicationBuilderExtensions
         }
     }
 
-    private static void ConfigureSpa(this WebApplication app)
+    private static void ConfigureSpa(this WebApplication app, string basePath)
     {
-        app.MapWhen(httpContext => 
-                httpContext.Request.Path.Value != null && 
-                !httpContext.Request.Path.Value.StartsWith("/api") && 
+        app.MapWhen(httpContext =>
+                httpContext.Request.Path.Value != null &&
+                !httpContext.Request.Path.Value.StartsWith("/api") &&
                 !httpContext.Request.Path.Value.StartsWith("/signalr"),
             configBuilder =>
             {
-                configBuilder.UseSpa(spa =>
+                var index = File.ReadAllText(Path.Combine(app.Environment.WebRootPath, "index.html"));
+                if (!string.IsNullOrEmpty(basePath))
                 {
-                    if (app.Environment.IsDevelopment())
-                    {
-                        spa.UseProxyToSpaDevelopmentServer("http://Lingarr.Client:9876");
-                    }
+                    index = index.Replace("<head>", $"<head><base href=\"{basePath}/\">");
+                }
+
+                configBuilder.Run(async ctx =>
+                {
+                    ctx.Response.ContentType = "text/html";
+                    await ctx.Response.WriteAsync(index);
                 });
             });
     }
