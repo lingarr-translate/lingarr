@@ -379,17 +379,22 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
         var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
 
+        var stopReason = jsonResponse.TryGetProperty("stop_reason", out var stopReasonProperty)
+            ? stopReasonProperty.GetString()
+            : null;
+
         // Extract tool use result from Anthropic response
-        if (!jsonResponse.TryGetProperty("content", out var contentArray) || 
+        if (!jsonResponse.TryGetProperty("content", out var contentArray) ||
             contentArray.GetArrayLength() == 0)
         {
-            throw new TranslationException("Invalid response format from Anthropic API.");
+            throw new TranslationException(
+                $"Anthropic returned no content (stop_reason: {stopReason ?? "unknown"}).");
         }
 
         JsonElement? toolUseContent = null;
         foreach (var contentItem in contentArray.EnumerateArray())
         {
-            if (contentItem.TryGetProperty("type", out var typeProperty) && 
+            if (contentItem.TryGetProperty("type", out var typeProperty) &&
                 typeProperty.GetString() == "tool_use")
             {
                 toolUseContent = contentItem;
@@ -397,11 +402,12 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             }
         }
 
-        if (!toolUseContent.HasValue || 
+        if (!toolUseContent.HasValue ||
             !toolUseContent.Value.TryGetProperty("input", out var inputProperty) ||
             !inputProperty.TryGetProperty("translations", out var translationsProperty))
         {
-            throw new TranslationException("Tool use result not found or invalid in Anthropic response.");
+            throw new TranslationException(
+                $"Anthropic response contained no tool_use block (stop_reason: {stopReason ?? "unknown"}).");
         }
 
         try
