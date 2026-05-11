@@ -9,6 +9,7 @@ export default defineConfig(({ command, mode }) => {
     const baseServerURL = env.VITE_BASE_SERVER_URL || "Lingarr.Server:9876";
 
     return {
+        base: './',
         esbuild: {
             drop: isProduction ? ['console'] : []
         },
@@ -19,6 +20,7 @@ export default defineConfig(({ command, mode }) => {
             }
         },
         server: {
+            allowedHosts: true,
             proxy: {
                 '/api': {
                     target: `http://${baseServerURL}`,

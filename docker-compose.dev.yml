@@ -19,6 +19,7 @@ services:
         BUILD_CONFIGURATION: ${BUILD_CONFIGURATION:-Debug}
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - BASE_PATH=/lingarr
     
       - DB_CONNECTION=mysql
       - DB_HOST=Lingarr.Mysql
@@ -52,6 +53,34 @@ services:
     depends_on:
       Lingarr.Postgres:
         condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=lingarr"
+      - "traefik.http.services.lingarr.loadbalancer.server.port=9876"
+      
+      # Prefix /lingarr: http://lingarr.localhost/lingarr
+      - "traefik.http.routers.lingarr-pfx.rule=Host(`lingarr.localhost`) && PathPrefix(`/lingarr`)"
+      - "traefik.http.routers.lingarr-pfx.entrypoints=web"
+      - "traefik.http.routers.lingarr-pfx.service=lingarr"
+      - "traefik.http.routers.lingarr-pfx.middlewares=lingarr-prefix"
+      - "traefik.http.middlewares.lingarr-prefix.headers.customrequestheaders.X-Forwarded-Prefix=/lingarr"
+
+  Lingarr.Traefik:
+    image: traefik:v3
+    container_name: Lingarr.Traefik
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - lingarr
 
   Lingarr.Client:
     image: ${DOCKER_REGISTRY-}lingarrclient

@@ -1,6 +1,7 @@
 import { reactive } from 'vue'
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr'
 import { EventCallbacks, Hub, SignalRState, SignalRStore } from '@/ts/composables/signalR'
+import { resolveUrl } from '@/utils/baseUrl'
 
 let signalRInstance: SignalRStore | null = null
 
@@ -16,7 +17,7 @@ export const createSignalRStore = (): SignalRStore => {
             if (!connectionPromises.has(hubName)) {
                 const startPromise = (async () => {
                     const connection = new HubConnectionBuilder()
-                        .withUrl(url)
+                        .withUrl(resolveUrl(url))
                         .configureLogging(LogLevel.None)
                         .withAutomaticReconnect()
                         .build()

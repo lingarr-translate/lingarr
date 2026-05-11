@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
 import { useInstanceStore } from '@/store/instance'
+import { baseUrl } from '@/utils/baseUrl'
 
 const routes: RouteRecordRaw[] = [
     // Auth
@@ -116,25 +117,23 @@ const routes: RouteRecordRaw[] = [
 ]
 
 const router = createRouter({
-    history: createWebHistory(),
+    history: createWebHistory(baseUrl()),
     routes
 })
 
-router.beforeEach(async (to, _, next) => {
+router.beforeEach(async (to) => {
     if (!to.meta.authenticated) {
-        next()
-        return
+        return true
     }
 
     const instanceStore = useInstanceStore()
     const isAuthenticated = await instanceStore.ensureAuthenticated()
 
     if (!isAuthenticated && to.name !== 'login') {
-        next({ name: 'login' })
-        return
+        return { name: 'login' }
     }
 
-    next()
+    return true
 })
 
 export default router

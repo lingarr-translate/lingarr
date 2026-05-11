@@ -1,5 +1,6 @@
 import axios, { AxiosStatic } from 'axios'
 import { Services } from '@/ts'
+import { baseUrl } from '@/utils/baseUrl'
 import { translationRequestService } from '@/services/translationRequestService'
 import { authService } from './authService'
 import { subtitleService } from './subtitleService'
@@ -15,20 +16,22 @@ import { telemetryService } from '@/services/telemetryService'
 import { logsService } from '@/services/logsService'
 import { requestTemplateService } from '@/services/requestTemplateService'
 
+axios.defaults.baseURL = baseUrl()
+
 axios.interceptors.response.use(
     (response) => response,
     (error) => {
+        const prefix = baseUrl().replace(/\/$/, '')
+        const loginPath = `${prefix}/auth/login`
+        const onboardingPath = `${prefix}/auth/onboarding`
         if (error.response?.status === 403 && error.response?.data?.onboardingRequired) {
-            window.location.href = '/auth/onboarding'
+            window.location.href = onboardingPath
             return
         }
         if (error.response?.status === 401) {
             const currentPath = window.location.pathname
-            if (
-                !currentPath.startsWith('/auth/login') &&
-                !currentPath.startsWith('/auth/onboarding')
-            ) {
-                window.location.href = '/auth/login'
+            if (!currentPath.startsWith(loginPath) && !currentPath.startsWith(onboardingPath)) {
+                window.location.href = loginPath
                 return
             }
         }
