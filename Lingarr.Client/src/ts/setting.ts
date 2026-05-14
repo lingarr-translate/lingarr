@@ -48,6 +48,7 @@ export const SETTINGS = {
     REMOVE_LANGUAGE_TAG: 'remove_language_tag',
     SUBTITLE_TAG: 'subtitle_tag',
     IGNORE_CAPTIONS: 'ignore_captions',
+    REQUEST_TIMEOUT: 'request_timeout',
     MAX_RETRIES: 'max_retries',
     RETRY_DELAY: 'retry_delay',
     RETRY_DELAY_MULTIPLIER: 'retry_delay_multiplier',
@@ -112,6 +113,7 @@ export interface ISettings {
     remove_language_tag: string
     subtitle_tag: string
     ignore_captions: string
+    request_timeout: string
     max_retries: string
     retry_delay: string
     retry_delay_multiplier: string
