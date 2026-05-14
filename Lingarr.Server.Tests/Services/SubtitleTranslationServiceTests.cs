@@ -1,0 +1,384 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Lingarr.Core.Entities;
+using Lingarr.Core.Enum;
+using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Models;
+using Lingarr.Server.Models.Batch;
+using Lingarr.Server.Models.FileSystem;
+using Lingarr.Server.Services;
+using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
+using Xunit;
+
+namespace Lingarr.Server.Tests.Services;
+
+public class SubtitleTranslationServiceTests
+{
+    private static TranslationRequest NewRequest() => new()
+    {
+        Title = "test",
+        SourceLanguage = "en",
+        TargetLanguage = "es",
+        MediaType = MediaType.Movie,
+        Status = TranslationStatus.InProgress
+    };
+
+    private static SubtitleItem Subtitle(int position, params string[] lines) => new()
+    {
+        Position = position,
+        Lines = lines.ToList(),
+        PlaintextLines = lines.ToList()
+    };
+
+    private sealed class PerLineHarness
+    {
+        public Mock<ITranslationService> TranslationServiceMock { get; init; } = null!;
+        public Mock<IProgressService> ProgressServiceMock { get; init; } = null!;
+        public SubtitleTranslationService Service { get; init; } = null!;
+    }
+
+    private sealed class BatchHarness
+    {
+        public Mock<ITranslationService> TranslationServiceMock { get; init; } = null!;
+        public Mock<IBatchTranslationService> BatchTranslationServiceMock { get; init; } = null!;
+        public Mock<IProgressService> ProgressServiceMock { get; init; } = null!;
+        public SubtitleTranslationService Service { get; init; } = null!;
+    }
+
+    private static PerLineHarness CreatePerLineHarness(Func<string, string> translate)
+    {
+        var translationServiceMock = new Mock<ITranslationService>();
+        translationServiceMock
+            .Setup(t => t.TranslateAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<List<string>?>(),
+                It.IsAny<List<string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string text, string _, string _, List<string>? _, List<string>? _, CancellationToken _) => translate(text));
+
+        var progressServiceMock = new Mock<IProgressService>();
+        progressServiceMock
+            .Setup(p => p.Emit(It.IsAny<TranslationRequest>(), It.IsAny<int>()))
+            .Returns(Task.CompletedTask);
+        progressServiceMock
+            .Setup(p => p.EmitLine(It.IsAny<TranslationRequest>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Returns(Task.CompletedTask);
+        progressServiceMock
+            .Setup(p => p.EmitLines(It.IsAny<TranslationRequest>(), It.IsAny<List<TranslatedLineData>>()))
+            .Returns(Task.CompletedTask);
+
+        return new PerLineHarness
+        {
+            TranslationServiceMock = translationServiceMock,
+            ProgressServiceMock = progressServiceMock,
+            Service = new SubtitleTranslationService(translationServiceMock.Object, NullLogger.Instance, progressServiceMock.Object)
+        };
+    }
+
+    private static BatchHarness CreateBatchHarness(Func<List<BatchSubtitleItem>, Dictionary<int, string>> batchTranslate)
+    {
+        // The service requires the same instance to be both ITranslationService and IBatchTranslationService.
+        var translationServiceMock = new Mock<ITranslationService>();
+        var batchTranslationServiceMock = translationServiceMock.As<IBatchTranslationService>();
+        batchTranslationServiceMock
+            .Setup(b => b.TranslateBatchAsync(
+                It.IsAny<List<BatchSubtitleItem>>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<BatchSubtitleItem> items, string _, string _, CancellationToken _) => batchTranslate(items));
+
+        var progressServiceMock = new Mock<IProgressService>();
+        progressServiceMock
+            .Setup(p => p.Emit(It.IsAny<TranslationRequest>(), It.IsAny<int>()))
+            .Returns(Task.CompletedTask);
+        progressServiceMock
+            .Setup(p => p.EmitLines(It.IsAny<TranslationRequest>(), It.IsAny<List<TranslatedLineData>>()))
+            .Returns(Task.CompletedTask);
+
+        return new BatchHarness
+        {
+            TranslationServiceMock = translationServiceMock,
+            BatchTranslationServiceMock = batchTranslationServiceMock,
+            ProgressServiceMock = progressServiceMock,
+            Service = new SubtitleTranslationService(translationServiceMock.Object, NullLogger.Instance, progressServiceMock.Object)
+        };
+    }
+
+    #region TranslateSubtitles Tests
+
+    [Fact]
+    public async Task TranslateSubtitles_SingleLine_TranslatesAsOneCallAndReturnsOneLine()
+    {
+        // Arrange
+        var harness = CreatePerLineHarness(_ => "hola");
+        var subtitles = new List<SubtitleItem> { Subtitle(1, "hello") };
+
+        // Act
+        await harness.Service.TranslateSubtitles(subtitles, NewRequest(),
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: false,
+            contextBefore: 0,
+            contextAfter: 0,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(["hola"], subtitles[0].TranslatedLines);
+        harness.TranslationServiceMock.Verify(
+            t => t.TranslateAsync("hello", "en", "es", null, null, It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task TranslateSubtitles_MultiLinePreserveOff_MergesIntoOneCallAndReturnsOneLine()
+    {
+        // Arrange
+        var captured = new List<string>();
+        var harness = CreatePerLineHarness(text =>
+        {
+            captured.Add(text);
+            return "hola mundo";
+        });
+        var subtitles = new List<SubtitleItem> { Subtitle(1, "hello", "world") };
+
+        // Act
+        await harness.Service.TranslateSubtitles(subtitles, NewRequest(),
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: false,
+            contextBefore: 0,
+            contextAfter: 0,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(["hello world"], captured);
+        Assert.Equal(["hola mundo"], subtitles[0].TranslatedLines);
+        harness.TranslationServiceMock.Verify(
+            t => t.TranslateAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<List<string>?>(),
+                It.IsAny<List<string>?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task TranslateSubtitles_MultiLinePreserveOffStripOn_RewrapsLongTranslation()
+    {
+        // Arrange - multi-line merged input with a long translation; rewrap kicks in because strip is on
+        var harness = CreatePerLineHarness(_ => "Esta es una traducción bastante larga que sin duda excederá el límite de cuarenta y dos caracteres");
+        var subtitles = new List<SubtitleItem> { Subtitle(1, "line a", "line b") };
+
+        // Act
+        await harness.Service.TranslateSubtitles(subtitles, NewRequest(),
+            stripSubtitleFormatting: true,
+            preserveLineBreaks: false,
+            contextBefore: 0,
+            contextAfter: 0,
+            CancellationToken.None);
+
+        // Assert
+        var translated = subtitles[0].TranslatedLines;
+        Assert.True(translated.Count > 1, "Expected the long translation to be wrapped into multiple lines");
+        Assert.All(translated, line => Assert.True(line.Length <= 42, $"Line exceeded max length: '{line}'"));
+    }
+
+    [Fact]
+    public async Task TranslateSubtitles_MultiLinePreserveOn_TranslatesEachLineSeparately()
+    {
+        // Arrange
+        var captured = new List<string>();
+        var harness = CreatePerLineHarness(text =>
+        {
+            captured.Add(text);
+            return text == "hello" ? "hola" : "mundo";
+        });
+        var subtitles = new List<SubtitleItem> { Subtitle(1, "hello", "world") };
+
+        // Act
+        await harness.Service.TranslateSubtitles(subtitles, NewRequest(),
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: true,
+            contextBefore: 0,
+            contextAfter: 0,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(["hello", "world"], captured);
+        Assert.Equal(["hola", "mundo"], subtitles[0].TranslatedLines);
+        harness.TranslationServiceMock.Verify(
+            t => t.TranslateAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<List<string>?>(),
+                It.IsAny<List<string>?>(),
+                It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task TranslateSubtitles_PreserveOnPerLineTranslationWithEmbeddedNewline_KeepsModelOutputVerbatim()
+    {
+        // Arrange - a per-line translation contains a literal '\n'. We must NOT round-trip through ToSubtitleLines
+        // (which would split on '\n' and trip the count-mismatch fallback). Output should be stored as the model returned.
+        var harness = CreatePerLineHarness(text => text == "hello" ? "ho\nla" : "mundo");
+        var subtitles = new List<SubtitleItem> { Subtitle(1, "hello", "world") };
+
+        // Act
+        await harness.Service.TranslateSubtitles(subtitles, NewRequest(),
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: true,
+            contextBefore: 0,
+            contextAfter: 0,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(["ho\nla", "mundo"], subtitles[0].TranslatedLines);
+    }
+
+    [Fact]
+    public async Task TranslateSubtitles_WhitespaceLine_SkipsTranslationAndPassesThrough()
+    {
+        // Arrange
+        var translatedCalls = 0;
+        var harness = CreatePerLineHarness(_ =>
+        {
+            translatedCalls++;
+            return "mundo";
+        });
+        var subtitles = new List<SubtitleItem> { Subtitle(1, "", "world") };
+
+        // Act
+        await harness.Service.TranslateSubtitles(subtitles, NewRequest(),
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: true,
+            contextBefore: 0,
+            contextAfter: 0,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(["", "mundo"], subtitles[0].TranslatedLines);
+        Assert.Equal(1, translatedCalls);
+    }
+
+    #endregion
+
+    #region ProcessSubtitleBatch Tests
+
+    [Fact]
+    public async Task ProcessSubtitleBatch_PreserveOff_JoinsWithSpaceAndReturnsSingleLine()
+    {
+        // Arrange
+        List<BatchSubtitleItem> seen = [];
+        var harness = CreateBatchHarness(items =>
+        {
+            seen = items;
+            return items.ToDictionary(i => i.Position, _ => "hola mundo");
+        });
+        var subtitles = new List<SubtitleItem> { Subtitle(1, "hello", "world") };
+
+        // Act
+        await harness.Service.ProcessSubtitleBatch(subtitles, (IBatchTranslationService)harness.TranslationServiceMock.Object,
+            "en", "es",
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: false,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal("hello world", seen[0].Line);
+        Assert.Equal(["hola mundo"], subtitles[0].TranslatedLines);
+    }
+
+    [Fact]
+    public async Task ProcessSubtitleBatch_PreserveOnMultiLine_JoinsWithNewlineAndSplitsBack()
+    {
+        // Arrange
+        List<BatchSubtitleItem> seen = [];
+        var harness = CreateBatchHarness(items =>
+        {
+            seen = items;
+            return items.ToDictionary(i => i.Position, _ => "hola\nmundo");
+        });
+        var subtitles = new List<SubtitleItem> { Subtitle(1, "hello", "world") };
+
+        // Act
+        await harness.Service.ProcessSubtitleBatch(subtitles, (IBatchTranslationService)harness.TranslationServiceMock.Object,
+            "en", "es",
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: true,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal("hello\nworld", seen[0].Line);
+        Assert.Equal(["hola", "mundo"], subtitles[0].TranslatedLines);
+    }
+
+    [Fact]
+    public async Task ProcessSubtitleBatch_PreserveOnButLineCountMismatch_CollapsesToSingleLine()
+    {
+        // Arrange - model returns three '\n'-separated lines but source had two; expect fallback to a merged single line
+        var harness = CreateBatchHarness(items =>
+            items.ToDictionary(i => i.Position, _ => "hola\nmundo\nextra"));
+        var subtitles = new List<SubtitleItem> { Subtitle(1, "hello", "world") };
+
+        // Act
+        await harness.Service.ProcessSubtitleBatch(subtitles, (IBatchTranslationService)harness.TranslationServiceMock.Object,
+            "en", "es",
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: true,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(["hola mundo extra"], subtitles[0].TranslatedLines);
+    }
+
+    [Fact]
+    public async Task ProcessSubtitleBatch_PreserveOffStripOnMultiLine_RewrapsLongTranslation()
+    {
+        // Arrange
+        var harness = CreateBatchHarness(items =>
+            items.ToDictionary(i => i.Position, _ => "Esta es una traducción bastante larga que sin duda excederá el límite de cuarenta y dos caracteres"));
+        var subtitles = new List<SubtitleItem> { Subtitle(1, "line a", "line b") };
+
+        // Act
+        await harness.Service.ProcessSubtitleBatch(subtitles, (IBatchTranslationService)harness.TranslationServiceMock.Object,
+            "en", "es",
+            stripSubtitleFormatting: true,
+            preserveLineBreaks: false,
+            CancellationToken.None);
+
+        // Assert
+        var translated = subtitles[0].TranslatedLines;
+        Assert.True(translated.Count > 1, "Expected the long translation to be wrapped into multiple lines");
+        Assert.All(translated, line => Assert.True(line.Length <= 42, $"Line exceeded max length: '{line}'"));
+    }
+
+    [Fact]
+    public async Task ProcessSubtitleBatch_MissingTranslation_FallsBackToOriginalLines()
+    {
+        // Arrange
+        var harness = CreateBatchHarness(_ => new Dictionary<int, string>());
+        var subtitles = new List<SubtitleItem> { Subtitle(1, "hello", "world") };
+
+        // Act
+        await harness.Service.ProcessSubtitleBatch(subtitles, (IBatchTranslationService)harness.TranslationServiceMock.Object,
+            "en", "es",
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: false,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(["hello", "world"], subtitles[0].TranslatedLines);
+    }
+
+    #endregion
+}

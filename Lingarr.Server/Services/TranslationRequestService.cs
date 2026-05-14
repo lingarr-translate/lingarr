@@ -535,8 +535,10 @@ public class TranslationRequestService : ITranslationRequestService
                 SettingKeys.Translation.UseBatchTranslation,
                 SettingKeys.Translation.ServiceType,
                 SettingKeys.Translation.MaxBatchSize,
-                SettingKeys.Translation.StripSubtitleFormatting
+                SettingKeys.Translation.StripSubtitleFormatting,
+                SettingKeys.Translation.PreserveLineBreaks
             ]);
+            var preserveLineBreaks = settings[SettingKeys.Translation.PreserveLineBreaks] == "true";
             var serviceType = settings[SettingKeys.Translation.ServiceType];
             var translationService = _translationServiceFactory.CreateTranslationService(
                 serviceType
@@ -605,6 +607,7 @@ public class TranslationRequestService : ITranslationRequestService
                         translationRequest,
                         maxSize,
                         stripSubtitleFormatting,
+                        preserveLineBreaks,
                         cancellationToken);
 
                     // Handle completion now since we early exit here
@@ -631,6 +634,7 @@ public class TranslationRequestService : ITranslationRequestService
                     translateAbleContent.SourceLanguage,
                     translateAbleContent.TargetLanguage,
                     stripSubtitleFormatting,
+                    preserveLineBreaks,
                     cancellationToken);
 
                 var batchLineData = subtitleItems.Select(s => new TranslatedLineData
@@ -798,6 +802,7 @@ public class TranslationRequestService : ITranslationRequestService
         TranslationRequest translationRequest,
         int maxBatchSize,
         bool stripSubtitleFormatting,
+        bool preserveLineBreaks,
         CancellationToken cancellationToken)
     {
         var results = new List<BatchTranslatedLine>();
@@ -815,7 +820,7 @@ public class TranslationRequestService : ITranslationRequestService
                 await ProcessBatch(currentBatch, subtitleTranslator, batchService,
                     translationRequest,
                     translateAbleSubtitleContent.SourceLanguage, translateAbleSubtitleContent.TargetLanguage,
-                    stripSubtitleFormatting, results, cancellationToken);
+                    stripSubtitleFormatting, preserveLineBreaks, results, cancellationToken);
                 currentBatch.Clear();
 
                 // Report progress
@@ -843,7 +848,7 @@ public class TranslationRequestService : ITranslationRequestService
             await ProcessBatch(currentBatch, subtitleTranslator, batchService,
                 translationRequest,
                 translateAbleSubtitleContent.SourceLanguage, translateAbleSubtitleContent.TargetLanguage,
-                stripSubtitleFormatting, results, cancellationToken);
+                stripSubtitleFormatting, preserveLineBreaks, results, cancellationToken);
 
             processedBatches++;
             var progress = (int)Math.Round((double)processedBatches * 100 / totalBatches);
@@ -864,6 +869,7 @@ public class TranslationRequestService : ITranslationRequestService
         string sourceLanguage,
         string targetLanguage,
         bool stripSubtitleFormatting,
+        bool preserveLineBreaks,
         List<BatchTranslatedLine> results,
         CancellationToken cancellationToken)
     {
@@ -873,6 +879,7 @@ public class TranslationRequestService : ITranslationRequestService
             sourceLanguage,
             targetLanguage,
             stripSubtitleFormatting,
+            preserveLineBreaks,
             cancellationToken);
 
         var lineData = batch.Select(s => new TranslatedLineData

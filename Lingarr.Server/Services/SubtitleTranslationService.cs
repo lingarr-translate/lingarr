@@ -1,5 +1,6 @@
-﻿using Lingarr.Core.Entities;
+using Lingarr.Core.Entities;
 using Lingarr.Server.Exceptions;
+using Lingarr.Server.Extensions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models;
@@ -11,6 +12,7 @@ namespace Lingarr.Server.Services;
 
 public class SubtitleTranslationService
 {
+    private const int MaxLineLength = 42;
     private int _lastProgression = -1;
     private readonly ITranslationService _translationService;
     private readonly IProgressService? _progressService;
@@ -32,6 +34,7 @@ public class SubtitleTranslationService
     /// <param name="subtitles">The list of subtitle items to translate.</param>
     /// <param name="translationRequest">Contains the source and target language specifications.</param>
     /// <param name="stripSubtitleFormatting">Boolean used for indicating that styles need to be stripped from the subtitle</param>
+    /// <param name="preserveLineBreaks">When true, multi-line subtitles are translated keeping their line breaks intact</param>
     /// <param name="contextBefore">Amount of context before the subtitle line</param>
     /// <param name="contextAfter">Amount of context after the subtitle line</param>
     /// <param name="cancellationToken">Token to support cancellation of the translation operation.</param>
@@ -39,6 +42,7 @@ public class SubtitleTranslationService
         List<SubtitleItem> subtitles,
         TranslationRequest translationRequest,
         bool stripSubtitleFormatting,
+        bool preserveLineBreaks,
         int contextBefore,
         int contextAfter,
         CancellationToken cancellationToken)
@@ -64,23 +68,37 @@ public class SubtitleTranslationService
             var contextLinesBefore = BuildContext(subtitles, index, contextBefore, stripSubtitleFormatting, true);
             var contextLinesAfter = BuildContext(subtitles, index, contextAfter, stripSubtitleFormatting, false);
 
-            var subtitleLine = string.Join(" ", stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines);
-            var translated = "";
-            if (subtitleLine != "")
-            {
-                translated = await TranslateSubtitleLine(new TranslateAbleSubtitleLine
-                    {
-                        SubtitleLine = subtitleLine,
-                        SourceLanguage = translationRequest.SourceLanguage,
-                        TargetLanguage = translationRequest.TargetLanguage,
-                        ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
-                        ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
-                    },
-                    cancellationToken);
-            }
-            subtitle.TranslatedLines = [translated];
+            var contentLines = stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines;
+            var subtitleLines = preserveLineBreaks && contentLines.Count > 1
+                ? contentLines
+                : [string.Join(" ", contentLines)];
 
-            await _progressService!.EmitLine(translationRequest, subtitle.Position, subtitleLine, translated);
+            var translatedLines = new List<string>(subtitleLines.Count);
+            foreach (var subtitleLine in subtitleLines)
+            {
+                if (string.IsNullOrWhiteSpace(subtitleLine))
+                {
+                    translatedLines.Add(subtitleLine);
+                    continue;
+                }
+
+                translatedLines.Add(await TranslateSubtitleLine(new TranslateAbleSubtitleLine
+                {
+                    SubtitleLine = subtitleLine,
+                    SourceLanguage = translationRequest.SourceLanguage,
+                    TargetLanguage = translationRequest.TargetLanguage,
+                    ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
+                    ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
+                }, cancellationToken));
+            }
+
+            subtitle.TranslatedLines = translatedLines.Count > 1
+                ? translatedLines
+                : ToSubtitleLines(translatedLines[0], contentLines.Count, preserveLineBreaks, stripSubtitleFormatting, subtitle.Position);
+
+            var sourceText = string.Join(" ", contentLines);
+            var translatedText = string.Join(" ", subtitle.TranslatedLines);
+            await _progressService!.EmitLine(translationRequest, subtitle.Position, sourceText, translatedText);
 
             iteration++;
             await EmitProgress(translationRequest, iteration, totalSubtitles);
@@ -122,19 +140,21 @@ public class SubtitleTranslationService
             throw new TranslationException("Translation failed for subtitle line", ex);
         }
     }
-    
+
     /// <summary>
-    /// Translates subtitles in batch mode 
+    /// Translates subtitles in batch mode
     /// </summary>
     /// <param name="subtitles">The list of subtitle items to translate.</param>
     /// <param name="translationRequest">Contains the source and target language specifications.</param>
     /// <param name="stripSubtitleFormatting">Boolean used for indicating that styles need to be stripped from the subtitle</param>
+    /// <param name="preserveLineBreaks">When true, multi-line subtitles are translated keeping their line breaks intact</param>
     /// <param name="batchSize">Number of subtitles to process in each batch (0 for all)</param>
     /// <param name="cancellationToken">Token to support cancellation of the translation operation.</param>
     public async Task<List<SubtitleItem>> TranslateSubtitlesBatch(
         List<SubtitleItem> subtitles,
         TranslationRequest translationRequest,
         bool stripSubtitleFormatting,
+        bool preserveLineBreaks,
         int batchSize = 0,
         CancellationToken cancellationToken = default)
     {
@@ -147,7 +167,7 @@ public class SubtitleTranslationService
         {
             throw new TranslationException("The configured translation service does not support batch translation.");
         }
-        
+
         // If batchSize is 0 or negative, we'll translate all subtitles at once
         if (batchSize <= 0)
         {
@@ -169,12 +189,13 @@ public class SubtitleTranslationService
                 .Skip(batchIndex * batchSize)
                 .Take(batchSize)
                 .ToList();
-            
+
             await ProcessSubtitleBatch(currentBatch,
                 batchTranslationService,
                 translationRequest.SourceLanguage,
                 translationRequest.TargetLanguage,
                 stripSubtitleFormatting,
+                preserveLineBreaks,
                 cancellationToken);
 
             var lineData = currentBatch.Select(s => new TranslatedLineData
@@ -201,6 +222,7 @@ public class SubtitleTranslationService
     /// <param name="sourceLanguage"></param>
     /// <param name="targetLanguage"></param>
     /// <param name="stripSubtitleFormatting">Boolean used for indicating that styles need to be stripped from the subtitle</param>
+    /// <param name="preserveLineBreaks">When true, multi-line subtitles are sent and parsed back with their line breaks preserved</param>
     /// <param name="cancellationToken">Token to support cancellation of the translation operation</param>
     public async Task ProcessSubtitleBatch(
         List<SubtitleItem> currentBatch,
@@ -208,12 +230,18 @@ public class SubtitleTranslationService
         string sourceLanguage,
         string targetLanguage,
         bool stripSubtitleFormatting,
+        bool preserveLineBreaks,
         CancellationToken cancellationToken)
     {
-        var batchItems = currentBatch.Select(subtitle => new BatchSubtitleItem
+        var lineSeparator = preserveLineBreaks ? "\n" : " ";
+        var batchItems = currentBatch.Select(subtitle =>
         {
-            Position = subtitle.Position,
-            Line = string.Join(" ", stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines)
+            var contentLines = stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines;
+            return new BatchSubtitleItem
+            {
+                Position = subtitle.Position,
+                Line = string.Join(lineSeparator, contentLines)
+            };
         }).ToList();
 
         var batchResults = await batchTranslationService.TranslateBatchAsync(
@@ -221,28 +249,62 @@ public class SubtitleTranslationService
             sourceLanguage,
             targetLanguage,
             cancellationToken);
-        
+
         foreach (var subtitle in currentBatch)
         {
-            if (batchResults.TryGetValue(subtitle.Position, out var translated))
-            {
-                if (stripSubtitleFormatting)
-                {
-                    translated = SubtitleFormatterService.RemoveMarkup(translated);
-                }
-
-                subtitle.TranslatedLines = [translated];
-            }
-            else
+            var contentLines = stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines;
+            if (!batchResults.TryGetValue(subtitle.Position, out var translated))
             {
                 _logger.LogWarning("Translation not found for subtitle at position {Position} using original line.", subtitle.Position);
-                subtitle.TranslatedLines = stripSubtitleFormatting ? 
-                    subtitle.PlaintextLines : 
-                    subtitle.Lines;
+                subtitle.TranslatedLines = contentLines;
+                continue;
             }
+
+            if (stripSubtitleFormatting)
+            {
+                translated = SubtitleFormatterService.RemoveMarkup(translated);
+            }
+
+            subtitle.TranslatedLines = ToSubtitleLines(
+                translated,
+                contentLines.Count,
+                preserveLineBreaks,
+                stripSubtitleFormatting,
+                subtitle.Position);
         }
     }
-    
+
+    /// <summary>
+    /// Resolves a raw translated string back into a list of subtitle lines.
+    /// When line breaks are being preserved, splits on '\n' and validates the count matches the input.
+    /// When the input was merged, optionally rewraps the output to <see cref="MaxLineLength"/> if formatting is stripped.
+    /// </summary>
+    private List<string> ToSubtitleLines(
+        string translated,
+        int originalLineCount,
+        bool preserveLineBreaks,
+        bool stripSubtitleFormatting,
+        int position)
+    {
+        if (preserveLineBreaks && originalLineCount > 1)
+        {
+            var splitLines = translated.Split('\n').Select(l => l.TrimEnd('\r')).ToList();
+            if (splitLines.Count == originalLineCount)
+            {
+                return splitLines;
+            }
+
+            _logger.LogWarning(
+                "Line break count mismatch at position {Position} (expected {Expected}, got {Actual}); collapsing to single line.",
+                position, originalLineCount, splitLines.Count);
+            return [string.Join(" ", splitLines)];
+        }
+
+        return originalLineCount > 1 && stripSubtitleFormatting
+            ? translated.SplitIntoLines(MaxLineLength)
+            : [translated];
+    }
+
     /// <summary>
     /// Builds a list of subtitle text strings as context around a given subtitle index.
     /// </summary>

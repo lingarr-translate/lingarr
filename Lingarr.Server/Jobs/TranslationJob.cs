@@ -76,6 +76,7 @@ public class TranslationJob
                 SettingKeys.Translation.ServiceType,
                 SettingKeys.Translation.FixOverlappingSubtitles,
                 SettingKeys.Translation.StripSubtitleFormatting,
+                SettingKeys.Translation.PreserveLineBreaks,
                 SettingKeys.Translation.AddTranslatorInfo,
 
                 SettingKeys.SubtitleValidation.ValidateSubtitles,
@@ -96,6 +97,7 @@ public class TranslationJob
             ]);
             var serviceType = settings[SettingKeys.Translation.ServiceType];
             var stripSubtitleFormatting = settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
+            var preserveLineBreaks = settings[SettingKeys.Translation.PreserveLineBreaks] == "true";
             var addTranslatorInfo = settings[SettingKeys.Translation.AddTranslatorInfo] == "true";
             var validateSubtitles = settings[SettingKeys.SubtitleValidation.ValidateSubtitles] != "false";
             var removeLanguageTag = settings[SettingKeys.Translation.RemoveLanguageTag] != "false";
@@ -182,6 +184,7 @@ public class TranslationJob
                     subtitles,
                     request,
                     stripSubtitleFormatting,
+                    preserveLineBreaks,
                     maxSize,
                     cancellationToken);
             }
@@ -198,6 +201,7 @@ public class TranslationJob
                     subtitles,
                     request,
                     stripSubtitleFormatting,
+                    preserveLineBreaks,
                     contextBefore,
                     contextAfter,
                     cancellationToken

@@ -43,6 +43,19 @@
                 </ToggleButton>
 
                 <div class="flex flex-col space-x-2">
+                    <span class="font-semibold">Preserve line breaks:</span>
+                    Keep multi-line subtitles split across lines after translation instead of
+                    merging them into a single line. AI services translate the whole subtitle in
+                    one call; classic services (DeepL, Google, Libre, etc.) translate each line
+                    separately.
+                </div>
+                <ToggleButton v-model="preserveLineBreaks">
+                    <span class="text-sm font-medium text-primary-content">
+                        {{ preserveLineBreaks == 'true' ? 'Enabled' : 'Disabled' }}
+                    </span>
+                </ToggleButton>
+
+                <div class="flex flex-col space-x-2">
                     <span class="font-semibold">Add translator info</span>
                     Add translator info at the beginning of subtitles.
                 </div>
@@ -121,6 +134,14 @@ const stripSubtitleFormatting = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.STRIP_SUBTITLE_FORMATTING) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.STRIP_SUBTITLE_FORMATTING, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+
+const preserveLineBreaks = computed({
+    get: (): string => settingsStore.getSetting(SETTINGS.PRESERVE_LINE_BREAKS) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.PRESERVE_LINE_BREAKS, newValue, true)
         saveNotification.value?.show()
     }
 })
