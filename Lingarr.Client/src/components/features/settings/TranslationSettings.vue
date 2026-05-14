@@ -31,15 +31,26 @@
                 </ToggleButton>
             </template>
 
+            <template v-if="useBatchTranslation == 'true'">
+                <div class="flex flex-col space-x-2">
+                    <span class="font-semibold">Batch size:</span>
+                    Amount of subtitle lines in a single batch.
+                </div>
+                <InputComponent
+                    v-model="maxBatchSize"
+                    :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
+                    @update:validation="(val) => (isValid.maxBatchSize = val)" />
+            </template>
+
             <div class="flex flex-col space-x-2">
-                <span class="font-semibold">Batch size:</span>
-                Amount of subtitle lines in a single batch.
+                <span class="font-semibold">Request timeout:</span>
+                Maximum time in minutes to wait for a translation response before the request is
+                cancelled. Increase this if you run a slow local AI on minimal hardware for example.
             </div>
             <InputComponent
-                v-if="useBatchTranslation == 'true'"
-                v-model="maxBatchSize"
+                v-model="requestTimeout"
                 :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
-                @update:validation="(val) => (isValid.maxBatchSize = val)" />
+                @update:validation="(val) => (isValid.requestTimeout = val)" />
 
             <div class="flex flex-col space-x-2">
                 <span class="font-semibold">Max translation retries:</span>
@@ -84,6 +95,7 @@ const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
 const isValid = reactive({
     maxBatchSize: true,
+    requestTimeout: true,
     maxRetries: true,
     retryDelay: true,
     retryDelayMultiplier: true
@@ -102,6 +114,14 @@ const maxBatchSize = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.MAX_BATCH_SIZE) as string,
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.MAX_BATCH_SIZE, newValue, isValid.maxBatchSize)
+        saveNotification.value?.show()
+    }
+})
+
+const requestTimeout = computed({
+    get: (): string => settingsStore.getSetting(SETTINGS.REQUEST_TIMEOUT) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.REQUEST_TIMEOUT, newValue, isValid.requestTimeout)
         saveNotification.value?.show()
     }
 })
