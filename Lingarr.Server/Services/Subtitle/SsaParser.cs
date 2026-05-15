@@ -187,6 +187,13 @@ public class SsaParser : ISubtitleParser
         var textLines = SplitTextByWrapStyle(text, ssaFormat.WrapStyle);
         var plaintextLines = textLines.Select(SubtitleFormatterService.RemoveMarkup).ToList();
 
+        // Early detection of vector drawing subtitles (common in anime fansubs for signs, karaoke, effects).
+        // These should generally not be sent to translation providers as they are graphics, not text.
+        bool isDrawingSubtitle = text.Contains("\\p1", StringComparison.OrdinalIgnoreCase) ||
+                                 text.Contains("\\p2", StringComparison.OrdinalIgnoreCase) ||
+                                 text.Contains("\\p3", StringComparison.OrdinalIgnoreCase) ||
+                                 plaintextLines.All(string.IsNullOrWhiteSpace);
+
         // Create SsaDialogue info
         var ssaDialogue = new SsaDialogue
         {

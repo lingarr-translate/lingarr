@@ -114,6 +114,13 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
             {
                 throw;
             }
+            catch (HttpRequestException ex) when (ex.Message.Contains("text size exceeds", StringComparison.OrdinalIgnoreCase) ||
+                                                   ex.Message.Contains("too long", StringComparison.OrdinalIgnoreCase) ||
+                                                   ex.Message.Contains("maximum", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("Provider rejected input due to length (len={Length}). This is often caused by ASS vector drawing data that should have been filtered. Error: {Message}", text.Length, ex.Message);
+                throw new TranslationException($"Input text too long for this translation provider (length={text.Length}). Vector drawing subtitles are automatically skipped in newer versions.", ex);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error during translation attempt {Attempt}", attempt);

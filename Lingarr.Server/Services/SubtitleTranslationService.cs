@@ -102,10 +102,30 @@ public class SubtitleTranslationService
         TranslateAbleSubtitleLine translateAbleSubtitle,
         CancellationToken cancellationToken)
     {
+        var line = translateAbleSubtitle.SubtitleLine;
+
+        // Guard: Skip translation for vector drawing commands (very common in anime .ass files)
+        // These are graphics instructions (m, l, b, c, s, n + coordinates), not human text.
+        if (string.IsNullOrWhiteSpace(line) ||
+            line.Contains("\\p1", StringComparison.OrdinalIgnoreCase) ||
+            line.Contains("\\p2", StringComparison.OrdinalIgnoreCase) ||
+            IsPureVectorDrawing(line))
+        {
+            _logger.LogDebug("Skipping translation for ASS vector drawing block or empty line (length={Length})", line?.Length ?? 0);
+            return line ?? string.Empty;
+        }
+
+        // Guard: Very long lines are usually either drawings that leaked or malformed — avoid sending to providers with strict limits
+        if (line.Length > 4500)
+        {
+            _logger.LogWarning("Skipping translation for extremely long subtitle line (length={Length}) — likely drawing data or malformed subtitle", line.Length);
+            return line;
+        }
+
         try
         {
             return await _translationService.TranslateAsync(
-                translateAbleSubtitle.SubtitleLine,
+                line,
                 translateAbleSubtitle.SourceLanguage,
                 translateAbleSubtitle.TargetLanguage,
                 translateAbleSubtitle.ContextLinesBefore,
@@ -114,13 +134,33 @@ public class SubtitleTranslationService
         }
         catch (TranslationException ex)
         {
+            // Never log the full content if it's long or looks like drawing data
+            var logContent = line.Length > 200 || IsPureVectorDrawing(line) 
+                ? $"[long-or-drawing-content, len={line.Length}]" 
+                : line;
+
             _logger.LogError(ex,
                 "Translation failed for subtitle line: {SubtitleLine} from {SourceLang} to {TargetLang}",
-                translateAbleSubtitle.SubtitleLine,
+                logContent,
                 translateAbleSubtitle.SourceLanguage,
                 translateAbleSubtitle.TargetLanguage);
             throw new TranslationException("Translation failed for subtitle line", ex);
         }
+    }
+
+    private static bool IsPureVectorDrawing(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return false;
+        var trimmed = text.TrimStart();
+        // Common ASS drawing command starters
+        return trimmed.Length > 5 && 
+               (trimmed[0] == 'm' || trimmed[0] == 'M' || 
+                trimmed[0] == 'l' || trimmed[0] == 'L' ||
+                trimmed[0] == 'b' || trimmed[0] == 'B' ||
+                trimmed[0] == 'c' || trimmed[0] == 'C' ||
+                trimmed[0] == 's' || trimmed[0] == 'S' ||
+                trimmed[0] == 'n' || trimmed[0] == 'N') &&
+               char.IsDigit(trimmed[1]) || (trimmed[1] == ' ' && trimmed.Length > 3 && char.IsDigit(trimmed[2]));
     }
     
     /// <summary>
