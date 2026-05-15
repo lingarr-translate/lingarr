@@ -221,7 +221,8 @@ const presetLabelMap: Record<string, string> = {
     gemini_request_template: 'Gemini Content',
     local_ai_generate_request_template: 'Ollama Generate',
     local_ai_chat_request_template: 'LocalAI Chat',
-    deepseek_request_template: 'DeepSeek Chat'
+    deepseek_request_template: 'DeepSeek Chat',
+    openrouter_request_template: 'OpenRouter Chat'
 }
 
 onMounted(async () => {

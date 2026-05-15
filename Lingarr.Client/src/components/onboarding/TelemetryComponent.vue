@@ -44,7 +44,10 @@ const previewData = ref({
             Episode: 5
         },
         modelUsage: {
-            'localai:openai/gpt-4o': 5
+            'localai:openai/gpt-4o': 5,
+            'openrouter:openai/gpt-4o': 5,
+            'openrouter:anthropic/claude-3.5-sonnet': 4,
+            'openrouter:google/gemini-2.5-pro': 3
         }
     }
 })

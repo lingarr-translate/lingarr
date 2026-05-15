@@ -61,6 +61,14 @@ public static class SettingKeys
             public const string RequestTemplate = "deepseek_request_template";
         }
 
+        public static class OpenRouter
+        {
+            public const string Model = "openrouter_model";
+            public const string ApiKey = "openrouter_api_key";
+            public const string Endpoint = "openrouter_endpoint";
+            public const string RequestTemplate = "openrouter_request_template";
+        }
+
         public static class LibreTranslate
         {
             public const string Url = "libretranslate_url";

@@ -13,9 +13,10 @@
                     SERVICE_TYPE.DEEPSEEK,
                     SERVICE_TYPE.GEMINI,
                     SERVICE_TYPE.LOCALAI,
-                    SERVICE_TYPE.OPENAI
+                    SERVICE_TYPE.OPENAI,
+                    SERVICE_TYPE.OPENROUTER
                 ].includes(
-                    serviceType as 'openai' | 'anthropic' | 'localai' | 'gemini' | 'deepseek'
+                    serviceType as 'openai' | 'anthropic' | 'localai' | 'gemini' | 'deepseek' | 'openrouter'
                 )
             ">
                 <div class="flex flex-col space-x-2">

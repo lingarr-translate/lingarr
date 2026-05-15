@@ -22,6 +22,8 @@ export const SETTINGS = {
     LOCAL_AI_MODEL: 'local_ai_model',
     GEMINI_MODEL: 'gemini_model',
     DEEPSEEK_MODEL: 'deepseek_model',
+    OPENROUTER_MODEL: 'openrouter_model',
+    OPENROUTER_ENDPOINT: 'openrouter_endpoint',
     AI_PROMPT: 'ai_prompt',
     THEME: 'theme',
     LOCALE: 'locale',
@@ -62,6 +64,7 @@ export const SETTINGS = {
     LOCAL_AI_GENERATE_REQUEST_TEMPLATE: 'local_ai_generate_request_template',
     DEEPSEEK_REQUEST_TEMPLATE: 'deepseek_request_template',
     GEMINI_REQUEST_TEMPLATE: 'gemini_request_template',
+    OPENROUTER_REQUEST_TEMPLATE: 'openrouter_request_template',
     LANGUAGE_CODE_FORMAT: 'language_code_format',
     RADARR_DEFAULT_INCLUDE: 'radarr_default_include',
     SONARR_DEFAULT_INCLUDE: 'sonarr_default_include'
@@ -88,6 +91,8 @@ export interface ISettings {
     local_ai_model: string
     gemini_model: string
     deepseek_model: string
+    openrouter_model: string
+    openrouter_endpoint: string
     ai_prompt: string
     movie_age_threshold: string
     show_age_threshold: string
@@ -127,6 +132,7 @@ export interface ISettings {
     local_ai_generate_request_template: string
     deepseek_request_template: string
     gemini_request_template: string
+    openrouter_request_template: string
     language_code_format: string
     radarr_default_include: string
     sonarr_default_include: string
@@ -144,6 +150,7 @@ export const ENCRYPTED_SETTINGS = {
     DEEPL_API_KEY: 'deepl_api_key',
     LIBRETRANSLATE_API_KEY: 'libretranslate_api_key',
     LOCAL_AI_API_KEY: 'local_ai_api_key',
+    OPENROUTER_API_KEY: 'openrouter_api_key',
 } as const
 
 export interface IEncryptedSettings {
@@ -157,6 +164,7 @@ export interface IEncryptedSettings {
     deepl_api_key: string
     libretranslate_api_key: string
     local_ai_api_key: string
+    openrouter_api_key: string
 }
 
 export const SERVICE_TYPE = {

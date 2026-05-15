@@ -21,9 +21,10 @@
                         SERVICE_TYPE.DEEPSEEK,
                         SERVICE_TYPE.GEMINI,
                         SERVICE_TYPE.LOCALAI,
-                        SERVICE_TYPE.OPENAI
+                        SERVICE_TYPE.OPENAI,
+                        SERVICE_TYPE.OPENROUTER
                     ].includes(
-                        serviceType as 'openai' | 'anthropic' | 'localai' | 'gemini' | 'deepseek'
+                        serviceType as 'openai' | 'anthropic' | 'localai' | 'gemini' | 'deepseek' | 'openrouter'
                     )
                 ">
                 <div class="flex flex-col gap-4">
@@ -64,6 +65,7 @@ import OpenAiConfig from '@/components/features/settings/services/OpenAiConfig.v
 import LocalAiConfig from '@/components/features/settings/services/LocalAiConfig.vue'
 import GeminiConfig from '@/components/features/settings/services/GeminiConfig.vue'
 import DeepSeekConfig from '@/components/features/settings/services/DeepSeekConfig.vue'
+import OpenRouterConfig from '@/components/features/settings/services/OpenRouterConfig.vue'
 import SourceAndTarget from '@/components/features/settings/SourceAndTarget.vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import ArrowRight from '@/components/icons/ArrowRight.vue'
@@ -85,6 +87,7 @@ const serviceOptions = [
     { value: SERVICE_TYPE.BING, label: 'Bing' },
     { value: SERVICE_TYPE.DEEPL, label: 'DeepL' },
     { value: SERVICE_TYPE.DEEPSEEK, label: 'DeepSeek' },
+    { value: SERVICE_TYPE.OPENROUTER, label: 'OpenRouter' },
     { value: SERVICE_TYPE.GEMINI, label: 'Gemini' },
     { value: SERVICE_TYPE.GOOGLE, label: 'Google' },
     { value: SERVICE_TYPE.LIBRETRANSLATE, label: 'LibreTranslate' },
@@ -110,6 +113,8 @@ const serviceConfigComponent = computed(() => {
             return GeminiConfig
         case SERVICE_TYPE.DEEPSEEK:
             return DeepSeekConfig
+        case SERVICE_TYPE.OPENROUTER:
+            return OpenRouterConfig
         case SERVICE_TYPE.GOOGLE:
         case SERVICE_TYPE.BING:
         case SERVICE_TYPE.MICROSOFT:

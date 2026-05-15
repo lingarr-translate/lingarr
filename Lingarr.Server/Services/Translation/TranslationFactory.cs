@@ -104,6 +104,14 @@ public class TranslationFactory : ITranslationServiceFactory
                 _serviceProvider.GetRequiredService<IRequestTemplateService>()
             ),
 
+            "openrouter" => new OpenRouterService(
+                _serviceProvider.GetRequiredService<ISettingService>(),
+                _serviceProvider.GetRequiredService<HttpClient>(),
+                _serviceProvider.GetRequiredService<ILogger<OpenRouterService>>(),
+                languageCodeService,
+                _serviceProvider.GetRequiredService<IRequestTemplateService>()
+            ),
+
             _ => throw new ArgumentException("Unsupported translation service type", nameof(serviceType))
         };
     }
