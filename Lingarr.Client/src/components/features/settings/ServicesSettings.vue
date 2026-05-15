@@ -88,7 +88,7 @@ const serviceOptions = [
     { value: SERVICE_TYPE.GEMINI, label: 'Gemini' },
     { value: SERVICE_TYPE.GOOGLE, label: 'Google' },
     { value: SERVICE_TYPE.LIBRETRANSLATE, label: 'LibreTranslate' },
-    { value: SERVICE_TYPE.LOCALAI, label: 'Local AI (Custom)' },
+    { value: SERVICE_TYPE.LOCALAI, label: 'OpenAI-compatible API (Custom)' },
     { value: SERVICE_TYPE.MICROSOFT, label: 'Microsoft' },
     { value: SERVICE_TYPE.OPENAI, label: 'OpenAI' },
     { value: SERVICE_TYPE.YANDEX, label: 'Yandex' }

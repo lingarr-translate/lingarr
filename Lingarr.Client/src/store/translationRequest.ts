@@ -1,5 +1,6 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import {
+    IActiveTranslation,
     IFilter,
     IPagedResult,
     IRequestProgress,
@@ -12,7 +13,7 @@ import services from '@/services'
 
 export const useTranslationRequestStore = defineStore('translateRequest', {
     state: (): IUseTranslationRequestStore => ({
-        activeTranslationRequests: 0,
+        activeTranslations: [],
         translationRequests: {
             totalCount: 0,
             pageSize: 0,
@@ -29,8 +30,8 @@ export const useTranslationRequestStore = defineStore('translateRequest', {
         selectAll: false
     }),
     getters: {
-        getActiveTranslationRequests: (state: IUseTranslationRequestStore): number =>
-            state.activeTranslationRequests,
+        getActiveTranslationCount: (state: IUseTranslationRequestStore): number =>
+            state.activeTranslations.length,
         getTranslationRequests(): IPagedResult<ITranslationRequest> {
             return this.translationRequests
         },
@@ -53,13 +54,12 @@ export const useTranslationRequestStore = defineStore('translateRequest', {
                 this.filter.isAscending
             )
         },
-        async setActiveCount(activeTranslationRequests: number) {
-            this.activeTranslationRequests = activeTranslationRequests
+        setActiveTranslations(activeTranslations: IActiveTranslation[]) {
+            this.activeTranslations = activeTranslations
         },
-        async getActiveCount() {
-            const activeTranslationRequests =
-                await services.translationRequest.getActiveCount<number>()
-            await this.setActiveCount(activeTranslationRequests)
+        async fetchActiveTranslations() {
+            this.activeTranslations =
+                await services.translationRequest.getActiveTranslations<IActiveTranslation[]>()
         },
         async cancel(translationRequest: ITranslationRequest) {
             await services.translationRequest.cancel<string>(translationRequest)

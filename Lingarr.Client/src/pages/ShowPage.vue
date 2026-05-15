@@ -77,9 +77,10 @@
                     @click="toggleShow(item)">
                     <div
                         :class="isSelectMode ? 'col-span-7' : 'col-span-8'"
-                        class="flex items-center px-4 py-2">
+                        class="flex items-center gap-2 px-4 py-2">
                         <CaretButton :is-expanded="expandedShow !== item.id" class="pr-2" />
-                        {{ item.title }}
+                        <span>{{ item.title }}</span>
+                        <ActiveTranslationBadge :show="item" />
                     </div>
                     <div class="col-span-1 flex items-center px-4 py-2" @click.stop>
                         <ToggleButton
@@ -151,6 +152,7 @@ import InputComponent from '@/components/common/InputComponent.vue'
 import CheckboxComponent from '@/components/common/CheckboxComponent.vue'
 import ContextMenu from '@/components/layout/ContextMenu.vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
+import ActiveTranslationBadge from '@/components/common/ActiveTranslationBadge.vue'
 
 const instanceStore = useInstanceStore()
 const showStore = useShowStore()

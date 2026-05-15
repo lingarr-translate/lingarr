@@ -5,6 +5,7 @@ using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
+using Lingarr.Server.Models.TranslationRequests;
 
 namespace Lingarr.Server.Interfaces.Services;
 
@@ -32,19 +33,17 @@ public interface ITranslationRequestService
     /// <returns>A list of created translation request IDs</returns>
     Task CreateBulkRequest(BulkTranslateRequest request);
 
-
+    /// <summary>
+    /// Retrieves the collection of currently active (Pending or InProgress) translation requests.
+    /// </summary>
+    /// <returns>The collection of active translation requests</returns>
+    Task<List<ActiveTranslation>> GetActiveTranslations();
 
     /// <summary>
-    /// Retrieves the count of active translation requests.
+    /// Broadcasts the current active translation requests over SignalR.
     /// </summary>
-    /// <returns>Number of translation requests that are neither Cancelled nor Completed</returns>
-    Task<int> GetActiveCount();
-
-    /// <summary>
-    /// Updates the active count and notifies connected clients via SignalR.
-    /// </summary>
-    /// <returns>The current count of active translation requests</returns>
-    Task<int> UpdateActiveCount();
+    /// <returns>The collection that was broadcast</returns>
+    Task<List<ActiveTranslation>> UpdateActiveCount();
 
     /// <summary>
     /// Resumes all pending and in-progress translation requests by re-enqueueing them in the job queue.

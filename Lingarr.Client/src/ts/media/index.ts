@@ -71,6 +71,12 @@ export interface ILineTranslated {
     target: string
 }
 
+export interface IActiveTranslation {
+    mediaId: number | null
+    mediaType: MediaType
+    status: TranslationStatus
+}
+
 export interface IRequestProgress {
     id: number
     jobId: string

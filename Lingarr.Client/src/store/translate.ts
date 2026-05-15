@@ -29,7 +29,7 @@ export const useTranslateStore = defineStore('translate', {
                 target,
                 mediaType
             )
-            await useTranslationRequestStore().getActiveCount()
+            await useTranslationRequestStore().fetchActiveTranslations()
             return result.jobId
         },
         async bulkTranslate(
@@ -42,7 +42,7 @@ export const useTranslateStore = defineStore('translate', {
                 targetLanguage,
                 mediaType
             )
-            await useTranslationRequestStore().getActiveCount()
+            await useTranslationRequestStore().fetchActiveTranslations()
         },
         async setLanguages(): Promise<void> {
             try {
