@@ -88,7 +88,12 @@ public class LibreService : BaseLanguageService
         _logger.LogInformation($"Retrieving |Green|LibreTranslate|/Green| languages");
         await InitializeAsync();
 
-        var libreTranslateLanguagesUrl = "https://libretranslate.com/languages";
+        if (string.IsNullOrEmpty(_apiUrl))
+        {
+            throw new InvalidOperationException("LibreTranslate URL is not configured.");
+        }
+
+        var libreTranslateLanguagesUrl = $"{_apiUrl}/languages";
         List<JsonLanguage>? libreLanguages;
         try
         {
