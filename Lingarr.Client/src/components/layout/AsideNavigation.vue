@@ -49,7 +49,12 @@
                     v-if="instanceStore.getVersion.currentVersion.length"
                     class="absolute bottom-0 right-0 flex w-full justify-center p-4">
                     <BadgeComponent
-                        v-if="instanceStore.getVersion.newVersion"
+                        v-if="instanceStore.getVersion.isDevelopment"
+                        classes="text-white border-amber-200 bg-amber-500/50">
+                        {{ 'Development' }}
+                    </BadgeComponent>
+                    <BadgeComponent
+                        v-else-if="instanceStore.getVersion.newVersion"
                         classes="text-white border-green-200 bg-green-500/50">
                         {{
                             'Update {version} is available'.format({
