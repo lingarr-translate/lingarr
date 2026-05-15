@@ -55,6 +55,13 @@ public class SubtitleTranslationService
         var iteration = 0;
         var totalSubtitles = subtitles.Count;
 
+        // Many fansub .ass files stack multiple Dialogue lines at the same
+        // timestamp with identical plaintext (shadow, glow, border, main
+        // layers). Translate each unique (Start, End, plaintext) once per
+        // file and reuse the result for the rest. SRT/VTT files almost never
+        // share timestamps, so this is a no-op there.
+        var translationCache = new Dictionary<string, string>();
+
         for (var index = 0; index < totalSubtitles; index++)
         {
             var subtitle = subtitles[index];
@@ -82,14 +89,20 @@ public class SubtitleTranslationService
                     continue;
                 }
 
-                translatedLines.Add(await TranslateSubtitleLine(new TranslateAbleSubtitleLine
+                var cacheKey = $"{subtitle.StartTime}|{subtitle.EndTime}|{subtitleLine}";
+                if (!translationCache.TryGetValue(cacheKey, out var translated))
                 {
-                    SubtitleLine = subtitleLine,
-                    SourceLanguage = translationRequest.SourceLanguage,
-                    TargetLanguage = translationRequest.TargetLanguage,
-                    ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
-                    ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
-                }, cancellationToken));
+                    translated = await TranslateSubtitleLine(new TranslateAbleSubtitleLine
+                    {
+                        SubtitleLine = subtitleLine,
+                        SourceLanguage = translationRequest.SourceLanguage,
+                        TargetLanguage = translationRequest.TargetLanguage,
+                        ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
+                        ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
+                    }, cancellationToken);
+                    translationCache[cacheKey] = translated;
+                }
+                translatedLines.Add(translated);
             }
 
             subtitle.TranslatedLines = translatedLines.Count > 1

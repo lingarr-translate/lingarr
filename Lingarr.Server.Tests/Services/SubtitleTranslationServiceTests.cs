@@ -270,6 +270,116 @@ public class SubtitleTranslationServiceTests
         Assert.Equal(1, translatedCalls);
     }
 
+    // ===== Per-file dedup =====
+    // Many fansub .ass files stack multiple Dialogue lines at the same timestamp
+    // with byte-identical plaintext (shadow/glow/border/main rendered as separate
+    // entries). The service caches by (StartTime, EndTime, plaintext) and reuses
+    // the translation for the duplicates.
+
+    [Fact]
+    public async Task TranslateSubtitles_StackedDuplicates_TranslatesOnceAndReusesResult()
+    {
+        // Arrange - four entries with the same (Start, End, plaintext): the layered shadow/glow/border/main case
+        var captured = new List<string>();
+        var harness = CreatePerLineHarness(text => { captured.Add(text); return "hola"; });
+        var subtitles = new List<SubtitleItem>
+        {
+            new() { Position = 1, StartTime = 1000, EndTime = 2000, Lines = ["Hello"], PlaintextLines = ["Hello"] },
+            new() { Position = 2, StartTime = 1000, EndTime = 2000, Lines = ["Hello"], PlaintextLines = ["Hello"] },
+            new() { Position = 3, StartTime = 1000, EndTime = 2000, Lines = ["Hello"], PlaintextLines = ["Hello"] },
+            new() { Position = 4, StartTime = 1000, EndTime = 2000, Lines = ["Hello"], PlaintextLines = ["Hello"] }
+        };
+
+        // Act
+        await harness.Service.TranslateSubtitles(subtitles, NewRequest(),
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: false,
+            contextBefore: 0,
+            contextAfter: 0,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Single(captured);
+        Assert.All(subtitles, s => Assert.Equal(["hola"], s.TranslatedLines));
+    }
+
+    [Fact]
+    public async Task TranslateSubtitles_SameTextDifferentTimes_TranslatesEachIndependently()
+    {
+        // Arrange - same plaintext at different timestamps are different scenes; each must be translated
+        var captured = new List<string>();
+        var harness = CreatePerLineHarness(text => { captured.Add(text); return "si"; });
+        var subtitles = new List<SubtitleItem>
+        {
+            new() { Position = 1, StartTime = 1000, EndTime = 2000, Lines = ["Yes"], PlaintextLines = ["Yes"] },
+            new() { Position = 2, StartTime = 5000, EndTime = 6000, Lines = ["Yes"], PlaintextLines = ["Yes"] },
+            new() { Position = 3, StartTime = 9000, EndTime = 10000, Lines = ["Yes"], PlaintextLines = ["Yes"] }
+        };
+
+        // Act
+        await harness.Service.TranslateSubtitles(subtitles, NewRequest(),
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: false,
+            contextBefore: 0,
+            contextAfter: 0,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(3, captured.Count);
+    }
+
+    [Fact]
+    public async Task TranslateSubtitles_NoDuplicates_TranslatesEvery()
+    {
+        // Arrange - SRT/VTT typical case: every entry unique
+        var captured = new List<string>();
+        var harness = CreatePerLineHarness(text => { captured.Add(text); return $"tr:{text}"; });
+        var subtitles = new List<SubtitleItem>
+        {
+            new() { Position = 1, StartTime = 1000, EndTime = 2000, Lines = ["Hello"], PlaintextLines = ["Hello"] },
+            new() { Position = 2, StartTime = 3000, EndTime = 4000, Lines = ["World"], PlaintextLines = ["World"] },
+            new() { Position = 3, StartTime = 5000, EndTime = 6000, Lines = ["How are you?"], PlaintextLines = ["How are you?"] }
+        };
+
+        // Act
+        await harness.Service.TranslateSubtitles(subtitles, NewRequest(),
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: false,
+            contextBefore: 0,
+            contextAfter: 0,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(["Hello", "World", "How are you?"], captured);
+        Assert.Equal(["tr:Hello"], subtitles[0].TranslatedLines);
+        Assert.Equal(["tr:World"], subtitles[1].TranslatedLines);
+        Assert.Equal(["tr:How are you?"], subtitles[2].TranslatedLines);
+    }
+
+    [Fact]
+    public async Task TranslateSubtitles_SameTimestampDifferentText_TranslatesEachIndependently()
+    {
+        // Arrange - overlapping dual-speaker dialogue: same timestamp, different text — both translated
+        var captured = new List<string>();
+        var harness = CreatePerLineHarness(text => { captured.Add(text); return $"tr:{text}"; });
+        var subtitles = new List<SubtitleItem>
+        {
+            new() { Position = 1, StartTime = 1000, EndTime = 2000, Lines = ["Run!"], PlaintextLines = ["Run!"] },
+            new() { Position = 2, StartTime = 1000, EndTime = 2000, Lines = ["Watch out!"], PlaintextLines = ["Watch out!"] }
+        };
+
+        // Act
+        await harness.Service.TranslateSubtitles(subtitles, NewRequest(),
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: false,
+            contextBefore: 0,
+            contextAfter: 0,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(["Run!", "Watch out!"], captured);
+    }
+
     #endregion
 
     #region ProcessSubtitleBatch Tests
