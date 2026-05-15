@@ -95,7 +95,7 @@ const router = useRouter()
 const route = useRoute()
 
 const activeRequests: ComputedRef<number> = computed(
-    () => translationRequestStore.getActiveTranslationRequests
+    () => translationRequestStore.getActiveTranslationCount
 )
 
 const isOpen = computed({

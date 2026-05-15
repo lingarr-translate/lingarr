@@ -200,7 +200,11 @@ public static class ServiceCollectionExtensions
 
     private static void ConfigureSignalR(this WebApplicationBuilder builder)
     {
-        builder.Services.AddSignalR();
+        builder.Services.AddSignalR()
+            .AddJsonProtocol(options =>
+            {
+                options.PayloadSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
     }
 
     private static void ConfigureHangfire(this WebApplicationBuilder builder)

@@ -3,6 +3,7 @@ using Lingarr.Server.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
+using Lingarr.Server.Models.TranslationRequests;
 
 namespace Lingarr.Server.Controllers;
 
@@ -39,16 +40,17 @@ public class TranslationRequestController : ControllerBase
     }
 
     /// <summary>
-    /// Gets the count of active translation requests
+    /// Gets the collection of currently active (Pending or InProgress) translation
+    /// requests. Used by the frontend to seed its state on initial load; subsequent
+    /// updates are pushed over SignalR on the <c>ActiveTranslations</c> event.
     /// </summary>
-    /// <response code="200">Returns the count of active translation requests</response>
-    /// <response code="500">If there was an error checking for updates</response>
-    /// <returns>ActionResult containing the count of active translation requests</returns>
+    /// <response code="200">Returns the collection of active translation requests</response>
+    /// <returns>ActionResult containing the collection of active translation requests</returns>
     [HttpGet("active")]
-    public async Task<ActionResult<int>> GetActiveTranslationCount()
+    public async Task<ActionResult<List<ActiveTranslation>>> GetActiveTranslations()
     {
-        var activeCount = await _translationRequestService.GetActiveCount();
-        return Ok(activeCount);
+        var activeTranslations = await _translationRequestService.GetActiveTranslations();
+        return Ok(activeTranslations);
     }
 
     /// <summary>

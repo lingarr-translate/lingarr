@@ -16,8 +16,9 @@
             <div class="col-span-1 px-4 py-2">
                 {{ episode.episodeNumber }}
             </div>
-            <div class="col-span-7 px-4 py-2 md:col-span-5">
-                {{ episode.title }}
+            <div class="col-span-7 flex items-center gap-2 px-4 py-2 md:col-span-5">
+                <span>{{ episode.title }}</span>
+                <ActiveTranslationBadge :media-id="episode.id" :media-type="MEDIA_TYPE.EPISODE" />
             </div>
             <div class="col-span-4 flex justify-between pr-4 md:col-span-5">
                 <div v-if="episode?.fileName" class="flex flex-wrap items-center gap-2">
@@ -57,6 +58,7 @@ import { IEpisode, ISubtitle, MEDIA_TYPE } from '@/ts'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
 import ContextMenu from '@/components/layout/ContextMenu.vue'
 import ToggleButton from '@/components/common/ToggleButton.vue'
+import ActiveTranslationBadge from '@/components/common/ActiveTranslationBadge.vue'
 import { useShowStore } from '@/store/show'
 
 const props = defineProps<{

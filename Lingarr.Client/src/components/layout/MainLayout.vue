@@ -49,7 +49,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, onUnmounted } from 'vue'
 import { useSignalR } from '@/composables/useSignalR'
-import { Hub, ISettings, ITheme, THEMES } from '@/ts'
+import { Hub, IActiveTranslation, ISettings, ITheme, THEMES } from '@/ts'
 import { useSettingStore } from '@/store/setting'
 import { useInstanceStore } from '@/store/instance'
 import useTranslationRequestStore from '@/store/translationRequest'
@@ -71,8 +71,8 @@ const onSettingUpdate = (setting: { key: keyof ISettings; value: string }) => {
     settingStore.storeSetting(setting.key, setting.value)
 }
 
-const onRequestActive = (request: { count: number }) => {
-    translationRequestStore.setActiveCount(request.count)
+const onActiveTranslations = (activeTranslations: IActiveTranslation[]) => {
+    translationRequestStore.setActiveTranslations(activeTranslations)
 }
 
 const setTheme = (theme: ITheme) => {
@@ -88,7 +88,7 @@ const isOpen = computed({
 onMounted(async () => {
     await settingStore.applySettingsOnLoad()
     await instanceStore.applyVersionOnLoad()
-    await translationRequestStore.getActiveCount()
+    await translationRequestStore.fetchActiveTranslations()
 
     settingHubConnection.value = await signalR.connect('SettingUpdates', '/signalr/SettingUpdates')
     await settingHubConnection.value.joinGroup({ group: 'SettingUpdates' })
@@ -99,11 +99,11 @@ onMounted(async () => {
         '/signalr/TranslationRequests'
     )
     await requestHubConnection.value.joinGroup({ group: 'TranslationRequests' })
-    requestHubConnection.value.on('RequestActive', onRequestActive)
+    requestHubConnection.value.on('ActiveTranslations', onActiveTranslations)
 })
 
 onUnmounted(async () => {
     settingHubConnection.value?.off('SettingUpdate', onSettingUpdate)
-    requestHubConnection.value?.off('RequestActive', onRequestActive)
+    requestHubConnection.value?.off('ActiveTranslations', onActiveTranslations)
 })
 </script>

@@ -1,7 +1,7 @@
-import { IFilter, IPagedResult, ITranslationRequest } from '@/ts'
+import { IActiveTranslation, IFilter, IPagedResult, ITranslationRequest } from '@/ts'
 
 export interface IUseTranslationRequestStore {
-    activeTranslationRequests: number
+    activeTranslations: IActiveTranslation[]
     translationRequests: IPagedResult<ITranslationRequest>
     filter: IFilter
     selectedRequests: ITranslationRequest[]

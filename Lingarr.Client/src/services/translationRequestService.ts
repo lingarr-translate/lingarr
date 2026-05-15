@@ -16,7 +16,7 @@ const service = (
                 })
         })
     },
-    getActiveCount<T>(): Promise<T> {
+    getActiveTranslations<T>(): Promise<T> {
         return new Promise((resolve, reject) => {
             http.get(`${resource}/active`)
                 .then((response: AxiosResponse<T>) => {

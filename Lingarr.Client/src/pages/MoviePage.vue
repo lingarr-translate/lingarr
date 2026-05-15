@@ -73,8 +73,11 @@
             </div>
             <div v-for="item in movies.items" :key="item.id">
                 <div class="grid grid-cols-12 border-b border-accent transition-colors hover:bg-accent/5">
-                    <div :class="isSelectMode ? 'col-span-4' : 'col-span-5'" class="px-4 py-2">
-                        {{ item.title }}
+                    <div
+                        :class="isSelectMode ? 'col-span-4' : 'col-span-5'"
+                        class="flex items-center gap-2 px-4 py-2">
+                        <span>{{ item.title }}</span>
+                        <ActiveTranslationBadge :media-id="item.id" :media-type="MEDIA_TYPE.MOVIE" />
                     </div>
                     <div class="col-span-4 flex flex-wrap items-center gap-2 px-4 py-2">
                         <ContextMenu
@@ -159,6 +162,7 @@ import ToggleButton from '@/components/common/ToggleButton.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 import CheckboxComponent from '@/components/common/CheckboxComponent.vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
+import ActiveTranslationBadge from '@/components/common/ActiveTranslationBadge.vue'
 
 const movieStore = useMovieStore()
 const settingStore = useSettingStore()

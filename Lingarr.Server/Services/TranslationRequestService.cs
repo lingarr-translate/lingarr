@@ -12,6 +12,7 @@ using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
+using Lingarr.Server.Models.TranslationRequests;
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -174,11 +175,7 @@ public class TranslationRequestService : ITranslationRequestService
         );
         await UpdateTranslationRequest(translationRequestCopy, TranslationStatus.Pending, jobId);
 
-        var count = await GetActiveCount();
-        await _hubContext.Clients.Group("TranslationRequests").SendAsync("RequestActive", new
-        {
-            count
-        });
+        await UpdateActiveCount();
 
         return translationRequestCopy.Id;
     }
@@ -301,26 +298,29 @@ public class TranslationRequestService : ITranslationRequestService
     }
 
     /// <inheritdoc />
-    public async Task<int> GetActiveCount()
+    public Task<List<ActiveTranslation>> GetActiveTranslations()
     {
-        return await _dbContext.TranslationRequests.CountAsync(translation =>
-            translation.Status != TranslationStatus.Cancelled &&
-            translation.Status != TranslationStatus.Failed &&
-            translation.Status != TranslationStatus.Completed &&
-            translation.Status != TranslationStatus.Interrupted);
-
+        return _dbContext.TranslationRequests
+            .Where(translationRequest =>
+                translationRequest.Status == TranslationStatus.Pending ||
+                translationRequest.Status == TranslationStatus.InProgress)
+            .Select(translationRequest => new ActiveTranslation
+            {
+                MediaId = translationRequest.MediaId,
+                MediaType = translationRequest.MediaType,
+                Status = translationRequest.Status
+            })
+            .ToListAsync();
     }
 
     /// <inheritdoc />
-    public async Task<int> UpdateActiveCount()
+    public async Task<List<ActiveTranslation>> UpdateActiveCount()
     {
-        var count = await GetActiveCount();
-        await _hubContext.Clients.Group("TranslationRequests").SendAsync("RequestActive", new
-        {
-            count
-        });
-        
-        return count;
+        var activeTranslations = await GetActiveTranslations();
+        await _hubContext.Clients.Group("TranslationRequests")
+            .SendAsync("ActiveTranslations", activeTranslations);
+
+        return activeTranslations;
     }
     
     /// <inheritdoc />
