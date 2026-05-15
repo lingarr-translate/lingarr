@@ -141,4 +141,24 @@ public class TranslationRequestController : ControllerBase
 
         return NotFound(newTranslationRequest);
     }
+
+    /// <summary>
+    /// Resumes a Failed, Cancelled or Interrupted translation request, reusing
+    /// any lines already translated by a previous attempt.
+    /// </summary>
+    /// <param name="resumeRequest">The translation request to resume</param>
+    /// <response code="200">Returns a message describing the resumed request</response>
+    /// <response code="404">If the translation request was not found or is not in a resumable state</response>
+    /// <returns>ActionResult containing the resume result message</returns>
+    [HttpPost("resume")]
+    public async Task<ActionResult<string>> ResumeTranslationRequest([FromBody] TranslationRequest resumeRequest)
+    {
+        var result = await _translationRequestService.ResumeTranslationRequest(resumeRequest);
+        if (result != null)
+        {
+            return Ok(result);
+        }
+
+        return NotFound(result);
+    }
 }

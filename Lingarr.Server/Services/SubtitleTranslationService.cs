@@ -72,6 +72,25 @@ public class SubtitleTranslationService
                 break;
             }
 
+            // subtitle already carries a translation from a prior run.
+            if (subtitle.TranslatedLines.Count > 0)
+            {
+                var existingContentLines = stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines;
+                if (!(preserveLineBreaks && existingContentLines.Count > 1))
+                {
+                    var sourceLine = string.Join(" ", existingContentLines);
+                    if (!string.IsNullOrWhiteSpace(sourceLine))
+                    {
+                        var cacheKey = $"{subtitle.StartTime}|{subtitle.EndTime}|{sourceLine}";
+                        translationCache.TryAdd(cacheKey, string.Join(" ", subtitle.TranslatedLines));
+                    }
+                }
+
+                iteration++;
+                await EmitProgress(translationRequest, iteration, totalSubtitles);
+                continue;
+            }
+
             var contextLinesBefore = BuildContext(subtitles, index, contextBefore, stripSubtitleFormatting, true);
             var contextLinesAfter = BuildContext(subtitles, index, contextAfter, stripSubtitleFormatting, false);
 
@@ -203,7 +222,7 @@ public class SubtitleTranslationService
                 .Take(batchSize)
                 .ToList();
 
-            await ProcessSubtitleBatch(currentBatch,
+            var newlyTranslated = await ProcessSubtitleBatch(currentBatch,
                 batchTranslationService,
                 translationRequest.SourceLanguage,
                 translationRequest.TargetLanguage,
@@ -211,13 +230,16 @@ public class SubtitleTranslationService
                 preserveLineBreaks,
                 cancellationToken);
 
-            var lineData = currentBatch.Select(s => new TranslatedLineData
+            if (newlyTranslated.Count > 0)
             {
-                Position = s.Position,
-                Source = string.Join(" ", stripSubtitleFormatting ? s.PlaintextLines : s.Lines),
-                Target = string.Join(" ", s.TranslatedLines ?? s.Lines)
-            }).ToList();
-            await _progressService!.EmitLines(translationRequest, lineData);
+                var lineData = newlyTranslated.Select(s => new TranslatedLineData
+                {
+                    Position = s.Position,
+                    Source = string.Join(" ", stripSubtitleFormatting ? s.PlaintextLines : s.Lines),
+                    Target = string.Join(" ", s.TranslatedLines)
+                }).ToList();
+                await _progressService!.EmitLines(translationRequest, lineData);
+            }
 
             processedSubtitles += currentBatch.Count;
             await EmitProgress(translationRequest, processedSubtitles, subtitles.Count);
@@ -237,7 +259,8 @@ public class SubtitleTranslationService
     /// <param name="stripSubtitleFormatting">Boolean used for indicating that styles need to be stripped from the subtitle</param>
     /// <param name="preserveLineBreaks">When true, multi-line subtitles are sent and parsed back with their line breaks preserved</param>
     /// <param name="cancellationToken">Token to support cancellation of the translation operation</param>
-    public async Task ProcessSubtitleBatch(
+    /// <returns>The subset of <paramref name="currentBatch"/> that was newly translated by this call (excludes items resumed from a prior run).</returns>
+    public async Task<List<SubtitleItem>> ProcessSubtitleBatch(
         List<SubtitleItem> currentBatch,
         IBatchTranslationService batchTranslationService,
         string sourceLanguage,
@@ -246,8 +269,15 @@ public class SubtitleTranslationService
         bool preserveLineBreaks,
         CancellationToken cancellationToken)
     {
+        // subtitle already carries a translation from a prior run.
+        var toTranslate = currentBatch.Where(s => s.TranslatedLines.Count == 0).ToList();
+        if (toTranslate.Count == 0)
+        {
+            return [];
+        }
+
         var lineSeparator = preserveLineBreaks ? "\n" : " ";
-        var batchItems = currentBatch.Select(subtitle =>
+        var batchItems = toTranslate.Select(subtitle =>
         {
             var contentLines = stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines;
             return new BatchSubtitleItem
@@ -263,7 +293,7 @@ public class SubtitleTranslationService
             targetLanguage,
             cancellationToken);
 
-        foreach (var subtitle in currentBatch)
+        foreach (var subtitle in toTranslate)
         {
             var contentLines = stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines;
             if (!batchResults.TryGetValue(subtitle.Position, out var translated))
@@ -285,6 +315,8 @@ public class SubtitleTranslationService
                 stripSubtitleFormatting,
                 subtitle.Position);
         }
+
+        return toTranslate;
     }
 
     /// <summary>

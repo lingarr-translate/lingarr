@@ -384,6 +384,45 @@ public class TranslationRequestService : ITranslationRequestService
         var newTranslationRequestId = await EnqueueRequest(translationRequest);
         return $"Translation request with id {retryRequest.Id} has been restarted, new job id {newTranslationRequestId}";
     }
+
+    /// <inheritdoc />
+    public async Task<string?> ResumeTranslationRequest(TranslationRequest resumeRequest)
+    {
+        var translationRequest = await _dbContext.TranslationRequests.FirstOrDefaultAsync(
+            tr => tr.Id == resumeRequest.Id);
+        if (translationRequest == null)
+        {
+            return null;
+        }
+
+        var resumable = new[]
+        {
+            TranslationStatus.Failed,
+            TranslationStatus.Cancelled,
+            TranslationStatus.Interrupted
+        };
+        if (!resumable.Contains(translationRequest.Status))
+        {
+            _logger.LogInformation(
+                "Resume skipped for request {Id}: status {Status} is not resumable.",
+                translationRequest.Id, translationRequest.Status);
+            return null;
+        }
+
+        translationRequest.Status = TranslationStatus.Pending;
+        translationRequest.ErrorMessage = null;
+        translationRequest.StackTrace = null;
+        translationRequest.CompletedAt = null;
+        await _dbContext.SaveChangesAsync();
+        await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Pending, "Resumed");
+
+        var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
+            job.Execute(translationRequest, CancellationToken.None));
+        await UpdateTranslationRequest(translationRequest, TranslationStatus.Pending, jobId);
+        await UpdateActiveCount();
+
+        return $"Translation request with id {resumeRequest.Id} has been resumed, new job id {jobId}";
+    }
     
     /// <inheritdoc />
     public async Task<TranslationRequest> UpdateTranslationRequest(TranslationRequest translationRequest,
@@ -628,7 +667,7 @@ public class TranslationRequestService : ITranslationRequestService
 
                 _logger.LogDebug("Starting batch subtitle processing with {itemCount} subtitle items", subtitleItems.Count);
 
-                await subtitleTranslator.ProcessSubtitleBatch(
+                var newlyTranslated = await subtitleTranslator.ProcessSubtitleBatch(
                     subtitleItems,
                     batchService,
                     translateAbleContent.SourceLanguage,
@@ -637,13 +676,16 @@ public class TranslationRequestService : ITranslationRequestService
                     preserveLineBreaks,
                     cancellationToken);
 
-                var batchLineData = subtitleItems.Select(s => new TranslatedLineData
+                if (newlyTranslated.Count > 0)
                 {
-                    Position = s.Position,
-                    Source = string.Join(" ", stripSubtitleFormatting ? s.PlaintextLines : s.Lines),
-                    Target = string.Join(" ", s.TranslatedLines ?? s.Lines)
-                }).ToList();
-                await _progressService.EmitLines(translationRequest, batchLineData);
+                    var batchLineData = newlyTranslated.Select(s => new TranslatedLineData
+                    {
+                        Position = s.Position,
+                        Source = string.Join(" ", stripSubtitleFormatting ? s.PlaintextLines : s.Lines),
+                        Target = string.Join(" ", s.TranslatedLines)
+                    }).ToList();
+                    await _progressService.EmitLines(translationRequest, batchLineData);
+                }
 
                 results = subtitleItems.Select(subtitle => new BatchTranslatedLine
                 {
@@ -873,7 +915,7 @@ public class TranslationRequestService : ITranslationRequestService
         List<BatchTranslatedLine> results,
         CancellationToken cancellationToken)
     {
-        await subtitleTranslator.ProcessSubtitleBatch(
+        var newlyTranslated = await subtitleTranslator.ProcessSubtitleBatch(
             batch,
             batchService,
             sourceLanguage,
@@ -882,18 +924,21 @@ public class TranslationRequestService : ITranslationRequestService
             preserveLineBreaks,
             cancellationToken);
 
-        var lineData = batch.Select(s => new TranslatedLineData
+        if (newlyTranslated.Count > 0)
         {
-            Position = s.Position,
-            Source = string.Join(" ", stripSubtitleFormatting ? s.PlaintextLines : s.Lines),
-            Target = string.Join(" ", s.TranslatedLines ?? s.Lines)
-        }).ToList();
-        await _progressService.EmitLines(translationRequest, lineData);
+            var lineData = newlyTranslated.Select(s => new TranslatedLineData
+            {
+                Position = s.Position,
+                Source = string.Join(" ", stripSubtitleFormatting ? s.PlaintextLines : s.Lines),
+                Target = string.Join(" ", s.TranslatedLines)
+            }).ToList();
+            await _progressService.EmitLines(translationRequest, lineData);
+        }
 
         results.AddRange(batch.Select(subtitle => new BatchTranslatedLine
         {
             Position = subtitle.Position,
-            Line = string.Join(" ", subtitle.TranslatedLines ?? subtitle.Lines)
+            Line = string.Join(" ", subtitle.TranslatedLines.Count > 0 ? subtitle.TranslatedLines : subtitle.Lines)
         }));
     }
     
