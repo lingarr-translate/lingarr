@@ -167,6 +167,31 @@ public class TranslationJob
             var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
             var translator = new SubtitleTranslationService(translationService, _logger, _progressService);
             var subtitles = await _subtitleService.ReadSubtitles(request.SubtitleToTranslate);
+
+            // subtitle already carries a translation from an earlier prior run.
+            // Group by Position and keep the most recent row in case the same position was used more than once.
+            var persistedLines = (await _dbContext.TranslationRequestLines
+                    .Where(line => line.TranslationRequestId == request.Id)
+                    .Select(line => new { line.Id, line.Position, line.Target })
+                    .ToListAsync(cancellationToken))
+                .GroupBy(line => line.Position)
+                .ToDictionary(g => g.Key, g => g.OrderByDescending(l => l.Id).First().Target);
+
+            if (persistedLines.Count > 0)
+            {
+                _logger.LogInformation(
+                    "Resuming translation for request {RequestId}: {Resumed} of {Total} lines already translated.",
+                    request.Id, persistedLines.Count, subtitles.Count);
+
+                foreach (var subtitle in subtitles)
+                {
+                    if (persistedLines.TryGetValue(subtitle.Position, out var target))
+                    {
+                        subtitle.TranslatedLines = [target];
+                    }
+                }
+            }
+
             List<SubtitleItem> translatedSubtitles;
             if (settings[SettingKeys.Translation.UseBatchTranslation] == "true"
                 && translationService is IBatchTranslationService _)
@@ -227,8 +252,11 @@ public class TranslationJob
                 }
             }
 
-            // statistics tracking
-            await _statisticsService.UpdateTranslationStatisticsFromSubtitles(request, serviceType, translationService.ModelName, translatedSubtitles);
+            // statistics tracking, only count subtitles translated by this run
+            var newlyTranslatedSubtitles = persistedLines.Count == 0
+                ? translatedSubtitles
+                : translatedSubtitles.Where(s => !persistedLines.ContainsKey(s.Position)).ToList();
+            await _statisticsService.UpdateTranslationStatisticsFromSubtitles(request, serviceType, translationService.ModelName, newlyTranslatedSubtitles);
 
             var subtitleTag = "";
             if (settings[SettingKeys.Translation.UseSubtitleTagging] == "true")

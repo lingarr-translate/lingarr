@@ -5,7 +5,7 @@
             @click="router.push({ name: 'translation-detail', params: { id: item.id } })">
             <EyeOnIcon class="h-5 w-5" />
         </button>
-        <div class="flex w-12 items-center gap-2">
+        <div class="flex w-20 items-center gap-2">
             <LoaderCircleIcon v-if="loading" class="h-5 w-5 animate-spin" />
             <button
                 v-else-if="inProgress"
@@ -15,7 +15,16 @@
             </button>
             <template v-else-if="removable">
                 <button
+                    v-if="resumable"
                     :disabled="loading"
+                    title="Resume — reuse already-translated lines"
+                    class="hover:text-primary-content/50 cursor-pointer text-primary-content transition-colors"
+                    @click="executeAction(TRANSLATION_ACTIONS.RESUME)">
+                    <StartIcon class="h-5 w-5" />
+                </button>
+                <button
+                    :disabled="loading"
+                    title="Retry — start over"
                     class="hover:text-primary-content/50 cursor-pointer text-primary-content transition-colors"
                     @click="executeAction(TRANSLATION_ACTIONS.RETRY)">
                     <RetryIcon class="h-5 w-5" />
@@ -39,6 +48,7 @@ import TimesIcon from '@/components/icons/TimesIcon.vue'
 import LoaderCircleIcon from '@/components/icons/LoaderCircleIcon.vue'
 import TrashIcon from '@/components/icons/TrashIcon.vue'
 import RetryIcon from '@/components/icons/RetryIcon.vue'
+import StartIcon from '@/components/icons/StartIcon.vue'
 import EyeOnIcon from '@/components/icons/EyeOnIcon.vue'
 const router = useRouter()
 
@@ -59,6 +69,13 @@ const removable = computed(
     () =>
         props.item.status !== TRANSLATION_STATUS.PENDING &&
         props.item.status !== TRANSLATION_STATUS.INPROGRESS
+)
+
+const resumable = computed(
+    () =>
+        props.item.status === TRANSLATION_STATUS.FAILED ||
+        props.item.status === TRANSLATION_STATUS.CANCELLED ||
+        props.item.status === TRANSLATION_STATUS.INTERRUPTED
 )
 
 const executeAction = async (action: TRANSLATION_ACTIONS) => {

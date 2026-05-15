@@ -189,6 +189,8 @@ async function handleAction(translationRequest: ITranslationRequest, action: TRA
             return await translationRequestStore.remove(translationRequest)
         case TRANSLATION_ACTIONS.RETRY:
             return await translationRequestStore.retry(translationRequest)
+        case TRANSLATION_ACTIONS.RESUME:
+            return await translationRequestStore.resume(translationRequest)
         default:
             console.error('unknown translation request action: ' + action)
     }

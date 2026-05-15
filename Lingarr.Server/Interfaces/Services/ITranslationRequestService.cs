@@ -93,6 +93,20 @@ public interface ITranslationRequestService
     );
 
     /// <summary>
+    /// Resumes a Failed, Cancelled or Interrupted translation request by re-running
+    /// the same row. Already-translated lines persisted on the row are reused, so
+    /// only the missing positions hit the translation provider.
+    /// </summary>
+    /// <param name="resumeRequest">The translation request to resume (only Id is required)</param>
+    /// <returns>
+    /// A message indicating the result of the resume operation, or null if the request
+    /// wasn't found or is not in a resumable state
+    /// </returns>
+    Task<string?> ResumeTranslationRequest(
+        TranslationRequest resumeRequest
+    );
+
+    /// <summary>
     /// Cancels an existing translation request and its associated background job.
     /// </summary>
     /// <param name="cancelRequest">The translation request to cancel</param>
