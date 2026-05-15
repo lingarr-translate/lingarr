@@ -116,12 +116,12 @@ public class StartupService : IHostedService
 
         foreach (var (envVar, settingKey) in environmentSettings)
         {
-            var value = Environment.GetEnvironmentVariable(envVar);
+            var value = ReadFromFileEnv(envVar + "_FILE") ?? Environment.GetEnvironmentVariable(envVar);
             if (string.IsNullOrEmpty(value))
             {
                 continue;
             }
-            
+
             var setting = await dbContext.Settings.FirstOrDefaultAsync(s => s.Key == settingKey);
             if (setting != null)
             {
@@ -130,6 +130,24 @@ public class StartupService : IHostedService
             }
 
             _logger.LogInformation($"Updated setting '{settingKey}' from environment variable '{envVar}'.");
+        }
+    }
+
+    private static string? ReadFromFileEnv(string fileEnvVar)
+    {
+        var path = Environment.GetEnvironmentVariable(fileEnvVar);
+        if (string.IsNullOrEmpty(path))
+        {
+            return null;
+        }
+
+        try
+        {
+            return File.ReadAllText(path).TrimEnd('\r', '\n');
+        }
+        catch
+        {
+            return null;
         }
     }
 

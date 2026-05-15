@@ -1,6 +1,29 @@
 ## Settings
 These settings can be configured as environment variables to persist configurations across reinstallations.
 
+### **Docker secrets**
+
+Any of the environment variables documented below can also be supplied by appending `_FILE` to the variable name and pointing it at a file containing the value.  
+When both `<VAR>` and `<VAR>_FILE` are set, `<VAR>_FILE` will be selected primarily.
+
+Example:
+
+```yaml
+services:
+  lingarr:
+    image: lingarr/lingarr:latest
+    environment:
+      OPENAI_API_KEY_FILE: /run/secrets/openai_api_key
+    secrets:
+      - openai_api_key
+
+secrets:
+  openai_api_key:
+    file: ./secrets/openai_api_key.txt
+```
+
+---
+
 ### **General Configuration**
 
 | **Environment Variable**   | **Description**                                                                                                                               |
