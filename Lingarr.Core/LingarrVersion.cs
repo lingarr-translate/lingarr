@@ -1,16 +1,28 @@
-﻿using Lingarr.Core.Models;
+﻿using System.Reflection;
+using Lingarr.Core.Models;
 
 namespace Lingarr.Core;
 
 public static class LingarrVersion
 {
     public const string Name = "Lingarr";
-    public const string Number = "1.1.0";
+
+    public static readonly string Number = GetCurrentVersion();
+
+    private static string GetCurrentVersion()
+    {
+        var attribute = typeof(LingarrVersion).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+        var version = attribute?.InformationalVersion ?? "0.0.0";
+
+        var buildMetadataStart = version.IndexOf('+');
+        return buildMetadataStart < 0 ? version : version[..buildMetadataStart];
+    }
 
     public static async Task<VersionInfo> CheckForUpdates(object? lingarrApiService = null)
     {
         var latestVersion = Number;
-        
+        var isDevelopment = !Version.TryParse(Number, out var current);
+
         try
         {
             var method = lingarrApiService?.GetType().GetMethod("GetLatestVersion");
@@ -26,19 +38,21 @@ public static class LingarrVersion
                 }
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"Failed to get latest version");
+            Console.WriteLine("Failed to get latest version");
         }
+
+        var newVersion = !isDevelopment
+            && Version.TryParse(latestVersion.TrimStart('v'), out var latest)
+            && latest > current;
 
         return new VersionInfo
         {
-            NewVersion = IsNewVersionAvailable(latestVersion, Number),
+            NewVersion = newVersion,
+            IsDevelopment = isDevelopment,
             CurrentVersion = Number,
             LatestVersion = latestVersion
         };
     }
-
-    private static bool IsNewVersionAvailable(string latestVersion, string currentVersion)
-        => Version.Parse(latestVersion.TrimStart('v')) > Version.Parse(currentVersion);
 }

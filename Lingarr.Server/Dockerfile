@@ -20,6 +20,7 @@ WORKDIR /app
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION
 ARG TARGETARCH
+ARG VERSION=0.0.0-dev
 WORKDIR /src
 COPY ["Directory.Packages.props", "global.json", "./"]
 COPY ["Lingarr.Server/Lingarr.Server.csproj", "Lingarr.Server/"]
@@ -29,13 +30,14 @@ RUN dotnet restore "./Lingarr.Server/./Lingarr.Server.csproj" --arch $TARGETARCH
 COPY . .
 WORKDIR "/src/Lingarr.Server"
 COPY --from=client /Client/dist/ ./wwwroot
-RUN dotnet build "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build --arch $TARGETARCH
+RUN dotnet build "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/build --arch $TARGETARCH /p:Version=$VERSION
 
 # Step 4: Publish the application
 FROM --platform=$BUILDPLATFORM build AS publish
 ARG BUILD_CONFIGURATION
 ARG TARGETARCH
-RUN dotnet publish "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --arch $TARGETARCH
+ARG VERSION=0.0.0-dev
+RUN dotnet publish "./Lingarr.Server.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false --arch $TARGETARCH /p:Version=$VERSION
 
 # Step 5: Final image
 FROM base AS final

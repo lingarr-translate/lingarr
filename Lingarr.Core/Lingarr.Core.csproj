@@ -5,6 +5,7 @@
         <TargetFramework>net10.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <Version Condition="'$(Version)' == ''">0.0.0-dev</Version>
     </PropertyGroup>
 
     <ItemGroup>
