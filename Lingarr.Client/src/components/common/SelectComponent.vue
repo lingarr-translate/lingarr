@@ -51,11 +51,7 @@ import { Ref, ref, nextTick, computed } from 'vue'
 import CaretRightIcon from '@/components/icons/CaretRightIcon.vue'
 import LoaderCircleIcon from '@/components/icons/LoaderCircleIcon.vue'
 import useClickOutside from '@/composables/useClickOutside'
-
-export interface ISelectOption {
-    value: string
-    label: string
-}
+import { ISelectOption } from '@/ts'
 
 const props = withDefaults(
     defineProps<{

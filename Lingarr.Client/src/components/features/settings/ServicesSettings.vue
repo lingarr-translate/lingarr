@@ -33,7 +33,7 @@
                         </div>
                         <button
                             type="button"
-                            class="text-secondary-content/60 hover:text-primary-content focus-visible:ring-accent cursor-pointer rounded p-1 focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-30"
+                            class="text-primary-content hover:text-primary-content/50 focus-visible:ring-accent cursor-pointer rounded p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-30"
                             :disabled="index === configuringIndex"
                             :aria-pressed="index === configuringIndex"
                             title="Configure credentials"
@@ -43,7 +43,7 @@
                         </button>
                         <button
                             type="button"
-                            class="text-secondary-content/60 hover:text-primary-content focus-visible:ring-accent cursor-pointer rounded p-1 focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-30"
+                            class="text-primary-content hover:text-primary-content/50 focus-visible:ring-accent cursor-pointer rounded p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-30"
                             :disabled="index === 0"
                             title="Move up"
                             aria-label="Move up"
@@ -52,7 +52,7 @@
                         </button>
                         <button
                             type="button"
-                            class="text-secondary-content/60 hover:text-primary-content focus-visible:ring-accent cursor-pointer rounded p-1 focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-30"
+                            class="text-primary-content hover:text-primary-content/50 focus-visible:ring-accent cursor-pointer rounded p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-30"
                             :disabled="index === services.length - 1"
                             title="Move down"
                             aria-label="Move down"
@@ -61,7 +61,7 @@
                         </button>
                         <button
                             type="button"
-                            class="text-secondary-content/40 focus-visible:ring-accent cursor-pointer rounded p-1 hover:text-red-400 focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-30"
+                            class="text-primary-content hover:text-primary-content/50 focus-visible:ring-accent cursor-pointer rounded p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-30"
                             :disabled="services.length <= 1"
                             title="Remove service"
                             aria-label="Remove service"
@@ -70,12 +70,8 @@
                         </button>
                     </li>
                     <li v-if="services.length < serviceOptions.length">
-                        <ButtonComponent
-                            variant="ghost"
-                            size="sm"
-                            class="w-full justify-start"
-                            @click="addRow">
-                            <PlusIcon class="mr-1 h-4 w-4" />
+                        <ButtonComponent variant="ghost" size="xs" @click="addRow">
+                            <PlusIcon class="mr-1 h-3 w-3" />
                             Add fallback service
                         </ButtonComponent>
                     </li>
