@@ -573,6 +573,7 @@ public class TranslationRequestService : ITranslationRequestService
             var settings = await _settingService.GetSettings([
                 SettingKeys.Translation.UseBatchTranslation,
                 SettingKeys.Translation.ServiceType,
+                SettingKeys.Translation.FallbackServiceType,
                 SettingKeys.Translation.MaxBatchSize,
                 SettingKeys.Translation.StripSubtitleFormatting,
                 SettingKeys.Translation.PreserveLineBreaks
@@ -582,6 +583,22 @@ public class TranslationRequestService : ITranslationRequestService
             var translationService = _translationServiceFactory.CreateTranslationService(
                 serviceType
             );
+
+            ITranslationService? fallbackTranslationService = null;
+            var fallbackServiceType = settings.GetValueOrDefault(SettingKeys.Translation.FallbackServiceType);
+            if (!string.IsNullOrWhiteSpace(fallbackServiceType) && !string.Equals(serviceType, fallbackServiceType, StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    fallbackTranslationService = _translationServiceFactory.CreateTranslationService(fallbackServiceType);
+                }
+                catch (ArgumentException ex)
+                {
+                    _logger.LogWarning(ex,
+                        "Configured fallback translation service '{FallbackService}' is not supported; continuing without fallback.",
+                        fallbackServiceType);
+                }
+            }
 
             // Skip if an active content-translation row for this media+target already exists.
             var existingId = await _dbContext.TranslationRequests
@@ -647,7 +664,9 @@ public class TranslationRequestService : ITranslationRequestService
                         maxSize,
                         stripSubtitleFormatting,
                         preserveLineBreaks,
-                        cancellationToken);
+                        cancellationToken,
+                        fallbackTranslationService,
+                        fallbackServiceType);
 
                     // Handle completion now since we early exit here
                     await HandleAsyncTranslationCompletion(translationRequest, serviceType, translationService, results, cancellationToken);
@@ -674,7 +693,9 @@ public class TranslationRequestService : ITranslationRequestService
                     translateAbleContent.TargetLanguage,
                     stripSubtitleFormatting,
                     preserveLineBreaks,
-                    cancellationToken);
+                    cancellationToken,
+                    fallbackTranslationService,
+                    fallbackServiceType);
 
                 if (newlyTranslated.Count > 0)
                 {
@@ -845,7 +866,9 @@ public class TranslationRequestService : ITranslationRequestService
         int maxBatchSize,
         bool stripSubtitleFormatting,
         bool preserveLineBreaks,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ITranslationService? fallbackTranslationService = null,
+        string? fallbackServiceType = null)
     {
         var results = new List<BatchTranslatedLine>();
         var currentBatch = new List<SubtitleItem>();
@@ -862,7 +885,8 @@ public class TranslationRequestService : ITranslationRequestService
                 await ProcessBatch(currentBatch, subtitleTranslator, batchService,
                     translationRequest,
                     translateAbleSubtitleContent.SourceLanguage, translateAbleSubtitleContent.TargetLanguage,
-                    stripSubtitleFormatting, preserveLineBreaks, results, cancellationToken);
+                    stripSubtitleFormatting, preserveLineBreaks, results, cancellationToken,
+                    fallbackTranslationService, fallbackServiceType);
                 currentBatch.Clear();
 
                 // Report progress
@@ -890,7 +914,8 @@ public class TranslationRequestService : ITranslationRequestService
             await ProcessBatch(currentBatch, subtitleTranslator, batchService,
                 translationRequest,
                 translateAbleSubtitleContent.SourceLanguage, translateAbleSubtitleContent.TargetLanguage,
-                stripSubtitleFormatting, preserveLineBreaks, results, cancellationToken);
+                stripSubtitleFormatting, preserveLineBreaks, results, cancellationToken,
+                fallbackTranslationService, fallbackServiceType);
 
             processedBatches++;
             var progress = (int)Math.Round((double)processedBatches * 100 / totalBatches);
@@ -913,7 +938,9 @@ public class TranslationRequestService : ITranslationRequestService
         bool stripSubtitleFormatting,
         bool preserveLineBreaks,
         List<BatchTranslatedLine> results,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        ITranslationService? fallbackTranslationService = null,
+        string? fallbackServiceType = null)
     {
         var newlyTranslated = await subtitleTranslator.ProcessSubtitleBatch(
             batch,
@@ -922,7 +949,9 @@ public class TranslationRequestService : ITranslationRequestService
             targetLanguage,
             stripSubtitleFormatting,
             preserveLineBreaks,
-            cancellationToken);
+            cancellationToken,
+            fallbackTranslationService,
+            fallbackServiceType);
 
         if (newlyTranslated.Count > 0)
         {
