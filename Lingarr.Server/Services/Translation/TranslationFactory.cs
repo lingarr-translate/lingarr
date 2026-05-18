@@ -29,7 +29,8 @@ public class TranslationFactory : ITranslationServiceFactory
                 languageCodeService),
 
             "google" => new GTranslatorService<GoogleTranslator>(
-                _serviceProvider.GetRequiredService<GoogleTranslator>(),
+                _serviceProvider,
+                _serviceProvider.GetRequiredService<IHttpClientFactory>(),
                 "/app/Statics/google_languages.json",
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<ILogger<GoogleTranslator>>(),
@@ -37,7 +38,8 @@ public class TranslationFactory : ITranslationServiceFactory
             ),
 
             "bing" => new GTranslatorService<BingTranslator>(
-                _serviceProvider.GetRequiredService<BingTranslator>(),
+                _serviceProvider,
+                _serviceProvider.GetRequiredService<IHttpClientFactory>(),
                 "/app/Statics/bing_languages.json",
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<ILogger<BingTranslator>>(),
@@ -45,7 +47,8 @@ public class TranslationFactory : ITranslationServiceFactory
             ),
 
             "microsoft" => new GTranslatorService<MicrosoftTranslator>(
-                _serviceProvider.GetRequiredService<MicrosoftTranslator>(),
+                _serviceProvider,
+                _serviceProvider.GetRequiredService<IHttpClientFactory>(),
                 "/app/Statics/microsoft_languages.json",
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<ILogger<MicrosoftTranslator>>(),
@@ -53,7 +56,8 @@ public class TranslationFactory : ITranslationServiceFactory
             ),
 
             "yandex" => new GTranslatorService<YandexTranslator>(
-                _serviceProvider.GetRequiredService<YandexTranslator>(),
+                _serviceProvider,
+                _serviceProvider.GetRequiredService<IHttpClientFactory>(),
                 "/app/Statics/yandex_languages.json",
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<ILogger<YandexTranslator>>(),
