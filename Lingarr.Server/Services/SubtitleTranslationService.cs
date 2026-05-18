@@ -13,6 +13,7 @@ namespace Lingarr.Server.Services;
 public class SubtitleTranslationService
 {
     private const int MaxLineLength = 42;
+    private const int SubtitleLineRetryAttempts = 3;
     private int _lastProgression = -1;
     private readonly ITranslationService _translationService;
     private readonly IProgressService? _progressService;
@@ -113,19 +114,19 @@ public class SubtitleTranslationService
                 {
                     try
                     {
-                        translated = await TranslateSubtitleLine(new TranslateAbleSubtitleLine
+                        translated = await TranslateSubtitleLineWithRetryAsync(new TranslateAbleSubtitleLine
                         {
                             SubtitleLine = subtitleLine,
                             SourceLanguage = translationRequest.SourceLanguage,
                             TargetLanguage = translationRequest.TargetLanguage,
                             ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
                             ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
-                        }, cancellationToken);
+                        }, subtitle.Position, cancellationToken);
                     }
                     catch (TranslationException ex) when (!cancellationToken.IsCancellationRequested)
                     {
                         _logger.LogWarning(ex,
-                            "Translation failed for subtitle position {Position}; keeping original line.",
+                            "Translation failed for subtitle position {Position} after retries; keeping original line.",
                             subtitle.Position);
                         translated = subtitleLine;
                     }
@@ -185,6 +186,32 @@ public class SubtitleTranslationService
         }
     }
 
+    /// <summary>
+    /// Translates a subtitle line with a small retry budget before bubbling the failure up.
+    /// </summary>
+    private async Task<string> TranslateSubtitleLineWithRetryAsync(
+        TranslateAbleSubtitleLine translateAbleSubtitle,
+        int position,
+        CancellationToken cancellationToken)
+    {
+        for (var attempt = 1; attempt <= SubtitleLineRetryAttempts; attempt++)
+        {
+            try
+            {
+                return await TranslateSubtitleLine(translateAbleSubtitle, cancellationToken);
+            }
+            catch (TranslationException ex) when (!cancellationToken.IsCancellationRequested && attempt < SubtitleLineRetryAttempts)
+            {
+                _logger.LogWarning(ex,
+                    "Translation failed for subtitle position {Position} on attempt {Attempt}/{MaxAttempts}; retrying.",
+                    position,
+                    attempt,
+                    SubtitleLineRetryAttempts);
+            }
+        }
+
+        throw new TranslationException($"Translation failed after {SubtitleLineRetryAttempts} attempts for subtitle position {position}.");
+    }
     /// <summary>
     /// Translates subtitles in batch mode
     /// </summary>
@@ -322,18 +349,19 @@ public class SubtitleTranslationService
                 string translated;
                 try
                 {
-                    translated = await _translationService.TranslateAsync(
-                        subtitleSource,
-                        sourceLanguage,
-                        targetLanguage,
-                        null,
-                        null,
-                        cancellationToken);
+                    translated = await TranslateSubtitleLineWithRetryAsync(new TranslateAbleSubtitleLine
+                    {
+                        SubtitleLine = subtitleSource,
+                        SourceLanguage = sourceLanguage,
+                        TargetLanguage = targetLanguage,
+                        ContextLinesBefore = null,
+                        ContextLinesAfter = null
+                    }, subtitle.Position, cancellationToken);
                 }
                 catch (TranslationException translationEx) when (!cancellationToken.IsCancellationRequested)
                 {
                     _logger.LogWarning(translationEx,
-                        "Translation failed for subtitle position {Position}; keeping original line.",
+                        "Translation failed for subtitle position {Position} after retries; keeping original line.",
                         subtitle.Position);
                     translated = subtitleSource;
                 }
