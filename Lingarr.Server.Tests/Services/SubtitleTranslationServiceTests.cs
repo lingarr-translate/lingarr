@@ -286,6 +286,49 @@ public class SubtitleTranslationServiceTests
     }
 
     [Fact]
+    public async Task TranslateSubtitles_TranslationFailure_FallsBackToAlternateProviderAndContinues()
+    {
+        // Arrange - primary provider dies, fallback provider succeeds
+        var primaryCalls = 0;
+        var harness = CreatePerLineHarness(_ =>
+        {
+            primaryCalls++;
+            throw new TranslationException("primary boom");
+        });
+
+        var fallbackTranslationServiceMock = new Mock<ITranslationService>();
+        fallbackTranslationServiceMock
+            .Setup(t => t.TranslateAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<List<string>?>(),
+                It.IsAny<List<string>?>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string text, string _, string _, List<string>? _, List<string>? _, CancellationToken _) =>
+                text == "hello" ? "hola" : "mundo");
+
+        var subtitles = new List<SubtitleItem>
+        {
+            Subtitle(1, "hello", "world")
+        };
+
+        // Act
+        await harness.Service.TranslateSubtitles(subtitles, NewRequest(),
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: true,
+            contextBefore: 0,
+            contextAfter: 0,
+            CancellationToken.None,
+            fallbackTranslationServiceMock.Object,
+            "fallback-provider");
+
+        // Assert
+        Assert.Equal(3, primaryCalls);
+        Assert.Equal(["hola", "mundo"], subtitles[0].TranslatedLines);
+    }
+
+    [Fact]
     public async Task TranslateSubtitles_WhitespaceLine_SkipsTranslationAndPassesThrough()
     {
         // Arrange
@@ -541,6 +584,52 @@ public class SubtitleTranslationServiceTests
 
         // Assert
         Assert.Equal(3, attempts);
+        Assert.Equal(["hola mundo"], subtitles[0].TranslatedLines);
+        Assert.Equal(["adios"], subtitles[1].TranslatedLines);
+    }
+
+    [Fact]
+    public async Task ProcessSubtitleBatch_BatchFailure_FallsBackToAlternateProviderAndContinues()
+    {
+        // Arrange - primary batch API dies, fallback batch API succeeds
+        var primaryAttempts = 0;
+        var harness = CreateBatchHarness(_ =>
+        {
+            primaryAttempts++;
+            throw new TranslationException("primary batch boom");
+        });
+
+        var fallbackTranslationServiceMock = new Mock<ITranslationService>();
+        var fallbackBatchTranslationServiceMock = fallbackTranslationServiceMock.As<IBatchTranslationService>();
+        fallbackBatchTranslationServiceMock
+            .Setup(b => b.TranslateBatchAsync(
+                It.IsAny<List<BatchSubtitleItem>>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<BatchSubtitleItem> items, string _, string _, CancellationToken _) =>
+                items.ToDictionary(i => i.Position, i => i.Position == 1 ? "hola mundo" : "adios"));
+
+        var subtitles = new List<SubtitleItem>
+        {
+            Subtitle(1, "hello", "world"),
+            Subtitle(2, "goodbye")
+        };
+
+        // Act
+        await harness.Service.ProcessSubtitleBatch(
+            subtitles,
+            (IBatchTranslationService)harness.TranslationServiceMock.Object,
+            "en",
+            "es",
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: false,
+            CancellationToken.None,
+            fallbackTranslationServiceMock.Object,
+            "fallback-provider");
+
+        // Assert
+        Assert.Equal(3, primaryAttempts);
         Assert.Equal(["hola mundo"], subtitles[0].TranslatedLines);
         Assert.Equal(["adios"], subtitles[1].TranslatedLines);
     }
