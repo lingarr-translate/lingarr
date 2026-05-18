@@ -1,4 +1,5 @@
 using System.Net;
+using System.Reflection;
 using GTranslate.Translators;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
@@ -43,7 +44,8 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
-                SettingKeys.Translation.RetryDelayMultiplier
+                SettingKeys.Translation.RetryDelayMultiplier,
+                SettingKeys.Translation.RequestTimeout
             ]);
 
             _maxRetries = int.TryParse(settings[SettingKeys.Translation.MaxRetries], out var maxRetries)
@@ -58,6 +60,11 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
             _retryDelayMultiplier = int.TryParse(settings[SettingKeys.Translation.RetryDelayMultiplier], out var multiplier)
                 ? multiplier
                 : 2;
+
+            var requestTimeoutMinutes = int.TryParse(settings[SettingKeys.Translation.RequestTimeout], out var requestTimeout)
+                ? requestTimeout
+                : 5;
+            ApplyHttpClientTimeout(TimeSpan.FromMinutes(requestTimeoutMinutes));
 
             _initialized = true;
         }
@@ -122,5 +129,40 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
         }
 
         throw new TranslationException("Translation failed after maximum retry attempts.");
+    }
+
+    private void ApplyHttpClientTimeout(TimeSpan timeout)
+    {
+        var httpClient = GetTranslatorHttpClient();
+        if (httpClient is null)
+        {
+            _logger.LogWarning(
+                "Unable to locate an HttpClient instance on {TranslatorType}; request timeout setting will not be applied.",
+                typeof(T).Name);
+            return;
+        }
+
+        httpClient.Timeout = timeout;
+    }
+
+    private HttpClient? GetTranslatorHttpClient()
+    {
+        var translatorType = _translator.GetType();
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+
+        foreach (var field in translatorType.GetFields(flags))
+        {
+            if (field.FieldType != typeof(HttpClient))
+            {
+                continue;
+            }
+
+            return field.GetValue(_translator) as HttpClient;
+        }
+
+        var property = translatorType.GetProperties(flags)
+            .FirstOrDefault(p => p.PropertyType == typeof(HttpClient) && p.CanRead);
+
+        return property?.GetValue(_translator) as HttpClient;
     }
 }
