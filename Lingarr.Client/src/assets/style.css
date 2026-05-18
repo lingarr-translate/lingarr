@@ -171,6 +171,51 @@
     --syntax-keyword: #919ba0;
 }
 
+.sonarr {
+    --primary: #262626;
+    --primary-content: #cccccc;
+    --secondary: #353535;
+    --secondary-content: #e8e8e8;
+    --tertiary: #2d2d2d;
+    --tertiary-content: #cccccc;
+    --accent: #35c5f0;
+    --accent-content: #ffffff;
+    --syntax-key: #35c5f0;
+    --syntax-string: #7ad17a;
+    --syntax-number: #ffc230;
+    --syntax-keyword: #e67e22;
+}
+
+.radarr {
+    --primary: #262626;
+    --primary-content: #cccccc;
+    --secondary: #353535;
+    --secondary-content: #e8e8e8;
+    --tertiary: #2d2d2d;
+    --tertiary-content: #cccccc;
+    --accent: #ffc230;
+    --accent-content: #1a1a1a;
+    --syntax-key: #ffc230;
+    --syntax-string: #7ad17a;
+    --syntax-number: #35c5f0;
+    --syntax-keyword: #e67e22;
+}
+
+.bazarr {
+    --primary: #262626;
+    --primary-content: #cccccc;
+    --secondary: #353535;
+    --secondary-content: #e8e8e8;
+    --tertiary: #2d2d2d;
+    --tertiary-content: #cccccc;
+    --accent: #be4bdb;
+    --accent-content: #ffffff;
+    --syntax-key: #be4bdb;
+    --syntax-string: #7ad17a;
+    --syntax-number: #ffc230;
+    --syntax-keyword: #35c5f0;
+}
+
 *::-webkit-scrollbar {
     @apply h-2 w-1;
 }
