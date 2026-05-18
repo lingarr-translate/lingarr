@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
+using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models;
@@ -82,10 +83,23 @@ public class SubtitleTranslationServiceTests
         };
     }
 
-    private static BatchHarness CreateBatchHarness(Func<List<BatchSubtitleItem>, Dictionary<int, string>> batchTranslate)
+    private static BatchHarness CreateBatchHarness(Func<List<BatchSubtitleItem>, Dictionary<int, string>> batchTranslate, Func<string, string>? translate = null)
     {
         // The service requires the same instance to be both ITranslationService and IBatchTranslationService.
         var translationServiceMock = new Mock<ITranslationService>();
+        if (translate != null)
+        {
+            translationServiceMock
+                .Setup(t => t.TranslateAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<string>(),
+                    It.IsAny<List<string>?>(),
+                    It.IsAny<List<string>?>(),
+                    It.IsAny<CancellationToken>()))
+                .ReturnsAsync((string text, string _, string _, List<string>? _, List<string>? _, CancellationToken _) => translate(text));
+        }
+
         var batchTranslationServiceMock = translationServiceMock.As<IBatchTranslationService>();
         batchTranslationServiceMock
             .Setup(b => b.TranslateBatchAsync(
@@ -246,6 +260,40 @@ public class SubtitleTranslationServiceTests
     }
 
     [Fact]
+    public async Task TranslateSubtitles_TranslationFailure_FallsBackToOriginalAndContinues()
+    {
+        // Arrange - first line fails, second line still translates
+        var callCount = 0;
+        var harness = CreatePerLineHarness(text =>
+        {
+            callCount++;
+            if (callCount == 1)
+            {
+                throw new TranslationException("boom");
+            }
+
+            return text == "world" ? "mundo" : $"tr:{text}";
+        });
+        var subtitles = new List<SubtitleItem>
+        {
+            Subtitle(1, "hello"),
+            Subtitle(2, "world")
+        };
+
+        // Act
+        await harness.Service.TranslateSubtitles(subtitles, NewRequest(),
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: false,
+            contextBefore: 0,
+            contextAfter: 0,
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(["hello"], subtitles[0].TranslatedLines);
+        Assert.Equal(["mundo"], subtitles[1].TranslatedLines);
+    }
+
+    [Fact]
     public async Task TranslateSubtitles_WhitespaceLine_SkipsTranslationAndPassesThrough()
     {
         // Arrange
@@ -270,7 +318,6 @@ public class SubtitleTranslationServiceTests
         Assert.Equal(1, translatedCalls);
     }
 
-    // ===== Per-file dedup =====
     // Many fansub .ass files stack multiple Dialogue lines at the same timestamp
     // with byte-identical plaintext (shadow/glow/border/main rendered as separate
     // entries). The service caches by (StartTime, EndTime, plaintext) and reuses
@@ -473,11 +520,16 @@ public class SubtitleTranslationServiceTests
     }
 
     [Fact]
-    public async Task ProcessSubtitleBatch_MissingTranslation_FallsBackToOriginalLines()
+    public async Task ProcessSubtitleBatch_BatchFailure_FallsBackToIndividualTranslationAndContinues()
     {
-        // Arrange
-        var harness = CreateBatchHarness(_ => new Dictionary<int, string>());
-        var subtitles = new List<SubtitleItem> { Subtitle(1, "hello", "world") };
+        // Arrange - batch API dies, but individual translation still works
+        var harness = CreateBatchHarness(_ => throw new TranslationException("batch boom"), text =>
+            text == "hello world" ? "hola mundo" : "adios");
+        var subtitles = new List<SubtitleItem>
+        {
+            Subtitle(1, "hello", "world"),
+            Subtitle(2, "goodbye")
+        };
 
         // Act
         await harness.Service.ProcessSubtitleBatch(subtitles, (IBatchTranslationService)harness.TranslationServiceMock.Object,
@@ -487,7 +539,8 @@ public class SubtitleTranslationServiceTests
             CancellationToken.None);
 
         // Assert
-        Assert.Equal(["hello", "world"], subtitles[0].TranslatedLines);
+        Assert.Equal(["hola mundo"], subtitles[0].TranslatedLines);
+        Assert.Equal(["adios"], subtitles[1].TranslatedLines);
     }
 
     #endregion
