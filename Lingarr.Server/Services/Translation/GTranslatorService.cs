@@ -61,7 +61,7 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
                 ? multiplier
                 : 2;
 
-            var requestTimeoutMinutes = int.TryParse(settings[SettingKeys.Translation.RequestTimeout], out var requestTimeout)
+            var requestTimeoutMinutes = int.TryParse(settings[SettingKeys.Translation.RequestTimeout], out var requestTimeout) && requestTimeout > 0
                 ? requestTimeout
                 : 5;
             ApplyHttpClientTimeout(TimeSpan.FromMinutes(requestTimeoutMinutes));
