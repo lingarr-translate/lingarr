@@ -14,19 +14,29 @@ public class SubtitleTranslationService
 {
     private const int MaxLineLength = 42;
     private int _lastProgression = -1;
-    private readonly ITranslationService _translationService;
+    private readonly IReadOnlyList<TranslationServiceEntry> _services;
     private readonly IProgressService? _progressService;
     private readonly ILogger _logger;
+    private readonly Dictionary<int, string> _serviceByPosition = [];
 
     public SubtitleTranslationService(
-        ITranslationService translationService,
+        IReadOnlyList<TranslationServiceEntry> services,
         ILogger logger,
         IProgressService? progressService = null)
     {
-        _translationService = translationService;
+        if (services.Count == 0)
+        {
+            throw new TranslationException("Subtitle translator could not be initialized, translation services list is empty.");
+        }
+        _services = services;
         _progressService = progressService;
         _logger = logger;
     }
+
+    /// <summary>
+    /// Service used to produce each translated line in the most recent run, keyed by subtitle position.
+    /// </summary>
+    public IReadOnlyDictionary<int, string> ServiceByPosition => _serviceByPosition;
 
     /// <summary>
     /// Translates a list of subtitle items from the source language to the target language.
@@ -100,6 +110,7 @@ public class SubtitleTranslationService
                 : [string.Join(" ", contentLines)];
 
             var translatedLines = new List<string>(subtitleLines.Count);
+            string? serviceUsed = null;
             foreach (var subtitleLine in subtitleLines)
             {
                 if (string.IsNullOrWhiteSpace(subtitleLine))
@@ -109,19 +120,23 @@ public class SubtitleTranslationService
                 }
 
                 var cacheKey = $"{subtitle.StartTime}|{subtitle.EndTime}|{subtitleLine}";
-                if (!translationCache.TryGetValue(cacheKey, out var translated))
+                if (translationCache.TryGetValue(cacheKey, out var cachedTranslation))
                 {
-                    translated = await TranslateSubtitleLine(new TranslateAbleSubtitleLine
-                    {
-                        SubtitleLine = subtitleLine,
-                        SourceLanguage = translationRequest.SourceLanguage,
-                        TargetLanguage = translationRequest.TargetLanguage,
-                        ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
-                        ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
-                    }, cancellationToken);
-                    translationCache[cacheKey] = translated;
+                    translatedLines.Add(cachedTranslation);
+                    continue;
                 }
-                translatedLines.Add(translated);
+
+                var (translation, service) = await TranslateSubtitleLine(new TranslateAbleSubtitleLine
+                {
+                    SubtitleLine = subtitleLine,
+                    SourceLanguage = translationRequest.SourceLanguage,
+                    TargetLanguage = translationRequest.TargetLanguage,
+                    ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
+                    ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
+                }, cancellationToken);
+                translationCache[cacheKey] = translation;
+                translatedLines.Add(translation);
+                serviceUsed ??= service;
             }
 
             subtitle.TranslatedLines = translatedLines.Count > 1
@@ -130,7 +145,11 @@ public class SubtitleTranslationService
 
             var sourceText = string.Join(" ", contentLines);
             var translatedText = string.Join(" ", subtitle.TranslatedLines);
-            await _progressService!.EmitLine(translationRequest, subtitle.Position, sourceText, translatedText);
+            if (serviceUsed != null)
+            {
+                _serviceByPosition[subtitle.Position] = serviceUsed;
+            }
+            await _progressService!.EmitLine(translationRequest, subtitle.Position, sourceText, translatedText, serviceUsed);
 
             iteration++;
             await EmitProgress(translationRequest, iteration, totalSubtitles);
@@ -141,47 +160,41 @@ public class SubtitleTranslationService
     }
 
     /// <summary>
-    /// Translates a single subtitle line using the configured translation service.
+    /// Translates a single subtitle line, walking the fallback services on <see cref="TranslationException"/>.
+    /// Cancellation propagates without triggering fallback.
     /// </summary>
-    /// <param name="translateAbleSubtitle">
-    /// Contains the subtitle line to translate along with source and target language specifications.
-    /// </param>
-    /// <param name="cancellationToken">Token to cancel the translation operation</param>
-    /// <returns>The translated subtitle line.</returns>
-    public async Task<string> TranslateSubtitleLine(
+    /// <returns>The translated line plus the service name that produced it.</returns>
+    public async Task<(string Translation, string Service)> TranslateSubtitleLine(
         TranslateAbleSubtitleLine translateAbleSubtitle,
         CancellationToken cancellationToken)
     {
-        try
+        TranslationException? lastError = null;
+        foreach (var entry in _services)
         {
-            return await _translationService.TranslateAsync(
-                translateAbleSubtitle.SubtitleLine,
-                translateAbleSubtitle.SourceLanguage,
-                translateAbleSubtitle.TargetLanguage,
-                translateAbleSubtitle.ContextLinesBefore,
-                translateAbleSubtitle.ContextLinesAfter,
-                cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                var translated = await entry.Service.TranslateAsync(
+                    translateAbleSubtitle.SubtitleLine,
+                    translateAbleSubtitle.SourceLanguage,
+                    translateAbleSubtitle.TargetLanguage,
+                    translateAbleSubtitle.ContextLinesBefore,
+                    translateAbleSubtitle.ContextLinesAfter,
+                    cancellationToken);
+                return (translated, entry.Name);
+            }
+            catch (TranslationException ex)
+            {
+                lastError = ex;
+                _logger.LogWarning(ex, "Translation service {Service} failed.", entry.Name);
+            }
         }
-        catch (TranslationException ex)
-        {
-            _logger.LogError(ex,
-                "Translation failed for subtitle line: {SubtitleLine} from {SourceLang} to {TargetLang}",
-                translateAbleSubtitle.SubtitleLine,
-                translateAbleSubtitle.SourceLanguage,
-                translateAbleSubtitle.TargetLanguage);
-            throw new TranslationException("Translation failed for subtitle line", ex);
-        }
+        throw new TranslationException("All configured translation services failed for subtitle line.", lastError);
     }
 
     /// <summary>
-    /// Translates subtitles in batch mode
+    /// Translates subtitles in batch mode.
     /// </summary>
-    /// <param name="subtitles">The list of subtitle items to translate.</param>
-    /// <param name="translationRequest">Contains the source and target language specifications.</param>
-    /// <param name="stripSubtitleFormatting">Boolean used for indicating that styles need to be stripped from the subtitle</param>
-    /// <param name="preserveLineBreaks">When true, multi-line subtitles are translated keeping their line breaks intact</param>
-    /// <param name="batchSize">Number of subtitles to process in each batch (0 for all)</param>
-    /// <param name="cancellationToken">Token to support cancellation of the translation operation.</param>
     public async Task<List<SubtitleItem>> TranslateSubtitlesBatch(
         List<SubtitleItem> subtitles,
         TranslationRequest translationRequest,
@@ -195,12 +208,6 @@ public class SubtitleTranslationService
             throw new TranslationException("Subtitle translator could not be initialized, progress service is null.");
         }
 
-        if (_translationService is not IBatchTranslationService batchTranslationService)
-        {
-            throw new TranslationException("The configured translation service does not support batch translation.");
-        }
-
-        // If batchSize is 0 or negative, we'll translate all subtitles at once
         if (batchSize <= 0)
         {
             batchSize = subtitles.Count;
@@ -222,8 +229,8 @@ public class SubtitleTranslationService
                 .Take(batchSize)
                 .ToList();
 
-            var newlyTranslated = await ProcessSubtitleBatch(currentBatch,
-                batchTranslationService,
+            var newlyTranslated = await ProcessSubtitleBatch(
+                currentBatch,
                 translationRequest.SourceLanguage,
                 translationRequest.TargetLanguage,
                 stripSubtitleFormatting,
@@ -236,7 +243,8 @@ public class SubtitleTranslationService
                 {
                     Position = s.Position,
                     Source = string.Join(" ", stripSubtitleFormatting ? s.PlaintextLines : s.Lines),
-                    Target = string.Join(" ", s.TranslatedLines)
+                    Target = string.Join(" ", s.TranslatedLines),
+                    Service = _serviceByPosition.GetValueOrDefault(s.Position)
                 }).ToList();
                 await _progressService!.EmitLines(translationRequest, lineData);
             }
@@ -250,32 +258,65 @@ public class SubtitleTranslationService
     }
 
     /// <summary>
-    /// Processes a batch of subtitles by translating them and updating their TranslatedLines property.
+    /// Translates a batch of subtitles using the first batch-capable provider, falling back to subsequent
+    /// batch-capable providers on <see cref="TranslationException"/>, then to per-line translation (which
+    /// has its own fallback loop) if no batch provider succeeds.
     /// </summary>
-    /// <param name="currentBatch">The batch of subtitles to process</param>
-    /// <param name="batchTranslationService">The batch translation service to use</param>
-    /// <param name="sourceLanguage"></param>
-    /// <param name="targetLanguage"></param>
-    /// <param name="stripSubtitleFormatting">Boolean used for indicating that styles need to be stripped from the subtitle</param>
-    /// <param name="preserveLineBreaks">When true, multi-line subtitles are sent and parsed back with their line breaks preserved</param>
-    /// <param name="cancellationToken">Token to support cancellation of the translation operation</param>
-    /// <returns>The subset of <paramref name="currentBatch"/> that was newly translated by this call (excludes items resumed from a prior run).</returns>
     public async Task<List<SubtitleItem>> ProcessSubtitleBatch(
         List<SubtitleItem> currentBatch,
-        IBatchTranslationService batchTranslationService,
         string sourceLanguage,
         string targetLanguage,
         bool stripSubtitleFormatting,
         bool preserveLineBreaks,
         CancellationToken cancellationToken)
     {
-        // subtitle already carries a translation from a prior run.
-        var toTranslate = currentBatch.Where(s => s.TranslatedLines.Count == 0).ToList();
+        var toTranslate = currentBatch.Where(subtitle => subtitle.TranslatedLines.Count == 0).ToList();
         if (toTranslate.Count == 0)
         {
             return [];
         }
 
+        TranslationException? lastError = null;
+        foreach (var entry in _services)
+        {
+            if (entry.BatchService is null)
+            {
+                continue;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                await RunBatch(
+                    entry.BatchService,
+                    entry.Name,
+                    toTranslate,
+                    sourceLanguage,
+                    targetLanguage,
+                    stripSubtitleFormatting,
+                    preserveLineBreaks,
+                    cancellationToken);
+                return toTranslate;
+            }
+            catch (TranslationException ex)
+            {
+                lastError = ex;
+                _logger.LogWarning(ex, "Batch translation service {Service} failed.", entry.Name);
+            }
+        }
+        throw new TranslationException("All configured batch translation services failed.", lastError);
+    }
+
+    private async Task RunBatch(
+        IBatchTranslationService batchService,
+        string serviceName,
+        List<SubtitleItem> toTranslate,
+        string sourceLanguage,
+        string targetLanguage,
+        bool stripSubtitleFormatting,
+        bool preserveLineBreaks,
+        CancellationToken cancellationToken)
+    {
         var lineSeparator = preserveLineBreaks ? "\n" : " ";
         var batchItems = toTranslate.Select(subtitle =>
         {
@@ -287,7 +328,7 @@ public class SubtitleTranslationService
             };
         }).ToList();
 
-        var batchResults = await batchTranslationService.TranslateBatchAsync(
+        var batchResults = await batchService.TranslateBatchAsync(
             batchItems,
             sourceLanguage,
             targetLanguage,
@@ -314,9 +355,8 @@ public class SubtitleTranslationService
                 preserveLineBreaks,
                 stripSubtitleFormatting,
                 subtitle.Position);
+            _serviceByPosition[subtitle.Position] = serviceName;
         }
-
-        return toTranslate;
     }
 
     /// <summary>

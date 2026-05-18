@@ -44,8 +44,6 @@ public class SubtitleTranslationServiceTests
 
     private sealed class BatchHarness
     {
-        public Mock<ITranslationService> TranslationServiceMock { get; init; } = null!;
-        public Mock<IBatchTranslationService> BatchTranslationServiceMock { get; init; } = null!;
         public Mock<IProgressService> ProgressServiceMock { get; init; } = null!;
         public SubtitleTranslationService Service { get; init; } = null!;
     }
@@ -78,15 +76,17 @@ public class SubtitleTranslationServiceTests
         {
             TranslationServiceMock = translationServiceMock,
             ProgressServiceMock = progressServiceMock,
-            Service = new SubtitleTranslationService(translationServiceMock.Object, NullLogger.Instance, progressServiceMock.Object)
+            Service = new SubtitleTranslationService(
+                [new TranslationServiceEntry("test", translationServiceMock.Object, null)],
+                NullLogger.Instance,
+                progressServiceMock.Object)
         };
     }
 
     private static BatchHarness CreateBatchHarness(Func<List<BatchSubtitleItem>, Dictionary<int, string>> batchTranslate)
     {
-        // The service requires the same instance to be both ITranslationService and IBatchTranslationService.
         var translationServiceMock = new Mock<ITranslationService>();
-        var batchTranslationServiceMock = translationServiceMock.As<IBatchTranslationService>();
+        var batchTranslationServiceMock = new Mock<IBatchTranslationService>();
         batchTranslationServiceMock
             .Setup(b => b.TranslateBatchAsync(
                 It.IsAny<List<BatchSubtitleItem>>(),
@@ -105,10 +105,11 @@ public class SubtitleTranslationServiceTests
 
         return new BatchHarness
         {
-            TranslationServiceMock = translationServiceMock,
-            BatchTranslationServiceMock = batchTranslationServiceMock,
             ProgressServiceMock = progressServiceMock,
-            Service = new SubtitleTranslationService(translationServiceMock.Object, NullLogger.Instance, progressServiceMock.Object)
+            Service = new SubtitleTranslationService(
+                [new TranslationServiceEntry("test", translationServiceMock.Object, batchTranslationServiceMock.Object)],
+                NullLogger.Instance,
+                progressServiceMock.Object)
         };
     }
 
@@ -397,7 +398,7 @@ public class SubtitleTranslationServiceTests
         var subtitles = new List<SubtitleItem> { Subtitle(1, "hello", "world") };
 
         // Act
-        await harness.Service.ProcessSubtitleBatch(subtitles, (IBatchTranslationService)harness.TranslationServiceMock.Object,
+        await harness.Service.ProcessSubtitleBatch(subtitles,
             "en", "es",
             stripSubtitleFormatting: false,
             preserveLineBreaks: false,
@@ -421,7 +422,7 @@ public class SubtitleTranslationServiceTests
         var subtitles = new List<SubtitleItem> { Subtitle(1, "hello", "world") };
 
         // Act
-        await harness.Service.ProcessSubtitleBatch(subtitles, (IBatchTranslationService)harness.TranslationServiceMock.Object,
+        await harness.Service.ProcessSubtitleBatch(subtitles,
             "en", "es",
             stripSubtitleFormatting: false,
             preserveLineBreaks: true,
@@ -441,7 +442,7 @@ public class SubtitleTranslationServiceTests
         var subtitles = new List<SubtitleItem> { Subtitle(1, "hello", "world") };
 
         // Act
-        await harness.Service.ProcessSubtitleBatch(subtitles, (IBatchTranslationService)harness.TranslationServiceMock.Object,
+        await harness.Service.ProcessSubtitleBatch(subtitles,
             "en", "es",
             stripSubtitleFormatting: false,
             preserveLineBreaks: true,
@@ -460,7 +461,7 @@ public class SubtitleTranslationServiceTests
         var subtitles = new List<SubtitleItem> { Subtitle(1, "line a", "line b") };
 
         // Act
-        await harness.Service.ProcessSubtitleBatch(subtitles, (IBatchTranslationService)harness.TranslationServiceMock.Object,
+        await harness.Service.ProcessSubtitleBatch(subtitles,
             "en", "es",
             stripSubtitleFormatting: true,
             preserveLineBreaks: false,
@@ -480,7 +481,7 @@ public class SubtitleTranslationServiceTests
         var subtitles = new List<SubtitleItem> { Subtitle(1, "hello", "world") };
 
         // Act
-        await harness.Service.ProcessSubtitleBatch(subtitles, (IBatchTranslationService)harness.TranslationServiceMock.Object,
+        await harness.Service.ProcessSubtitleBatch(subtitles,
             "en", "es",
             stripSubtitleFormatting: false,
             preserveLineBreaks: false,

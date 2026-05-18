@@ -6,9 +6,10 @@
         </template>
         <template #content>
             <div class="space-y-4">
-                <div class="flex flex-wrap items-center gap-3 justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-secondary-content/50 mr-1 text-xs font-medium uppercase tracking-wider">
+                        <span
+                            class="text-secondary-content/50 mr-1 text-xs font-medium tracking-wider uppercase">
                             Presets
                         </span>
                         <ButtonComponent
@@ -20,21 +21,24 @@
                             {{ preset.label }}
                         </ButtonComponent>
                     </div>
-                    <div
-                        class="border-accent/30 inline-flex overflow-hidden rounded-md border">
+                    <div class="border-accent/30 inline-flex overflow-hidden rounded-md border">
                         <button
                             class="cursor-pointer px-3 py-1 text-xs font-medium transition-colors duration-200"
-                            :class="mode === 'builder'
-                                ? 'bg-accent text-accent-content'
-                                : 'text-secondary-content/70 hover:bg-accent/10 hover:text-accent-content'"
+                            :class="
+                                mode === 'builder'
+                                    ? 'bg-accent text-accent-content'
+                                    : 'text-secondary-content/70 hover:bg-accent/10 hover:text-accent-content'
+                            "
                             @click="mode = 'builder'">
                             Builder
                         </button>
                         <button
                             class="border-accent/30 cursor-pointer border-l px-3 py-1 text-xs font-medium transition-colors duration-200"
-                            :class="mode === 'json'
-                                ? 'bg-accent text-accent-content'
-                                : 'text-secondary-content/70 hover:bg-accent/10 hover:text-accent-content'"
+                            :class="
+                                mode === 'json'
+                                    ? 'bg-accent text-accent-content'
+                                    : 'text-secondary-content/70 hover:bg-accent/10 hover:text-accent-content'
+                            "
                             @click="mode = 'json'">
                             JSON
                         </button>
@@ -42,9 +46,9 @@
                 </div>
 
                 <div class="flex items-center gap-2">
-                    <span class="font-semibold text-sm">Language format:</span>
+                    <span class="text-sm font-semibold">Language format:</span>
                     <ToggleButton v-model="languageCodeFormat">
-                        <span class="text-sm font-medium text-primary-content">
+                        <span class="text-primary-content text-sm font-medium">
                             {{ languageCodeFormat === 'true' ? 'Code (en)' : 'Name (English)' }}
                         </span>
                     </ToggleButton>
@@ -129,10 +133,13 @@ const placeholderItems = [
     }
 ]
 
-const serviceType = computed(() => (settingsStore.getSetting(SETTINGS.SERVICE_TYPE) as string) ?? '')
+const props = defineProps<{ service: string }>()
+
+const serviceType = computed(() => props.service)
 
 const languageCodeFormat = computed({
-    get: (): string => (settingsStore.getSetting(SETTINGS.LANGUAGE_CODE_FORMAT) as string) ?? 'false',
+    get: (): string =>
+        (settingsStore.getSetting(SETTINGS.LANGUAGE_CODE_FORMAT) as string) ?? 'false',
     set: (value: string) => {
         settingsStore.updateSetting(SETTINGS.LANGUAGE_CODE_FORMAT, value, true)
         saveNotification.value?.show()
@@ -226,8 +233,7 @@ const presetLabelMap: Record<string, string> = {
 
 onMounted(async () => {
     try {
-        const defaults =
-            await services.requestTemplate.getDefaults<Record<string, string>>()
+        const defaults = await services.requestTemplate.getDefaults<Record<string, string>>()
         presets.value = defaults
         presetOptions.value = Object.keys(defaults).map((key) => ({
             value: key,

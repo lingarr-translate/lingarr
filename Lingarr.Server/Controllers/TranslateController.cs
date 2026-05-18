@@ -9,6 +9,7 @@ using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Services;
+using Lingarr.Server.Services.Translation;
 
 namespace Lingarr.Server.Controllers;
 
@@ -82,16 +83,17 @@ public class TranslateController : ControllerBase
         [FromBody] TranslateAbleSubtitleLine translateAbleSubtitleLine,
         CancellationToken cancellationToken)
     {
-        var serviceType = await _settings.GetSetting(SettingKeys.Translation.ServiceType) ?? "libretranslate";
-
-        var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
-        var subtitleTranslator = new SubtitleTranslationService(translationService, _logger);
+        var serviceType = TranslationServices.Parse(await _settings.GetSetting(SettingKeys.Translation.ServiceType))[0];
+        var subtitleTranslator = new SubtitleTranslationService(
+            _translationServiceFactory.CreateTranslationServices([serviceType]),
+            _logger);
 
         if (translateAbleSubtitleLine.SubtitleLine == "")
         {
             return translateAbleSubtitleLine.SubtitleLine;
         }
-        return await subtitleTranslator.TranslateSubtitleLine(translateAbleSubtitleLine, cancellationToken);
+        var result = await subtitleTranslator.TranslateSubtitleLine(translateAbleSubtitleLine, cancellationToken);
+        return result.Translation;
     }
 
     /// <summary>
@@ -125,7 +127,7 @@ public class TranslateController : ControllerBase
     [HttpGet("languages")]
     public async Task<List<SourceLanguage>> GetLanguages()
     {
-        var serviceType = await _settings.GetSetting("service_type") ?? "libretranslate";
+        var serviceType = TranslationServices.Parse(await _settings.GetSetting(SettingKeys.Translation.ServiceType))[0];
         var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
 
         return await translationService.GetLanguages();
@@ -141,7 +143,7 @@ public class TranslateController : ControllerBase
     {
         try
         {
-            var serviceType = await _settings.GetSetting(SettingKeys.Translation.ServiceType) ?? "libretranslate";
+            var serviceType = TranslationServices.Parse(await _settings.GetSetting(SettingKeys.Translation.ServiceType))[0];
             var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
 
             // Service-specific logic to get models

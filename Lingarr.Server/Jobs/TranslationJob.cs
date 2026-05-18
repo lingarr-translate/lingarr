@@ -3,11 +3,13 @@ using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
+using Lingarr.Server.Exceptions;
 using Lingarr.Server.Filters;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Services;
+using Lingarr.Server.Services.Translation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Extensions;
 using SubtitleValidationOptions = Lingarr.Server.Models.SubtitleValidationOptions;
@@ -96,7 +98,8 @@ public class TranslationJob
                 SettingKeys.Translation.UseSubtitleTagging,
                 SettingKeys.Translation.SubtitleTag
             ]);
-            var serviceType = settings[SettingKeys.Translation.ServiceType];
+            var serviceNames = TranslationServices.Parse(settings[SettingKeys.Translation.ServiceType]);
+            var serviceType = serviceNames[0];
             var stripSubtitleFormatting = settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
             var preserveLineBreaks = settings[SettingKeys.Translation.PreserveLineBreaks] == "true";
             var addTranslatorInfo = settings[SettingKeys.Translation.AddTranslatorInfo] == "true";
@@ -165,8 +168,13 @@ public class TranslationJob
             }
 
             // translate subtitles
-            var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
-            var translator = new SubtitleTranslationService(translationService, _logger, _progressService);
+            var services = _translationServiceFactory.CreateTranslationServices(serviceNames);
+            if (services.Count == 0)
+            {
+                throw new TranslationException($"No usable translation services configured: [{string.Join(", ", serviceNames)}]");
+            }
+            var translationService = services[0].Service;
+            var translator = new SubtitleTranslationService(services, _logger, _progressService);
             var subtitles = await _subtitleService.ReadSubtitles(request.SubtitleToTranslate);
 
             // subtitle already carries a translation from an earlier prior run.
@@ -195,7 +203,7 @@ public class TranslationJob
 
             List<SubtitleItem> translatedSubtitles;
             if (settings[SettingKeys.Translation.UseBatchTranslation] == "true"
-                && translationService is IBatchTranslationService _)
+                && services.Any(entry => entry.Service is IBatchTranslationService))
             {
                 var maxSize = int.TryParse(settings[SettingKeys.Translation.MaxBatchSize],
                     out var batchSize)
@@ -257,7 +265,8 @@ public class TranslationJob
             var newlyTranslatedSubtitles = persistedLines.Count == 0
                 ? translatedSubtitles
                 : translatedSubtitles.Where(s => !persistedLines.ContainsKey(s.Position)).ToList();
-            await _statisticsService.UpdateTranslationStatisticsFromSubtitles(request, serviceType, translationService.ModelName, newlyTranslatedSubtitles);
+            await _statisticsService.UpdateTranslationStatisticsFromSubtitles(
+                request, serviceType, translationService.ModelName, newlyTranslatedSubtitles);
 
             var subtitleTag = "";
             if (settings[SettingKeys.Translation.UseSubtitleTagging] == "true")

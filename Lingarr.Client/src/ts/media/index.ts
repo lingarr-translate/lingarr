@@ -62,6 +62,7 @@ export interface ISubtitleLineComparison {
     position: number
     source: string
     target: string
+    service?: string | null
 }
 
 export interface ILineTranslated {
@@ -69,6 +70,7 @@ export interface ILineTranslated {
     position: number
     source: string
     target: string
+    service?: string | null
 }
 
 export interface IActiveTranslation {

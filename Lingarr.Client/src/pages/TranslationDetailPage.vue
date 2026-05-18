@@ -1,6 +1,6 @@
 <template>
     <div class="w-full">
-        <div class="flex items-center bg-tertiary p-4">
+        <div class="bg-tertiary flex items-center p-4">
             <ButtonComponent
                 variant="ghost"
                 size="xs"
@@ -59,7 +59,7 @@
                         </div>
                         <div v-if="detail.subtitleToTranslate" class="col-span-2">
                             <span class="font-semibold">Subtitle Path</span>
-                            <div class="mt-1 break-all text-sm">
+                            <div class="mt-1 text-sm break-all">
                                 {{ detail.subtitleToTranslate }}
                             </div>
                         </div>
@@ -74,14 +74,14 @@
                                 StackTrace
                             </summary>
                             <pre
-                                class="mt-2 whitespace-pre-wrap break-all rounded bg-black/30 p-3 text-xs text-red-300/80"
+                                class="mt-2 rounded bg-black/30 p-3 text-xs break-all whitespace-pre-wrap text-red-300/80"
                                 >{{ detail.stackTrace }}</pre
                             >
                         </details>
                     </div>
                     <div v-if="showProgress" class="flex items-center gap-3">
                         <TranslationProgress :progress="displayProgress" />
-                        <span class="shrink-0 text-sm font-medium text-primary-content">
+                        <span class="text-primary-content shrink-0 text-sm font-medium">
                             {{ displayProgress }}%
                         </span>
                     </div>
@@ -90,10 +90,11 @@
 
             <CardComponent v-if="reversedLines.length > 0" title="Translated Lines">
                 <template #content>
-                    <div class="hidden border-b border-accent font-bold md:grid md:grid-cols-12">
+                    <div class="border-accent hidden border-b font-bold md:grid md:grid-cols-12">
                         <div class="col-span-1 px-4 py-2 text-sm">#</div>
-                        <div class="col-span-5 px-4 py-2 text-sm">Source</div>
-                        <div class="col-span-6 px-4 py-2 text-sm">Target</div>
+                        <div class="col-span-4 px-4 py-2 text-sm">Source</div>
+                        <div class="col-span-5 px-4 py-2 text-sm">Target</div>
+                        <div class="col-span-2 px-4 py-2 text-sm">Service</div>
                     </div>
                     <div class="max-h-96 overflow-y-auto">
                         <div
@@ -107,14 +108,18 @@
                                       ? 'bg-accent/5'
                                       : ''
                             ">
-                            <div class="px-4 py-2 text-xs text-primary-content md:col-span-1">
+                            <div class="text-primary-content px-4 py-2 text-xs md:col-span-1">
                                 {{ line.position }}
                             </div>
-                            <div class="px-4 py-2 text-sm text-primary-content md:col-span-5">
+                            <div class="text-primary-content px-4 py-2 text-sm md:col-span-4">
                                 {{ line.source }}
                             </div>
-                            <div class="px-4 py-2 text-sm text-primary-content md:col-span-6">
+                            <div class="text-primary-content px-4 py-2 text-sm md:col-span-5">
                                 {{ line.target }}
+                            </div>
+                            <div
+                                class="text-primary-content/70 truncate px-4 py-2 text-xs md:col-span-2">
+                                {{ line.service ?? 'unknown' }}
                             </div>
                         </div>
                     </div>
@@ -198,7 +203,8 @@ const handleLineTranslated = (line: ILineTranslated) => {
         detail.value.lines.push({
             position: line.position,
             source: line.source,
-            target: line.target
+            target: line.target,
+            service: line.service ?? null
         })
         latestPosition.value = line.position
     }

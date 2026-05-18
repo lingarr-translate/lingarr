@@ -37,14 +37,15 @@ public class ProgressService : IProgressService
     }
 
     /// <inheritdoc />
-    public async Task EmitLine(TranslationRequest request, int position, string source, string target)
+    public async Task EmitLine(TranslationRequest request, int position, string source, string target, string? service = null)
     {
         _dbContext.TranslationRequestLines.Add(new TranslationRequestLine
         {
             TranslationRequestId = request.Id,
             Position = position,
             Source = source,
-            Target = target
+            Target = target,
+            Service = service
         });
         await _dbContext.SaveChangesAsync();
 
@@ -53,7 +54,8 @@ public class ProgressService : IProgressService
             request.Id,
             Position = position,
             Source = source,
-            Target = target
+            Target = target,
+            Service = service
         });
     }
 
@@ -67,7 +69,8 @@ public class ProgressService : IProgressService
                 TranslationRequestId = request.Id,
                 Position = line.Position,
                 Source = line.Source,
-                Target = line.Target
+                Target = line.Target,
+                Service = line.Service
             });
         }
         await _dbContext.SaveChangesAsync();
@@ -79,7 +82,8 @@ public class ProgressService : IProgressService
                 request.Id,
                 line.Position,
                 line.Source,
-                line.Target
+                line.Target,
+                line.Service
             });
         }
     }

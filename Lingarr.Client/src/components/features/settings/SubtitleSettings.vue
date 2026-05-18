@@ -15,7 +15,7 @@
                     Forced already exists.
                 </div>
                 <ToggleButton v-model="ignoreCaptions">
-                    <span class="text-sm font-medium text-primary-content">
+                    <span class="text-primary-content text-sm font-medium">
                         {{ ignoreCaptions == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
@@ -26,7 +26,7 @@
                     previous, current and next subtitle based on text length.
                 </div>
                 <ToggleButton v-model="fixOverlappingSubtitles">
-                    <span class="text-sm font-medium text-primary-content">
+                    <span class="text-primary-content text-sm font-medium">
                         {{ fixOverlappingSubtitles == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
@@ -37,7 +37,7 @@
                     position) from (SRT) subtitles, resulting in plain text subtitles.
                 </div>
                 <ToggleButton v-model="stripSubtitleFormatting">
-                    <span class="text-sm font-medium text-primary-content">
+                    <span class="text-primary-content text-sm font-medium">
                         {{ stripSubtitleFormatting == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
@@ -45,12 +45,12 @@
                 <div class="flex flex-col space-x-2">
                     <span class="font-semibold">Preserve line breaks:</span>
                     Keep multi-line subtitles split across lines after translation instead of
-                    merging them into a single line. AI services translate the whole subtitle in
-                    one call; classic services (DeepL, Google, Libre, etc.) translate each line
+                    merging them into a single line. AI services translate the whole subtitle in one
+                    call; classic services (DeepL, Google, Libre, etc.) translate each line
                     separately.
                 </div>
                 <ToggleButton v-model="preserveLineBreaks">
-                    <span class="text-sm font-medium text-primary-content">
+                    <span class="text-primary-content text-sm font-medium">
                         {{ preserveLineBreaks == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
@@ -60,7 +60,7 @@
                     Add translator info at the beginning of subtitles.
                 </div>
                 <ToggleButton v-model="addTranslatorInfo">
-                    <span class="text-sm font-medium text-primary-content">
+                    <span class="text-primary-content text-sm font-medium">
                         {{ addTranslatorInfo == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
@@ -70,7 +70,7 @@
                     Remove language tags (e.g., ".en.") from file names.
                 </div>
                 <ToggleButton v-model="removeLanguageTag">
-                    <span class="text-sm font-medium text-primary-content">
+                    <span class="text-primary-content text-sm font-medium">
                         {{ removeLanguageTag == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
@@ -78,11 +78,11 @@
                 <div class="flex flex-col space-y-4">
                     <div class="flex flex-col space-x-2">
                         <span class="font-semibold">Use subtitle tagging</span>
-                        Add a custom tag or text to the subtitle file to identify it as translated
-                        by Lingarr.
+                        Appends a custom segment to the subtitle filename however. This is not a
+                        recognised subtitle standard and may cause issues with other apps.
                     </div>
                     <ToggleButton v-model="useSubtitleTagging">
-                        <span class="text-sm font-medium text-primary-content">
+                        <span class="text-primary-content text-sm font-medium">
                             {{ useSubtitleTagging == 'true' ? 'Enabled' : 'Disabled' }}
                         </span>
                     </ToggleButton>

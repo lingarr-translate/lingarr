@@ -16,7 +16,7 @@ public interface IProgressService
     /// <summary>
     /// Saves a translated line to the database and broadcasts it via SignalR.
     /// </summary>
-    Task EmitLine(TranslationRequest request, int position, string source, string target);
+    Task EmitLine(TranslationRequest request, int position, string source, string target, string? service = null);
 
     /// <summary>
     /// Saves multiple translated lines to the database and broadcasts them via SignalR.
