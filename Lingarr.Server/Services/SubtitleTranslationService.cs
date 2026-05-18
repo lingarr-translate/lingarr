@@ -14,6 +14,8 @@ public class SubtitleTranslationService
 {
     private const int MaxLineLength = 42;
     private const int SubtitleLineRetryAttempts = 3;
+    private const int SubtitleBatchRetryAttempts = 3;
+    private const int SubtitleBatchRetryBaseDelayMilliseconds = 100;
     private int _lastProgression = -1;
     private readonly ITranslationService _translationService;
     private readonly IProgressService? _progressService;
@@ -316,50 +318,12 @@ public class SubtitleTranslationService
             };
         }).ToList();
 
-        Dictionary<int, string> batchResults;
-        try
-        {
-            batchResults = await batchTranslationService.TranslateBatchAsync(
-                batchItems,
-                sourceLanguage,
-                targetLanguage,
-                cancellationToken);
-        }
-        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
-        {
-            _logger.LogWarning(ex,
-                "Batch translation failed for {Count} subtitles; falling back to individual translation.",
-                toTranslate.Count);
-
-            foreach (var subtitle in toTranslate)
-            {
-                var contentLines = stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines;
-                var subtitleSource = string.Join(lineSeparator, contentLines);
-
-                var translated = await TranslateSubtitleLineWithRetryAsync(new TranslateAbleSubtitleLine
-                {
-                    SubtitleLine = subtitleSource,
-                    SourceLanguage = sourceLanguage,
-                    TargetLanguage = targetLanguage,
-                    ContextLinesBefore = null,
-                    ContextLinesAfter = null
-                }, subtitle.Position, cancellationToken);
-
-                if (stripSubtitleFormatting)
-                {
-                    translated = SubtitleFormatterService.RemoveMarkup(translated);
-                }
-
-                subtitle.TranslatedLines = ToSubtitleLines(
-                    translated,
-                    contentLines.Count,
-                    preserveLineBreaks,
-                    stripSubtitleFormatting,
-                    subtitle.Position);
-            }
-
-            return toTranslate;
-        }
+        var batchResults = await TranslateBatchWithRetryAsync(
+            batchTranslationService,
+            batchItems,
+            sourceLanguage,
+            targetLanguage,
+            cancellationToken);
 
         foreach (var subtitle in toTranslate)
         {
@@ -385,6 +349,51 @@ public class SubtitleTranslationService
         }
 
         return toTranslate;
+    }
+
+    /// <summary>
+    /// Translates a batch with a small retry budget before bubbling the failure up.
+    /// </summary>
+    private async Task<Dictionary<int, string>> TranslateBatchWithRetryAsync(
+        IBatchTranslationService batchTranslationService,
+        List<BatchSubtitleItem> batchItems,
+        string sourceLanguage,
+        string targetLanguage,
+        CancellationToken cancellationToken)
+    {
+        TranslationException? lastException = null;
+
+        for (var attempt = 1; attempt <= SubtitleBatchRetryAttempts; attempt++)
+        {
+            try
+            {
+                return await batchTranslationService.TranslateBatchAsync(
+                    batchItems,
+                    sourceLanguage,
+                    targetLanguage,
+                    cancellationToken);
+            }
+            catch (TranslationException ex) when (!cancellationToken.IsCancellationRequested && attempt < SubtitleBatchRetryAttempts)
+            {
+                lastException = ex;
+                var delayMilliseconds = SubtitleBatchRetryBaseDelayMilliseconds * (1 << (attempt - 1));
+                _logger.LogWarning(ex,
+                    "Batch translation failed for {Count} subtitles on attempt {Attempt}/{MaxAttempts}; retrying in {Delay}ms.",
+                    batchItems.Count,
+                    attempt,
+                    SubtitleBatchRetryAttempts,
+                    delayMilliseconds);
+                await Task.Delay(delayMilliseconds, cancellationToken).ConfigureAwait(false);
+            }
+            catch (TranslationException ex)
+            {
+                lastException = ex;
+            }
+        }
+
+        throw new TranslationException(
+            $"Batch translation failed after {SubtitleBatchRetryAttempts} attempts.",
+            lastException);
     }
 
     /// <summary>
