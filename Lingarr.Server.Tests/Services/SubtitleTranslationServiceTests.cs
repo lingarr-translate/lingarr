@@ -296,6 +296,7 @@ public class SubtitleTranslationServiceTests
             throw new TranslationException("primary boom");
         });
 
+        var fallbackCalls = 0;
         var fallbackTranslationServiceMock = new Mock<ITranslationService>();
         fallbackTranslationServiceMock
             .Setup(t => t.TranslateAsync(
@@ -306,7 +307,10 @@ public class SubtitleTranslationServiceTests
                 It.IsAny<List<string>?>(),
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((string text, string _, string _, List<string>? _, List<string>? _, CancellationToken _) =>
-                text == "hello" ? "hola" : "mundo");
+            {
+                fallbackCalls++;
+                return text == "hello" ? "hola" : "mundo";
+            });
 
         var subtitles = new List<SubtitleItem>
         {
@@ -324,7 +328,8 @@ public class SubtitleTranslationServiceTests
             "fallback-provider");
 
         // Assert
-        Assert.Equal(3, primaryCalls);
+        Assert.Equal(6, primaryCalls);
+        Assert.Equal(2, fallbackCalls);
         Assert.Equal(["hola", "mundo"], subtitles[0].TranslatedLines);
     }
 
