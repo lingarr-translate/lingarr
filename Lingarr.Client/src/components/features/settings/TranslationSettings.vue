@@ -1,7 +1,7 @@
 ﻿<template>
     <CardComponent title="Translation Request">
         <template #description>
-            Modify translation request settings by changing retry options or batch size if available in the service.
+            Modify translation request settings by changing retry options, batch size, or fallback behavior if available in the service.
         </template>
         <template #content>
             <SaveNotification ref="saveNotification" />
@@ -78,18 +78,29 @@
                 v-model="retryDelayMultiplier"
                 :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                 @update:validation="(val) => (isValid.retryDelayMultiplier = val)" />
+
+            <div class="flex flex-col space-x-2">
+                <span class="font-semibold">Fallback translation service:</span>
+                If the primary provider still fails after retries, Lingarr will try this provider
+                instead. Leave it disabled if you do not want a fallback.
+            </div>
+            <SelectComponent
+                v-model:selected="fallbackServiceType"
+                :options="fallbackServiceOptions"
+                placeholder="Disabled" />
         </template>
     </CardComponent>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive } from 'vue'
+import { computed, ref, reactive, watch } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import { INPUT_VALIDATION_TYPE, SERVICE_TYPE, SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 import ToggleButton from '@/components/common/ToggleButton.vue'
+import SelectComponent, { type ISelectOption } from '@/components/common/SelectComponent.vue'
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
@@ -101,6 +112,25 @@ const isValid = reactive({
     retryDelayMultiplier: true
 })
 const serviceType = computed(() => settingsStore.getSetting(SETTINGS.SERVICE_TYPE))
+
+const serviceOptions: ISelectOption[] = [
+    { value: SERVICE_TYPE.ANTHROPIC, label: 'Anthropic' },
+    { value: SERVICE_TYPE.BING, label: 'Bing' },
+    { value: SERVICE_TYPE.DEEPL, label: 'DeepL' },
+    { value: SERVICE_TYPE.DEEPSEEK, label: 'DeepSeek' },
+    { value: SERVICE_TYPE.GEMINI, label: 'Gemini' },
+    { value: SERVICE_TYPE.GOOGLE, label: 'Google' },
+    { value: SERVICE_TYPE.LIBRETRANSLATE, label: 'LibreTranslate' },
+    { value: SERVICE_TYPE.LOCALAI, label: 'OpenAI-compatible API (Custom)' },
+    { value: SERVICE_TYPE.MICROSOFT, label: 'Microsoft' },
+    { value: SERVICE_TYPE.OPENAI, label: 'OpenAI' },
+    { value: SERVICE_TYPE.YANDEX, label: 'Yandex' }
+]
+
+const fallbackServiceOptions = computed<ISelectOption[]>(() => [
+    { value: '', label: 'Disabled' },
+    ...serviceOptions.filter((option) => option.value !== serviceType.value)
+])
 
 const useBatchTranslation = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.USE_BATCH_TRANSLATION) as string,
@@ -151,6 +181,20 @@ const retryDelayMultiplier = computed({
             isValid.retryDelayMultiplier
         )
         saveNotification.value?.show()
+    }
+})
+
+const fallbackServiceType = computed({
+    get: (): string => settingsStore.getSetting(SETTINGS.FALLBACK_SERVICE_TYPE) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.FALLBACK_SERVICE_TYPE, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+
+watch(serviceType, (newServiceType) => {
+    if (fallbackServiceType.value && fallbackServiceType.value === newServiceType) {
+        fallbackServiceType.value = ''
     }
 })
 </script>
