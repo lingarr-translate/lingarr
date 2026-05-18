@@ -1,7 +1,6 @@
 ﻿using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using GTranslate.Translators;
 using Hangfire;
 using Hangfire.MySql;
 using Hangfire.PostgreSql;
@@ -176,10 +175,6 @@ public static class ServiceCollectionExtensions
         builder.Services.AddHostedService<StartupService>();
 
         // Add translation services
-        builder.Services.AddTransient<GoogleTranslator>();
-        builder.Services.AddTransient<BingTranslator>();
-        builder.Services.AddTransient<MicrosoftTranslator>();
-        builder.Services.AddTransient<YandexTranslator>();
         builder.Services.AddTransient<OpenAiService>();
 
         builder.Services.AddTransient<PathConversionService>();

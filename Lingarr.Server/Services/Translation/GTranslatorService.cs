@@ -4,12 +4,15 @@ using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Services.Translation.Base;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Lingarr.Server.Services.Translation;
 
 public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
 {
-    private readonly T _translator;
+    private readonly IServiceProvider _serviceProvider;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private T? _translator;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
@@ -22,13 +25,15 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
     public override string? ModelName => null;
 
     public GTranslatorService(
-        T translator,
+        IServiceProvider serviceProvider,
+        IHttpClientFactory httpClientFactory,
         string languageFilePath,
         ISettingService settings,
         ILogger logger,
         LanguageCodeService languageCodeService) : base(settings, logger, languageCodeService, languageFilePath)
     {
-        _translator = translator;
+        _serviceProvider = serviceProvider;
+        _httpClientFactory = httpClientFactory;
     }
 
     private async Task InitializeAsync()
@@ -43,7 +48,8 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
-                SettingKeys.Translation.RetryDelayMultiplier
+                SettingKeys.Translation.RetryDelayMultiplier,
+                SettingKeys.Translation.RequestTimeout
             ]);
 
             _maxRetries = int.TryParse(settings[SettingKeys.Translation.MaxRetries], out var maxRetries)
@@ -58,6 +64,15 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
             _retryDelayMultiplier = int.TryParse(settings[SettingKeys.Translation.RetryDelayMultiplier], out var multiplier)
                 ? multiplier
                 : 2;
+
+            var requestTimeoutMinutes = int.TryParse(settings[SettingKeys.Translation.RequestTimeout], out var requestTimeout) && requestTimeout > 0
+                ? requestTimeout
+                : 5;
+
+            var httpClient = _httpClientFactory.CreateClient();
+            httpClient.Timeout = TimeSpan.FromMinutes(requestTimeoutMinutes);
+
+            _translator ??= ActivatorUtilities.CreateInstance<T>(_serviceProvider, httpClient);
 
             _initialized = true;
         }
@@ -86,7 +101,7 @@ public class GTranslatorService<T> : BaseLanguageService where T : ITranslator
         {
             try
             {
-                var result = await _translator.TranslateAsync(
+                var result = await _translator!.TranslateAsync(
                         text,
                         targetLanguage,
                         sourceLanguage)
