@@ -160,7 +160,7 @@ public class SubtitleTranslationService
     }
 
     /// <summary>
-    /// Translates a single subtitle line, walking the fallback services on <see cref="TranslationException"/>.
+    /// Translates a single subtitle line, walking the fallback services on any provider failure.
     /// Cancellation propagates without triggering fallback.
     /// </summary>
     /// <returns>The translated line plus the service name that produced it.</returns>
@@ -168,7 +168,7 @@ public class SubtitleTranslationService
         TranslateAbleSubtitleLine translateAbleSubtitle,
         CancellationToken cancellationToken)
     {
-        TranslationException? lastError = null;
+        Exception? lastError = null;
         foreach (var entry in _services)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -183,7 +183,11 @@ public class SubtitleTranslationService
                     cancellationToken);
                 return (translated, entry.Name);
             }
-            catch (TranslationException ex)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
             {
                 lastError = ex;
                 _logger.LogWarning(ex, "Translation service {Service} failed.", entry.Name);
@@ -276,7 +280,7 @@ public class SubtitleTranslationService
             return [];
         }
 
-        TranslationException? lastError = null;
+        Exception? lastError = null;
         foreach (var entry in _services)
         {
             if (entry.BatchService is null)
@@ -298,7 +302,11 @@ public class SubtitleTranslationService
                     cancellationToken);
                 return toTranslate;
             }
-            catch (TranslationException ex)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
             {
                 lastError = ex;
                 _logger.LogWarning(ex, "Batch translation service {Service} failed.", entry.Name);
