@@ -72,6 +72,11 @@ public static class DatabaseConfiguration
     private static string GetSqliteConnectionString()
     {
         var sqliteDbPath = Environment.GetEnvironmentVariable("SQLITE_DB_PATH") ?? "local.db";
+        if (Path.IsPathRooted(sqliteDbPath))
+        {
+            return $"Data Source={sqliteDbPath};Foreign Keys=True";
+        }
+
         return $"Data Source=/app/config/{sqliteDbPath};Foreign Keys=True";
     }
 
@@ -117,6 +122,7 @@ public static class DatabaseConfiguration
 
         options.UseSqlite(connectionString,
                 sqliteOptions => sqliteOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery))
+            .AddInterceptors(new SqlitePragmaConnectionInterceptor())
             .UseSnakeCaseNamingConvention();
     }
 
