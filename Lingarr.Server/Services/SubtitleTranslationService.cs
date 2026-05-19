@@ -20,7 +20,7 @@ public class SubtitleTranslationService
     private readonly ILogger _logger;
     private readonly Dictionary<int, (string Service, LanguagePair Pair)> _translationByPosition = [];
     private readonly HashSet<string> _loggedSkips = [];
-    private readonly HashSet<TranslationCandidate> _loggedDegradations = [];
+    private readonly HashSet<TranslationCandidate> _loggedFallbacks = [];
     private readonly Dictionary<(string Source, string Target), IReadOnlyList<TranslationCandidate>> _candidatesByPair = [];
 
     public SubtitleTranslationService(
@@ -201,7 +201,7 @@ public class SubtitleTranslationService
                     translateAbleSubtitle.ContextLinesBefore,
                     translateAbleSubtitle.ContextLinesAfter,
                     cancellationToken);
-                LogDegradationOnce(candidate, translateAbleSubtitle.SourceLanguage, translateAbleSubtitle.TargetLanguage);
+                LogFallback(candidate, translateAbleSubtitle.SourceLanguage, translateAbleSubtitle.TargetLanguage);
                 return (translated, candidate.Entry.Name, candidate.Pair);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -257,10 +257,16 @@ public class SubtitleTranslationService
         return sorted;
     }
 
-    private void LogDegradationOnce(TranslationCandidate candidate, string requestedSource, string requestedTarget)
+    private void LogFallback(TranslationCandidate candidate, string requestedSource, string requestedTarget)
     {
-        if (candidate.Pair.Tier == MatchTier.Exact) return;
-        if (!_loggedDegradations.Add(candidate)) return;
+        if (candidate.Pair.Tier == MatchTier.Exact)
+        {
+            return;
+        }
+        if (!_loggedFallbacks.Add(candidate))
+        {
+            return;
+        }
 
         _logger.LogInformation(
             "Translation service {Service} matched {RequestedSource}->{RequestedTarget} as {MatchedSource}->{MatchedTarget} ({Tier}).",
@@ -386,7 +392,7 @@ public class SubtitleTranslationService
                     stripSubtitleFormatting,
                     preserveLineBreaks,
                     cancellationToken);
-                LogDegradationOnce(candidate, sourceLanguage, targetLanguage);
+                LogFallback(candidate, sourceLanguage, targetLanguage);
                 return toTranslate;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)

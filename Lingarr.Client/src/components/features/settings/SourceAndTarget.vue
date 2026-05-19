@@ -60,11 +60,17 @@
                     :options="languages" />
             </div>
         </template>
+        <p class="text-sm text-secondary-content">
+            If no configured service supports the language code, the language falls back to the
+            closest available variant (for example, <CodeSnippet>en-US</CodeSnippet>
+            may resolve to neutral <CodeSnippet>en</CodeSnippet>).
+        </p>
     </template>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import CodeSnippet from '@/components/common/CodeSnippet.vue'
 import LanguageSelect from '@/components/features/settings/LanguageSelect.vue'
 import { ILanguage, SETTINGS } from '@/ts'
 import { useTranslateStore } from '@/store/translate'

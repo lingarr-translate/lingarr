@@ -46,9 +46,9 @@ public class LibreService : BaseLanguageService
     {
         if (_initialized) return;
 
+        await _initLock.WaitAsync();
         try
         {
-            await _initLock.WaitAsync();
             if (_initialized) return;
 
             var settings = await _settings.GetSettings([
