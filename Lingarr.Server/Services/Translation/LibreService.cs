@@ -83,7 +83,7 @@ public class LibreService : BaseLanguageService
     }
 
     /// <inheritdoc />
-    public override async Task<List<SourceLanguage>> GetLanguages()
+    protected override async Task<List<SourceLanguage>> GetServiceLanguages()
     {
         _logger.LogInformation($"Retrieving |Green|LibreTranslate|/Green| languages");
         await InitializeAsync();

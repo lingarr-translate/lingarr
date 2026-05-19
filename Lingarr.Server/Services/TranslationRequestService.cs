@@ -688,12 +688,14 @@ public class TranslationRequestService : ITranslationRequestService
 
                     var translatedText = "";
                     string? serviceUsed = null;
+                    LanguagePair? pairUsed = null;
                     if (!string.IsNullOrWhiteSpace(translateLine.SubtitleLine))
                     {
                         var result = await subtitleTranslator.TranslateSubtitleLine(translateLine,
                             cancellationToken);
                         translatedText = result.Translation;
                         serviceUsed = result.Service;
+                        pairUsed = result.Pair;
                     }
 
                     tempResults.Add(new BatchTranslatedLine
@@ -702,7 +704,7 @@ public class TranslationRequestService : ITranslationRequestService
                         Line = translatedText
                     });
 
-                    await _progressService.EmitLine(translationRequest, item.Position, item.Line, translatedText, serviceUsed);
+                    await _progressService.EmitLine(translationRequest, item.Position, item.Line, translatedText, serviceUsed, pairUsed);
 
                     var progress = (int)Math.Round((double)iteration * 100 / total);
                     await _progressService.Emit(translationRequest, progress);

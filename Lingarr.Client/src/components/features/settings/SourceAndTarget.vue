@@ -57,7 +57,7 @@
                 <LanguageSelect
                     v-model:selected="targetLanguages"
                     class="w-full"
-                    :options="selectedTargetLanguages" />
+                    :options="languages" />
             </div>
         </template>
     </template>
@@ -90,28 +90,6 @@ const targetLanguages = computed({
         settingsStore.updateSetting(SETTINGS.TARGET_LANGUAGES, newValue, true, true)
         emit('save')
     }
-})
-
-const selectedTargetLanguages = computed(() => {
-    if (!sourceLanguages.value || sourceLanguages.value.length === 0 || !languages.value) {
-        return []
-    }
-
-    const allTargets = sourceLanguages.value.flatMap((sourceLanguage) => {
-        const sourceTargetSet = languages.value.find((lang) => lang.code === sourceLanguage.code)
-        if (!sourceTargetSet) {
-            return []
-        }
-        return sourceTargetSet.targets
-    })
-
-    const uniqueTargets = [...new Set(allTargets)]
-    return uniqueTargets.map((targetCode) => {
-        const languageInfo = languages.value.find((lang) => lang.code === targetCode)
-        if (languageInfo) {
-            return { ...languageInfo }
-        }
-    }) as ILanguage[]
 })
 
 function retryLoadLanguages() {

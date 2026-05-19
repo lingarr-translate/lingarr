@@ -29,6 +29,9 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
     /// <inheritdoc />
     public override string? ModelName => _model;
 
+    /// <inheritdoc />
+    protected override bool AcceptsAnyLanguage => true;
+
     // retry settings
     private int _maxRetries;
     private TimeSpan _retryDelay;

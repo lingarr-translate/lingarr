@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
+using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models;
@@ -52,6 +53,12 @@ public class SubtitleTranslationServiceTests
     {
         var translationServiceMock = new Mock<ITranslationService>();
         translationServiceMock
+            .Setup(t => t.GetLanguagePair(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string source, string target, CancellationToken _) => new LanguagePair { Source = source, Target = target, Tier = MatchTier.Exact });
+        translationServiceMock
             .Setup(t => t.TranslateAsync(
                 It.IsAny<string>(),
                 It.IsAny<string>(),
@@ -66,7 +73,13 @@ public class SubtitleTranslationServiceTests
             .Setup(p => p.Emit(It.IsAny<TranslationRequest>(), It.IsAny<int>()))
             .Returns(Task.CompletedTask);
         progressServiceMock
-            .Setup(p => p.EmitLine(It.IsAny<TranslationRequest>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>()))
+            .Setup(progressService => progressService.EmitLine(
+                It.IsAny<TranslationRequest>(),
+                It.IsAny<int>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string?>(),
+                It.IsAny<LanguagePair?>()))
             .Returns(Task.CompletedTask);
         progressServiceMock
             .Setup(p => p.EmitLines(It.IsAny<TranslationRequest>(), It.IsAny<List<TranslatedLineData>>()))
@@ -86,6 +99,12 @@ public class SubtitleTranslationServiceTests
     private static BatchHarness CreateBatchHarness(Func<List<BatchSubtitleItem>, Dictionary<int, string>> batchTranslate)
     {
         var translationServiceMock = new Mock<ITranslationService>();
+        translationServiceMock
+            .Setup(t => t.GetLanguagePair(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string source, string target, CancellationToken _) => new LanguagePair { Source = source, Target = target, Tier = MatchTier.Exact });
         var batchTranslationServiceMock = new Mock<IBatchTranslationService>();
         batchTranslationServiceMock
             .Setup(b => b.TranslateBatchAsync(
@@ -489,6 +508,125 @@ public class SubtitleTranslationServiceTests
 
         // Assert
         Assert.Equal(["hello", "world"], subtitles[0].TranslatedLines);
+    }
+
+    #endregion
+
+    #region Chain-wide best-match resolution
+
+    private static Mock<ITranslationService> MockService(LanguagePair? pair, Func<string, string> translate)
+    {
+        var mock = new Mock<ITranslationService>();
+        mock.Setup(service => service.GetLanguagePair(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pair);
+        mock.Setup(service => service.TranslateAsync(
+                It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<List<string>?>(), It.IsAny<List<string>?>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string text, string _, string _, List<string>? _, List<string>? _, CancellationToken _) => translate(text));
+        return mock;
+    }
+
+    [Fact]
+    public async Task TranslateSubtitleLine_PrefersExactMatchOverNeutralFallback()
+    {
+        // Arrange
+        var primary = MockService(new LanguagePair { Source = "en", Target = "zh", Tier = MatchTier.NeutralEquivalent }, _ => "primary");
+        var fallback = MockService(new LanguagePair { Source = "en", Target = "zh-TW", Tier = MatchTier.Exact }, _ => "fallback");
+        var service = new SubtitleTranslationService(
+            [
+                new TranslationServiceEntry("primary", primary.Object, null),
+                new TranslationServiceEntry("fallback", fallback.Object, null)
+            ],
+            NullLogger.Instance);
+
+        // Act
+        var (translation, serviceName, pair) = await service.TranslateSubtitleLine(
+            new TranslateAbleSubtitleLine { SubtitleLine = "hi", SourceLanguage = "en", TargetLanguage = "zh-TW" },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal("fallback", translation);
+        Assert.Equal("fallback", serviceName);
+        Assert.Equal(MatchTier.Exact, pair.Tier);
+        Assert.Equal("zh-TW", pair.Target);
+    }
+
+    [Fact]
+    public async Task TranslateSubtitleLine_SameTierBreaksTiesByChainOrder()
+    {
+        // Arrange
+        var primary = MockService(new LanguagePair { Source = "en", Target = "zh-TW", Tier = MatchTier.Exact }, _ => "primary");
+        var fallback = MockService(new LanguagePair { Source = "en", Target = "zh-TW", Tier = MatchTier.Exact }, _ => "fallback");
+        var service = new SubtitleTranslationService(
+            [
+                new TranslationServiceEntry("primary", primary.Object, null),
+                new TranslationServiceEntry("fallback", fallback.Object, null)
+            ],
+            NullLogger.Instance);
+
+        // Act
+        var (translation, serviceName, _) = await service.TranslateSubtitleLine(
+            new TranslateAbleSubtitleLine { SubtitleLine = "hi", SourceLanguage = "en", TargetLanguage = "zh-TW" },
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal("primary", translation);
+        Assert.Equal("primary", serviceName);
+    }
+
+    [Fact]
+    public async Task TranslateSubtitleLine_FallbackMatchSurfacesMatchedCodesOnEmittedLine()
+    {
+        // Arrange
+        var only = MockService(new LanguagePair { Source = "en", Target = "zh", Tier = MatchTier.NeutralEquivalent }, _ => "ni hao");
+        var progress = new Mock<IProgressService>();
+        progress.Setup(progressService => progressService.Emit(It.IsAny<TranslationRequest>(), It.IsAny<int>())).Returns(Task.CompletedTask);
+        progress.Setup(progressService => progressService.EmitLine(
+                It.IsAny<TranslationRequest>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<string>(),
+                It.IsAny<string?>(), It.IsAny<LanguagePair?>()))
+            .Returns(Task.CompletedTask);
+        var service = new SubtitleTranslationService(
+            [new TranslationServiceEntry("only", only.Object, null)],
+            NullLogger.Instance,
+            progress.Object);
+        var request = new TranslationRequest
+        {
+            Title = "t",
+            SourceLanguage = "en",
+            TargetLanguage = "zh-TW",
+            MediaType = MediaType.Movie,
+            Status = TranslationStatus.InProgress
+        };
+
+        // Act
+        await service.TranslateSubtitles([Subtitle(1, "hi")], request,
+            stripSubtitleFormatting: false,
+            preserveLineBreaks: false,
+            contextBefore: 0,
+            contextAfter: 0,
+            CancellationToken.None);
+
+        // Assert
+        progress.Verify(progressService => progressService.EmitLine(
+            request, 1, "hi", "ni hao", "only",
+            It.Is<LanguagePair?>(pair => pair != null && pair.Source == "en" && pair.Target == "zh" && pair.Tier == MatchTier.NeutralEquivalent)),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task TranslateSubtitleLine_NoServiceSupportsPair_Throws()
+    {
+        // Arrange
+        var none = MockService(pair: null, _ => "unused");
+        var service = new SubtitleTranslationService(
+            [new TranslationServiceEntry("none", none.Object, null)],
+            NullLogger.Instance);
+
+        // Act + Assert
+        await Assert.ThrowsAsync<TranslationException>(() =>
+            service.TranslateSubtitleLine(
+                new TranslateAbleSubtitleLine { SubtitleLine = "hi", SourceLanguage = "en", TargetLanguage = "zh-TW" },
+                CancellationToken.None));
     }
 
     #endregion

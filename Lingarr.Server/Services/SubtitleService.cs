@@ -612,7 +612,7 @@ public class SubtitleService : ISubtitleService
     /// </param>
     /// <param name="languageCode">
     /// When this method returns, contains the two-letter ISO language code corresponding to the 
-    /// matched culture; otherwise, <c>null</c> if no match is found.
+    /// matched culture; otherwise, null if no match is found.
     /// </param>
     private bool TryGetLanguageByPart(string part, out string? languageCode)
     {
@@ -624,7 +624,7 @@ public class SubtitleService : ISubtitleService
         
         try
         {
-            languageCode = _languageCodeService.GetNormalizedCode(part);
+            languageCode = LanguageCodeService.GetNormalizedCode(part);
             return true;
         }
         catch (ArgumentException)

@@ -46,4 +46,12 @@ public interface ITranslationService
     /// <returns>A task that represents the asynchronous operation. The task result contains a <see cref="ModelsResponse"/> with information about available models.</returns>
     /// <exception cref="Exception">Thrown when an error occurs while fetching models from the AI service.</exception>
     Task<ModelsResponse> GetModels();
+
+    /// <summary>
+    /// Gets a source/target language pair from the requested source or target.
+    /// </summary>
+    Task<LanguagePair?> GetLanguagePair(
+        string requestedSource,
+        string requestedTarget,
+        CancellationToken cancellationToken);
 }

@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Lingarr.Core.Enum;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Batch.Response;
@@ -8,7 +9,7 @@ namespace Lingarr.Server.Services.Translation.Base;
 public abstract class BaseLanguageService : BaseTranslationService
 {
     private readonly string _languageFilePath;
-    protected readonly LanguageCodeService _languageCodeService;
+    private Task<List<SourceLanguage>>? _cachedLanguages;
     protected string? _contextPrompt;
     protected string? _contextPromptEnabled;
     protected Dictionary<string, string> _replacements;
@@ -17,17 +18,23 @@ public abstract class BaseLanguageService : BaseTranslationService
         ISettingService settings,
         ILogger logger,
         LanguageCodeService languageCodeService,
-        string languageFilePath) : base(settings, logger)
+        string languageFilePath) : base(settings, logger, languageCodeService)
     {
         _languageFilePath = languageFilePath;
-        _languageCodeService = languageCodeService;
         _replacements = new Dictionary<string, string>();
     }
+
+    /// <summary>
+    /// When true the service accepts any culture-valid pair
+    /// </summary>
+    protected virtual bool AcceptsAnyLanguage => false;
     
     protected string ReplacePlaceholders(string promptTemplate, Dictionary<string, string> replacements)
     {
         if (string.IsNullOrEmpty(promptTemplate))
+        {
             return promptTemplate;
+        }
 
         var result = promptTemplate;
         foreach (var replacement in replacements)
@@ -55,11 +62,40 @@ public abstract class BaseLanguageService : BaseTranslationService
     }
 
     /// <inheritdoc />
-    public override async Task<List<SourceLanguage>> GetLanguages()
+    public override Task<LanguagePair?> GetLanguagePair(
+        string requestedSource,
+        string requestedTarget,
+        CancellationToken cancellationToken)
+    {
+        if (!AcceptsAnyLanguage)
+        {
+            return base.GetLanguagePair(requestedSource, requestedTarget, cancellationToken);
+        }
+
+        if (!_languageCodeService.Validate(requestedSource) || !_languageCodeService.Validate(requestedTarget))
+        {
+            return Task.FromResult<LanguagePair?>(null);
+        }
+
+        return Task.FromResult<LanguagePair?>(new LanguagePair
+        {
+            Source = requestedSource,
+            Target = requestedTarget,
+            Tier = MatchTier.Exact
+        });
+    }
+
+    /// <inheritdoc />
+    public sealed override Task<List<SourceLanguage>> GetLanguages() => _cachedLanguages ??= GetServiceLanguages();
+
+    /// <summary>
+    /// Produces the supported-languages list for this service.
+    /// </summary>
+    protected virtual async Task<List<SourceLanguage>> GetServiceLanguages()
     {
         _logger.LogInformation($"Retrieving |Green|{_languageFilePath}|/Green| languages");
         var sourceLanguages = await GetJson();
-        
+
         var languageCodes = sourceLanguages.Select(l => l.Code).ToHashSet();
         return sourceLanguages
             .Select(lang => new SourceLanguage
@@ -119,7 +155,7 @@ public abstract class BaseLanguageService : BaseTranslationService
     /// </summary>
     /// <param name="languageCode">The language code to convert (e.g., "en", "pt-BR", "zh-TW").</param>
     /// <returns>The full language name or the original code if no match is found.</returns>
-    protected string GetFullLanguageName(string languageCode)
+    private string GetFullLanguageName(string languageCode)
     {
         if (string.IsNullOrWhiteSpace(languageCode))
             return languageCode;

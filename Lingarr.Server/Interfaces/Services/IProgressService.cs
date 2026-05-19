@@ -1,4 +1,4 @@
-﻿using Lingarr.Core.Entities;
+using Lingarr.Core.Entities;
 using Lingarr.Server.Models;
 
 namespace Lingarr.Server.Interfaces.Services;
@@ -16,7 +16,13 @@ public interface IProgressService
     /// <summary>
     /// Saves a translated line to the database and broadcasts it via SignalR.
     /// </summary>
-    Task EmitLine(TranslationRequest request, int position, string source, string target, string? service = null);
+    Task EmitLine(
+        TranslationRequest request,
+        int position,
+        string source,
+        string target,
+        string? service = null,
+        LanguagePair? pair = null);
 
     /// <summary>
     /// Saves multiple translated lines to the database and broadcasts them via SignalR.

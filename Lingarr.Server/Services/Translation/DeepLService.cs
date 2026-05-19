@@ -30,7 +30,8 @@ public class DeepLService : BaseTranslationService
     
     public DeepLService(
         ISettingService settings,
-        ILogger<DeepLService> logger) : base(settings, logger)
+        ILogger<DeepLService> logger,
+        LanguageCodeService languageCodeService) : base(settings, logger, languageCodeService)
     {
     }
 

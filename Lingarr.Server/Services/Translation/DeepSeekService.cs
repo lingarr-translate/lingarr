@@ -25,6 +25,9 @@ public class DeepSeekService : BaseLanguageService
     /// <inheritdoc />
     public override string? ModelName => _model;
 
+    /// <inheritdoc />
+    protected override bool AcceptsAnyLanguage => true;
+
     public DeepSeekService(
         ISettingService settings,
         HttpClient httpClient,

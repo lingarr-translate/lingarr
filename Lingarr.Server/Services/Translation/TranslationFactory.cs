@@ -66,7 +66,8 @@ public class TranslationFactory : ITranslationServiceFactory
 
             "deepl" => new DeepLService(
                 _serviceProvider.GetRequiredService<ISettingService>(),
-                _serviceProvider.GetRequiredService<ILogger<DeepLService>>()
+                _serviceProvider.GetRequiredService<ILogger<DeepLService>>(),
+                languageCodeService
             ),
 
             "openai" => new OpenAiService(
