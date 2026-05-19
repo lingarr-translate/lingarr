@@ -155,7 +155,7 @@ public static class MigrationConfiguration
         {
             "sqlite" => $"SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='{tableName}'",
             "mysql" => $"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = '{tableName}'",
-            "postgres" or "postgresql" => $"SELECT COUNT(*) FROM information_schema.tables WHERE table_name = '{tableName}'",
+            "postgres" or "postgresql" => $"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = current_schema() AND table_name = '{tableName}'",
             _ => $"SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='{tableName}'"
         };
 
@@ -188,7 +188,7 @@ public static class MigrationConfiguration
             )",
             "postgres" or "postgresql" => $@"CREATE TABLE IF NOT EXISTS ""{VersionTableName}"" (
                 ""version"" BIGINT NOT NULL,
-                ""applied_on"" TIMESTAMP,
+                ""applied_on"" TIMESTAMP WITH TIME ZONE,
                 ""description"" VARCHAR(1024)
             )",
             _ => $@"CREATE TABLE IF NOT EXISTS ""{VersionTableName}"" (
@@ -210,7 +210,7 @@ public static class MigrationConfiguration
         command.CommandText = dbConnection.ToLowerInvariant() switch
         {
             "mysql" => $"INSERT INTO {VersionTableName} (version, applied_on, description) VALUES ({version}, '{now:yyyy-MM-dd HH:mm:ss}', '{description}')",
-            "postgres" or "postgresql" => $"INSERT INTO \"{VersionTableName}\" (\"version\", \"applied_on\", \"description\") VALUES ({version}, '{now:yyyy-MM-dd HH:mm:ss}', '{description}')",
+            "postgres" or "postgresql" => $"INSERT INTO \"{VersionTableName}\" (\"version\", \"applied_on\", \"description\") VALUES ({version}, '{now:yyyy-MM-dd HH:mm:ss}Z', '{description}')",
             _ => $"INSERT INTO \"{VersionTableName}\" (\"version\", \"applied_on\", \"description\") VALUES ({version}, '{now:yyyy-MM-dd HH:mm:ss}', '{description}')"
         };
 

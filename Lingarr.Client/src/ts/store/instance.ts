@@ -19,6 +19,9 @@ export const THEMES = {
     GRUVBOX: 'gruvbox',
     CYBERPUNK_NEON: 'cyberpunk-neon',
     HORIZON: 'horizon',
+    SONARR: 'sonarr',
+    RADARR: 'radarr',
+    BAZARR: 'bazarr',
     LINGARR: 'lingarr'
 } as const
 
