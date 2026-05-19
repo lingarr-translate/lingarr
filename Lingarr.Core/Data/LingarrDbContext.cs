@@ -33,6 +33,37 @@ public class LingarrDbContext : DbContext
         modelBuilder.ApplyConfiguration(new SeasonConfiguration());
         modelBuilder.ApplyConfiguration(new EpisodeConfiguration());
         modelBuilder.ApplyConfiguration(new ImageConfiguration());
+
+        if (Database.IsNpgsql())
+        {
+            ConvertDateTimePropertiesToUtc(modelBuilder);
+        }
+    }
+
+    private static void ConvertDateTimePropertiesToUtc(ModelBuilder modelBuilder)
+    {
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(DateTime))
+                {
+                    property.SetValueConverter(new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime, DateTime>(
+                        v => v.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(v, DateTimeKind.Utc) : v.ToUniversalTime(),
+                        v => v));
+                }
+                else if (property.ClrType == typeof(DateTime?))
+                {
+                    property.SetValueConverter(new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime?, DateTime?>(
+                        v => v.HasValue 
+                            ? (v.Value.Kind == DateTimeKind.Unspecified 
+                                ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) 
+                                : v.Value.ToUniversalTime()) 
+                            : v,
+                        v => v));
+                }
+            }
+        }
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
