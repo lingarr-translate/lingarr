@@ -2,10 +2,10 @@
     <div class="relative">
         <div
             ref="excludeClickOutside"
-            class="flex h-12 cursor-pointer items-center justify-between rounded-md border border-accent px-4 py-2"
+            class="flex min-h-12 cursor-pointer items-center justify-between rounded-md border border-accent px-4 py-2"
             @click="toggleDropdown">
             <span v-if="selectedItems.length === 0" class="text-gray-400">Select language...</span>
-            <div v-else class="flex max-h-12 flex-wrap gap-2 overflow-auto">
+            <div v-else class="flex flex-1 flex-wrap items-center gap-2">
                 <span
                     v-for="(item, index) in selectedItems"
                     :key="`${item.code}-${index}`"
@@ -23,7 +23,8 @@
         <ul
             v-show="isOpen"
             ref="clickOutside"
-            class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-accent bg-primary shadow-lg">
+            class="absolute z-10 max-h-60 w-full overflow-auto rounded-md border border-accent bg-primary shadow-lg"
+            :class="openUpward ? 'bottom-full mb-1' : 'top-full mt-1'">
             <li v-if="!options?.length" class="p-3">Select a source language first.</li>
             <li v-else class="flex items-center">
                 <input
@@ -72,6 +73,7 @@ const {
 const emit = defineEmits(['update:selected'])
 
 const isOpen: Ref<boolean> = ref(false)
+const openUpward: Ref<boolean> = ref(false)
 const searchInput: Ref<HTMLInputElement | undefined> = ref()
 const selectedItems: Ref<ILanguage[]> = ref(selected)
 const clickOutside: Ref<HTMLElement | undefined> = ref()
@@ -81,15 +83,25 @@ const searchTerm: Ref<string> = ref('')
 const filteredLanguages = computed(() => {
     return options
         .filter((option) => {
-            if (!option) return false
-            if (!searchTerm.value) return true
+            if (!option) {
+                return false
+            }
+            if (!searchTerm.value) {
+                return true
+            }
             return option.name.toLowerCase().includes(searchTerm.value.toLowerCase())
         })
         .sort((a, b) => a.name.localeCompare(b.name))
 })
 
 const toggleDropdown = async () => {
-    if (disabled) return
+    if (disabled) {
+        return
+    }
+    if (!isOpen.value && excludeClickOutside.value) {
+        const rect = excludeClickOutside.value.getBoundingClientRect()
+        openUpward.value = window.innerHeight - rect.bottom < rect.top
+    }
     isOpen.value = !isOpen.value
     await nextTick()
     searchInput.value?.focus()

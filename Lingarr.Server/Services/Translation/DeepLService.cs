@@ -30,7 +30,8 @@ public class DeepLService : BaseTranslationService
     
     public DeepLService(
         ISettingService settings,
-        ILogger<DeepLService> logger) : base(settings, logger)
+        ILogger<DeepLService> logger,
+        LanguageCodeService languageCodeService) : base(settings, logger, languageCodeService)
     {
     }
 
@@ -44,9 +45,9 @@ public class DeepLService : BaseTranslationService
     {
         if (_initialized) return;
 
+        await _initLock.WaitAsync();
         try
         {
-            await _initLock.WaitAsync();
             if (_initialized) return;
 
             var settings = await _settings.GetSettings([

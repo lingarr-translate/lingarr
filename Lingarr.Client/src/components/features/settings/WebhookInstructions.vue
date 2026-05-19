@@ -12,13 +12,9 @@
                     and use this URL:
                 </span>
                 <span class="font-semibold">Radarr</span>
-                <code class="bg-accent/20 mt-1 block rounded p-2 text-sm overflow-x-auto">
-                    {{ webhookUrl }}/api/webhook/radarr
-                </code>
+                <CodeSnippet class="mt-1 block overflow-x-auto">{{ webhookUrl }}/api/webhook/radarr</CodeSnippet>
                 <span class="font-semibold">Sonarr</span>
-                <code class="bg-accent/20 mt-1 block rounded p-2 text-sm overflow-x-auto">
-                    {{ webhookUrl }}/api/webhook/sonarr
-                </code>
+                <CodeSnippet class="mt-1 block overflow-x-auto">{{ webhookUrl }}/api/webhook/sonarr</CodeSnippet>
             </div>
         </template>
     </CardComponent>
@@ -26,6 +22,7 @@
 
 <script setup lang="ts">
 import CardComponent from '@/components/common/CardComponent.vue'
+import CodeSnippet from '@/components/common/CodeSnippet.vue'
 
 const webhookUrl = window.location.origin
 </script>

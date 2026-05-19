@@ -9,6 +9,7 @@ using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Services;
+using Lingarr.Server.Services.Translation;
 
 namespace Lingarr.Server.Controllers;
 
@@ -20,17 +21,20 @@ public class TranslateController : ControllerBase
     private readonly ITranslationServiceFactory _translationServiceFactory;
     private readonly ITranslationRequestService _translationRequestService;
     private readonly ISettingService _settings;
+    private readonly LanguageCodeService _languageCodeService;
     private readonly ILogger<TranslateController> _logger;
 
     public TranslateController(
         ITranslationServiceFactory translationServiceFactory,
         ITranslationRequestService translationRequestService,
         ISettingService settings,
+        LanguageCodeService languageCodeService,
         ILogger<TranslateController> logger)
     {
         _translationServiceFactory = translationServiceFactory;
         _translationRequestService = translationRequestService;
         _settings = settings;
+        _languageCodeService = languageCodeService;
         _logger = logger;
     }
 
@@ -82,16 +86,17 @@ public class TranslateController : ControllerBase
         [FromBody] TranslateAbleSubtitleLine translateAbleSubtitleLine,
         CancellationToken cancellationToken)
     {
-        var serviceType = await _settings.GetSetting(SettingKeys.Translation.ServiceType) ?? "libretranslate";
-
-        var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
-        var subtitleTranslator = new SubtitleTranslationService(translationService, _logger);
+        var serviceType = TranslationServices.Parse(await _settings.GetSetting(SettingKeys.Translation.ServiceType))[0];
+        var subtitleTranslator = new SubtitleTranslationService(
+            _translationServiceFactory.CreateTranslationServices([serviceType]),
+            _logger);
 
         if (translateAbleSubtitleLine.SubtitleLine == "")
         {
             return translateAbleSubtitleLine.SubtitleLine;
         }
-        return await subtitleTranslator.TranslateSubtitleLine(translateAbleSubtitleLine, cancellationToken);
+        var result = await subtitleTranslator.TranslateSubtitleLine(translateAbleSubtitleLine, cancellationToken);
+        return result.Translation;
     }
 
     /// <summary>
@@ -117,18 +122,15 @@ public class TranslateController : ControllerBase
     }
 
     /// <summary>
-    /// Retrieves a list of available source languages and their supported target languages.
+    /// Returns the canonical culture list used by the language picker.
+    /// Per-service capability gating happens at translate time.
     /// </summary>
-    /// <returns>A list of source languages, each containing its code, name, and list of supported target language codes</returns>
-    /// <exception cref="InvalidOperationException">Thrown when service is not properly configured or initialization fails</exception>
-    /// <exception cref="JsonException">Thrown when language configuration files cannot be parsed (for file-based services)</exception>
+    /// <returns>A list of cultures with code and English name. Targets is always empty.</returns>
     [HttpGet("languages")]
-    public async Task<List<SourceLanguage>> GetLanguages()
+    public ActionResult<IReadOnlyList<SourceLanguage>> GetLanguages()
     {
-        var serviceType = await _settings.GetSetting("service_type") ?? "libretranslate";
-        var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
-
-        return await translationService.GetLanguages();
+        var languageCodes = _languageCodeService.GetSupportedLanguages();
+        return Ok(languageCodes);
     }
 
     /// <summary>
@@ -141,7 +143,7 @@ public class TranslateController : ControllerBase
     {
         try
         {
-            var serviceType = await _settings.GetSetting(SettingKeys.Translation.ServiceType) ?? "libretranslate";
+            var serviceType = TranslationServices.Parse(await _settings.GetSetting(SettingKeys.Translation.ServiceType))[0];
             var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
 
             // Service-specific logic to get models

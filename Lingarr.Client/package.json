@@ -31,5 +31,9 @@
         "typescript": "^6.0.3",
         "vite": "^8.0.10",
         "vue-tsc": "^3.2.7"
+    },
+    "optionalDependencies": {
+        "@oxfmt/binding-win32-x64-msvc": "^0.50.0",
+        "@oxfmt/binding-linux-x64-gnu": "^0.50.0"
     }
 }

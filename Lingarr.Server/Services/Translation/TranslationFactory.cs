@@ -66,7 +66,8 @@ public class TranslationFactory : ITranslationServiceFactory
 
             "deepl" => new DeepLService(
                 _serviceProvider.GetRequiredService<ISettingService>(),
-                _serviceProvider.GetRequiredService<ILogger<DeepLService>>()
+                _serviceProvider.GetRequiredService<ILogger<DeepLService>>(),
+                languageCodeService
             ),
 
             "openai" => new OpenAiService(
@@ -110,5 +111,25 @@ public class TranslationFactory : ITranslationServiceFactory
 
             _ => throw new ArgumentException("Unsupported translation service type", nameof(serviceType))
         };
+    }
+
+    /// <inheritdoc />
+    public IReadOnlyList<TranslationServiceEntry> CreateTranslationServices(IReadOnlyList<string> serviceTypes)
+    {
+        var services = new List<TranslationServiceEntry>(serviceTypes.Count);
+        foreach (var serviceType in serviceTypes)
+        {
+            var name = serviceType.ToLowerInvariant();
+            try
+            {
+                var service = CreateTranslationService(name);
+                services.Add(new TranslationServiceEntry(name, service, service as IBatchTranslationService));
+            }
+            catch (ArgumentException)
+            {
+                _logger.LogWarning("Skipping unknown translation service '{ServiceType}'.", name);
+            }
+        }
+        return services;
     }
 }

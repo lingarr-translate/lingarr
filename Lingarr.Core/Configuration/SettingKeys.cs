@@ -17,6 +17,7 @@ public static class SettingKeys
     public static class Translation
     {
         public const string ServiceType = "service_type";
+        public const string DefaultServiceType = "libretranslate";
 
         public static class OpenAi
         {

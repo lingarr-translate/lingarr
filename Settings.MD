@@ -76,7 +76,7 @@ secrets:
 
 | **Environment Variable** | **Description**                                                                 |
 |--------------------------|---------------------------------------------------------------------------------|
-| `SERVICE_TYPE`           | The type of translation service to use. Supported values: `libretranslate`, `openai`, `anthropic`, `localai`, `deepl`, `google`, `bing`, `microsoft`, `yandex`. |
+| `SERVICE_TYPE`           | An ordered JSON array of translation services. The first entry is the primary; the rest are fallbacks tried in order when the primary fails. A single value (e.g. `openai`) is still accepted and is normalised to a one-element array on startup. |
 | `SOURCE_LANGUAGES`       | A minified JSON array of source languages for translation. |
 | `TARGET_LANGUAGES`       | A minified JSON array of target languages for translation. |
 
@@ -148,14 +148,25 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 
 ### **Translation Services**
 
-The `SERVICE_TYPE` variable determines which translation service to use. Below are the supported values:
+The `SERVICE_TYPE` variable determines which translation services to use. Provide a JSON array, 
+the first entry is the primary service and any remaining entries are fallbacks, tried in order when the primary fails. 
+A single value is also accepted and is rewritten to an array on startup.
+
+#### Example:
+```json
+["openai","anthropic","libretranslate"]
+```
+
+The supported values are:
 
 | **Value**       | **Description**                                                                 |
 |-----------------|---------------------------------------------------------------------------------|
 | `libretranslate`| Use the LibreTranslate service for translations.                                |
 | `openai`        | Use OpenAI's models (e.g., GPT-4, GPT-3.5) for translations.                    |
 | `anthropic`     | Use Anthropic's models (e.g., Claude-2) for translations.                       |
-| `localai`       | Use a locally hosted AI model for translations.                                 |
+| `gemini`        | Use Google's Gemini models for translations.                                    |
+| `deepseek`      | Use DeepSeek's models for translations.                                         |
+| `localai`       | Use a locally hosted or OpenAI-compatible AI model for translations.            |
 | `deepl`         | Use the DeepL API for translations.                                             |
 | `google`        | Use Google Translate for translations.                                          |
 | `bing`          | Use Bing Translate for translations.                                            |

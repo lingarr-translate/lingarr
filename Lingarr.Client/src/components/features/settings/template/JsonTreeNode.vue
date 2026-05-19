@@ -71,7 +71,7 @@
             </template>
 
             <button
-                class="text-secondary-content/40 ml-auto h-4 w-4 cursor-pointer shrink-0 opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100"
+                class="text-primary-content hover:text-primary-content/50 ml-auto h-4 w-4 cursor-pointer shrink-0 opacity-0 transition-colors group-hover:opacity-100"
                 title="Remove"
                 @click="$emit('delete')">
                 <TrashIcon class="h-4 w-4" />

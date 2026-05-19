@@ -1,8 +1,9 @@
 using System;
 using System.IO;
 using System.Linq;
+using Lingarr.Core.Enum;
+using Lingarr.Server.Models;
 using Lingarr.Server.Services;
-using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Lingarr.Server.Tests.Services;
@@ -13,8 +14,7 @@ public class LanguageCodeServiceTests
 
     public LanguageCodeServiceTests()
     {
-        var logger = NullLogger<LanguageCodeService>.Instance;
-        _service = new LanguageCodeService(logger);
+        _service = new LanguageCodeService();
     }
 
     #region Validate Tests
@@ -106,7 +106,7 @@ public class LanguageCodeServiceTests
     [InlineData("EN", "en")]
     public void GetNormalizedCode_WithTwoLetterCodes_ReturnsLowercase(string code, string expected)
     {
-        var result = _service.GetNormalizedCode(code);
+        var result = LanguageCodeService.GetNormalizedCode(code);
         Assert.Equal(expected, result);
     }
 
@@ -118,7 +118,7 @@ public class LanguageCodeServiceTests
     [InlineData("PT-BR", "pt-br")]
     public void GetNormalizedCode_WithRegionCodes_ReturnsLowercasePreservingRegion(string code, string expected)
     {
-        var result = _service.GetNormalizedCode(code);
+        var result = LanguageCodeService.GetNormalizedCode(code);
         Assert.Equal(expected, result);
     }
 
@@ -131,14 +131,124 @@ public class LanguageCodeServiceTests
     [InlineData("zh-CN", "zh-cn")]
     public void GetNormalizedCode_WithLegacyChineseCodes_PreservesLegacyFormat(string code, string expected)
     {
-        var result = _service.GetNormalizedCode(code);
+        var result = LanguageCodeService.GetNormalizedCode(code);
         Assert.Equal(expected, result);
     }
 
     [Fact]
     public void GetNormalizedCode_WithInvalidCode_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() => _service.GetNormalizedCode("invalid"));
+        Assert.Throws<ArgumentException>(() => LanguageCodeService.GetNormalizedCode("invalid"));
+    }
+
+    #endregion
+
+    #region GetBestMatch Tests
+
+    private static void AssertMatch(LanguageMatch? match, string expectedCode, MatchTier expectedTier)
+    {
+        Assert.NotNull(match);
+        Assert.Equal(expectedCode, match!.Code);
+        Assert.Equal(expectedTier, match.Tier);
+    }
+
+    [Fact]
+    public void GetBestMatch_ExactBeatsNeutral()
+    {
+        AssertMatch(_service.GetBestMatch("zh-TW", ["zh", "zh-CN", "zh-TW"]), "zh-TW", MatchTier.Exact);
+    }
+
+    [Fact]
+    public void GetBestMatch_AliasEquivalentBeatsNeutral()
+    {
+        // Legacy zh-TW aliases to zh-Hant-TW; catalog has the canonical form.
+        AssertMatch(_service.GetBestMatch("zh-TW", ["zh", "zh-Hant-TW"]), "zh-Hant-TW", MatchTier.AliasEquivalent);
+    }
+
+    [Fact]
+    public void GetBestMatch_ScriptEquivalentBeatsNeutral()
+    {
+        AssertMatch(_service.GetBestMatch("zh-TW", ["zh-Hans", "zh-Hant"]), "zh-Hant", MatchTier.ScriptEquivalent);
+    }
+
+    [Fact]
+    public void GetBestMatch_NeutralFallbackWhenNothingMoreSpecific()
+    {
+        AssertMatch(_service.GetBestMatch("zh-TW", ["zh", "zh-CN"]), "zh", MatchTier.NeutralEquivalent);
+    }
+
+    [Fact]
+    public void GetBestMatch_DifferentScriptDoesNotMatch()
+    {
+        // zh-TW (Traditional) must not collapse to zh-CN (Simplified) — neither is an ancestor of the other.
+        Assert.Null(_service.GetBestMatch("zh-TW", ["zh-CN"]));
+    }
+
+    [Fact]
+    public void GetBestMatch_RegionSiblingDoesNotMatch()
+    {
+        // pt-BR and pt-PT share parent pt but neither is in the other's chain.
+        Assert.Null(_service.GetBestMatch("pt-BR", ["pt-PT"]));
+        Assert.Null(_service.GetBestMatch("pt-PT", ["pt-BR"]));
+    }
+
+    [Fact]
+    public void GetBestMatch_NeutralBeatsSibling()
+    {
+        AssertMatch(_service.GetBestMatch("pt-BR", ["pt-PT", "pt"]), "pt", MatchTier.NeutralEquivalent);
+    }
+
+    [Fact]
+    public void GetBestMatch_CaseInsensitiveExact()
+    {
+        AssertMatch(_service.GetBestMatch("ZH-tw", ["zh-TW"]), "zh-TW", MatchTier.Exact);
+    }
+
+    [Fact]
+    public void GetBestMatch_NullOrUnknownRequestedReturnsNull()
+    {
+        Assert.Null(_service.GetBestMatch(null, ["en"]));
+        Assert.Null(_service.GetBestMatch("notacode", ["en"]));
+    }
+
+    #endregion
+
+    #region GetSupportedLanguages Tests
+
+    [Fact]
+    public void GetSupportedLanguages_IncludesNeutralsAndAllowedSpecifics()
+    {
+        var codes = _service.GetSupportedLanguages().Select(language => language.Code).ToHashSet();
+        // Neutrals always included.
+        Assert.Contains("en", codes);
+        Assert.Contains("zh", codes);
+        Assert.Contains("zh-Hans", codes);
+        Assert.Contains("zh-Hant", codes);
+        Assert.Contains("sr-Cyrl", codes);
+        // Allowed regional variants.
+        Assert.Contains("pt-BR", codes);
+        Assert.Contains("pt-PT", codes);
+        Assert.Contains("en-US", codes);
+        Assert.Contains("en-GB", codes);
+        Assert.Contains("zh-TW", codes);
+    }
+
+    [Fact]
+    public void GetSupportedLanguages_ExcludesUnlistedRegionalVariants()
+    {
+        var codes = _service.GetSupportedLanguages().Select(language => language.Code).ToHashSet();
+        // Regions that produce identical translation output as the neutral should be filtered.
+        Assert.DoesNotContain("af-NA", codes);
+        Assert.DoesNotContain("af-ZA", codes);
+        Assert.DoesNotContain("en-CM", codes);
+        Assert.DoesNotContain("en-KE", codes);
+        Assert.DoesNotContain("fr-MC", codes);
+    }
+
+    [Fact]
+    public void GetSupportedLanguages_AllEntriesHaveEmptyTargets()
+    {
+        Assert.All(_service.GetSupportedLanguages(), language => Assert.Empty(language.Targets));
     }
 
     #endregion
@@ -160,7 +270,7 @@ public class LanguageCodeServiceTests
         var languagePart = parts.FirstOrDefault();
 
         var isValid = languagePart != null && _service.Validate(languagePart);
-        var normalizedCode = isValid ? _service.GetNormalizedCode(languagePart!) : null;
+        var normalizedCode = isValid ? LanguageCodeService.GetNormalizedCode(languagePart!) : null;
 
         Assert.True(isValid, $"Language part '{languagePart}' should be valid");
         Assert.Equal(expectedCode, normalizedCode);

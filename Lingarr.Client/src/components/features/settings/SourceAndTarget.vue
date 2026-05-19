@@ -57,14 +57,20 @@
                 <LanguageSelect
                     v-model:selected="targetLanguages"
                     class="w-full"
-                    :options="selectedTargetLanguages" />
+                    :options="languages" />
             </div>
         </template>
+        <p class="text-sm text-secondary-content">
+            If no configured service supports the language code, the language falls back to the
+            closest available variant (for example, <CodeSnippet>en-US</CodeSnippet>
+            may resolve to neutral <CodeSnippet>en</CodeSnippet>).
+        </p>
     </template>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
+import CodeSnippet from '@/components/common/CodeSnippet.vue'
 import LanguageSelect from '@/components/features/settings/LanguageSelect.vue'
 import { ILanguage, SETTINGS } from '@/ts'
 import { useTranslateStore } from '@/store/translate'
@@ -90,28 +96,6 @@ const targetLanguages = computed({
         settingsStore.updateSetting(SETTINGS.TARGET_LANGUAGES, newValue, true, true)
         emit('save')
     }
-})
-
-const selectedTargetLanguages = computed(() => {
-    if (!sourceLanguages.value || sourceLanguages.value.length === 0 || !languages.value) {
-        return []
-    }
-
-    const allTargets = sourceLanguages.value.flatMap((sourceLanguage) => {
-        const sourceTargetSet = languages.value.find((lang) => lang.code === sourceLanguage.code)
-        if (!sourceTargetSet) {
-            return []
-        }
-        return sourceTargetSet.targets
-    })
-
-    const uniqueTargets = [...new Set(allTargets)]
-    return uniqueTargets.map((targetCode) => {
-        const languageInfo = languages.value.find((lang) => lang.code === targetCode)
-        if (languageInfo) {
-            return { ...languageInfo }
-        }
-    }) as ILanguage[]
 })
 
 function retryLoadLanguages() {

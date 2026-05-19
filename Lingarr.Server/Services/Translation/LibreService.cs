@@ -46,9 +46,9 @@ public class LibreService : BaseLanguageService
     {
         if (_initialized) return;
 
+        await _initLock.WaitAsync();
         try
         {
-            await _initLock.WaitAsync();
             if (_initialized) return;
 
             var settings = await _settings.GetSettings([
@@ -83,7 +83,7 @@ public class LibreService : BaseLanguageService
     }
 
     /// <inheritdoc />
-    public override async Task<List<SourceLanguage>> GetLanguages()
+    protected override async Task<List<SourceLanguage>> GetServiceLanguages()
     {
         _logger.LogInformation($"Retrieving |Green|LibreTranslate|/Green| languages");
         await InitializeAsync();

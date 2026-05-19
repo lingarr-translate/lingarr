@@ -5,6 +5,7 @@ using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Jobs;
 using Lingarr.Server.Services;
+using Lingarr.Server.Services.Translation;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -237,8 +238,9 @@ public class SettingChangedListener
                     break;
 
                 case "ServiceType":
-                    var serviceType = await settingService.GetSetting(SettingKeys.Translation.ServiceType);
-                    if (serviceType != null && BatchServiceTypes.Contains(serviceType))
+                    var serviceTypeRaw = await settingService.GetSetting(SettingKeys.Translation.ServiceType);
+                    var primary = TranslationServices.Parse(serviceTypeRaw)[0];
+                    if (BatchServiceTypes.Contains(primary))
                     {
                         await settingService.SetSetting(SettingKeys.Translation.UseBatchTranslation, "false");
                     }

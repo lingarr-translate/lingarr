@@ -28,6 +28,9 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
     /// <inheritdoc />
     public override string? ModelName => _model;
 
+    /// <inheritdoc />
+    protected override bool AcceptsAnyLanguage => true;
+
     // retry settings
     private int _maxRetries;
     private TimeSpan _retryDelay;
@@ -56,9 +59,9 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
     {
         if (_initialized) return;
 
+        await _initLock.WaitAsync();
         try
         {
-            await _initLock.WaitAsync();
             if (_initialized) return;
 
             var settings = await _settings.GetSettings([
