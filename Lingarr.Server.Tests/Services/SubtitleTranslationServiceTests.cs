@@ -260,14 +260,19 @@ public class SubtitleTranslationServiceTests
     }
 
     [Fact]
-    public async Task TranslateSubtitles_TranslationFailure_RetriesAndThrows()
+    public async Task TranslateSubtitles_TranslationFailure_RetriesAndContinues()
     {
-        // Arrange - all attempts fail, the exception bubbles up after retries
+        // Arrange - first attempt fails, retry succeeds
         var callCount = 0;
-        var harness = CreatePerLineHarness(_ =>
+        var harness = CreatePerLineHarness(text =>
         {
             callCount++;
-            throw new TranslationException("boom");
+            if (callCount == 1)
+            {
+                throw new TranslationException("boom");
+            }
+
+            return text == "hello" ? "hola" : text == "world" ? "mundo" : $"tr:{text}";
         });
         var subtitles = new List<SubtitleItem>
         {
@@ -275,13 +280,17 @@ public class SubtitleTranslationServiceTests
             Subtitle(2, "world")
         };
 
-        // Act + Assert
-        await Assert.ThrowsAsync<TranslationException>(() => harness.Service.TranslateSubtitles(subtitles, NewRequest(),
+        // Act
+        await harness.Service.TranslateSubtitles(subtitles, NewRequest(),
             stripSubtitleFormatting: false,
             preserveLineBreaks: false,
             contextBefore: 0,
             contextAfter: 0,
-            CancellationToken.None));
+            CancellationToken.None);
+
+        // Assert
+        Assert.Equal(["hola"], subtitles[0].TranslatedLines);
+        Assert.Equal(["mundo"], subtitles[1].TranslatedLines);
         Assert.Equal(3, callCount);
     }
 

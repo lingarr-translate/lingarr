@@ -112,14 +112,24 @@ public class SubtitleTranslationService
                 var cacheKey = $"{subtitle.StartTime}|{subtitle.EndTime}|{subtitleLine}";
                 if (!translationCache.TryGetValue(cacheKey, out var translated))
                 {
-                    translated = await TranslateSubtitleLineWithRetryAsync(new TranslateAbleSubtitleLine
+                    try
                     {
-                        SubtitleLine = subtitleLine,
-                        SourceLanguage = translationRequest.SourceLanguage,
-                        TargetLanguage = translationRequest.TargetLanguage,
-                        ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
-                        ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
-                    }, subtitle.Position, cancellationToken);
+                        translated = await TranslateSubtitleLineWithRetryAsync(new TranslateAbleSubtitleLine
+                        {
+                            SubtitleLine = subtitleLine,
+                            SourceLanguage = translationRequest.SourceLanguage,
+                            TargetLanguage = translationRequest.TargetLanguage,
+                            ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
+                            ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
+                        }, subtitle.Position, cancellationToken);
+                    }
+                    catch (TranslationException ex) when (!cancellationToken.IsCancellationRequested)
+                    {
+                        _logger.LogWarning(ex,
+                            "Translation failed for subtitle position {Position} after retries; keeping original line.",
+                            subtitle.Position);
+                        translated = subtitleLine;
+                    }
 
                     translationCache[cacheKey] = translated;
                 }
@@ -336,14 +346,25 @@ public class SubtitleTranslationService
                 var contentLines = stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines;
                 var subtitleSource = string.Join(lineSeparator, contentLines);
 
-                var translated = await TranslateSubtitleLineWithRetryAsync(new TranslateAbleSubtitleLine
+                string translated;
+                try
                 {
-                    SubtitleLine = subtitleSource,
-                    SourceLanguage = sourceLanguage,
-                    TargetLanguage = targetLanguage,
-                    ContextLinesBefore = null,
-                    ContextLinesAfter = null
-                }, subtitle.Position, cancellationToken);
+                    translated = await TranslateSubtitleLineWithRetryAsync(new TranslateAbleSubtitleLine
+                    {
+                        SubtitleLine = subtitleSource,
+                        SourceLanguage = sourceLanguage,
+                        TargetLanguage = targetLanguage,
+                        ContextLinesBefore = null,
+                        ContextLinesAfter = null
+                    }, subtitle.Position, cancellationToken);
+                }
+                catch (TranslationException translationEx) when (!cancellationToken.IsCancellationRequested)
+                {
+                    _logger.LogWarning(translationEx,
+                        "Translation failed for subtitle position {Position} after retries; keeping original line.",
+                        subtitle.Position);
+                    translated = subtitleSource;
+                }
 
                 if (stripSubtitleFormatting)
                 {
