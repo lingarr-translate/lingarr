@@ -111,28 +111,16 @@ public class SubtitleTranslationService
                 var cacheKey = $"{subtitle.StartTime}|{subtitle.EndTime}|{subtitleLine}";
                 if (!translationCache.TryGetValue(cacheKey, out var translated))
                 {
-                    try
+                    translated = await TranslateSubtitleLine(new TranslateAbleSubtitleLine
                     {
-                        translated = await TranslateSubtitleLine(new TranslateAbleSubtitleLine
-                        {
-                            SubtitleLine = subtitleLine,
-                            SourceLanguage = translationRequest.SourceLanguage,
-                            TargetLanguage = translationRequest.TargetLanguage,
-                            ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
-                            ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
-                        }, cancellationToken);
-                    }
-                    catch (TranslationException ex) when (!cancellationToken.IsCancellationRequested)
-                    {
-                        _logger.LogWarning(ex,
-                            "Translation failed for subtitle position {Position}; keeping original line.",
-                            subtitle.Position);
-                        translated = subtitleLine;
-                    }
-
+                        SubtitleLine = subtitleLine,
+                        SourceLanguage = translationRequest.SourceLanguage,
+                        TargetLanguage = translationRequest.TargetLanguage,
+                        ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
+                        ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
+                    }, cancellationToken);
                     translationCache[cacheKey] = translated;
                 }
-
                 translatedLines.Add(translated);
             }
 
@@ -299,60 +287,11 @@ public class SubtitleTranslationService
             };
         }).ToList();
 
-        Dictionary<int, string> batchResults;
-        try
-        {
-            batchResults = await batchTranslationService.TranslateBatchAsync(
-                batchItems,
-                sourceLanguage,
-                targetLanguage,
-                cancellationToken);
-        }
-        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
-        {
-            _logger.LogWarning(ex,
-                "Batch translation failed for {Count} subtitles; falling back to individual translation.",
-                toTranslate.Count);
-
-            foreach (var subtitle in toTranslate)
-            {
-                var contentLines = stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines;
-                var subtitleSource = string.Join(lineSeparator, contentLines);
-
-                string translated;
-                try
-                {
-                    translated = await _translationService.TranslateAsync(
-                        subtitleSource,
-                        sourceLanguage,
-                        targetLanguage,
-                        null,
-                        null,
-                        cancellationToken);
-                }
-                catch (TranslationException translationEx) when (!cancellationToken.IsCancellationRequested)
-                {
-                    _logger.LogWarning(translationEx,
-                        "Translation failed for subtitle position {Position}; keeping original line.",
-                        subtitle.Position);
-                    translated = subtitleSource;
-                }
-
-                if (stripSubtitleFormatting)
-                {
-                    translated = SubtitleFormatterService.RemoveMarkup(translated);
-                }
-
-                subtitle.TranslatedLines = ToSubtitleLines(
-                    translated,
-                    contentLines.Count,
-                    preserveLineBreaks,
-                    stripSubtitleFormatting,
-                    subtitle.Position);
-            }
-
-            return toTranslate;
-        }
+        var batchResults = await batchTranslationService.TranslateBatchAsync(
+            batchItems,
+            sourceLanguage,
+            targetLanguage,
+            cancellationToken);
 
         foreach (var subtitle in toTranslate)
         {
