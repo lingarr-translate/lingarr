@@ -75,7 +75,6 @@ public class TranslationJob
                 translationRequest.SubtitleToTranslate);
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.ServiceType,
-                SettingKeys.Translation.FallbackServiceType,
                 SettingKeys.Translation.FixOverlappingSubtitles,
                 SettingKeys.Translation.StripSubtitleFormatting,
                 SettingKeys.Translation.PreserveLineBreaks,
@@ -167,21 +166,6 @@ public class TranslationJob
 
             // translate subtitles
             var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
-            var fallbackServiceType = settings.GetValueOrDefault(SettingKeys.Translation.FallbackServiceType);
-            ITranslationService? fallbackTranslationService = null;
-            if (!string.IsNullOrWhiteSpace(fallbackServiceType) && !string.Equals(serviceType, fallbackServiceType, StringComparison.OrdinalIgnoreCase))
-            {
-                try
-                {
-                    fallbackTranslationService = _translationServiceFactory.CreateTranslationService(fallbackServiceType);
-                }
-                catch (ArgumentException ex)
-                {
-                    _logger.LogWarning(ex,
-                        "Configured fallback translation service '{FallbackService}' is not supported; continuing without fallback.",
-                        fallbackServiceType);
-                }
-            }
             var translator = new SubtitleTranslationService(translationService, _logger, _progressService);
             var subtitles = await _subtitleService.ReadSubtitles(request.SubtitleToTranslate);
 
@@ -228,9 +212,7 @@ public class TranslationJob
                     stripSubtitleFormatting,
                     preserveLineBreaks,
                     maxSize,
-                    cancellationToken,
-                    fallbackTranslationService,
-                    fallbackServiceType);
+                    cancellationToken);
             }
             else
             {
@@ -248,9 +230,8 @@ public class TranslationJob
                     preserveLineBreaks,
                     contextBefore,
                     contextAfter,
-                    cancellationToken,
-                    fallbackTranslationService,
-                    fallbackServiceType);
+                    cancellationToken
+                );
             }
 
             if (settings[SettingKeys.Translation.FixOverlappingSubtitles] == "true")

@@ -9,7 +9,6 @@ export const SETTINGS = {
     SONARR_SETTINGS_COMPLETED: 'sonarr_settings_completed',
     RADARR_SETTINGS_COMPLETED: 'radarr_settings_completed',
     SERVICE_TYPE: 'service_type',
-    FALLBACK_SERVICE_TYPE: 'fallback_service_type',
     LIBRETRANSLATE_URL: 'libretranslate_url',
     SHOW_SCHEDULE: 'show_schedule',
     MOVIE_SCHEDULE: 'movie_schedule',
@@ -72,7 +71,6 @@ export interface ISettings {
     radarr_url: string
     sonarr_url: string
     service_type: string
-    fallback_service_type: string
     libretranslate_url: string
     show_schedule: string
     movie_schedule: string

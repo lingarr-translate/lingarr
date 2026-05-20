@@ -17,7 +17,6 @@ public static class SettingKeys
     public static class Translation
     {
         public const string ServiceType = "service_type";
-        public const string FallbackServiceType = "fallback_service_type";
 
         public static class OpenAi
         {
