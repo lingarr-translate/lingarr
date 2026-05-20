@@ -106,9 +106,10 @@ const routes: RouteRecordRaw[] = [
                         component: () => import('@/pages/settings/TelemetryPage.vue')
                     },
                     {
-                        path: 'request-template',
+                        path: 'request-template/:service',
                         name: 'request-template-settings',
-                        component: () => import('@/pages/settings/RequestTemplatePage.vue')
+                        component: () => import('@/pages/settings/RequestTemplatePage.vue'),
+                        props: true
                     }
                 ]
             }

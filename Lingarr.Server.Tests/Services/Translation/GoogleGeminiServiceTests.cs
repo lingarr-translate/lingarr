@@ -41,7 +41,7 @@ public class GoogleGeminiServiceTests
         _settingsMock.Setup(settingService => settingService.GetEncryptedSetting(It.IsAny<string>()))
             .ReturnsAsync("test-api-key");
 
-        var languageCodeService = new LanguageCodeService(NullLogger<LanguageCodeService>.Instance);
+        var languageCodeService = new LanguageCodeService();
         var requestTemplateService = new RequestTemplateService();
         _service = new GoogleGeminiService(
             _settingsMock.Object,
@@ -244,7 +244,7 @@ public class GoogleGeminiServiceTests
             .ReturnsAsync(apiKey);
 
         var realHttpClient = new HttpClient();
-        var languageCodeService = new LanguageCodeService(NullLogger<LanguageCodeService>.Instance);
+        var languageCodeService = new LanguageCodeService();
         var requestTemplateService2 = new RequestTemplateService();
         var service = new GoogleGeminiService(
             _settingsMock.Object,

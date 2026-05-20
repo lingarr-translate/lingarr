@@ -51,7 +51,7 @@ services:
     networks:
       - lingarr
     depends_on:
-      Lingarr.Postgres:
+      Lingarr.Mysql:
         condition: service_healthy
     labels:
       - "traefik.enable=true"

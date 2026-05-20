@@ -1,5 +1,6 @@
 ﻿using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
+using Lingarr.Server.Services.Translation;
 using Microsoft.EntityFrameworkCore;
 
 namespace Lingarr.Server.Services;
@@ -26,6 +27,7 @@ public class StartupService : IHostedService
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
 
+        await NormaliseServiceType(dbContext);
         await ApplySettingsFromEnvironment(dbContext);
 
         await CheckAndUpdateIntegrationSettings(dbContext, "radarr", [
@@ -37,6 +39,33 @@ public class StartupService : IHostedService
             SettingKeys.Integration.SonarrUrl,
             SettingKeys.Integration.SonarrApiKey
         ]);
+    }
+
+    /// <summary>
+    /// Ensures the service_type setting is stored as a JSON array. The setting historically held a
+    /// single service identifier; on every startup we promote legacy single-value rows (existing
+    /// installs and fresh seeds alike) to the ordered-list form used by the rest of the system.
+    /// </summary>
+    /// <param name="dbContext">The database context used to access and update settings.</param>
+    private async Task NormaliseServiceType(LingarrDbContext dbContext)
+    {
+        var setting = await dbContext.Settings
+            .FirstOrDefaultAsync(s => s.Key == SettingKeys.Translation.ServiceType);
+
+        if (setting == null || string.IsNullOrEmpty(setting.Value))
+        {
+            return;
+        }
+
+        if (setting.Value.TrimStart().StartsWith('['))
+        {
+            return;
+        }
+
+        setting.Value = TranslationServices.Normalise(setting.Value, _logger);
+        await dbContext.SaveChangesAsync();
+
+        _logger.LogInformation("Normalised service_type setting to JSON-array.");
     }
 
     /// <summary>
@@ -120,6 +149,11 @@ public class StartupService : IHostedService
             if (string.IsNullOrEmpty(value))
             {
                 continue;
+            }
+            
+            if (settingKey == SettingKeys.Translation.ServiceType)
+            {
+                value = TranslationServices.Normalise(value, _logger);
             }
 
             var setting = await dbContext.Settings.FirstOrDefaultAsync(s => s.Key == settingKey);

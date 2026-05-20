@@ -26,7 +26,6 @@ public class StartupServiceTests : IDisposable
         ("SONARR_API_KEY", SettingKeys.Integration.SonarrApiKey),
         ("SOURCE_LANGUAGES", SettingKeys.Translation.SourceLanguages),
         ("TARGET_LANGUAGES", SettingKeys.Translation.TargetLanguages),
-        ("SERVICE_TYPE", SettingKeys.Translation.ServiceType),
         ("LIBRE_TRANSLATE_URL", SettingKeys.Translation.LibreTranslate.Url),
         ("LIBRE_TRANSLATE_API_KEY", SettingKeys.Translation.LibreTranslate.ApiKey),
         ("AI_PROMPT", SettingKeys.Translation.AiPrompt),
@@ -91,6 +90,30 @@ public class StartupServiceTests : IDisposable
 
         // Assert
         Assert.Equal("from-file-value", await GetSettingValue(serviceProvider, settingKey));
+    }
+
+    [Fact]
+    public async Task ApplySettingsFromEnvironment_ServiceType_NormalisesToJsonArray()
+    {
+        // Arrange
+        var path = Path.Combine(_tempDir, "SERVICE_TYPE");
+        await File.WriteAllTextAsync(path, "openai");
+        Environment.SetEnvironmentVariable("SERVICE_TYPE_FILE", path);
+
+        var serviceProvider = BuildProvider();
+        await using (var seedScope = serviceProvider.CreateAsyncScope())
+        {
+            var seedDb = seedScope.ServiceProvider.GetRequiredService<LingarrDbContext>();
+            seedDb.Settings.Add(new Setting { Key = SettingKeys.Translation.ServiceType, Value = "" });
+            await seedDb.SaveChangesAsync();
+        }
+        var startupService = new StartupService(serviceProvider, NullLogger<StartupService>.Instance);
+
+        // Act
+        await startupService.StartAsync(CancellationToken.None);
+
+        // Assert: a legacy single-value env var is wrapped into a one-element JSON array.
+        Assert.Equal("[\"openai\"]", await GetSettingValue(serviceProvider, SettingKeys.Translation.ServiceType));
     }
 
     [Fact]

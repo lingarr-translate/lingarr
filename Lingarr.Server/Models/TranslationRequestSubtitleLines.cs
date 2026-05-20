@@ -5,4 +5,5 @@ public class TranslationRequestSubtitleLines
     public int Position { get; set; }
     public required string Source { get; set; }
     public required string Target { get; set; }
+    public string? Service { get; set; }
 }
