@@ -512,20 +512,11 @@ public class SubtitleTranslationServiceTests
     }
 
     [Fact]
-    public async Task ProcessSubtitleBatch_BatchFailure_RetriesAndSucceeds()
+    public async Task ProcessSubtitleBatch_BatchFailure_FallsBackToIndividualTranslationAndContinues()
     {
-        // Arrange - batch API flakes twice, then succeeds on the third try
-        var attempts = 0;
-        var harness = CreateBatchHarness(items =>
-        {
-            attempts++;
-            if (attempts < 3)
-            {
-                throw new TranslationException("batch boom");
-            }
-
-            return items.ToDictionary(i => i.Position, i => i.Position == 1 ? "hola mundo" : "adios");
-        });
+        // Arrange - batch API dies, but individual translation still works
+        var harness = CreateBatchHarness(_ => throw new TranslationException("batch boom"), text =>
+            text == "hello world" ? "hola mundo" : "adios");
         var subtitles = new List<SubtitleItem>
         {
             Subtitle(1, "hello", "world"),
@@ -540,34 +531,8 @@ public class SubtitleTranslationServiceTests
             CancellationToken.None);
 
         // Assert
-        Assert.Equal(3, attempts);
         Assert.Equal(["hola mundo"], subtitles[0].TranslatedLines);
         Assert.Equal(["adios"], subtitles[1].TranslatedLines);
-    }
-
-    [Fact]
-    public async Task ProcessSubtitleBatch_BatchFailure_RetriesAndThrowsAfterExhaustion()
-    {
-        // Arrange - all batch attempts fail, so the exception bubbles up
-        var attempts = 0;
-        var harness = CreateBatchHarness(_ =>
-        {
-            attempts++;
-            throw new TranslationException("batch boom");
-        });
-        var subtitles = new List<SubtitleItem>
-        {
-            Subtitle(1, "hello", "world"),
-            Subtitle(2, "goodbye")
-        };
-
-        // Act + Assert
-        await Assert.ThrowsAsync<TranslationException>(() => harness.Service.ProcessSubtitleBatch(subtitles, (IBatchTranslationService)harness.TranslationServiceMock.Object,
-            "en", "es",
-            stripSubtitleFormatting: false,
-            preserveLineBreaks: false,
-            CancellationToken.None));
-        Assert.Equal(3, attempts);
     }
 
     #endregion
