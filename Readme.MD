@@ -5,6 +5,9 @@
 [![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)](LICENSE)
 [![Discord](https://img.shields.io/discord/1293119073739210885?label=discord&logo=discord)](https://discord.gg/HkubmH2rcR)
 
+> [!WARNING]
+> Pull requests are temporarily closed due to a major change currently in development
+
 Lingarr is an application that leverages translation technologies to automatically translate subtitle files to your desired target language. 
 With support for multiple translation services including LibreTranslate, DeepL, and various AI providers, Lingarr offers a flexible solution for all your subtitle translation needs.
 
