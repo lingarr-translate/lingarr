@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Lingarr.Contracts.Models;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Enum;
 using Lingarr.Server.Models;

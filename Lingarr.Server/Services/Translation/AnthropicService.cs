@@ -1,14 +1,13 @@
 ﻿using System.Net;
 using System.Text;
 using System.Text.Json;
+using Lingarr.Contracts.Exceptions;
+using Lingarr.Contracts.Models;
+using Lingarr.Contracts.Models.Batch;
+using Lingarr.Contracts.Translation;
 using Lingarr.Core.Configuration;
-using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
-using Lingarr.Server.Models;
 using Lingarr.Server.Services.Translation.Base;
-using Lingarr.Server.Interfaces.Services.Translation;
-using Lingarr.Server.Models.Batch;
-using Lingarr.Server.Models.Batch.Response;
 
 namespace Lingarr.Server.Services.Translation;
 

@@ -1,10 +1,9 @@
 using System.Net;
 using GTranslate.Translators;
+using Lingarr.Contracts.Exceptions;
 using Lingarr.Core.Configuration;
-using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Services.Translation.Base;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Lingarr.Server.Services.Translation;
 

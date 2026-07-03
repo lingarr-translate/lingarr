@@ -1,4 +1,4 @@
-﻿using Lingarr.Server.Interfaces.Services.Translation;
+﻿using Lingarr.Contracts.Translation;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.FileSystem;
 

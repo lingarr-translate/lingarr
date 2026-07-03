@@ -1,4 +1,4 @@
-using Lingarr.Core.Enum;
+using Lingarr.Contracts.Models;
 
 namespace Lingarr.Server.Models;
 

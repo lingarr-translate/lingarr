@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
-using Lingarr.Core.Enum;
+using Lingarr.Contracts.Models;
+using Lingarr.Contracts.Models.Batch;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
-using Lingarr.Server.Models.Batch.Response;
 
 namespace Lingarr.Server.Services.Translation.Base;
 

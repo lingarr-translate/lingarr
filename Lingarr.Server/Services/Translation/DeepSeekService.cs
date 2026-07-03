@@ -1,10 +1,10 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Lingarr.Contracts.Exceptions;
+using Lingarr.Contracts.Models;
 using Lingarr.Core.Configuration;
-using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
-using Lingarr.Server.Models;
 using Lingarr.Server.Models.Integrations.Translation;
 using Lingarr.Server.Services.Translation.Base;
 

@@ -1,3 +1,4 @@
+using Lingarr.Contracts.Models;
 using Lingarr.Core.Entities;
 using Lingarr.Server.Models;
 

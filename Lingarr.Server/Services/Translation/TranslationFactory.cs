@@ -1,4 +1,5 @@
 ﻿using GTranslate.Translators;
+using Lingarr.Contracts.Translation;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 

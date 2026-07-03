@@ -1,9 +1,10 @@
 ﻿using System.Security.Cryptography;
+using Lingarr.Contracts.Interfaces;
+using Lingarr.Contracts.Models;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Enum;
 using Lingarr.Core.Interfaces;
-using Lingarr.Server.Interfaces;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.FileSystem;

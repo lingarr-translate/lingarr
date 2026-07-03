@@ -1,5 +1,5 @@
 using System.Globalization;
-using Lingarr.Core.Enum;
+using Lingarr.Contracts.Models;
 using Lingarr.Server.Models;
 
 namespace Lingarr.Server.Services;

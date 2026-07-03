@@ -43,6 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Lingarr.Contracts\Lingarr.Contracts.csproj" />
     <ProjectReference Include="..\Lingarr.Core\Lingarr.Core.csproj" />
     <ProjectReference Include="..\Lingarr.Migrations\Lingarr.Migrations.csproj" />
   </ItemGroup>
