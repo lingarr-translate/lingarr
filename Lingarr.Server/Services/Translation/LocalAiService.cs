@@ -106,7 +106,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 : 5;
             _httpClient.Timeout = TimeSpan.FromMinutes(requestTimeout);
             _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
             var apiKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.LocalAi.ApiKey);
             if (!string.IsNullOrEmpty(apiKey))

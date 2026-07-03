@@ -97,7 +97,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                 : 5;
             _httpClient.Timeout = TimeSpan.FromMinutes(requestTimeout);
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
             _maxRetries = int.TryParse(settings[SettingKeys.Translation.MaxRetries], out var maxRetries) 
                 ? maxRetries 
@@ -396,7 +396,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
 
             var requestUrl = $"{_endpoint}models";
             var response = await client.GetAsync(requestUrl);

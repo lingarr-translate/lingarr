@@ -82,7 +82,7 @@ public class DeepSeekService : BaseLanguageService
             _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
             
             _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
 
             _initialized = true;
@@ -170,7 +170,7 @@ public class DeepSeekService : BaseLanguageService
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"{_endpoint}/models");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Headers.Add("Accept", "application/json");
 
             var response = await _httpClient.SendAsync(request);
 

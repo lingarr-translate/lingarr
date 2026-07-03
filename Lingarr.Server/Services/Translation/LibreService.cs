@@ -60,7 +60,7 @@ public class LibreService : BaseLanguageService
             ]);
             _apiUrl = settings[SettingKeys.Translation.LibreTranslate.Url];
             _apiKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.LibreTranslate.ApiKey);
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
             _maxRetries = int.TryParse(settings[SettingKeys.Translation.MaxRetries], out var maxRetries)
                 ? maxRetries
