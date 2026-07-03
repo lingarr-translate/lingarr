@@ -110,6 +110,11 @@ const routes: RouteRecordRaw[] = [
                         name: 'request-template-settings',
                         component: () => import('@/pages/settings/RequestTemplatePage.vue'),
                         props: true
+                    },
+                    {
+                        path: 'plugins',
+                        name: 'plugins-settings',
+                        component: () => import('@/pages/settings/PluginsPage.vue')
                     }
                 ]
             }
