@@ -10,8 +10,4 @@
         <Description>Public contracts for Lingarr plugins. Reference this assembly to implement ITranslationService or IPluginManifest.</Description>
     </PropertyGroup>
 
-    <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-    </ItemGroup>
-
 </Project>
