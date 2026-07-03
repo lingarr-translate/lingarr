@@ -110,7 +110,9 @@ public class TranslationFactory : ITranslationServiceFactory
                 _serviceProvider.GetRequiredService<IRequestTemplateService>()
             ),
 
-            _ => throw new ArgumentException("Unsupported translation service type", nameof(serviceType))
+            // load any registered plugins
+            _ => _serviceProvider.GetKeyedService<ITranslationService>(serviceType.ToLowerInvariant())
+                 ?? throw new ArgumentException("Unsupported translation service type", nameof(serviceType))
         };
     }
 

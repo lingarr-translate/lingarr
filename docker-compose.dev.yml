@@ -41,11 +41,13 @@ services:
       - TARGET_LANGUAGES=[{"name":"Turkish","code":"tr"},{"name":"Dutch","code":"nl"}]
       - ASPNETCORE_URLS=http://+:9876
       - ASPNETCORE_HTTP_PORTS=9876
+      - PLUGINS_PATH=/app/plugins # Use when plugins exist
     volumes:
       - ../media/data/movies:/movies
       - ../media/data/tv:/tv
       - ../media/data/series/anime:/anime
       - ../media/data/config:/app/config
+      - ./samples/CloudflarePlugin/bin/Debug/net10.0:/app/plugins:ro # Mount the plugins
     ports:
       - "9877:9876"
     networks:

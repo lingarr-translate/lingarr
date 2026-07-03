@@ -1,5 +1,7 @@
 ﻿using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
+using Lingarr.Core.Entities;
+using Lingarr.Server.Services.Plugins;
 using Lingarr.Server.Services.Translation;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,6 +32,13 @@ public class StartupService : IHostedService
         await NormaliseServiceType(dbContext);
         await ApplySettingsFromEnvironment(dbContext);
 
+        var pluginRegistry = scope.ServiceProvider.GetService<IPluginRegistry>();
+        var pluginLoader = scope.ServiceProvider.GetService<PluginLoader>();
+        if (pluginRegistry is not null)
+        {
+            await SyncPluginSettings(dbContext, pluginRegistry, pluginLoader?.LoadingEnabled ?? false);
+        }
+
         await CheckAndUpdateIntegrationSettings(dbContext, "radarr", [
             SettingKeys.Integration.RadarrUrl,
             SettingKeys.Integration.RadarrApiKey
@@ -39,6 +48,110 @@ public class StartupService : IHostedService
             SettingKeys.Integration.SonarrUrl,
             SettingKeys.Integration.SonarrApiKey
         ]);
+    }
+
+    /// <summary>
+    /// Synchronizes plugin-declared settings with the database, creating missing rows and
+    /// removing rows for plugins that are no longer loaded.
+    /// </summary>
+    private async Task SyncPluginSettings(
+        LingarrDbContext dbContext,
+        IPluginRegistry pluginRegistry,
+        bool pluginLoadingEnabled)
+    {
+        var pluginEntries = pluginRegistry.All
+            .Where(plugin => !plugin.IsBuiltIn)
+            .ToList();
+
+        await AddDeclaredSettings(dbContext, pluginEntries);
+
+        if (pluginLoadingEnabled)
+        {
+            await RemoveOrphanedSettings(dbContext, pluginEntries);
+        }
+    }
+
+    private async Task AddDeclaredSettings(LingarrDbContext dbContext, IReadOnlyList<RegisteredPlugin> pluginEntries)
+    {
+        var declaredKeys = pluginEntries
+            .SelectMany(plugin => plugin.Manifest.Settings.Select(field => field.Key))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var existingByKey = await dbContext.Settings
+            .Where(setting => declaredKeys.Contains(setting.Key))
+            .ToDictionaryAsync(
+                setting => setting.Key,
+                StringComparer.OrdinalIgnoreCase);
+
+        foreach (var plugin in pluginEntries)
+        {
+            var provider = plugin.Manifest.Provider;
+            foreach (var field in plugin.Manifest.Settings)
+            {
+                if (!existingByKey.TryGetValue(field.Key, out var existing))
+                {
+                    dbContext.Settings.Add(new Setting
+                    {
+                        Key = field.Key,
+                        Value = field.Default ?? string.Empty,
+                        Provider = provider
+                    });
+                    _logger.LogInformation("Added plugin setting {Key} for {Provider}.", field.Key, provider);
+                    continue;
+                }
+
+                if (existing.Provider is null)
+                {
+                    _logger.LogWarning(
+                        "Plugin {Provider} declares key {Key} but a built-in setting with that key already exists; skipping.",
+                        provider,
+                        field.Key);
+                    continue;
+                }
+
+                if (!string.Equals(existing.Provider, provider, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning(
+                        "Plugin {Provider} declares key {Key} but it is already owned by {Owner}; skipping.",
+                        provider,
+                        field.Key,
+                        existing.Provider);
+                }
+            }
+        }
+
+        await dbContext.SaveChangesAsync();
+    }
+
+    private async Task RemoveOrphanedSettings(LingarrDbContext dbContext, IReadOnlyList<RegisteredPlugin> pluginEntries)
+    {
+        var loadedProviders = new HashSet<string>(
+            pluginEntries.Select(plugin => plugin.Manifest.Provider),
+            StringComparer.OrdinalIgnoreCase);
+
+        var ownedRows = await dbContext.Settings
+            .Where(setting => setting.Provider != null)
+            .ToListAsync();
+
+        var orphaned = ownedRows
+            .Where(setting => !loadedProviders.Contains(setting.Provider!))
+            .ToList();
+
+        if (orphaned.Count == 0)
+        {
+            return;
+        }
+
+        dbContext.Settings.RemoveRange(orphaned);
+        await dbContext.SaveChangesAsync();
+
+        foreach (var setting in orphaned)
+        {
+            _logger.LogInformation(
+                "Removed orphaned setting {Key} owned by {Owner} (plugin not loaded).",
+                setting.Key,
+                setting.Provider);
+        }
     }
 
     /// <summary>

@@ -8,4 +8,7 @@ public class Setting
     [MaxLength(255)]
     public required string Key { get; set; }
     public required string Value { get; set; }
+
+    [MaxLength(255)]
+    public string? Provider { get; set; }
 }
