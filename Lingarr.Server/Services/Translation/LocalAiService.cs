@@ -29,9 +29,6 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
     /// <inheritdoc />
     public override string? ModelName => _model;
 
-    /// <inheritdoc />
-    protected override bool AcceptsAnyLanguage => true;
-
     // retry settings
     private int _maxRetries;
     private TimeSpan _retryDelay;
@@ -43,7 +40,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         ILogger<LocalAiService> logger,
         LanguageCodeService languageCodeService,
         IRequestTemplateService requestTemplateService)
-        : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
+        : base(settings, logger, languageCodeService)
     {
         _httpClient = httpClient;
         _requestTemplateService = requestTemplateService;

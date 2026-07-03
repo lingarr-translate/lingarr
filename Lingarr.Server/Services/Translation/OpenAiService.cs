@@ -39,7 +39,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
         LanguageCodeService languageCodeService,
         IRequestTemplateService requestTemplateService,
         HttpClient? httpClient = null)
-        : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
+        : base(settings, logger, languageCodeService)
     {
         _httpClient = httpClient ?? new HttpClient();
         _requestTemplateService = requestTemplateService;

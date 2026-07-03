@@ -25,16 +25,13 @@ public class DeepSeekService : BaseLanguageService
     /// <inheritdoc />
     public override string? ModelName => _model;
 
-    /// <inheritdoc />
-    protected override bool AcceptsAnyLanguage => true;
-
     public DeepSeekService(
         ISettingService settings,
         HttpClient httpClient,
         ILogger<DeepSeekService> logger,
         LanguageCodeService languageCodeService,
         IRequestTemplateService requestTemplateService)
-        : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
+        : base(settings, logger, languageCodeService)
     {
         _httpClient = httpClient;
         _requestTemplateService = requestTemplateService;

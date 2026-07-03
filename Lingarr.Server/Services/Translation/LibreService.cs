@@ -33,7 +33,7 @@ public class LibreService : BaseLanguageService
         ISettingService settings,
         ILogger<LibreService> logger,
         LanguageCodeService languageCodeService)
-        : base(settings, logger, languageCodeService, "/app/Statics/libre_translate_languages.json")
+        : base(settings, logger, languageCodeService)
     {
         _httpClient = httpClient;
     }

@@ -27,9 +27,6 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
     /// <inheritdoc />
     public override string? ModelName => _model;
 
-    /// <inheritdoc />
-    protected override bool AcceptsAnyLanguage => true;
-
     // retry settings
     private int _maxRetries;
     private TimeSpan _retryDelay;
@@ -41,7 +38,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         ILogger<GoogleGeminiService> logger,
         LanguageCodeService languageCodeService,
         IRequestTemplateService requestTemplateService)
-        : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
+        : base(settings, logger, languageCodeService)
     {
         _httpClient = httpClient;
         _requestTemplateService = requestTemplateService;
