@@ -218,7 +218,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     /// <summary>
     /// Updates the media hash in the database.
     /// </summary>
-    /// <returns>A task representing the asynchronous operation.</returns
+    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task UpdateHash()
     {
         _media.MediaHash = _hash;
