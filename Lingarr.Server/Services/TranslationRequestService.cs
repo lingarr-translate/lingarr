@@ -1,5 +1,8 @@
 ﻿using DeepL;
 using Hangfire;
+using Lingarr.Contracts.Exceptions;
+using Lingarr.Contracts.Models;
+using Lingarr.Contracts.Translation;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
@@ -585,7 +588,7 @@ public class TranslationRequestService : ITranslationRequestService
             var services = _translationServiceFactory.CreateTranslationServices(serviceNames);
             if (services.Count == 0)
             {
-                throw new Exceptions.TranslationException(
+                throw new TranslationException(
                     $"No usable translation services configured: [{string.Join(", ", serviceNames)}]");
             }
             var translationService = services[0].Service;

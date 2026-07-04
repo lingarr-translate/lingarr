@@ -1,4 +1,6 @@
-﻿namespace Lingarr.Server.Interfaces.Services.Translation;
+﻿using Lingarr.Contracts.Translation;
+
+namespace Lingarr.Server.Interfaces.Services.Translation;
 
 public readonly record struct TranslationServiceEntry(string Name, ITranslationService Service, IBatchTranslationService? BatchService);
 

@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AssemblyName>Lingarr.Plugin.Cloudflare</AssemblyName>
+        <RootNamespace>Lingarr.Plugin.Cloudflare</RootNamespace>
+        <Description>Sample translation plugin using Cloudflare Workers AI. Serves as a starting point for developing your own custom translation plugins.</Description>
+        <Version>0.0.0-dev</Version>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Lingarr.Contracts\Lingarr.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    </ItemGroup>
+
+</Project>

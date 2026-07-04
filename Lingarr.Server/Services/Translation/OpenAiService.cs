@@ -2,14 +2,14 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Lingarr.Contracts.Exceptions;
+using Lingarr.Contracts.Models;
+using Lingarr.Contracts.Models.Batch;
+using Lingarr.Contracts.Translation;
 using Lingarr.Core.Configuration;
-using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
-using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Services.Translation.Base;
-using Lingarr.Server.Models.Batch;
-using Lingarr.Server.Models.Batch.Response;
 
 namespace Lingarr.Server.Services.Translation;
 
@@ -39,7 +39,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
         LanguageCodeService languageCodeService,
         IRequestTemplateService requestTemplateService,
         HttpClient? httpClient = null)
-        : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
+        : base(settings, logger, languageCodeService)
     {
         _httpClient = httpClient ?? new HttpClient();
         _requestTemplateService = requestTemplateService;
@@ -97,7 +97,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                 : 5;
             _httpClient.Timeout = TimeSpan.FromMinutes(requestTimeout);
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
             _maxRetries = int.TryParse(settings[SettingKeys.Translation.MaxRetries], out var maxRetries) 
                 ? maxRetries 
@@ -396,7 +396,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
         {
             var client = new HttpClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
-            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
 
             var requestUrl = $"{_endpoint}models";
             var response = await client.GetAsync(requestUrl);

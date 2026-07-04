@@ -5,6 +5,8 @@ using Hangfire;
 using Hangfire.MySql;
 using Hangfire.PostgreSql;
 using Hangfire.Storage.SQLite;
+using Lingarr.Contracts.Interfaces.Plugins;
+using Lingarr.Contracts.Settings;
 using Lingarr.Core;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
@@ -20,6 +22,8 @@ using Lingarr.Server.Listener;
 using Lingarr.Server.Providers;
 using Lingarr.Server.Services;
 using Lingarr.Server.Services.Integration;
+using Lingarr.Server.Services.Plugins;
+using Lingarr.Server.Services.Plugins.Manifests;
 using Lingarr.Server.Services.Subtitle;
 using Lingarr.Server.Services.Sync;
 using Lingarr.Server.Services.Translation;
@@ -84,9 +88,14 @@ public static class ServiceCollectionExtensions
     private static void ConfigureLogging(this WebApplicationBuilder builder)
     {
         builder.Logging.ClearProviders();
-        builder.Logging.AddProvider(new CustomLogFormatter(Options.Create(new CustomLogFormatterOptions())));
+        AddLogProviders(builder.Logging);
+    }
+
+    private static void AddLogProviders(ILoggingBuilder logging)
+    {
+        logging.AddProvider(new CustomLogFormatter(Options.Create(new CustomLogFormatterOptions())));
         #if !DEBUG
-        builder.Logging.AddProvider(new InMemoryLoggerProvider());
+        logging.AddProvider(new InMemoryLoggerProvider());
         #endif
     }
 
@@ -171,11 +180,33 @@ public static class ServiceCollectionExtensions
         builder.Services.AddSingleton<LanguageCodeService>();
         builder.Services.AddSingleton<IRequestTemplateService, RequestTemplateService>();
 
+        // Register manifests
+        builder.Services.AddSingleton<IPluginManifest, AnthropicPluginManifest>();
+        builder.Services.AddSingleton<IPluginManifest, OpenAiPluginManifest>();
+        builder.Services.AddSingleton<IPluginManifest, GeminiPluginManifest>();
+        builder.Services.AddSingleton<IPluginManifest, DeepSeekPluginManifest>();
+        builder.Services.AddSingleton<IPluginManifest, LocalAiPluginManifest>();
+        builder.Services.AddSingleton<IPluginManifest, DeepLPluginManifest>();
+        builder.Services.AddSingleton<IPluginManifest, LibreTranslatePluginManifest>();
+        builder.Services.AddSingleton<IPluginManifest, GoogleTranslatePluginManifest>();
+        builder.Services.AddSingleton<IPluginManifest, BingTranslatePluginManifest>();
+        builder.Services.AddSingleton<IPluginManifest, MicrosoftTranslatePluginManifest>();
+        builder.Services.AddSingleton<IPluginManifest, YandexTranslatePluginManifest>();
+
+        // Plugin discovery and the read settings
+        builder.Services.AddSingleton<IPluginRegistry, PluginRegistry>();
+        builder.Services.AddScoped<ISettingsAccess, SettingsAccess>();
+
+        // Scan for external plugins before the container is ready
+        var pluginLoaderLogger = LoggerFactory
+            .Create(AddLogProviders)
+            .CreateLogger<PluginLoader>();
+        var pluginLoader = new PluginLoader(pluginLoaderLogger);
+        pluginLoader.LoadPlugins(builder.Services);
+        builder.Services.AddSingleton(pluginLoader);
+
         // Added startup service to validate new settings
         builder.Services.AddHostedService<StartupService>();
-
-        // Add translation services
-        builder.Services.AddTransient<OpenAiService>();
 
         builder.Services.AddTransient<PathConversionService>();
         builder.Services.AddScoped<IStatisticsService, StatisticsService>();

@@ -1,10 +1,10 @@
 ﻿using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Lingarr.Contracts.Exceptions;
+using Lingarr.Contracts.Models;
 using Lingarr.Core.Configuration;
-using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
-using Lingarr.Server.Models;
 using Lingarr.Server.Models.Integrations.Translation;
 using Lingarr.Server.Services.Translation.Base;
 
@@ -25,16 +25,13 @@ public class DeepSeekService : BaseLanguageService
     /// <inheritdoc />
     public override string? ModelName => _model;
 
-    /// <inheritdoc />
-    protected override bool AcceptsAnyLanguage => true;
-
     public DeepSeekService(
         ISettingService settings,
         HttpClient httpClient,
         ILogger<DeepSeekService> logger,
         LanguageCodeService languageCodeService,
         IRequestTemplateService requestTemplateService)
-        : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
+        : base(settings, logger, languageCodeService)
     {
         _httpClient = httpClient;
         _requestTemplateService = requestTemplateService;
@@ -82,7 +79,7 @@ public class DeepSeekService : BaseLanguageService
             _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
             
             _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
 
             _initialized = true;
@@ -170,7 +167,7 @@ public class DeepSeekService : BaseLanguageService
         {
             var request = new HttpRequestMessage(HttpMethod.Get, $"{_endpoint}/models");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            request.Headers.Add("Accept", "application/json");
 
             var response = await _httpClient.SendAsync(request);
 

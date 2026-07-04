@@ -29,10 +29,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { SETTINGS, SERVICE_TYPE } from '@/ts'
+import { IPluginSummary, SETTINGS } from '@/ts'
 import { useSettingStore } from '@/store/setting'
+import services from '@/services'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import TabComponent from '@/components/common/TabComponent.vue'
 import ArrowLeft from '@/components/icons/ArrowLeft.vue'
@@ -40,24 +41,36 @@ import RequestTemplate from '@/components/features/settings/template/RequestTemp
 import SystemPrompt from '@/components/features/settings/SystemPrompt.vue'
 import ContextPrompt from '@/components/features/settings/ContextPrompt.vue'
 
-const props = defineProps<{ service: string }>()
-
 const router = useRouter()
 const settingsStore = useSettingStore()
 
-const SERVICE_LABELS: Record<string, string> = {
-    [SERVICE_TYPE.OPENAI]: 'OpenAI',
-    [SERVICE_TYPE.ANTHROPIC]: 'Anthropic',
-    [SERVICE_TYPE.LOCALAI]: 'Custom',
-    [SERVICE_TYPE.GEMINI]: 'Gemini',
-    [SERVICE_TYPE.DEEPSEEK]: 'DeepSeek'
-}
+const props = defineProps<{ service: string }>()
+const allPlugins = ref<IPluginSummary[]>([])
+const pluginsLoaded = ref(false)
+
+const configuredServices = computed<string[]>(() => {
+    const raw = (settingsStore.getSetting(SETTINGS.SERVICE_TYPE) as string) ?? '[]'
+    try {
+        return JSON.parse(raw) as string[]
+    } catch {
+        return []
+    }
+})
 
 const tabOptions = computed(() => {
-    const raw = (settingsStore.getSetting(SETTINGS.SERVICE_TYPE) as string) ?? '[]'
-    return (JSON.parse(raw) as string[])
-        .filter((service) => service in SERVICE_LABELS)
-        .map((service) => ({ value: service, label: SERVICE_LABELS[service] }))
+    const templated = new Map<string, IPluginSummary>()
+    for (const plugin of allPlugins.value) {
+        if (plugin.hasRequestTemplate) {
+            templated.set(plugin.provider, plugin)
+        }
+    }
+
+    return configuredServices.value
+        .filter((provider) => templated.has(provider))
+        .map((provider) => {
+            const summary = templated.get(provider)!
+            return { value: provider, label: summary.displayName }
+        })
 })
 
 function selectService(value: string) {
@@ -68,8 +81,11 @@ function selectService(value: string) {
 }
 
 watch(
-    [() => props.service, tabOptions],
-    ([current, options]) => {
+    [() => props.service, tabOptions, pluginsLoaded],
+    ([current, options, loaded]) => {
+        if (!loaded) {
+            return
+        }
         if (options.length === 0) {
             router.push({ name: 'services-settings' })
             return
@@ -80,4 +96,14 @@ watch(
     },
     { immediate: true }
 )
+
+onMounted(async () => {
+    try {
+        allPlugins.value = await services.plugin.list()
+    } catch (error) {
+        console.error('Failed to load translation provider list', error)
+    } finally {
+        pluginsLoaded.value = true
+    }
+})
 </script>

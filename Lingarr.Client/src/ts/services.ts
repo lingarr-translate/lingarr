@@ -12,7 +12,11 @@ import {
     IApiKeyResponse,
     IUser,
     IUpdateUserRequest,
-    IIncludeSummary
+    IIncludeSummary,
+    IPluginManifest,
+    IPluginOptionsResponse,
+    IPluginStatus,
+    IPluginSummary
 } from '@/ts'
 
 export interface Services {
@@ -30,6 +34,14 @@ export interface Services {
     logs: ILogsService
     telemetry: ITelemetryService
     requestTemplate: IRequestTemplateService
+    plugin: IPluginService
+}
+
+export interface IPluginService {
+    list(): Promise<IPluginSummary[]>
+    getManifest(provider: string): Promise<IPluginManifest>
+    getStatus(provider: string): Promise<IPluginStatus>
+    getOptions(endpoint: string): Promise<IPluginOptionsResponse>
 }
 
 export interface IAuthService {
@@ -95,7 +107,6 @@ export interface ITranslateService {
         mediaType: MediaType
     ): Promise<T>
     getLanguages<T>(): Promise<T>
-    getModels<T>(): Promise<T>
 }
 
 export interface ITranslationRequestService {

@@ -1,9 +1,10 @@
 ﻿using Hangfire;
+using Lingarr.Contracts.Exceptions;
+using Lingarr.Contracts.Translation;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
-using Lingarr.Server.Exceptions;
 using Lingarr.Server.Filters;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;

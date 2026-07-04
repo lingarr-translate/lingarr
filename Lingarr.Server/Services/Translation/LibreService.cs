@@ -2,8 +2,9 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Lingarr.Contracts.Exceptions;
+using Lingarr.Contracts.Models;
 using Lingarr.Core.Configuration;
-using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
@@ -32,7 +33,7 @@ public class LibreService : BaseLanguageService
         ISettingService settings,
         ILogger<LibreService> logger,
         LanguageCodeService languageCodeService)
-        : base(settings, logger, languageCodeService, "/app/Statics/libre_translate_languages.json")
+        : base(settings, logger, languageCodeService)
     {
         _httpClient = httpClient;
     }
@@ -59,7 +60,7 @@ public class LibreService : BaseLanguageService
             ]);
             _apiUrl = settings[SettingKeys.Translation.LibreTranslate.Url];
             _apiKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.LibreTranslate.ApiKey);
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
             _maxRetries = int.TryParse(settings[SettingKeys.Translation.MaxRetries], out var maxRetries)
                 ? maxRetries

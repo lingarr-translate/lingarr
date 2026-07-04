@@ -1,5 +1,5 @@
-﻿using Lingarr.Core.Enum;
-using Lingarr.Server.Models.Batch.Request;
+﻿using Lingarr.Contracts.Models.Batch;
+using Lingarr.Core.Enum;
 
 namespace Lingarr.Server.Models.FileSystem;
 

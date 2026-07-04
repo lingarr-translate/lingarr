@@ -1,13 +1,12 @@
-﻿using System.Text.Json;
+﻿using Lingarr.Contracts.Models;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Attributes;
 using Microsoft.AspNetCore.Mvc;
+using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
-using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
-using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Services;
 using Lingarr.Server.Services.Translation;
 
@@ -133,27 +132,4 @@ public class TranslateController : ControllerBase
         return Ok(languageCodes);
     }
 
-    /// <summary>
-    /// Retrieves available AI models for the currently active translation service.
-    /// </summary>
-    /// <returns>A list of models in a standardized label/value format for frontend consumption</returns>
-    /// <exception cref="InvalidOperationException">Thrown when service is not properly configured or initialization fails</exception>
-    [HttpGet("models")]
-    public async Task<ActionResult<List<LabelValue>>> GetModels()
-    {
-        try
-        {
-            var serviceType = TranslationServices.Parse(await _settings.GetSetting(SettingKeys.Translation.ServiceType))[0];
-            var translationService = _translationServiceFactory.CreateTranslationService(serviceType);
-
-            // Service-specific logic to get models
-            var models = await translationService.GetModels();
-            return Ok(models);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving models for translation service");
-            return StatusCode(500, "Failed to retrieve available models");
-        }
-    }
 }

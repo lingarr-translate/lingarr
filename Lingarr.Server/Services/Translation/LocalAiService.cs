@@ -2,12 +2,12 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using Lingarr.Contracts.Exceptions;
+using Lingarr.Contracts.Models.Batch;
+using Lingarr.Contracts.Translation;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
-using Lingarr.Server.Interfaces.Services.Translation;
-using Lingarr.Server.Models.Batch;
-using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.Integrations.Translation;
 using Lingarr.Server.Services.Translation.Base;
 
@@ -29,9 +29,6 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
     /// <inheritdoc />
     public override string? ModelName => _model;
 
-    /// <inheritdoc />
-    protected override bool AcceptsAnyLanguage => true;
-
     // retry settings
     private int _maxRetries;
     private TimeSpan _retryDelay;
@@ -43,7 +40,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         ILogger<LocalAiService> logger,
         LanguageCodeService languageCodeService,
         IRequestTemplateService requestTemplateService)
-        : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
+        : base(settings, logger, languageCodeService)
     {
         _httpClient = httpClient;
         _requestTemplateService = requestTemplateService;
@@ -106,7 +103,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 : 5;
             _httpClient.Timeout = TimeSpan.FromMinutes(requestTimeout);
             _httpClient.DefaultRequestHeaders.Accept.Clear();
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
             var apiKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.LocalAi.ApiKey);
             if (!string.IsNullOrEmpty(apiKey))

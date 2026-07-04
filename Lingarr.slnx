@@ -33,7 +33,19 @@
     <File Path=".github/workflows/docker-build.yml" />
     <File Path=".github/workflows/pr-comment.yml" />
   </Folder>
+  <Folder Name="/Lingarr.Root/samples/CloudflarePlugin/">
+    <File Path="samples/CloudflarePlugin/AssemblyInfo.cs" />
+    <File Path="samples/CloudflarePlugin/CloudflarePlugin.csproj" />
+    <File Path="samples/CloudflarePlugin/CloudflarePluginManifest.cs" />
+    <File Path="samples/CloudflarePlugin/CloudflareTranslator.cs" />
+    <File Path="samples/CloudflarePlugin/README.md" />
+  </Folder>
+  <Folder Name="/Lingarr.Root/samples/CloudflarePlugin/Models/">
+    <File Path="samples/CloudflarePlugin/Models/CloudflareRequest.cs" />
+    <File Path="samples/CloudflarePlugin/Models/CloudflareResponse.cs" />
+  </Folder>
   <Project Path="Lingarr.Client/Lingarr.Client.njsproj" />
+  <Project Path="Lingarr.Contracts/Lingarr.Contracts.csproj" />
   <Project Path="Lingarr.Core/Lingarr.Core.csproj" />
   <Project Path="Lingarr.Migrations/Lingarr.Migrations.csproj" />
   <Project Path="Lingarr.Migrations.Tests/Lingarr.Migrations.Tests.csproj" />

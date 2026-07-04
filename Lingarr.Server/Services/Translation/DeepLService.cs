@@ -1,8 +1,8 @@
 ﻿using DeepL;
+using Lingarr.Contracts.Exceptions;
+using Lingarr.Contracts.Models;
 using Lingarr.Core.Configuration;
-using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
-using Lingarr.Server.Models;
 using Lingarr.Server.Services.Translation.Base;
 using Microsoft.Extensions.Caching.Memory;
 

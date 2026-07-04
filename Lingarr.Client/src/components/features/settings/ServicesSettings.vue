@@ -69,7 +69,7 @@
                             <TrashIcon class="h-4 w-4" />
                         </button>
                     </li>
-                    <li v-if="services.length < serviceOptions.length">
+                    <li v-if="services.length < serviceOptions.length && serviceOptions.length > 0">
                         <ButtonComponent variant="ghost" size="xs" @click="addRow">
                             <PlusIcon class="mr-1 h-3 w-3" />
                             Add fallback service
@@ -78,15 +78,19 @@
                 </ol>
             </div>
 
-            <div v-if="serviceConfigComponent" class="mt-4 space-y-2">
+            <div v-if="configuringManifest || manifestError" class="mt-4 space-y-2">
                 <div class="text-sm">
                     <span class="text-secondary-content/60">Configuring credentials for</span>
                     <span class="ml-1 font-semibold">{{ configuringLabel }}</span>
                 </div>
-                <component :is="serviceConfigComponent" @save="saveNotification?.show()" />
+                <DynamicPluginForm
+                    v-if="configuringManifest"
+                    :manifest="configuringManifest"
+                    @save="saveNotification?.show()" />
+                <p v-else-if="manifestError" class="text-sm text-red-500">{{ manifestError }}</p>
             </div>
 
-            <div v-if="hasAiService" class="mt-6">
+            <div v-if="configuringManifest?.hasRequestTemplate" class="mt-6">
                 <div class="flex flex-col gap-4">
                     <div class="flex flex-col space-x-2">
                         <span class="font-semibold">Customize request template and prompts</span>
@@ -113,22 +117,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useSettingStore } from '@/store/setting'
-import { SETTINGS, SERVICE_TYPE } from '@/ts'
+import { IPluginManifest, IPluginSummary, SETTINGS, SERVICE_TYPE } from '@/ts'
+import servicesApi from '@/services'
 import CardComponent from '@/components/common/CardComponent.vue'
 import SelectComponent from '@/components/common/SelectComponent.vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
-import LibreTranslateConfig from '@/components/features/settings/services/LibreTranslateConfig.vue'
-import DeepLConfig from '@/components/features/settings/services/DeepLConfig.vue'
-import FreeServiceConfig from '@/components/features/settings/services/FreeServiceConfig.vue'
-import AnthropicConfig from '@/components/features/settings/services/AnthropicConfig.vue'
-import OpenAiConfig from '@/components/features/settings/services/OpenAiConfig.vue'
-import LocalAiConfig from '@/components/features/settings/services/LocalAiConfig.vue'
-import GeminiConfig from '@/components/features/settings/services/GeminiConfig.vue'
-import DeepSeekConfig from '@/components/features/settings/services/DeepSeekConfig.vue'
+import DynamicPluginForm from '@/components/features/settings/DynamicPluginForm.vue'
 import SourceAndTarget from '@/components/features/settings/SourceAndTarget.vue'
 import ArrowRight from '@/components/icons/ArrowRight.vue'
 import CaretUpIcon from '@/components/icons/CaretUpIcon.vue'
@@ -141,41 +139,7 @@ const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
 const router = useRouter()
 
-const serviceOptions = [
-    { value: SERVICE_TYPE.ANTHROPIC, label: 'Anthropic' },
-    { value: SERVICE_TYPE.BING, label: 'Bing' },
-    { value: SERVICE_TYPE.DEEPL, label: 'DeepL' },
-    { value: SERVICE_TYPE.DEEPSEEK, label: 'DeepSeek' },
-    { value: SERVICE_TYPE.GEMINI, label: 'Gemini' },
-    { value: SERVICE_TYPE.GOOGLE, label: 'Google' },
-    { value: SERVICE_TYPE.LIBRETRANSLATE, label: 'LibreTranslate' },
-    { value: SERVICE_TYPE.LOCALAI, label: 'OpenAI-compatible API (Custom)' },
-    { value: SERVICE_TYPE.MICROSOFT, label: 'Microsoft' },
-    { value: SERVICE_TYPE.OPENAI, label: 'OpenAI' },
-    { value: SERVICE_TYPE.YANDEX, label: 'Yandex' }
-]
-
-const configComponents: Record<string, unknown> = {
-    [SERVICE_TYPE.LIBRETRANSLATE]: LibreTranslateConfig,
-    [SERVICE_TYPE.OPENAI]: OpenAiConfig,
-    [SERVICE_TYPE.ANTHROPIC]: AnthropicConfig,
-    [SERVICE_TYPE.LOCALAI]: LocalAiConfig,
-    [SERVICE_TYPE.DEEPL]: DeepLConfig,
-    [SERVICE_TYPE.GEMINI]: GeminiConfig,
-    [SERVICE_TYPE.DEEPSEEK]: DeepSeekConfig,
-    [SERVICE_TYPE.GOOGLE]: FreeServiceConfig,
-    [SERVICE_TYPE.BING]: FreeServiceConfig,
-    [SERVICE_TYPE.MICROSOFT]: FreeServiceConfig,
-    [SERVICE_TYPE.YANDEX]: FreeServiceConfig
-}
-
-const AI_SERVICES: string[] = [
-    SERVICE_TYPE.ANTHROPIC,
-    SERVICE_TYPE.DEEPSEEK,
-    SERVICE_TYPE.GEMINI,
-    SERVICE_TYPE.LOCALAI,
-    SERVICE_TYPE.OPENAI
-]
+const serviceOptions = ref<{ value: string; label: string }[]>([])
 
 function parseServices(raw: unknown): string[] {
     const list = JSON.parse((raw as string) ?? '[]') as string[]
@@ -184,19 +148,28 @@ function parseServices(raw: unknown): string[] {
 
 const services = ref<string[]>(parseServices(settingsStore.getSetting(SETTINGS.SERVICE_TYPE)))
 const configuringIndex = ref(0)
+const configuringManifest = ref<IPluginManifest | null>(null)
+const manifestError = ref<string | null>(null)
 
-watch(
-    () => settingsStore.getSetting(SETTINGS.SERVICE_TYPE),
-    (raw) => {
-        services.value = parseServices(raw)
+async function loadManifest(provider: string) {
+    try {
+        const manifest = await servicesApi.plugin.getManifest(provider)
+        await settingsStore.setPluginSettings(manifest.settings)
+
+        configuringManifest.value = manifest
+        manifestError.value = null
+    } catch (error) {
+        console.error('Failed to load manifest', error)
+        configuringManifest.value = null
+        manifestError.value = `No manifest available for ${provider}.`
     }
-)
+}
 
 function optionsForRow(index: number) {
     const usedElsewhere = new Set(
         services.value.filter((_, currentIndex) => currentIndex !== index)
     )
-    return serviceOptions.filter((option) => !usedElsewhere.has(option.value))
+    return serviceOptions.value.filter((option) => !usedElsewhere.has(option.value))
 }
 
 async function save(next: string[]) {
@@ -213,7 +186,7 @@ function createRow(index: number, value: string) {
 }
 
 function addRow() {
-    const unused = serviceOptions.find((option) => !services.value.includes(option.value))
+    const unused = serviceOptions.value.find((option) => !services.value.includes(option.value))
     if (!unused) {
         return
     }
@@ -247,12 +220,30 @@ function moveRow(index: number, delta: number) {
 
 const configuringLabel = computed(() => {
     const value = services.value[configuringIndex.value]
-    return serviceOptions.find((option) => option.value === value)?.label ?? value
+    return serviceOptions.value.find((option) => option.value === value)?.label ?? value
 })
 
-const serviceConfigComponent = computed(
-    () => configComponents[services.value[configuringIndex.value]] ?? null
+watch(
+    () => settingsStore.getSetting(SETTINGS.SERVICE_TYPE),
+    (raw) => {
+        services.value = parseServices(raw)
+    }
 )
 
-const hasAiService = computed(() => AI_SERVICES.includes(services.value[configuringIndex.value]))
+watch(
+    () => services.value[configuringIndex.value],
+    loadManifest,
+    { immediate: true }
+)
+
+onMounted(async () => {
+    try {
+        const summaries: IPluginSummary[] = await servicesApi.plugin.list()
+        serviceOptions.value = summaries
+            .map((summary) => ({ value: summary.provider, label: summary.displayName }))
+            .sort((a, b) => a.label.localeCompare(b.label))
+    } catch (error) {
+        console.error('Failed to load translation provider list', error)
+    }
+})
 </script>

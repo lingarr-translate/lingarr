@@ -1,7 +1,6 @@
-﻿using Lingarr.Core.Enum;
+﻿using Lingarr.Contracts.Models;
+using Lingarr.Contracts.Translation;
 using Lingarr.Server.Interfaces.Services;
-using Lingarr.Server.Interfaces.Services.Translation;
-using Lingarr.Server.Models;
 
 namespace Lingarr.Server.Services.Translation.Base;
 

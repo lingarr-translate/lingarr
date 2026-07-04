@@ -1,9 +1,10 @@
 ﻿using System.Security.Cryptography;
+using Lingarr.Contracts.Interfaces;
+using Lingarr.Contracts.Models;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Enum;
 using Lingarr.Core.Interfaces;
-using Lingarr.Server.Interfaces;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.FileSystem;
@@ -217,7 +218,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     /// <summary>
     /// Updates the media hash in the database.
     /// </summary>
-    /// <returns>A task representing the asynchronous operation.</returns
+    /// <returns>A task representing the asynchronous operation.</returns>
     private async Task UpdateHash()
     {
         _media.MediaHash = _hash;

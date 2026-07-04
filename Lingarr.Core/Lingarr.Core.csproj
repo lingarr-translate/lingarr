@@ -16,4 +16,8 @@
       <PackageReference Include="Microting.EntityFrameworkCore.MySql" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Lingarr.Contracts\Lingarr.Contracts.csproj" />
+    </ItemGroup>
+
 </Project>

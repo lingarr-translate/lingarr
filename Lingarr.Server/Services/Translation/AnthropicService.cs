@@ -1,14 +1,13 @@
 ﻿using System.Net;
 using System.Text;
 using System.Text.Json;
+using Lingarr.Contracts.Exceptions;
+using Lingarr.Contracts.Models;
+using Lingarr.Contracts.Models.Batch;
+using Lingarr.Contracts.Translation;
 using Lingarr.Core.Configuration;
-using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
-using Lingarr.Server.Models;
 using Lingarr.Server.Services.Translation.Base;
-using Lingarr.Server.Interfaces.Services.Translation;
-using Lingarr.Server.Models.Batch;
-using Lingarr.Server.Models.Batch.Response;
 
 namespace Lingarr.Server.Services.Translation;
 
@@ -28,9 +27,6 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
     /// <inheritdoc />
     public override string? ModelName => _model;
 
-    /// <inheritdoc />
-    protected override bool AcceptsAnyLanguage => true;
-
     // retry settings
     private int _maxRetries;
     private TimeSpan _retryDelay;
@@ -41,7 +37,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         ILogger<AnthropicService> logger,
         LanguageCodeService languageCodeService,
         IRequestTemplateService requestTemplateService)
-        : base(settings, logger, languageCodeService, "/app/Statics/ai_languages.json")
+        : base(settings, logger, languageCodeService)
     {
         _httpClient = httpClient;
         _requestTemplateService = requestTemplateService;

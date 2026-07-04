@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
-using Lingarr.Core.Enum;
+using Lingarr.Contracts.Models;
 using Lingarr.Server.Models;
 using Lingarr.Server.Services;
 using Xunit;

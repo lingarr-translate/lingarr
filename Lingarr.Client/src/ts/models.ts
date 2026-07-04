@@ -6,8 +6,3 @@ export interface LabelValue {
 export interface SelectComponentExpose {
     setLoadingState: (loading: boolean) => void
 }
-
-export interface TranslateModelsResponse {
-    message?: string
-    options: LabelValue[]
-}

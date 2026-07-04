@@ -1,14 +1,14 @@
 ﻿using System.Text.Json;
-using Lingarr.Core.Enum;
+using Lingarr.Contracts.Models;
+using Lingarr.Contracts.Models.Batch;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
-using Lingarr.Server.Models.Batch.Response;
 
 namespace Lingarr.Server.Services.Translation.Base;
 
 public abstract class BaseLanguageService : BaseTranslationService
 {
-    private readonly string _languageFilePath;
+    private readonly string? _languageFilePath;
     private Task<List<SourceLanguage>>? _cachedLanguages;
     protected string? _contextPrompt;
     protected string? _contextPromptEnabled;
@@ -18,17 +18,12 @@ public abstract class BaseLanguageService : BaseTranslationService
         ISettingService settings,
         ILogger logger,
         LanguageCodeService languageCodeService,
-        string languageFilePath) : base(settings, logger, languageCodeService)
+        string? languageFilePath = null) : base(settings, logger, languageCodeService)
     {
         _languageFilePath = languageFilePath;
         _replacements = new Dictionary<string, string>();
     }
 
-    /// <summary>
-    /// When true the service accepts any culture-valid pair
-    /// </summary>
-    protected virtual bool AcceptsAnyLanguage => false;
-    
     protected string ReplacePlaceholders(string promptTemplate, Dictionary<string, string> replacements)
     {
         if (string.IsNullOrEmpty(promptTemplate))
@@ -62,27 +57,43 @@ public abstract class BaseLanguageService : BaseTranslationService
     }
 
     /// <inheritdoc />
-    public override Task<LanguagePair?> GetLanguagePair(
+    public override async Task<LanguagePair?> GetLanguagePair(
         string requestedSource,
         string requestedTarget,
         CancellationToken cancellationToken)
     {
-        if (!AcceptsAnyLanguage)
+        List<SourceLanguage> languages;
+        try
         {
-            return base.GetLanguagePair(requestedSource, requestedTarget, cancellationToken);
+            languages = await GetLanguages();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogDebug(exception, "Could not retrieve supported languages, treating as unsupported pair.");
+            return null;
+        }
+
+        // Services without a language list, accept any culture-valid pair.
+        if (languages.Count > 0)
+        {
+            return await base.GetLanguagePair(requestedSource, requestedTarget, cancellationToken);
         }
 
         if (!_languageCodeService.Validate(requestedSource) || !_languageCodeService.Validate(requestedTarget))
         {
-            return Task.FromResult<LanguagePair?>(null);
+            return null;
         }
 
-        return Task.FromResult<LanguagePair?>(new LanguagePair
+        return new LanguagePair
         {
             Source = requestedSource,
             Target = requestedTarget,
             Tier = MatchTier.Exact
-        });
+        };
     }
 
     /// <inheritdoc />
@@ -93,8 +104,13 @@ public abstract class BaseLanguageService : BaseTranslationService
     /// </summary>
     protected virtual async Task<List<SourceLanguage>> GetServiceLanguages()
     {
+        if (_languageFilePath is null)
+        {
+            return [];
+        }
+
         _logger.LogInformation($"Retrieving |Green|{_languageFilePath}|/Green| languages");
-        var sourceLanguages = await GetJson();
+        var sourceLanguages = await GetJson(_languageFilePath);
 
         var languageCodes = sourceLanguages.Select(l => l.Code).ToHashSet();
         return sourceLanguages
@@ -115,13 +131,13 @@ public abstract class BaseLanguageService : BaseTranslationService
     /// <returns>A list of language configurations from the JSON file</returns>
     /// <exception cref="JsonException">Thrown when deserialization of the JSON file fails</exception>
     /// <exception cref="IOException">Thrown when the file cannot be read</exception>
-    private async Task<List<JsonLanguage>> GetJson()
+    private async Task<List<JsonLanguage>> GetJson(string languageFilePath)
     {
-        string jsonContent = await File.ReadAllTextAsync(_languageFilePath);
+        string jsonContent = await File.ReadAllTextAsync(languageFilePath);
         var sourceLanguages = JsonSerializer.Deserialize<List<JsonLanguage>>(jsonContent);
         if (sourceLanguages == null)
         {
-            throw new JsonException($"Failed to deserialize {_languageFilePath}");
+            throw new JsonException($"Failed to deserialize {languageFilePath}");
         }
 
         return sourceLanguages;

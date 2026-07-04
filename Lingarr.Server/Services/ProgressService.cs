@@ -1,6 +1,6 @@
+using Lingarr.Contracts.Models;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
-using Lingarr.Core.Enum;
 using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;

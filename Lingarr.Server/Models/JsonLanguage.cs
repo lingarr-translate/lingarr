@@ -1,5 +1,5 @@
 ﻿using System.Text.Json.Serialization;
-using Lingarr.Server.Interfaces;
+using Lingarr.Contracts.Interfaces;
 
 namespace Lingarr.Server.Models;
 

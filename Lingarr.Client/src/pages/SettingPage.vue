@@ -94,6 +94,12 @@ const menuItems: MenuItem[] = [
         route: 'automation-settings',
         children: []
     },
+    {
+        label: 'Plugins',
+        icon: SettingIcon,
+        route: 'plugins-settings',
+        children: []
+    },
     { label: 'Tasks', icon: TaskIcon, route: 'tasks-settings', children: [] },
     { label: 'Logs', icon: LogIcon, route: 'logs-settings', children: [] },
     { label: 'Telemetry', icon: TelemetryIcon, route: 'telemetry-settings', children: [] }

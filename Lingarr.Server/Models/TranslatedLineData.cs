@@ -1,3 +1,5 @@
+using Lingarr.Contracts.Models;
+
 namespace Lingarr.Server.Models;
 
 public class TranslatedLineData
