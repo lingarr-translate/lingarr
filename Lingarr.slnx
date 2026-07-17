@@ -31,8 +31,10 @@
   <Folder Name="/Lingarr.Root/.github/workflows/">
     <File Path=".github/workflows/ci.yml" />
     <File Path=".github/workflows/docker-build.yml" />
+    <File Path=".github/workflows/docs.yml" />
     <File Path=".github/workflows/pr-comment.yml" />
   </Folder>
+  <Folder Name="/Lingarr.Root/samples/" />
   <Folder Name="/Lingarr.Root/samples/CloudflarePlugin/">
     <File Path="samples/CloudflarePlugin/AssemblyInfo.cs" />
     <File Path="samples/CloudflarePlugin/CloudflarePlugin.csproj" />
@@ -44,6 +46,7 @@
     <File Path="samples/CloudflarePlugin/Models/CloudflareRequest.cs" />
     <File Path="samples/CloudflarePlugin/Models/CloudflareResponse.cs" />
   </Folder>
+  <Project Path="Lingarr.Docs/Lingarr.Docs.njsproj" />
   <Project Path="Lingarr.Client/Lingarr.Client.njsproj" />
   <Project Path="Lingarr.Contracts/Lingarr.Contracts.csproj" />
   <Project Path="Lingarr.Core/Lingarr.Core.csproj" />

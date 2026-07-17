@@ -32,7 +32,7 @@ Lingarr scans a folder specified by the `PLUGINS_PATH` environment variable at s
 
 - If the env var `PLUGINS_PATH` is not set, plugins are disabled.
 - If the folder doesn’t exist, Lingarr logs a warning and continues.
-- Failed or incompatible plugins are skipped (they souldn't crash the application).
+- Failed or incompatible plugins are skipped (they shouldn't crash the application).
 
 ## Reserved identifiers
 

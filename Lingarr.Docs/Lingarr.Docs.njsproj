@@ -1,0 +1,18 @@
+<Project>
+  <Import Project="$(VSToolsPath)\Node.js Tools\Microsoft.NodejsToolsV2.targets"
+          Condition="Exists('$(VSToolsPath)\Node.js Tools\Microsoft.NodejsToolsV2.targets')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{e73694f8-55b5-4c93-b03e-dab51aebfc32}</ProjectGuid>
+    <ProjectHome />
+    <ProjectView>ShowAllFiles</ProjectView>
+    <WorkingDirectory>.</WorkingDirectory>
+    <OutputPath>.</OutputPath>
+    <ProjectTypeGuids>{3AF33F2E-1136-4D97-BBB7-1795711AC8B8};{349c5851-65df-11da-9384-00065b846f21};{9092AA53-FB77-4645-B42D-1CCCA6BD08BD}</ProjectTypeGuids>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="**\*"
+             Exclude="node_modules\**;dist\**;bin\**;obj\**;.vite\**;.vitepress\cache\**;.vitepress\dist\**" />
+  </ItemGroup>
+</Project>
