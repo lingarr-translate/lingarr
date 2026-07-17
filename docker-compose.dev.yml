@@ -100,6 +100,20 @@ services:
     networks:
       - lingarr
 
+  Lingarr.Docs:
+    image: node:alpine
+    container_name: Lingarr.Docs
+    working_dir: /app
+    ports:
+      - "9879:5173"
+    volumes:
+      - ./Lingarr.Docs:/app:rw
+      - ./Lingarr.Docs/node_modules:/app/node_modules
+    tty: true
+    command: /bin/sh -c "npm install && npm run dev -- --host"
+    networks:
+      - lingarr
+
   LibreTranslate:
     container_name: LibreTranslate
     image: libretranslate/libretranslate:latest
