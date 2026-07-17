@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Lingarr.Contracts.Models.Batch;
 
 /// <summary>
@@ -5,6 +7,9 @@ namespace Lingarr.Contracts.Models.Batch;
 /// </summary>
 public class BatchSubtitleItem
 {
+    [JsonPropertyName("position")]
     public int Position { get; set; }
+
+    [JsonPropertyName("line")]
     public string Line { get; set; } = string.Empty;
 }
