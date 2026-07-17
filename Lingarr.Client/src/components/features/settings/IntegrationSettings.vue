@@ -55,7 +55,7 @@
             </div>
             <div>
                 No media visible? Try reindexing by starting a sync task
-                <a href="/settings/tasks" class="underline">here</a>
+                <router-link to="/settings/tasks" class="underline">here</router-link>
             </div>
         </template>
     </CardComponent>
