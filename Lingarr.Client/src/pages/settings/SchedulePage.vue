@@ -16,29 +16,41 @@
             <div
                 v-for="job in jobs"
                 :key="job.id"
-                class="border-b border-accent md:grid md:grid-cols-12">
-                <div class="px-4 py-2 md:col-span-5">
-                    <span class="font-bold md:hidden">Job Name:&nbsp;</span>
-                    {{ job.id }}
+                class="border-accent flex flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 md:grid md:grid-cols-12 md:gap-0 md:py-0">
+                <div class="flex w-full items-center gap-2 md:col-span-5 md:w-auto md:px-4 md:py-2">
+                    <span class="min-w-0 flex-1 md:flex-none">{{ job.id }}</span>
+                    <span class="ml-auto flex-none md:hidden">
+                        <TriggerJob
+                            title="Run"
+                            @toggle:trigger="scheduleStore.startJob(job.id)" />
+                    </span>
                 </div>
-                <div class="px-4 py-2 md:col-span-2">
-                    <span class="font-bold md:hidden">State:&nbsp;</span>
+                <div class="flex items-center md:col-span-2 md:px-4 md:py-2">
                     {{ job.currentState }}
                 </div>
-                <div class="px-4 py-2 md:col-span-2">
-                    <span class="font-bold md:hidden">Last Execution:&nbsp;</span>
+                <div
+                    :class="job.lastExecution ? 'flex' : 'hidden md:flex'"
+                    class="items-center gap-2 md:col-span-2 md:px-4 md:py-2">
                     <span v-if="job.lastExecution">
                         {{ formatDateTime(job.lastExecution) }}
                     </span>
+                    <span
+                        class="text-primary-content/50 text-xs font-semibold tracking-wide uppercase md:hidden">
+                        Last run
+                    </span>
                 </div>
-                <div class="px-4 py-2 md:col-span-2">
-                    <span class="font-bold md:hidden">Next Execution:&nbsp;</span>
-                    <div v-if="job.nextExecution">
+                <div
+                    :class="job.nextExecution ? 'flex' : 'hidden md:flex'"
+                    class="items-center gap-2 md:col-span-2 md:px-4 md:py-2">
+                    <span v-if="job.nextExecution">
                         {{ formatDateTime(job.nextExecution) }}
-                    </div>
+                    </span>
+                    <span
+                        class="text-primary-content/50 text-xs font-semibold tracking-wide uppercase md:hidden">
+                        Next run
+                    </span>
                 </div>
-                <div class="px-4 py-2 md:col-span-1">
-                    <span class="font-bold md:hidden">Actions:&nbsp;</span>
+                <div class="hidden md:col-span-1 md:flex md:items-center md:px-4 md:py-2">
                     <TriggerJob title="Run" @toggle:trigger="scheduleStore.startJob(job.id)" />
                 </div>
             </div>

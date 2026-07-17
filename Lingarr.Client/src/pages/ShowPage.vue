@@ -34,35 +34,32 @@
                     {{ showStore.includeSummary.included }}/{{ showStore.includeSummary.total }}
                     included
                 </span>
-                <SortControls
-                    v-model="filter"
-                    :options="[
-                        {
-                            label: 'Sort by Title',
-                            value: 'Title'
-                        },
-                        {
-                            label: 'Sort by Added',
-                            value: 'DateAdded'
-                        }
-                    ]" />
+                <div class="flex flex-wrap items-center gap-2">
+                    <SortControls
+                        v-model="filter"
+                        :options="[
+                            {
+                                label: 'Sort by Title',
+                                value: 'Title'
+                            },
+                            {
+                                label: 'Sort by Added',
+                                value: 'DateAdded'
+                            }
+                        ]" />
+                    <ReloadComponent @toggle:update="showStore.fetch()" />
+                </div>
             </div>
         </div>
 
         <div class="w-full px-4">
             <!-- Shows -->
-            <div class="grid grid-cols-12 border-b border-accent font-bold">
+            <div class="border-accent hidden border-b font-bold md:grid md:grid-cols-12">
                 <div :class="isSelectMode ? 'col-span-7' : 'col-span-8'" class="px-4 py-2">
                     Title
                 </div>
-                <div class="col-span-1 px-4 py-2">
-                    <span class="hidden md:block">Include</span>
-                    <span class="block md:hidden">✓</span>
-                </div>
-                <div class="col-span-1 px-4 py-2">Delay</div>
-                <div class="col-span-2 flex justify-end px-4 py-2">
-                    <ReloadComponent @toggle:update="showStore.fetch()" />
-                </div>
+                <div class="col-span-1 px-4 py-2">Include</div>
+                <div class="col-span-3 px-4 py-2">Delay</div>
                 <div
                     v-if="isSelectMode"
                     class="col-span-1 flex items-center justify-center px-4 py-2">
@@ -73,16 +70,21 @@
             </div>
             <div v-for="item in shows.items" :key="item.id">
                 <div
-                    class="grid cursor-pointer grid-cols-12 border-b border-accent"
+                    class="border-accent flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 md:grid md:grid-cols-12 md:gap-0 md:py-0"
                     @click="toggleShow(item)">
                     <div
-                        :class="isSelectMode ? 'col-span-7' : 'col-span-8'"
-                        class="flex items-center gap-2 px-4 py-2">
+                        :class="isSelectMode ? 'md:col-span-7' : 'md:col-span-8'"
+                        class="flex w-full items-center gap-2 md:w-auto md:px-4 md:py-2">
                         <CaretButton :is-expanded="expandedShow !== item.id" class="pr-2" />
                         <span>{{ item.title }}</span>
                         <ActiveTranslationBadge :show="item" />
+                        <span v-if="isSelectMode" class="ml-auto md:hidden" @click.stop>
+                            <CheckboxComponent
+                                :model-value="showStore.selectedShows.some((s) => s.id === item.id)"
+                                @change="showStore.toggleSelect(item)" />
+                        </span>
                     </div>
-                    <div class="col-span-1 flex items-center px-4 py-2" @click.stop>
+                    <div class="flex items-center gap-2 md:col-span-1 md:px-4 md:py-2" @click.stop>
                         <ToggleButton
                             v-model="item.includeInTranslation"
                             size="small"
@@ -94,8 +96,12 @@
                                         item.includeInTranslation
                                     )
                             " />
+                        <span
+                            class="text-primary-content/50 text-xs font-semibold tracking-wide uppercase md:hidden">
+                            Include
+                        </span>
                     </div>
-                    <div class="col-span-3 flex items-center px-4 py-2" @click.stop>
+                    <div class="flex items-center gap-2 md:col-span-3 md:px-4 md:py-2" @click.stop>
                         <InputComponent
                             :model-value="item.translationAgeThreshold ?? null"
                             placeholder="hours"
@@ -109,10 +115,14 @@
                                     showStore.updateThreshold(MEDIA_TYPE.SHOW, item.id, value)
                                 }
                             " />
+                        <span
+                            class="text-primary-content/50 text-xs font-semibold tracking-wide uppercase md:hidden">
+                            Delay
+                        </span>
                     </div>
                     <div
                         v-if="isSelectMode"
-                        class="col-span-1 flex items-center justify-center px-4 py-2"
+                        class="hidden items-center justify-center px-4 py-2 md:col-span-1 md:flex"
                         @click.stop>
                         <CheckboxComponent
                             :model-value="showStore.selectedShows.some((s) => s.id === item.id)"

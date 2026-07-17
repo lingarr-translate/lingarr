@@ -1,6 +1,6 @@
 ﻿<template>
     <select
-        class="block rounded-md border border-accent bg-primary px-2 py-1 text-sm text-primary-content focus:border-accent focus:ring-2 focus:ring-accent"
+        class="block w-full rounded-md border border-accent bg-primary px-2 py-1 text-sm text-primary-content focus:border-accent focus:ring-2 focus:ring-accent md:w-auto"
         :value="modelValue.sortBy"
         @change="sortBy">
         <option
@@ -11,7 +11,7 @@
         </option>
     </select>
     <button
-        class="flex cursor-pointer items-center justify-end space-x-2 md:justify-center"
+        class="ml-auto flex cursor-pointer items-center justify-end space-x-2 md:ml-0 md:justify-center"
         @click="orderBy">
         <span class="md:hidden">Order by</span>
         <CaretUpIcon v-if="modelValue.isAscending" class="h-6 w-6" />
