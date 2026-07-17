@@ -34,35 +34,32 @@
                     {{ movieStore.includeSummary.included }}/{{ movieStore.includeSummary.total }}
                     included
                 </span>
-                <SortControls
-                    v-model="filter"
-                    :options="[
-                        {
-                            label: 'Sort by Title',
-                            value: 'Title'
-                        },
-                        {
-                            label: 'Sort by Added',
-                            value: 'DateAdded'
-                        }
-                    ]" />
+                <div class="flex flex-wrap items-center gap-2">
+                    <SortControls
+                        v-model="filter"
+                        :options="[
+                            {
+                                label: 'Sort by Title',
+                                value: 'Title'
+                            },
+                            {
+                                label: 'Sort by Added',
+                                value: 'DateAdded'
+                            }
+                        ]" />
+                    <ReloadComponent @toggle:update="movieStore.fetch()" />
+                </div>
             </div>
         </div>
 
         <div class="w-full px-4">
-            <div class="grid grid-cols-12 border-b border-accent font-bold">
+            <div class="border-accent hidden border-b font-bold md:grid md:grid-cols-12">
                 <div :class="isSelectMode ? 'col-span-4' : 'col-span-5'" class="px-4 py-2">
                     Title
                 </div>
                 <div class="col-span-4 px-4 py-2">Subtitles</div>
-                <div class="col-span-1 px-4 py-2">
-                    <span class="hidden md:block">Include</span>
-                    <span class="block md:hidden">✓</span>
-                </div>
-                <div class="col-span-1 px-4 py-2">Delay</div>
-                <div class="col-span-1 flex justify-end px-4 py-2">
-                    <ReloadComponent @toggle:update="movieStore.fetch()" />
-                </div>
+                <div class="col-span-1 px-4 py-2">Include</div>
+                <div class="col-span-2 px-4 py-2">Delay</div>
                 <div
                     v-if="isSelectMode"
                     class="col-span-1 flex items-center justify-center px-4 py-2">
@@ -72,14 +69,26 @@
                 </div>
             </div>
             <div v-for="item in movies.items" :key="item.id">
-                <div class="grid grid-cols-12 border-b border-accent transition-colors hover:bg-accent/5">
+                <div
+                    class="border-accent hover:bg-accent/5 flex flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 transition-colors md:grid md:grid-cols-12 md:gap-0 md:py-0">
                     <div
-                        :class="isSelectMode ? 'col-span-4' : 'col-span-5'"
-                        class="flex items-center gap-2 px-4 py-2">
+                        :class="isSelectMode ? 'md:col-span-4' : 'md:col-span-5'"
+                        class="flex w-full items-center gap-2 md:w-auto md:px-4 md:py-2">
                         <span>{{ item.title }}</span>
-                        <ActiveTranslationBadge :media-id="item.id" :media-type="MEDIA_TYPE.MOVIE" />
+                        <ActiveTranslationBadge
+                            :media-id="item.id"
+                            :media-type="MEDIA_TYPE.MOVIE" />
+                        <span v-if="isSelectMode" class="ml-auto md:hidden">
+                            <CheckboxComponent
+                                :model-value="
+                                    movieStore.selectedMovies.some((m) => m.id === item.id)
+                                "
+                                @change="movieStore.toggleSelect(item)" />
+                        </span>
                     </div>
-                    <div class="col-span-4 flex flex-wrap items-center gap-2 px-4 py-2">
+                    <div
+                        :class="item.subtitles?.length ? 'flex' : 'hidden md:flex'"
+                        class="w-full flex-wrap items-center gap-2 md:col-span-4 md:w-auto md:px-4 md:py-2">
                         <ContextMenu
                             v-for="(subtitle, index) in item.subtitles"
                             :key="`${index}-${subtitle.fileName}`"
@@ -95,7 +104,7 @@
                             </BadgeComponent>
                         </ContextMenu>
                     </div>
-                    <div class="col-span-1 flex flex-wrap items-center gap-2 px-4 py-2">
+                    <div class="flex items-center gap-2 md:col-span-1 md:px-4 md:py-2">
                         <ToggleButton
                             v-model="item.includeInTranslation"
                             size="small"
@@ -107,8 +116,12 @@
                                         item.includeInTranslation
                                     )
                             " />
+                        <span
+                            class="text-primary-content/50 text-xs font-semibold tracking-wide uppercase md:hidden">
+                            Include
+                        </span>
                     </div>
-                    <div class="col-span-2 flex items-center px-4 py-2" @click.stop>
+                    <div class="flex items-center gap-2 md:col-span-2 md:px-4 md:py-2" @click.stop>
                         <InputComponent
                             :model-value="item?.translationAgeThreshold"
                             placeholder="hours"
@@ -122,10 +135,14 @@
                                     movieStore.updateThreshold(MEDIA_TYPE.MOVIE, item.id, value)
                                 }
                             " />
+                        <span
+                            class="text-primary-content/50 text-xs font-semibold tracking-wide uppercase md:hidden">
+                            Delay
+                        </span>
                     </div>
                     <div
                         v-if="isSelectMode"
-                        class="col-span-1 flex items-center justify-center px-4 py-2">
+                        class="hidden items-center justify-center px-4 py-2 md:col-span-1 md:flex">
                         <CheckboxComponent
                             :model-value="movieStore.selectedMovies.some((m) => m.id === item.id)"
                             @change="movieStore.toggleSelect(item)" />

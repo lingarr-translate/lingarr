@@ -16,22 +16,25 @@
                     @click="toggleSelectMode">
                     {{ isSelectMode ? 'Cancel' : 'Select' }}
                 </button>
-                <SortControls
-                    v-model="filter"
-                    :options="[
-                        {
-                            label: 'Sort by Added',
-                            value: 'CreatedAt'
-                        },
-                        {
-                            label: 'Sort by Completed',
-                            value: 'CompletedAt'
-                        },
-                        {
-                            label: 'Sort by Title',
-                            value: 'Title'
-                        }
-                    ]" />
+                <div class="flex flex-wrap items-center gap-2">
+                    <SortControls
+                        v-model="filter"
+                        :options="[
+                            {
+                                label: 'Sort by Added',
+                                value: 'CreatedAt'
+                            },
+                            {
+                                label: 'Sort by Completed',
+                                value: 'CompletedAt'
+                            },
+                            {
+                                label: 'Sort by Title',
+                                value: 'Title'
+                            }
+                        ]" />
+                    <ReloadComponent @toggle:update="translationRequestStore.fetch()" />
+                </div>
             </div>
         </div>
 
@@ -45,9 +48,7 @@
                     Progress
                 </div>
                 <div class="col-span-1 px-4 py-2">Completed</div>
-                <div class="col-span-1 flex justify-end px-4 py-2">
-                    <ReloadComponent @toggle:update="translationRequestStore.fetch()" />
-                </div>
+                <div class="col-span-1"></div>
                 <div
                     v-if="isSelectMode"
                     class="col-span-1 flex items-center justify-center px-4 py-2">
@@ -59,58 +60,70 @@
             <div
                 v-for="item in translationRequests.items"
                 :key="item.id"
-                class="rounded-lg py-4 shadow-sm transition-colors hover:bg-accent/5 md:grid md:grid-cols-12 md:rounded-none md:border-b md:border-accent md:bg-transparent md:p-0 md:shadow-none">
-                <div class="deletable float-right md:hidden">
-                    <TranslationAction
-                        :item="item"
-                        :on-action="(action) => handleAction(item, action)" />
-                </div>
-                <div class="mb-2 md:col-span-4 md:mb-0 md:px-4 md:py-2">
-                    <span :id="`deletable-${item.id}`" class="font-bold md:hidden">
-                        Title:&nbsp;
-                    </span>
+                class="border-accent hover:bg-accent/5 flex flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 transition-colors md:grid md:grid-cols-12 md:gap-0 md:py-0">
+                <div class="flex w-full items-center gap-2 md:col-span-4 md:w-auto md:px-4 md:py-2">
                     <span
                         v-if="item.mediaType === MEDIA_TYPE.EPISODE"
                         v-show-title
-                        class="block cursor-help"
+                        class="block min-w-0 flex-1 cursor-help md:flex-none"
                         :title="item.title">
                         {{ item.title }}
                     </span>
-                    <span v-else>
+                    <span v-else class="min-w-0 flex-1 md:flex-none">
                         {{ item.title }}
                     </span>
+                    <span class="ml-auto flex flex-none items-center gap-2 md:hidden">
+                        <TranslationAction
+                            :item="item"
+                            :on-action="(action) => handleAction(item, action)" />
+                        <CheckboxComponent
+                            v-if="isSelectMode"
+                            :model-value="
+                                translationRequestStore.selectedRequests.some(
+                                    (request) => request.id === item.id
+                                )
+                            "
+                            @change="translationRequestStore.toggleSelect(item)" />
+                    </span>
                 </div>
-                <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
-                    <span class="font-bold md:hidden">Source:&nbsp;</span>
+                <div class="flex items-center md:col-span-1 md:px-4 md:py-2">
                     <BadgeComponent classes="text-primary-content border-accent bg-secondary">
                         {{ item.sourceLanguage.toUpperCase() }}
                     </BadgeComponent>
                 </div>
-                <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
-                    <span class="font-bold md:hidden">Target:&nbsp;</span>
+                <div class="flex items-center gap-2 md:col-span-1 md:px-4 md:py-2">
+                    <span class="text-primary-content/50 md:hidden">→</span>
                     <BadgeComponent classes="text-primary-content border-accent bg-secondary">
                         {{ item.targetLanguage.toUpperCase() }}
                     </BadgeComponent>
                 </div>
-                <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
-                    <span class="font-bold md:hidden">Status:&nbsp;</span>
+                <div class="flex items-center md:col-span-1 md:px-4 md:py-2">
                     <TranslationStatus :translation-status="item.status" />
                 </div>
                 <div
-                    class="mb-2 flex items-center md:mb-0 md:px-4 md:py-2"
-                    :class="isSelectMode ? 'md:col-span-2' : 'md:col-span-3'">
+                    class="items-center md:flex md:px-4 md:py-2"
+                    :class="[
+                        isSelectMode ? 'md:col-span-2' : 'md:col-span-3',
+                        item.status === TRANSLATION_STATUS.INPROGRESS && item.progress
+                            ? 'flex w-full md:w-auto'
+                            : 'hidden'
+                    ]">
                     <div
                         v-if="item.status === TRANSLATION_STATUS.INPROGRESS && item.progress"
                         class="w-full">
-                        <span class="mr-2 font-bold md:hidden">Progress:&nbsp;</span>
                         <TranslationProgress :progress="item.progress" />
                     </div>
                 </div>
-                <div class="mb-2 md:col-span-1 md:mb-0 md:px-4 md:py-2">
-                    <span class="font-bold md:hidden">Completed:&nbsp;</span>
+                <div
+                    :class="item.completedAt ? 'flex' : 'hidden md:flex'"
+                    class="items-center gap-2 md:col-span-1 md:px-4 md:py-2">
                     <TranslationCompletedAt
                         v-if="item.completedAt"
                         :completed-at="item.completedAt" />
+                    <span
+                        class="text-primary-content/50 text-xs font-semibold tracking-wide uppercase md:hidden">
+                        Completed
+                    </span>
                 </div>
                 <div
                     class="hidden items-center justify-between md:col-span-1 md:flex md:justify-end md:py-2">
@@ -122,7 +135,7 @@
                 </div>
                 <div
                     v-if="isSelectMode"
-                    class="col-span-1 flex items-center justify-end py-2 md:justify-center md:px-4">
+                    class="hidden items-center justify-center py-2 md:col-span-1 md:flex md:px-4">
                     <CheckboxComponent
                         :model-value="
                             translationRequestStore.selectedRequests.some(
