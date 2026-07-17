@@ -22,8 +22,9 @@
 
                 <div class="flex flex-col space-x-2">
                     <span class="font-semibold">Fix overlapping subtitles:</span>
-                    Automatically resolves overlapping subtitles by adjusting the timing of the
-                    previous, current and next subtitle based on text length.
+                    Automatically resolves overlapping subtitles by trimming the end time of the
+                    earlier subtitle. This won't work on subtitles that are out of sync.
+                    And in most cases it also caused subtitles to go out of sync.
                 </div>
                 <ToggleButton v-model="fixOverlappingSubtitles">
                     <span class="text-primary-content text-sm font-medium">
