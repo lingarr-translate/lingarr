@@ -342,31 +342,17 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         CancellationToken cancellationToken)
     {
         var endpoint = $"{_endpoint}/models/{_model}:generateContent?key={_apiKey}";
-        var requestBody = new Dictionary<string, object>
+        var placeholders = new Dictionary<string, string>
         {
-            ["systemInstruction"] = new
-            {
-                parts = new[]
-                {
-                    new
-                    {
-                        text = _prompt
-                    }
-                }
-            },
-            ["contents"] = new[]
-            {
-                new
-                {
-                    parts = new[]
-                    {
-                        new
-                        {
-                            text = JsonSerializer.Serialize(subtitleBatch)
-                        }
-                    }
-                }
-            },
+            ["model"] = _model!,
+            ["systemPrompt"] = _prompt!,
+            ["userMessage"] = JsonSerializer.Serialize(subtitleBatch),
+            ["sourceLanguage"] = _replacements["sourceLanguage"],
+            ["targetLanguage"] = _replacements["targetLanguage"]
+        };
+        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
+        bodyJson = _requestTemplateService.SetRequestFields(bodyJson, new Dictionary<string, object?>
+        {
             ["generationConfig"] = new Dictionary<string, object>
             {
                 ["response_mime_type"] = "application/json",
@@ -391,10 +377,10 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                     }
                 }
             }
-        };
+        });
 
         var content = new StringContent(
-            JsonSerializer.Serialize(requestBody),
+            bodyJson,
             Encoding.UTF8,
             "application/json");
 

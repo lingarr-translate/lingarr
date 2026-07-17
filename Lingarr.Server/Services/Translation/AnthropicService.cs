@@ -292,11 +292,17 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
-        var requestBody = new Dictionary<string, object>
+        var placeholders = new Dictionary<string, string>
         {
             ["model"] = _model!,
-            ["max_tokens"] = 1024,
-            ["system"] = _prompt!,
+            ["systemPrompt"] = _prompt!,
+            ["userMessage"] = JsonSerializer.Serialize(subtitleBatch),
+            ["sourceLanguage"] = _replacements["sourceLanguage"],
+            ["targetLanguage"] = _replacements["targetLanguage"]
+        };
+        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
+        bodyJson = _requestTemplateService.SetRequestFields(bodyJson, new Dictionary<string, object?>
+        {
             ["tools"] = new[]
             {
                 new
@@ -306,33 +312,33 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                     input_schema = new
                     {
                         type = "object",
-                    properties = new Dictionary<string, object>
-                    {
-                        ["translations"] = new
+                        properties = new Dictionary<string, object>
                         {
-                            type = "array",
-                            items = new
+                            ["translations"] = new
                             {
-                                type = "object",
-                                properties = new Dictionary<string, object>
+                                type = "array",
+                                items = new
                                 {
-                                    ["position"] = new
+                                    type = "object",
+                                    properties = new Dictionary<string, object>
                                     {
-                                        type = "integer",
-                                        description = "Position/index of the subtitle item"
+                                        ["position"] = new
+                                        {
+                                            type = "integer",
+                                            description = "Position/index of the subtitle item"
+                                        },
+                                        ["line"] = new
+                                        {
+                                            type = "string",
+                                            description = "Translated subtitle text"
+                                        }
                                     },
-                                    ["line"] = new
-                                    {
-                                        type = "string",
-                                        description = "Translated subtitle text"
-                                    }
+                                    required = new[] { "position", "line" }
                                 },
-                                required = new[] { "position", "line" }
-                            },
-                            description = "Array of translated subtitle items with their positions"
-                        }
-                    },
-                    required = new[] { "translations" }
+                                description = "Array of translated subtitle items with their positions"
+                            }
+                        },
+                        required = new[] { "translations" }
                     }
                 }
             },
@@ -340,19 +346,11 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             {
                 type = "tool",
                 name = "record_translation_batch"
-            },
-            ["messages"] = new[]
-            {
-                new
-                {
-                    role = "user",
-                    content = JsonSerializer.Serialize(subtitleBatch)
-                }
             }
-        };
+        });
 
         var content = new StringContent(
-            JsonSerializer.Serialize(requestBody),
+            bodyJson,
             Encoding.UTF8,
             "application/json");
 

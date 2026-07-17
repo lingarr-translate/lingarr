@@ -27,4 +27,9 @@ public interface IRequestTemplateService
     /// <returns>A valid JSON string with all placeholders replaced.</returns>
     /// <exception cref="System.Text.Json.JsonException">Thrown when the resulting string is not valid JSON.</exception>
     string BuildRequestBody(string template, Dictionary<string, string> placeholders);
+
+    /// <summary>
+    /// Sets provider-required fields on a rendered request body, merging nested objects so template customizations are preserved.
+    /// </summary>
+    string SetRequestFields(string requestBody, Dictionary<string, object?> fields);
 }
