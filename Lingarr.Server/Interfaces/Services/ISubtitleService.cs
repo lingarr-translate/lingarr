@@ -45,10 +45,8 @@ public interface ISubtitleService
     string CreateFilePath(string originalPath, string targetLanguage, string subtitleTag);
     
     /// <summary>
-    /// Adjusts subtitle timings to prevent overlaps and ensure optimal duration based on content length.
+    /// Removes overlaps between consecutive subtitles by trimming end times, start times are never shifted.
     /// </summary>
-    /// <param name="subtitles">The list of subtitle items to process</param>
-    /// <returns>The modified list of subtitles with fixed timings</returns>
     List<SubtitleItem> FixOverlappingSubtitles(List<SubtitleItem> subtitles);
 
     /// <summary>

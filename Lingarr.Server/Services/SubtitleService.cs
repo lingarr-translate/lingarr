@@ -13,7 +13,6 @@ public class SubtitleService : ISubtitleService
 {
     private static readonly string[] SupportedExtensions = [".srt", ".ssa", ".ass"];
     private static readonly string[] SupportedCaptions = ["sdh", "cc", "forced", "hi"];
-    private static readonly char[] WhitespaceCharacters = [' ', '\t', '\n', '\r'];
 
     private readonly ILogger<SubtitleService> _logger;
     private readonly LanguageCodeService _languageCodeService;
@@ -179,151 +178,35 @@ public class SubtitleService : ISubtitleService
     /// <inheritdoc />
     public List<SubtitleItem> FixOverlappingSubtitles(List<SubtitleItem> subtitles)
     {
-        const int buffer = 20;
-        const int baseMinDuration = 1500;
-        const int maxDuration = 6000;
-        const double wordsPerSecond = 2.5;
+        const int gap = 20;
+        const int minimumDuration = 500;
         var fixCount = 0;
 
-        for (var index = 1; index < subtitles.Count - 1; index++)
+        for (var index = 0; index < subtitles.Count - 1; index++)
         {
-            var prev = subtitles[index - 1];
             var current = subtitles[index];
             var next = subtitles[index + 1];
 
-            var wordCount = CountWords(current.Lines);
-            var optimalDuration = CalculateOptimalDuration(wordCount, wordsPerSecond, baseMinDuration, maxDuration);
-
-            var hasOverlap = current.EndTime + buffer > next.StartTime;
-            var needsAdjustment = hasOverlap;
-            if (!needsAdjustment)
+            if (current.EndTime + gap <= next.StartTime)
             {
                 continue;
             }
 
-            var currentDuration = current.EndTime - current.StartTime;
-
-            var overlapTime = Math.Max(0, current.EndTime + buffer - next.StartTime);
-            var optimalTimeNeeded = Math.Max(0, optimalDuration - currentDuration);
-            var timeNeeded = Math.Max(overlapTime, optimalTimeNeeded);
-
-            if (timeNeeded <= 0)
+            var trimmedEndTime = next.StartTime - gap;
+            if (trimmedEndTime - current.StartTime < minimumDuration)
             {
+                // Intentionally stacked cues, such as dual-speaker dialogue sharing a
+                // timestamp, would become unreadable when trimmed. Keep their timing.
                 continue;
             }
 
-            var prevWordCount = CountWords(prev.Lines);
-            var nextWordCount = CountWords(next.Lines);
-            var prevMinDuration = CalculateOptimalDuration(prevWordCount, wordsPerSecond, baseMinDuration, maxDuration);
-            var nextMinDuration = CalculateOptimalDuration(nextWordCount, wordsPerSecond, baseMinDuration, maxDuration);
-
-            var prevDuration = prev.EndTime - prev.StartTime;
-            var nextDuration = next.EndTime - next.StartTime;
-            var availableFromPrev = Math.Max(0, prevDuration - prevMinDuration);
-            var availableFromNext = Math.Max(0, nextDuration - nextMinDuration);
-
-            var timeFromPrev = Math.Min(timeNeeded / 2, availableFromPrev);
-            var timeFromNext = Math.Min(timeNeeded - timeFromPrev, availableFromNext);
-
-            var remainingNeeded = timeNeeded - timeFromPrev - timeFromNext;
-
-            if (timeFromPrev > 0)
-            {
-                prev.EndTime -= timeFromPrev;
-                current.StartTime -= timeFromPrev;
-            }
-
-            if (timeFromNext > 0)
-            {
-                next.StartTime += timeFromNext;
-            }
-
-            // If we still have overlap, adjust current subtitle timing
-            switch (remainingNeeded)
-            {
-                case > 0 when overlapTime > 0:
-                    current.EndTime = next.StartTime - buffer;
-                    Console.WriteLine(
-                        $"Couldn't reach optimal duration for subtitle #{current.Position} due to timing constraints");
-                    break;
-                case > 0 when optimalTimeNeeded > 0:
-                    Console.WriteLine(
-                        $"Subtitle #{current.Position} couldn't reach optimal duration of {optimalDuration}ms, achieved {current.EndTime - current.StartTime}ms");
-                    break;
-                default:
-                {
-                    if (overlapTime > 0)
-                    {
-                        current.EndTime = next.StartTime - buffer;
-                    }
-                    else if (optimalTimeNeeded > 0)
-                    {
-                        current.EndTime = current.StartTime + optimalDuration;
-                    }
-
-                    break;
-                }
-            }
-
+            current.EndTime = trimmedEndTime;
             fixCount++;
-            Console.WriteLine(
-                $"Timing adjusted for subtitle #{current.Position} based on content length ({wordCount} words)");
+            _logger.LogDebug("Trimmed subtitle #{Position} to remove overlap with #{NextPosition}",
+                current.Position, next.Position);
         }
 
-        if (subtitles.Count > 1)
-        {
-            var first = subtitles[0];
-            var second = subtitles[1];
-            var firstWordCount = CountWords(first.Lines);
-            var firstOptimalDuration =
-                CalculateOptimalDuration(firstWordCount, wordsPerSecond, baseMinDuration, maxDuration);
-
-            var firstDuration = first.EndTime - first.StartTime;
-            var hasOverlap = first.EndTime + buffer > second.StartTime;
-            var isTooShort = firstDuration < firstOptimalDuration;
-
-            if (hasOverlap || isTooShort)
-            {
-                var availableForward = Math.Max(0, second.StartTime - buffer - first.EndTime);
-
-                if (first.EndTime + buffer > second.StartTime)
-                {
-                    first.EndTime = second.StartTime - buffer;
-                    fixCount++;
-                    Console.WriteLine(
-                        $"Adjusted first subtitle #{first.Position} to avoid overlap with #{second.Position}");
-                }
-                else if (availableForward > 0 && (first.EndTime - first.StartTime) < firstOptimalDuration)
-                {
-                    var extensionNeeded = firstOptimalDuration - (first.EndTime - first.StartTime);
-                    var extension = Math.Min(extensionNeeded, availableForward);
-                    first.EndTime += extension;
-                    fixCount++;
-                    Console.WriteLine(
-                        $"Extended first subtitle #{first.Position} duration based on content length ({firstWordCount} words)");
-                }
-            }
-
-            // Last subtitle
-            var lastIndex = subtitles.Count - 1;
-            var last = subtitles[lastIndex];
-            var secondLast = subtitles[lastIndex - 1];
-            if (secondLast.EndTime + buffer > last.StartTime)
-            {
-                last.StartTime = secondLast.EndTime + buffer;
-
-                if (last.EndTime - last.StartTime < baseMinDuration)
-                {
-                    last.EndTime = last.StartTime + baseMinDuration;
-                }
-
-                fixCount++;
-                Console.WriteLine(
-                    $"Adjusted last subtitle #{last.Position} to avoid overlap with #{secondLast.Position}");
-            }
-        }
-
-        Console.WriteLine($"Fixed {fixCount} subtitle timings with content aware adjustments");
+        _logger.LogInformation("Fixed {FixCount} overlapping subtitles by trimming end times", fixCount);
         return subtitles;
     }
 
@@ -572,33 +455,6 @@ public class SubtitleService : ISubtitleService
             SourceLanguage = sourceLanguage,
             AvailableLanguages = availableLanguages
         };
-    }
-
-    /// <summary>
-    /// Counts the number of words in a list of plaintext subtitle lines
-    /// </summary>
-    /// <param name="lines">The plaintext subtitle lines to analyze</param>
-    /// <returns>The total count of words across all lines</returns>
-    private static int CountWords(List<string> lines)
-    {
-        return lines
-            .Where(line => !string.IsNullOrWhiteSpace(line))
-            .Sum(line => line.Split(WhitespaceCharacters, StringSplitOptions.RemoveEmptyEntries).Length);
-    }
-
-    /// <summary>
-    /// Calculates the optimal duration for a subtitle based on its word count
-    /// </summary>
-    /// <param name="wordCount">Number of words in the subtitle</param>
-    /// <param name="wordsPerSecond">Reading speed in words per second</param>
-    /// <param name="minDuration">Minimum allowed duration in milliseconds</param>
-    /// <param name="maxDuration">Maximum allowed duration in milliseconds</param>
-    /// <returns>The calculated optimal duration in milliseconds</returns>
-    private static int CalculateOptimalDuration(int wordCount, double wordsPerSecond, int minDuration, int maxDuration)
-    {
-        var readingTime = (int)(wordCount * 1000 / wordsPerSecond);
-        var optimalTime = readingTime + 500;
-        return Math.Max(minDuration, Math.Min(optimalTime, maxDuration));
     }
 
     /// <summary>
