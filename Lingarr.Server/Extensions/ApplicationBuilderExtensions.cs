@@ -114,10 +114,7 @@ public static class ApplicationBuilderExtensions
             configBuilder =>
             {
                 var index = File.ReadAllText(Path.Combine(app.Environment.WebRootPath, "index.html"));
-                if (!string.IsNullOrEmpty(basePath))
-                {
-                    index = index.Replace("<head>", $"<head><base href=\"{basePath}/\">");
-                }
+                index = index.Replace("<head>", $"<head><base href=\"{basePath}/\">");
 
                 configBuilder.Run(async ctx =>
                 {

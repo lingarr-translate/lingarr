@@ -9,7 +9,7 @@ export default defineConfig(({ command, mode }) => {
     const baseServerURL = env.VITE_BASE_SERVER_URL || "Lingarr.Server:9876";
 
     return {
-        base: '/',
+        base: './',
         esbuild: {
             drop: isProduction ? ['console'] : []
         },
