@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models.RequestTemplates;
@@ -56,5 +57,46 @@ public class RequestTemplateService : IRequestTemplateService
 
         using var doc = JsonDocument.Parse(result);
         return result;
+    }
+
+    /// <inheritdoc />
+    public string SetRequestFields(string requestBody, Dictionary<string, object?> fields)
+    {
+        if (JsonNode.Parse(requestBody) is not JsonObject body)
+        {
+            throw new JsonException("Request body is not a JSON object.");
+        }
+
+        foreach (var field in fields)
+        {
+            var value = JsonSerializer.SerializeToNode(field.Value);
+            if (body[field.Key] is JsonObject existingObject && value is JsonObject valueObject)
+            {
+                MergeFields(existingObject, valueObject);
+            }
+            else
+            {
+                body[field.Key] = value;
+            }
+        }
+
+        return body.ToJsonString();
+    }
+
+    private static void MergeFields(JsonObject target, JsonObject fields)
+    {
+        foreach (var field in fields)
+        {
+            // A JsonNode cannot belong to two parents, so detach via clone before assigning
+            var value = field.Value?.DeepClone();
+            if (target[field.Key] is JsonObject existingObject && value is JsonObject valueObject)
+            {
+                MergeFields(existingObject, valueObject);
+            }
+            else
+            {
+                target[field.Key] = value;
+            }
+        }
     }
 }

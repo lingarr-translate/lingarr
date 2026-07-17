@@ -303,29 +303,22 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             }
         };
 
-        var messages = new[]
-        {
-            new Dictionary<string, string>
-            {
-                ["role"] = "system",
-                ["content"] = _prompt!
-            },
-            new Dictionary<string, string>
-            {
-                ["role"] = "user",
-                ["content"] = JsonSerializer.Serialize(subtitleBatch)
-            }
-        };
-
-        var requestBody = new Dictionary<string, object>
+        var placeholders = new Dictionary<string, string>
         {
             ["model"] = _model!,
-            ["messages"] = messages,
-            ["response_format"] = responseFormat
+            ["systemPrompt"] = _prompt!,
+            ["userMessage"] = JsonSerializer.Serialize(subtitleBatch),
+            ["sourceLanguage"] = _replacements["sourceLanguage"],
+            ["targetLanguage"] = _replacements["targetLanguage"]
         };
+        var bodyJson = _requestTemplateService.BuildRequestBody(_chatRequestTemplate!, placeholders);
+        bodyJson = _requestTemplateService.SetRequestFields(bodyJson, new Dictionary<string, object?>
+        {
+            ["response_format"] = responseFormat
+        });
 
         var requestContent = new StringContent(
-            JsonSerializer.Serialize(requestBody),
+            bodyJson,
             Encoding.UTF8,
             "application/json");
 
@@ -380,28 +373,18 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
-        var messages = new[]
-        {
-            new Dictionary<string, string>
-            {
-                ["role"] = "system",
-                ["content"] = _prompt!
-            },
-            new Dictionary<string, string>
-            {
-                ["role"] = "user",
-                ["content"] = JsonSerializer.Serialize(subtitleBatch)
-            }
-        };
-
-        var requestBody = new Dictionary<string, object>
+        var placeholders = new Dictionary<string, string>
         {
             ["model"] = _model!,
-            ["messages"] = messages
+            ["systemPrompt"] = _prompt!,
+            ["userMessage"] = JsonSerializer.Serialize(subtitleBatch),
+            ["sourceLanguage"] = _replacements["sourceLanguage"],
+            ["targetLanguage"] = _replacements["targetLanguage"]
         };
+        var bodyJson = _requestTemplateService.BuildRequestBody(_chatRequestTemplate!, placeholders);
 
         var requestContent = new StringContent(
-            JsonSerializer.Serialize(requestBody),
+            bodyJson,
             Encoding.UTF8,
             "application/json");
 
@@ -461,15 +444,23 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         CancellationToken cancellationToken)
     {
         var batchPrompt = _prompt +
-                          "\n\nPlease return the response as a JSON array with objects containing 'position' and 'line' fields. Example: [{\"position\": 1, \"line\": \"translated text\"}]\n\n";
+                          "\n\nPlease return the response as a JSON array with objects containing 'position' and 'line' fields. Example: [{\"position\": 1, \"line\": \"translated text\"}]";
 
-        var requestData = new Dictionary<string, object>
+        var placeholders = new Dictionary<string, string>
         {
             ["model"] = _model!,
-            ["prompt"] = batchPrompt + JsonSerializer.Serialize(subtitleBatch),
-            ["stream"] = false
+            ["systemPrompt"] = batchPrompt,
+            ["userMessage"] = JsonSerializer.Serialize(subtitleBatch),
+            ["sourceLanguage"] = _replacements["sourceLanguage"],
+            ["targetLanguage"] = _replacements["targetLanguage"]
         };
-        var content = new StringContent(JsonSerializer.Serialize(requestData),
+        var bodyJson = _requestTemplateService.BuildRequestBody(_generateRequestTemplate!, placeholders);
+        bodyJson = _requestTemplateService.SetRequestFields(bodyJson, new Dictionary<string, object?>
+        {
+            ["stream"] = false
+        });
+
+        var content = new StringContent(bodyJson,
             Encoding.UTF8, "application/json");
 
         var response = await _httpClient.PostAsync(_endpoint, content, cancellationToken);
