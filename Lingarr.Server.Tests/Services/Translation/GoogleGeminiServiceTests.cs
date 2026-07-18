@@ -516,6 +516,70 @@ public class GoogleGeminiServiceTests
         Assert.Equal("Our love.\nIt is beautiful.", result[89]);
     }
 
+    [Fact]
+    public async Task TranslateBatchAsync_ShouldThrowOperationCanceled_WhenCancelledDuringRequest()
+    {
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var cancellationTokenSource = new CancellationTokenSource();
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", 
+                ItExpr.IsAny<HttpRequestMessage>(), 
+                ItExpr.IsAny<CancellationToken>()
+                )
+            .Callback(() => cancellationTokenSource.Cancel())
+            .ThrowsAsync(new TaskCanceledException());
+
+        var batch = new List<BatchSubtitleItem>
+        {
+            new()
+            {
+                Position = 1, 
+                Line = "Hello"
+            }
+        };
+        
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => _service.TranslateBatchAsync(
+            batch, 
+            "en", 
+            "nl", 
+            cancellationTokenSource.Token)
+        );
+    }
+
+    [Fact]
+    public async Task TranslateBatchAsync_ShouldThrowTranslationException_WhenRequestTimesOutWithoutCancellation()
+    {
+        var settings = GetDefaultSettings();
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync", 
+                ItExpr.IsAny<HttpRequestMessage>(), 
+                ItExpr.IsAny<CancellationToken>()
+                )
+            .ThrowsAsync(new TaskCanceledException());
+
+        var batch = new List<BatchSubtitleItem>
+        {
+            new()
+            {
+                Position = 1, 
+                Line = "Hello"
+            }
+        };
+
+        await Assert.ThrowsAsync<TranslationException>(
+            () => _service.TranslateBatchAsync(batch, 
+                "en", 
+                "nl", 
+                CancellationToken.None)
+            );
+    }
+
     // Helper to keep the tests clean
     private Dictionary<string, string> GetDefaultSettings()
     {
