@@ -226,6 +226,10 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                     "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
                     "LocalAI", ex.StatusCode, delay, attempt, _maxRetries);
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error during batch translation attempt {Attempt}", attempt);
