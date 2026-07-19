@@ -23,6 +23,7 @@ export const SETTINGS = {
     GEMINI_MODEL: 'gemini_model',
     DEEPSEEK_MODEL: 'deepseek_model',
     AI_PROMPT: 'ai_prompt',
+    AI_USER_PROMPT: 'ai_user_prompt',
     THEME: 'theme',
     LOCALE: 'locale',
     MOVIE_AGE_THRESHOLD: 'movie_age_threshold',
@@ -38,8 +39,6 @@ export const SETTINGS = {
     SUBTITLE_VALIDATION_MINSUBTITLELENGTH: 'subtitle_validation_minsubtitlelength',
     SUBTITLE_VALIDATION_MAXSUBTITLELENGTH: 'subtitle_validation_maxsubtitlelength',
     SUBTITLE_VALIDATION_MAXFILESIZEBYTES: 'subtitle_validation_maxfilesizebytes',
-    AI_CONTEXT_PROMPT_ENABLED: 'ai_context_prompt_enabled',
-    AI_CONTEXT_PROMPT: 'ai_context_prompt',
     AI_CONTEXT_BEFORE: 'ai_context_before',
     AI_CONTEXT_AFTER: 'ai_context_after',
     USE_BATCH_TRANSLATION: 'use_batch_translation',
@@ -89,6 +88,7 @@ export interface ISettings {
     gemini_model: string
     deepseek_model: string
     ai_prompt: string
+    ai_user_prompt: string
     movie_age_threshold: string
     show_age_threshold: string
     fix_overlapping_subtitles: string
@@ -103,8 +103,6 @@ export interface ISettings {
     subtitle_validation_maxsubtitlelength: string
     subtitle_validation_mindurationms: string
     subtitle_validation_maxdurationsecs: string
-    ai_context_prompt_enabled: string
-    ai_context_prompt: string
     ai_context_before: string
     ai_context_after: string
     use_batch_translation: string

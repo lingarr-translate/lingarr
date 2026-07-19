@@ -19,7 +19,6 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
     private readonly IRequestTemplateService _requestTemplateService;
     private string? _model;
     private string? _endpoint;
-    private string? _prompt;
     private string? _chatRequestTemplate;
     private string? _generateRequestTemplate;
     private bool _isChatEndpoint;
@@ -69,8 +68,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 SettingKeys.Translation.LocalAi.ChatRequestTemplate,
                 SettingKeys.Translation.LocalAi.GenerateRequestTemplate,
                 SettingKeys.Translation.AiPrompt,
-                SettingKeys.Translation.AiContextPrompt,
-                SettingKeys.Translation.AiContextPromptEnabled,
+                SettingKeys.Translation.AiUserPrompt,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
@@ -85,7 +83,6 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             _generateRequestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.LocalAi.GenerateRequestTemplate])
                 ? settings[SettingKeys.Translation.LocalAi.GenerateRequestTemplate]
                 : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.LocalAi.GenerateRequestTemplate);
-            _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_endpoint))
             {
@@ -93,8 +90,8 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             }
 
             SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
-            _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
-            _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
+            _prompt = settings[SettingKeys.Translation.AiPrompt];
+            _userPrompt = settings[SettingKeys.Translation.AiUserPrompt];
             _isChatEndpoint = _endpoint.TrimEnd('/').EndsWith("completions", StringComparison.OrdinalIgnoreCase);
 
             var requestTimeout = int.TryParse(settings[SettingKeys.Translation.RequestTimeout],
@@ -141,7 +138,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
 
-        text = ApplyContextIfEnabled(text, contextLinesBefore, contextLinesAfter);
+        var replacements = GetReplacements(_model!, text, contextLinesBefore, contextLinesAfter);
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
 
@@ -151,8 +148,8 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             try
             {
                 return _isChatEndpoint
-                    ? await TranslateWithChatApi(text, retry.Token)
-                    : await TranslateWithGenerateApi(text, retry.Token);
+                    ? await TranslateWithChatApi(replacements, retry.Token)
+                    : await TranslateWithGenerateApi(replacements, retry.Token);
             }
             catch (TranslationResponseException ex)
             {
@@ -307,15 +304,8 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             }
         };
 
-        var placeholders = new Dictionary<string, string>
-        {
-            ["model"] = _model!,
-            ["systemPrompt"] = _prompt!,
-            ["userMessage"] = JsonSerializer.Serialize(subtitleBatch),
-            ["sourceLanguage"] = _replacements["sourceLanguage"],
-            ["targetLanguage"] = _replacements["targetLanguage"]
-        };
-        var bodyJson = _requestTemplateService.BuildRequestBody(_chatRequestTemplate!, placeholders);
+        var replacements = GetBatchReplacements(_model!, JsonSerializer.Serialize(subtitleBatch));
+        var bodyJson = _requestTemplateService.BuildRequestBody(_chatRequestTemplate!, replacements);
         bodyJson = _requestTemplateService.SetRequestFields(bodyJson, new Dictionary<string, object?>
         {
             ["response_format"] = responseFormat
@@ -377,15 +367,8 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
-        var placeholders = new Dictionary<string, string>
-        {
-            ["model"] = _model!,
-            ["systemPrompt"] = _prompt!,
-            ["userMessage"] = JsonSerializer.Serialize(subtitleBatch),
-            ["sourceLanguage"] = _replacements["sourceLanguage"],
-            ["targetLanguage"] = _replacements["targetLanguage"]
-        };
-        var bodyJson = _requestTemplateService.BuildRequestBody(_chatRequestTemplate!, placeholders);
+        var replacements = GetBatchReplacements(_model!, JsonSerializer.Serialize(subtitleBatch));
+        var bodyJson = _requestTemplateService.BuildRequestBody(_chatRequestTemplate!, replacements);
 
         var requestContent = new StringContent(
             bodyJson,
@@ -447,18 +430,10 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
-        var batchPrompt = _prompt +
-                          "\n\nPlease return the response as a JSON array with objects containing 'position' and 'line' fields. Example: [{\"position\": 1, \"line\": \"translated text\"}]";
-
-        var placeholders = new Dictionary<string, string>
-        {
-            ["model"] = _model!,
-            ["systemPrompt"] = batchPrompt,
-            ["userMessage"] = JsonSerializer.Serialize(subtitleBatch),
-            ["sourceLanguage"] = _replacements["sourceLanguage"],
-            ["targetLanguage"] = _replacements["targetLanguage"]
-        };
-        var bodyJson = _requestTemplateService.BuildRequestBody(_generateRequestTemplate!, placeholders);
+        var replacements = GetBatchReplacements(_model!, JsonSerializer.Serialize(subtitleBatch));
+        replacements["systemPrompt"] +=
+            "\n\nPlease return the response as a JSON array with objects containing 'position' and 'line' fields. Example: [{\"position\": 1, \"line\": \"translated text\"}]";
+        var bodyJson = _requestTemplateService.BuildRequestBody(_generateRequestTemplate!, replacements);
         bodyJson = _requestTemplateService.SetRequestFields(bodyJson, new Dictionary<string, object?>
         {
             ["stream"] = false
@@ -515,17 +490,11 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         }
     }
 
-    private async Task<string> TranslateWithGenerateApi(string text, CancellationToken cancellationToken)
+    private async Task<string> TranslateWithGenerateApi(
+        Dictionary<string, string> replacements,
+        CancellationToken cancellationToken)
     {
-        var placeholders = new Dictionary<string, string>
-        {
-            ["model"] = _model!,
-            ["systemPrompt"] = _prompt!,
-            ["userMessage"] = text,
-            ["sourceLanguage"] = _replacements["sourceLanguage"],
-            ["targetLanguage"] = _replacements["targetLanguage"]
-        };
-        var bodyJson = _requestTemplateService.BuildRequestBody(_generateRequestTemplate!, placeholders);
+        var bodyJson = _requestTemplateService.BuildRequestBody(_generateRequestTemplate!, replacements);
 
 
         var content = new StringContent(bodyJson,
@@ -553,20 +522,14 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         return generateResponse.Response;
     }
 
-    private async Task<string> TranslateWithChatApi(string? text, CancellationToken cancellationToken)
+    private async Task<string> TranslateWithChatApi(
+        Dictionary<string, string> replacements,
+        CancellationToken cancellationToken)
     {
-        var placeholders = new Dictionary<string, string>
-        {
-            ["model"] = _model!,
-            ["systemPrompt"] = _prompt!,
-            ["userMessage"] = text ?? string.Empty,
-            ["sourceLanguage"] = _replacements["sourceLanguage"],
-            ["targetLanguage"] = _replacements["targetLanguage"]
-        };
-        var bodyJson = _requestTemplateService.BuildRequestBody(_chatRequestTemplate!, placeholders);
+        var bodyJson = _requestTemplateService.BuildRequestBody(_chatRequestTemplate!, replacements);
+        
 
-
-        var content = new StringContent(bodyJson,
+               var content = new StringContent(bodyJson,
             Encoding.UTF8, "application/json");
 
         var response = await _httpClient.PostAsync(_endpoint, content, cancellationToken);

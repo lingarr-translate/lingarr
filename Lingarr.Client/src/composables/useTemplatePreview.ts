@@ -10,37 +10,53 @@ interface TemplatePreviewProps {
 export function useTemplatePreview(props: TemplatePreviewProps) {
     const settingsStore = useSettingStore()
 
-    const sampleValues = computed(() => {
+    const sampleValues = computed((): Record<string, string> => {
         const useLanguageCodes = settingsStore.getSetting(SETTINGS.LANGUAGE_CODE_FORMAT) === 'true'
         const sourceLang = useLanguageCodes ? 'en' : 'English'
         const targetLang = useLanguageCodes ? 'nl' : 'Dutch'
+        const useBatchTranslation =
+            settingsStore.getSetting(SETTINGS.USE_BATCH_TRANSLATION) === 'true'
 
-        const prompt = settingsStore.getSetting(SETTINGS.AI_PROMPT) as string || 'Translate from English to Dutch'
+        const lineToTranslate =
+            'The answer to the ultimate question of life, the universe, and everything is 42.'
 
-        let userMessage = 'The answer to the ultimate question of life, the universe, and everything is 42.'
-        if(settingsStore.getSetting(SETTINGS.AI_CONTEXT_PROMPT_ENABLED) == 'true') {
-            userMessage = settingsStore.getSetting(SETTINGS.AI_CONTEXT_PROMPT) as string
-        }
-        return {
+        const values: Record<string, string> = {
             model: props.serviceType || 'aya-expanse',
-            systemPrompt: prompt
-                .replace('{sourceLanguage}', sourceLang)
-                .replace('{targetLanguage}', targetLang),
-            userMessage: userMessage,
             sourceLanguage: sourceLang,
-            targetLanguage: targetLang
+            targetLanguage: targetLang,
+            lineToTranslate: useBatchTranslation ? '' : lineToTranslate,
+            contextBefore: useBatchTranslation
+                ? ''
+                : 'What is the answer to the ultimate question?',
+            contextAfter: useBatchTranslation ? '' : 'That is not an answer we can work with.'
         }
+
+        const prompt =
+            (settingsStore.getSetting(SETTINGS.AI_PROMPT) as string) ||
+            'Translate from {sourceLanguage} to {targetLanguage}'
+        const userPrompt =
+            (settingsStore.getSetting(SETTINGS.AI_USER_PROMPT) as string) || '{lineToTranslate}'
+
+        const systemPrompt = replacePlaceholders(prompt, values)
+        const userMessage = useBatchTranslation
+            ? JSON.stringify([{ position: 1, line: lineToTranslate }])
+            : replacePlaceholders(userPrompt, values)
+        values.systemPrompt = systemPrompt
+        values.userMessage = userMessage
+        return values
     })
 
+    function replacePlaceholders(template: string, values: Record<string, string>): string {
+        return template.replace(/\{(\w+)\}/g, (match, name) =>
+            name in values ? values[name] : match
+        )
+    }
+
     function substitute(template: string): string {
-        let result = template
-        const vals = sampleValues.value
-        result = result.replace(/\{model\}/g, escapeJsonValue(vals.model))
-        result = result.replace(/\{systemPrompt\}/g, escapeJsonValue(vals.systemPrompt))
-        result = result.replace(/\{userMessage\}/g, escapeJsonValue(vals.userMessage))
-        result = result.replace(/\{sourceLanguage\}/g, escapeJsonValue(vals.sourceLanguage))
-        result = result.replace(/\{targetLanguage\}/g, escapeJsonValue(vals.targetLanguage))
-        return result
+        const values = sampleValues.value
+        return template.replace(/\{(\w+)\}/g, (match, name) =>
+            name in values ? escapeJsonValue(values[name]) : match
+        )
     }
 
     function escapeJsonValue(value: string): string {

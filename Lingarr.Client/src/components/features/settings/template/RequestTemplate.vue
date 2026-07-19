@@ -1,8 +1,8 @@
 ﻿<template>
     <CardComponent title="AI Request Body Template">
         <template #description>
-            Customize the JSON structure sent to your AI provider. Use placeholders {model},
-            {systemPrompt}, and {userMessage} which will be replaced when performing translations.
+            Customize the JSON structure sent to your AI provider. Placeholders are replaced across
+            the whole template when performing translations and can be used in any field.
         </template>
         <template #content>
             <div class="space-y-4">
@@ -82,7 +82,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { SETTINGS, SERVICE_TYPE, ISettings } from '@/ts'
+import { PLACEHOLDER, SETTINGS, SERVICE_TYPE, ISettings } from '@/ts'
 import { useSettingStore } from '@/store/setting'
 import useDebounce from '@/composables/useDebounce'
 import services from '@/services'
@@ -101,36 +101,14 @@ const jsonText = ref('')
 const selectedPreset = ref('')
 
 const placeholderItems = [
-    {
-        placeholder: '{model}',
-        placeholderText: 'insert {model}',
-        title: 'Model',
-        description: 'The AI model identifier configured for the selected service'
-    },
-    {
-        placeholder: '{systemPrompt}',
-        placeholderText: 'insert {systemPrompt}',
-        title: 'System Prompt',
-        description: 'The system prompt with source and target language instructions'
-    },
-    {
-        placeholder: '{userMessage}',
-        placeholderText: 'insert {userMessage}',
-        title: 'User Message',
-        description: 'The subtitle text that needs to be translated'
-    },
-    {
-        placeholder: '{sourceLanguage}',
-        placeholderText: 'insert {sourceLanguage}',
-        title: 'Source Language',
-        description: 'The full name of the source language (e.g. English)'
-    },
-    {
-        placeholder: '{targetLanguage}',
-        placeholderText: 'insert {targetLanguage}',
-        title: 'Target Language',
-        description: 'The full name of the target language (e.g. Dutch)'
-    }
+    PLACEHOLDER.MODEL,
+    PLACEHOLDER.SYSTEM_PROMPT,
+    PLACEHOLDER.USER_MESSAGE,
+    PLACEHOLDER.SOURCE_LANGUAGE,
+    PLACEHOLDER.TARGET_LANGUAGE,
+    PLACEHOLDER.LINE_TO_TRANSLATE,
+    PLACEHOLDER.CONTEXT_BEFORE,
+    PLACEHOLDER.CONTEXT_AFTER
 ]
 
 const props = defineProps<{ service: string }>()
