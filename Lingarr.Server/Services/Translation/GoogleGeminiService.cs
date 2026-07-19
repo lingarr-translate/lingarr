@@ -19,7 +19,6 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
     private readonly IRequestTemplateService _requestTemplateService;
     private string? _model;
     private string? _apiKey;
-    private string? _prompt;
     private string? _requestTemplate;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
@@ -65,8 +64,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                 SettingKeys.Translation.Gemini.Model,
                 SettingKeys.Translation.Gemini.RequestTemplate,
                 SettingKeys.Translation.AiPrompt,
-                SettingKeys.Translation.AiContextPrompt,
-                SettingKeys.Translation.AiContextPromptEnabled,
+                SettingKeys.Translation.AiUserPrompt,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
@@ -78,7 +76,6 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             _requestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.Gemini.RequestTemplate])
                 ? settings[SettingKeys.Translation.Gemini.RequestTemplate]
                 : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.Gemini.RequestTemplate);
-            _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey))
             {
@@ -86,8 +83,8 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             }
 
             SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
-            _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
-            _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
+            _prompt = settings[SettingKeys.Translation.AiPrompt];
+            _userPrompt = settings[SettingKeys.Translation.AiUserPrompt];
 
             var requestTimeout = int.TryParse(settings[SettingKeys.Translation.RequestTimeout],
                 out var timeOut)
@@ -127,16 +124,16 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
 
-        text = ApplyContextIfEnabled(text, contextLinesBefore, contextLinesAfter);
+        var replacements = GetReplacements(_model!, text, contextLinesBefore, contextLinesAfter);
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
-        
+
         var delay = _retryDelay;
         for (var attempt = 1; attempt <= _maxRetries; attempt++)
         {
             try
             {
-                return await TranslateWithGeminiApi(text, linked.Token);
+                return await TranslateWithGeminiApi(replacements, linked.Token);
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {
@@ -167,18 +164,12 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         throw new TranslationException("Translation failed after maximum retry attempts.");
     }
 
-    private async Task<string> TranslateWithGeminiApi(string? message, CancellationToken cancellationToken)
+    private async Task<string> TranslateWithGeminiApi(
+        Dictionary<string, string> replacements,
+        CancellationToken cancellationToken)
     {
         var endpoint = $"{_endpoint}/models/{_model}:generateContent?key={_apiKey}";
-        var placeholders = new Dictionary<string, string>
-        {
-            ["model"] = _model!,
-            ["systemPrompt"] = _prompt!,
-            ["userMessage"] = message ?? string.Empty,
-            ["sourceLanguage"] = _replacements["sourceLanguage"],
-            ["targetLanguage"] = _replacements["targetLanguage"]
-        };
-        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
+        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
 
         var content = new StringContent(
             bodyJson,
@@ -346,15 +337,8 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         CancellationToken cancellationToken)
     {
         var endpoint = $"{_endpoint}/models/{_model}:generateContent?key={_apiKey}";
-        var placeholders = new Dictionary<string, string>
-        {
-            ["model"] = _model!,
-            ["systemPrompt"] = _prompt!,
-            ["userMessage"] = JsonSerializer.Serialize(subtitleBatch),
-            ["sourceLanguage"] = _replacements["sourceLanguage"],
-            ["targetLanguage"] = _replacements["targetLanguage"]
-        };
-        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
+        var replacements = GetBatchReplacements(_model!, JsonSerializer.Serialize(subtitleBatch));
+        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
         bodyJson = _requestTemplateService.SetRequestFields(bodyJson, new Dictionary<string, object?>
         {
             ["generationConfig"] = new Dictionary<string, object>

@@ -232,6 +232,7 @@ public class StartupService : IHostedService
             { "LIBRE_TRANSLATE_URL", SettingKeys.Translation.LibreTranslate.Url },
             { "LIBRE_TRANSLATE_API_KEY", SettingKeys.Translation.LibreTranslate.ApiKey },
             { "AI_PROMPT", SettingKeys.Translation.AiPrompt },
+            { "AI_USER_PROMPT", SettingKeys.Translation.AiUserPrompt },
 
             { "OPENAI_MODEL", SettingKeys.Translation.OpenAi.Model },
             { "OPENAI_API_KEY", SettingKeys.Translation.OpenAi.ApiKey },

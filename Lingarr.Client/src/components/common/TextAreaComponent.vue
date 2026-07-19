@@ -35,16 +35,10 @@
 
 <script setup lang="ts">
 import { computed, ref, nextTick, onMounted } from 'vue'
+import { IPlaceholder } from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import ValidationIcon from '@/components/common/ValidationIcon.vue'
 import PlaceholderButton from '@/components/common/PlaceholderButton.vue'
-interface Placeholder {
-    placeholder: string
-    placeholderText: string
-    title: string
-    description: string
-    required?: boolean
-}
 
 const props = withDefaults(
     defineProps<{
@@ -53,7 +47,7 @@ const props = withDefaults(
         modelValue: string
         placeholder?: string
         rows?: number
-        placeholders?: Placeholder[]
+        placeholders?: IPlaceholder[]
         requiredPlaceholders?: string[]
     }>(),
     {

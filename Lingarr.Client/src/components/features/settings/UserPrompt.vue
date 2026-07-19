@@ -1,38 +1,26 @@
-﻿<template>
-    <CardComponent title="Context Prompt">
+<template>
+    <CardComponent title="User Prompt">
         <template #description>
-            Define custom instructions to be included in the {userMessage} as context
+            Define the user message sent with each translation.
         </template>
         <template #content>
             <div class="flex flex-col space-y-4">
                 <SaveNotification ref="saveNotification" />
-                <div v-if="useBatchTranslation == 'false'" class="space-y-4">
+                <div v-if="useBatchTranslation !== 'true'" class="space-y-4">
                     <div class="flex flex-col space-x-2">
-                        <span class="font-semibold">Enable context prompt:</span>
+                        <span class="font-semibold">User prompt</span>
+                        Use the context placeholders to include lines before and after the current
+                        subtitle, helping the AI generate a more accurate translation.
                     </div>
-                    <ToggleButton v-model="aiContextPromptEnabled">
-                        <span class="text-sm font-medium text-primary-content">
-                            {{ aiContextPromptEnabled == 'true' ? 'Enable' : 'Disabled' }}
-                        </span>
-                    </ToggleButton>
-                    <div v-if="aiContextPromptEnabled == 'true'" class="flex flex-col space-x-2">
-                        <span class="font-semibold">Context prompt</span>
-                        Provide the surrounding context, including lines before and after the
-                        current subtitle, to help the AI generate a more accurate translation.
-                    </div>
-                    <AiContextPrompt
-                        v-if="aiContextPromptEnabled == 'true'"
-                        @save="saveNotification?.show()" />
+                    <AiUserPrompt @save="saveNotification?.show()" />
 
                     <InputComponent
-                        v-if="aiContextPromptEnabled == 'true'"
                         v-model="contextBefore"
                         :type="INPUT_TYPE.NUMBER"
                         :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                         label="Context before"
                         @update:validation="(val) => (isValid.contextBefore = val)" />
                     <InputComponent
-                        v-if="aiContextPromptEnabled == 'true'"
                         v-model="contextAfter"
                         :type="INPUT_TYPE.NUMBER"
                         :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
@@ -40,8 +28,8 @@
                         @update:validation="(val) => (isValid.contextAfter = val)" />
                 </div>
                 <div v-else class="text-xs">
-                    Context prompt is not supported and has been disabled when sending subtitles in
-                    batch.
+                    The user prompt is not applied when sending subtitles in batch; the subtitle
+                    batch is sent directly as the user message.
                 </div>
             </div>
         </template>
@@ -52,9 +40,8 @@ import { computed, ref, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
 import { INPUT_TYPE, INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
-import AiContextPrompt from '@/components/features/settings/services/AiContextPrompt.vue'
+import AiUserPrompt from '@/components/features/settings/services/AiUserPrompt.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
-import ToggleButton from '@/components/common/ToggleButton.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
 
 const settingsStore = useSettingStore()
@@ -67,14 +54,6 @@ const isValid = reactive({
 const useBatchTranslation = computed(
     () => settingsStore.getSetting(SETTINGS.USE_BATCH_TRANSLATION) as string
 )
-
-const aiContextPromptEnabled = computed({
-    get: (): string => settingsStore.getSetting(SETTINGS.AI_CONTEXT_PROMPT_ENABLED) as string,
-    set: (newValue: string): void => {
-        settingsStore.updateSetting(SETTINGS.AI_CONTEXT_PROMPT_ENABLED, newValue, true)
-        saveNotification.value?.show()
-    }
-})
 
 const contextBefore = computed({
     get: () => settingsStore.getSetting(SETTINGS.AI_CONTEXT_BEFORE) as string,
