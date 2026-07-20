@@ -18,6 +18,7 @@ using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Models.TranslationRequests;
 using Lingarr.Server.Services.Translation;
 using System.Collections.Concurrent;
+using System.IO;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -556,12 +557,21 @@ public class TranslationRequestService : ITranslationRequestService
         CancellationToken parentCancellationToken)
     {
         // Prepare TranslationRequest Object
+        var contentTitle = translateAbleContent.Title?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(contentTitle)
+            && !string.IsNullOrWhiteSpace(translateAbleContent.SourceSubtitlePath))
+        {
+            contentTitle = Path.GetFileName(translateAbleContent.SourceSubtitlePath);
+        }
+
         var translationRequest = new TranslationRequest
         {
             MediaId = await GetMediaId(translateAbleContent.ArrMediaId, translateAbleContent.MediaType),
-            Title = translateAbleContent.Title,
+            Title = contentTitle,
             SourceLanguage = translateAbleContent.SourceLanguage,
             TargetLanguage = translateAbleContent.TargetLanguage,
+            SubtitleToTranslate = translateAbleContent.SourceSubtitlePath,
+            TranslatedSubtitle = translateAbleContent.TranslatedSubtitlePath,
             MediaType = translateAbleContent.MediaType,
             Status = TranslationStatus.InProgress
         };
