@@ -251,8 +251,8 @@ const handleDelete = async () => {
 
 const fileName = (path?: string | null) => {
     if (!path) return ''
-    const parts = path.replace(/\/g, '/').split('/')
-    return parts[parts.length - 1] || path
+    const parts = path.split(/[/\\]/)
+    return parts.filter(Boolean).pop() || path
 }
 
 const displayTitle = (item: { title?: string; subtitleToTranslate?: string }) => {
