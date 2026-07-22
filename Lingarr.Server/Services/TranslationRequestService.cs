@@ -18,7 +18,6 @@ using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Models.TranslationRequests;
 using Lingarr.Server.Services.Translation;
 using System.Collections.Concurrent;
-using System.IO;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -120,7 +119,7 @@ public class TranslationRequestService : ITranslationRequestService
     /// <inheritdoc />
     public async Task<int> CreateRequest(TranslateAbleSubtitle translateAbleSubtitle)
     {
-        var mediaTitle = await FormatMediaTitle(translateAbleSubtitle);
+        var mediaTitle = await FormatMediaTitle(translateAbleSubtitle.MediaId, translateAbleSubtitle.MediaType);
         var translationRequest = new TranslationRequest
         {
             MediaId = translateAbleSubtitle.MediaId,
@@ -556,17 +555,19 @@ public class TranslationRequestService : ITranslationRequestService
         TranslateAbleSubtitleContent translateAbleContent,
         CancellationToken parentCancellationToken)
     {
-        // Prepare TranslationRequest Object
-        var contentTitle = translateAbleContent.Title?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(contentTitle)
-            && !string.IsNullOrWhiteSpace(translateAbleContent.SourceSubtitlePath))
-        {
-            contentTitle = Path.GetFileName(translateAbleContent.SourceSubtitlePath);
-        }
+        // Resolve internal media id from the client's ArrMediaId
+        var mediaId = await GetMediaId(translateAbleContent.ArrMediaId, translateAbleContent.MediaType);
+
+        // Derive canonical title from the media lookup (FormatMediaTitle queries the DB for
+        // the resolved movie/episode title). The client's Title becomes an optional override.
+        var canonicalTitle = await FormatMediaTitle(mediaId, translateAbleContent.MediaType);
+        var contentTitle = !string.IsNullOrWhiteSpace(translateAbleContent.Title?.Trim())
+            ? translateAbleContent.Title.Trim()
+            : canonicalTitle;
 
         var translationRequest = new TranslationRequest
         {
-            MediaId = await GetMediaId(translateAbleContent.ArrMediaId, translateAbleContent.MediaType),
+            MediaId = mediaId,
             Title = contentTitle,
             SourceLanguage = translateAbleContent.SourceLanguage,
             TargetLanguage = translateAbleContent.TargetLanguage,
@@ -824,21 +825,22 @@ public class TranslationRequestService : ITranslationRequestService
     /// <summary>
     /// Formats the media title based on the media type and ID.
     /// </summary>
-    /// <param name="translateAbleSubtitle">The subtitle information containing media type and ID</param>
-    private async Task<string> FormatMediaTitle(TranslateAbleSubtitle translateAbleSubtitle)
+    /// <param name="mediaId">The internal media ID (Movie or Episode primary key)</param>
+    /// <param name="mediaType">The type of media (Movie or Episode)</param>
+    private async Task<string> FormatMediaTitle(int mediaId, MediaType mediaType)
     {
-        switch (translateAbleSubtitle.MediaType)
+        switch (mediaType)
         {
             case MediaType.Movie:
                 var movie = await _dbContext.Movies
-                    .FirstOrDefaultAsync(m => m.Id == translateAbleSubtitle.MediaId);
+                    .FirstOrDefaultAsync(m => m.Id == mediaId);
                 return movie?.Title ?? "Unknown Movie";
 
             case MediaType.Episode:
                 var episode = await _dbContext.Episodes
                     .Include(e => e.Season)
                     .ThenInclude(s => s.Show)
-                    .FirstOrDefaultAsync(e => e.Id == translateAbleSubtitle.MediaId);
+                    .FirstOrDefaultAsync(e => e.Id == mediaId);
 
                 if (episode == null)
                     return "Unknown Episode";
@@ -849,7 +851,7 @@ public class TranslationRequestService : ITranslationRequestService
                        $"{episode.Title}";
 
             default:
-                throw new ArgumentException($"Unsupported media type: {translateAbleSubtitle.MediaType}");
+                throw new ArgumentException($"Unsupported media type: {mediaType}");
         }
     }
 }

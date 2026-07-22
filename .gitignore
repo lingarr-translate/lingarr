@@ -56,4 +56,4 @@ local_nas.db
 *.db
 
 # Ansible
-ansible_env/
+ansible_env/.nuget-packages/
