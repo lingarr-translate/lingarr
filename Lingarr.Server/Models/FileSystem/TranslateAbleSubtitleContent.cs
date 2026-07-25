@@ -6,7 +6,11 @@ namespace Lingarr.Server.Models.FileSystem;
 public class TranslateAbleSubtitleContent
 {
     public required int ArrMediaId { get; set; }
-    public required string Title { get; set; }
+    /// <summary>
+    /// Optional override. When null/empty, TranslateContentAsync derives the
+    /// canonical title via FormatMediaTitle after resolving MediaId.
+    /// </summary>
+    public string? Title { get; set; }
     public required string SourceLanguage { get; set; }
     public required string TargetLanguage { get; set; }
     public required MediaType MediaType { get; set; }

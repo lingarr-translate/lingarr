@@ -62,24 +62,16 @@
                 :key="item.id"
                 class="border-accent hover:bg-accent/5 flex flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 transition-colors md:grid md:grid-cols-12 md:gap-0 md:py-0">
                 <div class="flex w-full items-center gap-2 md:col-span-4 md:w-auto md:px-4 md:py-2">
-                    <div class="min-w-0 flex-1 md:flex-none">
-                        <span
-                            v-if="item.mediaType === MEDIA_TYPE.EPISODE"
-                            v-show-title
-                            class="block min-w-0 cursor-help"
-                            :title="item.title || item.subtitleToTranslate || ''">
-                            {{ displayTitle(item) }}
-                        </span>
-                        <span v-else class="block min-w-0" :title="item.subtitleToTranslate || item.title || ''">
-                            {{ displayTitle(item) }}
-                        </span>
-                        <span
-                            v-if="item.subtitleToTranslate && displayTitle(item) !== fileName(item.subtitleToTranslate)"
-                            class="text-primary-content/50 block truncate text-xs"
-                            :title="item.subtitleToTranslate">
-                            {{ fileName(item.subtitleToTranslate) }}
-                        </span>
-                    </div>
+                    <span
+                        v-if="item.mediaType === MEDIA_TYPE.EPISODE"
+                        v-show-title
+                        class="block min-w-0 flex-1 cursor-help md:flex-none"
+                        :title="item.title">
+                        {{ item.title }}
+                    </span>
+                    <span v-else class="min-w-0 flex-1 md:flex-none">
+                        {{ item.title }}
+                    </span>
                     <span class="ml-auto flex flex-none items-center gap-2 md:hidden">
                         <TranslationAction
                             :item="item"
@@ -247,17 +239,5 @@ const handleDelete = async () => {
     }
     translationRequestStore.clearSelection()
     translationRequestStore.fetch()
-}
-
-const fileName = (path?: string | null) => {
-    if (!path) return ''
-    const parts = path.split(/[/\\]/)
-    return parts.filter(Boolean).pop() || path
-}
-
-const displayTitle = (item: { title?: string; subtitleToTranslate?: string }) => {
-    const title = (item.title || '').trim()
-    if (title) return title
-    return fileName(item.subtitleToTranslate) || 'Untitled'
 }
 </script>
