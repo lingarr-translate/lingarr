@@ -1,8 +1,7 @@
 ﻿<template>
     <CardComponent title="System Prompt">
         <template #description>
-            Define custom instructions (system prompt) and an optional context prompt to control AI
-            response logic.
+            Define custom instructions (system prompt) to control AI response logic.
         </template>
         <template #content>
             <div class="flex flex-col space-y-4">

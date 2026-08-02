@@ -36,6 +36,7 @@
 
 <script setup lang="ts">
 import { nextTick } from 'vue'
+import { IPlaceholder } from '@/ts'
 import { useJsonTree } from '@/composables/useJsonTree'
 import JsonTreeNode from './JsonTreeNode.vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
@@ -45,12 +46,7 @@ import StatusMessage from '@/components/common/StatusMessage.vue'
 
 const props = defineProps<{
     modelValue: string
-    placeholders: {
-        placeholder: string
-        placeholderText: string
-        title: string
-        description: string
-    }[]
+    placeholders: IPlaceholder[]
 }>()
 
 const emit = defineEmits<{

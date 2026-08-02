@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.RegularExpressions;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models.RequestTemplates;
@@ -8,6 +9,8 @@ namespace Lingarr.Server.Services.Translation;
 
 public class RequestTemplateService : IRequestTemplateService
 {
+    private static readonly Regex PlaceholderPattern = new(@"\{(\w+)\}", RegexOptions.Compiled);
+
     private readonly Dictionary<string, Func<string>> _templateFactories = new()
     {
         [SettingKeys.Translation.OpenAi.RequestTemplate] =
@@ -47,13 +50,10 @@ public class RequestTemplateService : IRequestTemplateService
     /// <inheritdoc />
     public string BuildRequestBody(string template, Dictionary<string, string> placeholders)
     {
-        var result = placeholders.Aggregate(template, (current, placeholder) =>
-        {
-            return current.Replace(
-                $"{{{placeholder.Key}}}",
-                JsonEncodedText.Encode(placeholder.Value).ToString()
-            );
-        });
+        var result = PlaceholderPattern.Replace(template, match =>
+            placeholders.TryGetValue(match.Groups[1].Value, out var value)
+                ? JsonEncodedText.Encode(value).ToString()
+                : match.Value);
 
         using var doc = JsonDocument.Parse(result);
         return result;

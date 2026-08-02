@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.RegularExpressions;
 using Lingarr.Contracts.Models;
 using Lingarr.Contracts.Models.Batch;
 using Lingarr.Server.Interfaces.Services;
@@ -8,10 +9,12 @@ namespace Lingarr.Server.Services.Translation.Base;
 
 public abstract class BaseLanguageService : BaseTranslationService
 {
+    private static readonly Regex PlaceholderPattern = new(@"\{(\w+)\}", RegexOptions.Compiled);
+
     private readonly string? _languageFilePath;
     private Task<List<SourceLanguage>>? _cachedLanguages;
-    protected string? _contextPrompt;
-    protected string? _contextPromptEnabled;
+    protected string? _prompt;
+    protected string? _userPrompt;
     protected Dictionary<string, string> _replacements;
 
     protected BaseLanguageService(
@@ -24,36 +27,51 @@ public abstract class BaseLanguageService : BaseTranslationService
         _replacements = new Dictionary<string, string>();
     }
 
-    protected string ReplacePlaceholders(string promptTemplate, Dictionary<string, string> replacements)
+    protected static string ReplacePlaceholders(string? template, Dictionary<string, string> replacements)
     {
-        if (string.IsNullOrEmpty(promptTemplate))
+        if (string.IsNullOrEmpty(template))
         {
-            return promptTemplate;
+            return string.Empty;
         }
 
-        var result = promptTemplate;
-        foreach (var replacement in replacements)
-        {
-            result = result.Replace($"{{{replacement.Key}}}", replacement.Value);
-        }
-
-        return result;
+        return PlaceholderPattern.Replace(template, match =>
+            replacements.TryGetValue(match.Groups[1].Value, out var value) ? value : match.Value);
     }
 
-    protected string ApplyContextIfEnabled(
-        string text, 
-        List<string>? contextLinesBefore, 
+    protected Dictionary<string, string> GetReplacements(
+        string model,
+        string lineToTranslate,
+        List<string>? contextLinesBefore,
         List<string>? contextLinesAfter)
     {
-        if (_contextPromptEnabled != "true" || string.IsNullOrEmpty(_contextPrompt))
+        var replacements = new Dictionary<string, string>(_replacements)
         {
-            return text;
-        }
+            ["model"] = model,
+            ["lineToTranslate"] = lineToTranslate,
+            ["contextBefore"] = string.Join("\n", contextLinesBefore ?? []),
+            ["contextAfter"] = string.Join("\n", contextLinesAfter ?? [])
+        };
+        var systemPrompt = ReplacePlaceholders(_prompt, replacements);
+        var userMessage = string.IsNullOrEmpty(_userPrompt)
+            ? lineToTranslate
+            : ReplacePlaceholders(_userPrompt, replacements);
+        replacements["systemPrompt"] = systemPrompt;
+        replacements["userMessage"] = userMessage;
+        return replacements;
+    }
 
-        _replacements["contextBefore"] = string.Join("\n", contextLinesBefore ?? []);
-        _replacements["lineToTranslate"] = text;
-        _replacements["contextAfter"] = string.Join("\n", contextLinesAfter ?? []);
-        return ReplacePlaceholders(_contextPrompt, _replacements);
+    protected Dictionary<string, string> GetBatchReplacements(string model, string serializedBatch)
+    {
+        var replacements = new Dictionary<string, string>(_replacements)
+        {
+            ["model"] = model,
+            ["lineToTranslate"] = string.Empty,
+            ["contextBefore"] = string.Empty,
+            ["contextAfter"] = string.Empty
+        };
+        replacements["systemPrompt"] = ReplacePlaceholders(_prompt, replacements);
+        replacements["userMessage"] = serializedBatch;
+        return replacements;
     }
 
     /// <inheritdoc />

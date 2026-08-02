@@ -90,7 +90,6 @@ public class TranslationJob
                 SettingKeys.SubtitleValidation.MinDurationMs,
                 SettingKeys.SubtitleValidation.MaxDurationSecs,
 
-                SettingKeys.Translation.AiContextPromptEnabled,
                 SettingKeys.Translation.AiContextBefore,
                 SettingKeys.Translation.AiContextAfter,
                 SettingKeys.Translation.UseBatchTranslation,
@@ -106,21 +105,15 @@ public class TranslationJob
             var addTranslatorInfo = settings[SettingKeys.Translation.AddTranslatorInfo] == "true";
             var validateSubtitles = settings[SettingKeys.SubtitleValidation.ValidateSubtitles] != "false";
             var removeLanguageTag = settings[SettingKeys.Translation.RemoveLanguageTag] != "false";
-            var contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled] == "true";
 
-            var contextBefore = 0;
-            var contextAfter = 0;
-            if (contextPromptEnabled)
-            {
-                contextBefore = int.TryParse(settings[SettingKeys.Translation.AiContextBefore],
-                    out var linesBefore)
-                    ? linesBefore
-                    : 0;
-                contextAfter = int.TryParse(settings[SettingKeys.Translation.AiContextAfter],
-                    out var linesAfter)
-                    ? linesAfter
-                    : 0;
-            }
+            var contextBefore = int.TryParse(settings[SettingKeys.Translation.AiContextBefore],
+                out var linesBefore)
+                ? linesBefore
+                : 0;
+            var contextAfter = int.TryParse(settings[SettingKeys.Translation.AiContextAfter],
+                out var linesAfter)
+                ? linesAfter
+                : 0;
 
             // validate subtitles
             if (validateSubtitles)
@@ -225,7 +218,7 @@ public class TranslationJob
             }
             else
             {
-                if (contextPromptEnabled)
+                if (contextBefore > 0 || contextAfter > 0)
                 {
                     _logger.LogInformation(
                         "Using individual translation with context (before: {contextBefore}, after: {contextAfter}) for subtitle: {filePath}",

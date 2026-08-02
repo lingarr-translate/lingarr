@@ -17,7 +17,6 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
     private readonly HttpClient _httpClient;
     private readonly IRequestTemplateService _requestTemplateService;
     private string? _model;
-    private string? _prompt;
     private string? _apiKey;
     private string? _version;
     private string? _requestTemplate;
@@ -65,8 +64,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 SettingKeys.Translation.Anthropic.Version,
                 SettingKeys.Translation.Anthropic.RequestTemplate,
                 SettingKeys.Translation.AiPrompt,
-                SettingKeys.Translation.AiContextPrompt,
-                SettingKeys.Translation.AiContextPromptEnabled,
+                SettingKeys.Translation.AiUserPrompt,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
@@ -79,7 +77,6 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             _requestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.Anthropic.RequestTemplate])
                 ? settings[SettingKeys.Translation.Anthropic.RequestTemplate]
                 : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.Anthropic.RequestTemplate);
-            _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey) || string.IsNullOrEmpty(_version))
             {
@@ -87,8 +84,8 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             }
 
             SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
-            _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
-            _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
+            _prompt = settings[SettingKeys.Translation.AiPrompt];
+            _userPrompt = settings[SettingKeys.Translation.AiUserPrompt];
             
             var requestTimeout = int.TryParse(settings[SettingKeys.Translation.RequestTimeout],
                 out var timeOut)
@@ -129,7 +126,6 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
 
-        text = ApplyContextIfEnabled(text, contextLinesBefore, contextLinesAfter);
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
         
@@ -138,15 +134,8 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         {
             try
             {
-                var placeholders = new Dictionary<string, string>
-                {
-                    ["model"] = _model!,
-                    ["systemPrompt"] = _prompt!,
-                    ["userMessage"] = text,
-                    ["sourceLanguage"] = _replacements["sourceLanguage"],
-                    ["targetLanguage"] = _replacements["targetLanguage"]
-                };
-                var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
+                var replacements = GetReplacements(_model!, text, contextLinesBefore, contextLinesAfter);
+                var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
                 var content = new StringContent(
                     bodyJson,
                     Encoding.UTF8,
@@ -296,15 +285,8 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
-        var placeholders = new Dictionary<string, string>
-        {
-            ["model"] = _model!,
-            ["systemPrompt"] = _prompt!,
-            ["userMessage"] = JsonSerializer.Serialize(subtitleBatch),
-            ["sourceLanguage"] = _replacements["sourceLanguage"],
-            ["targetLanguage"] = _replacements["targetLanguage"]
-        };
-        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
+        var replacements = GetBatchReplacements(_model!, JsonSerializer.Serialize(subtitleBatch));
+        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
         bodyJson = _requestTemplateService.SetRequestFields(bodyJson, new Dictionary<string, object?>
         {
             ["tools"] = new[]

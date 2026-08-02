@@ -19,7 +19,7 @@
         <div
             class="grid grid-flow-row auto-rows-max grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-2">
             <SystemPrompt />
-            <ContextPrompt />
+            <UserPrompt />
         </div>
 
         <div class="grid grid-flow-row auto-rows-max grid-cols-1 gap-4 px-4 pb-4">
@@ -39,7 +39,7 @@ import TabComponent from '@/components/common/TabComponent.vue'
 import ArrowLeft from '@/components/icons/ArrowLeft.vue'
 import RequestTemplate from '@/components/features/settings/template/RequestTemplate.vue'
 import SystemPrompt from '@/components/features/settings/SystemPrompt.vue'
-import ContextPrompt from '@/components/features/settings/ContextPrompt.vue'
+import UserPrompt from '@/components/features/settings/UserPrompt.vue'
 
 const router = useRouter()
 const settingsStore = useSettingStore()
@@ -47,6 +47,10 @@ const settingsStore = useSettingStore()
 const props = defineProps<{ service: string }>()
 const allPlugins = ref<IPluginSummary[]>([])
 const pluginsLoaded = ref(false)
+
+const settingsLoaded = computed(
+    () => settingsStore.getSetting(SETTINGS.SERVICE_TYPE) !== undefined
+)
 
 const configuredServices = computed<string[]>(() => {
     const raw = (settingsStore.getSetting(SETTINGS.SERVICE_TYPE) as string) ?? '[]'
@@ -81,9 +85,9 @@ function selectService(value: string) {
 }
 
 watch(
-    [() => props.service, tabOptions, pluginsLoaded],
-    ([current, options, loaded]) => {
-        if (!loaded) {
+    [() => props.service, tabOptions, pluginsLoaded, settingsLoaded],
+    ([current, options, loaded, settingsReady]) => {
+        if (!loaded || !settingsReady) {
             return
         }
         if (options.length === 0) {

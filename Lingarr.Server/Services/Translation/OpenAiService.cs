@@ -16,7 +16,6 @@ namespace Lingarr.Server.Services.Translation;
 public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTranslationService
 {
     private readonly string? _endpoint = "https://api.openai.com/v1/";
-    private string? _prompt;
     private string? _model;
     private string? _apiKey;
     private string? _requestTemplate;
@@ -66,8 +65,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                 SettingKeys.Translation.OpenAi.Model,
                 SettingKeys.Translation.OpenAi.RequestTemplate,
                 SettingKeys.Translation.AiPrompt,
-                SettingKeys.Translation.AiContextPrompt,
-                SettingKeys.Translation.AiContextPromptEnabled,
+                SettingKeys.Translation.AiUserPrompt,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
@@ -80,7 +78,6 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
             _requestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.OpenAi.RequestTemplate])
                 ? settings[SettingKeys.Translation.OpenAi.RequestTemplate]
                 : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.OpenAi.RequestTemplate);
-            _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey))
             {
@@ -88,8 +85,8 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
             }
 
             SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
-            _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
-            _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
+            _prompt = settings[SettingKeys.Translation.AiPrompt];
+            _userPrompt = settings[SettingKeys.Translation.AiUserPrompt];
 
             var requestTimeout = int.TryParse(settings[SettingKeys.Translation.RequestTimeout],
                 out var timeOut)
@@ -129,7 +126,6 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
 
-        text = ApplyContextIfEnabled(text, contextLinesBefore, contextLinesAfter);
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
         
@@ -139,15 +135,8 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
             try
             {
                 var requestUrl = $"{_endpoint}chat/completions";
-                var placeholders = new Dictionary<string, string>
-                {
-                    ["model"] = _model!,
-                    ["systemPrompt"] = _prompt!,
-                    ["userMessage"] = text,
-                    ["sourceLanguage"] = _replacements["sourceLanguage"],
-                    ["targetLanguage"] = _replacements["targetLanguage"]
-                };
-                var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
+                var replacements = GetReplacements(_model!, text, contextLinesBefore, contextLinesAfter);
+                var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
                 var requestContent = new StringContent(
                     bodyJson,
                     Encoding.UTF8,
@@ -307,15 +296,8 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
             }
         };
 
-        var placeholders = new Dictionary<string, string>
-        {
-            ["model"] = _model!,
-            ["systemPrompt"] = _prompt!,
-            ["userMessage"] = JsonSerializer.Serialize(subtitleBatch),
-            ["sourceLanguage"] = _replacements["sourceLanguage"],
-            ["targetLanguage"] = _replacements["targetLanguage"]
-        };
-        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
+        var replacements = GetBatchReplacements(_model!, JsonSerializer.Serialize(subtitleBatch));
+        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
         bodyJson = _requestTemplateService.SetRequestFields(bodyJson, new Dictionary<string, object?>
         {
             ["response_format"] = responseFormat

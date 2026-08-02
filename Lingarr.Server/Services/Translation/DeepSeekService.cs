@@ -16,7 +16,6 @@ public class DeepSeekService : BaseLanguageService
     private readonly HttpClient _httpClient;
     private readonly IRequestTemplateService _requestTemplateService;
     private string? _model;
-    private string? _prompt;
     private string? _apiKey;
     private string? _requestTemplate;
     private bool _initialized;
@@ -57,9 +56,8 @@ public class DeepSeekService : BaseLanguageService
             var settings = await _settings.GetSettings([
                 SettingKeys.Translation.DeepSeek.Model,
                 SettingKeys.Translation.DeepSeek.RequestTemplate,
-                SettingKeys.Translation.AiContextPromptEnabled,
-                SettingKeys.Translation.AiContextPrompt,
                 SettingKeys.Translation.AiPrompt,
+                SettingKeys.Translation.AiUserPrompt,
                 SettingKeys.Translation.LanguageCodeFormat
             ]);
             _model = settings[SettingKeys.Translation.DeepSeek.Model];
@@ -67,7 +65,6 @@ public class DeepSeekService : BaseLanguageService
             _requestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.DeepSeek.RequestTemplate])
                 ? settings[SettingKeys.Translation.DeepSeek.RequestTemplate]
                 : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.DeepSeek.RequestTemplate);
-            _contextPromptEnabled = settings[SettingKeys.Translation.AiContextPromptEnabled];
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey))
             {
@@ -75,8 +72,8 @@ public class DeepSeekService : BaseLanguageService
             }
 
             SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
-            _prompt = ReplacePlaceholders(settings[SettingKeys.Translation.AiPrompt], _replacements);
-            _contextPrompt = settings[SettingKeys.Translation.AiContextPrompt];
+            _prompt = settings[SettingKeys.Translation.AiPrompt];
+            _userPrompt = settings[SettingKeys.Translation.AiUserPrompt];
             
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
@@ -101,22 +98,16 @@ public class DeepSeekService : BaseLanguageService
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
 
-        text = ApplyContextIfEnabled(text, contextLinesBefore, contextLinesAfter);
+        var replacements = GetReplacements(_model!, text, contextLinesBefore, contextLinesAfter);
 
-        return await TranslateWithChatApi(text, cancellationToken);
+        return await TranslateWithChatApi(replacements, cancellationToken);
     }
 
-    private async Task<string> TranslateWithChatApi(string? text, CancellationToken cancellationToken)
+    private async Task<string> TranslateWithChatApi(
+        Dictionary<string, string> replacements,
+        CancellationToken cancellationToken)
     {
-        var placeholders = new Dictionary<string, string>
-        {
-            ["model"] = _model!,
-            ["systemPrompt"] = _prompt!,
-            ["userMessage"] = text ?? string.Empty,
-            ["sourceLanguage"] = _replacements["sourceLanguage"],
-            ["targetLanguage"] = _replacements["targetLanguage"]
-        };
-        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, placeholders);
+        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
 
         var content = new StringContent(
             bodyJson,

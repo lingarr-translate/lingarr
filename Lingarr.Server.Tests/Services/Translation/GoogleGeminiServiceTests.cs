@@ -59,8 +59,7 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.Gemini.ApiKey, "test-api-key" },
             { SettingKeys.Translation.Gemini.Model, "gemini-pro" },
             { SettingKeys.Translation.AiPrompt, "Translate this." },
-            { SettingKeys.Translation.AiContextPrompt, "Context." },
-            { SettingKeys.Translation.AiContextPromptEnabled, "false" },
+            { SettingKeys.Translation.AiUserPrompt, "{lineToTranslate}" },
             { SettingKeys.Translation.Gemini.RequestTemplate, "" },
             { SettingKeys.Translation.RequestTimeout, "30" },
             { SettingKeys.Translation.MaxRetries, "3" },
@@ -143,8 +142,7 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.Gemini.ApiKey, "test-api-key" },
             { SettingKeys.Translation.Gemini.Model, "gemini-pro" },
             { SettingKeys.Translation.AiPrompt, "Translate this." },
-            { SettingKeys.Translation.AiContextPrompt, "Context." },
-            { SettingKeys.Translation.AiContextPromptEnabled, "false" },
+            { SettingKeys.Translation.AiUserPrompt, "{lineToTranslate}" },
             { SettingKeys.Translation.Gemini.RequestTemplate, "" },
             { SettingKeys.Translation.RequestTimeout, "30" },
             { SettingKeys.Translation.MaxRetries, "3" },
@@ -226,8 +224,7 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.Gemini.ApiKey, apiKey },
             { SettingKeys.Translation.Gemini.Model, model },
             { SettingKeys.Translation.AiPrompt, "Translate the following subtitles to Spanish. Return JSON." },
-            { SettingKeys.Translation.AiContextPrompt, "" },
-            { SettingKeys.Translation.AiContextPromptEnabled, "false" },
+            { SettingKeys.Translation.AiUserPrompt, "{lineToTranslate}" },
             { SettingKeys.Translation.Gemini.RequestTemplate, "" },
             { SettingKeys.Translation.RequestTimeout, "120" },
             { SettingKeys.Translation.MaxRetries, "3" },
@@ -580,6 +577,93 @@ public class GoogleGeminiServiceTests
             );
     }
 
+    [Fact]
+    public async Task TranslateAsync_ShouldReplacePlaceholders_AcrossTheWholeRequestTemplate()
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        settings[SettingKeys.Translation.Gemini.RequestTemplate] =
+            "{\"systemInstruction\":{\"parts\":[{\"text\":\"{systemPrompt}\"}]},\"contents\":[{\"parts\":[{\"text\":\"Before: {contextBefore}\\nLine: {lineToTranslate}\\nAfter: {contextAfter}\"}]}]}";
+        settings[SettingKeys.Translation.AiPrompt] = "Translate from {sourceLanguage} to {targetLanguage}";
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var geminiResponse = new { candidates = new[] { new { content = new { parts = new[] { new { text = "Hallo" } } } } } };
+
+        string? requestBody = null;
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, _) =>
+                requestBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(JsonSerializer.Serialize(geminiResponse), Encoding.UTF8, "application/json")
+            });
+
+        // Act
+        var result = await _service.TranslateAsync(
+            "Hello", "en", "nl", ["Line before"], ["Line after"], CancellationToken.None);
+
+        // Assert
+        Assert.Equal("Hallo", result);
+        Assert.NotNull(requestBody);
+
+        using var body = JsonDocument.Parse(requestBody);
+        Assert.Equal(
+            "Translate from English to Dutch",
+            body.RootElement.GetProperty("systemInstruction").GetProperty("parts")[0].GetProperty("text").GetString());
+        Assert.Equal(
+            "Before: Line before\nLine: Hello\nAfter: Line after",
+            body.RootElement.GetProperty("contents")[0].GetProperty("parts")[0].GetProperty("text").GetString());
+    }
+
+    [Fact]
+    public async Task TranslateBatchAsync_ShouldSendSerializedBatchAsUserMessage_AndEmptyContextPlaceholders()
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        settings[SettingKeys.Translation.Gemini.RequestTemplate] =
+            "{\"systemInstruction\":{\"parts\":[{\"text\":\"{systemPrompt}\"}]},\"contents\":[{\"parts\":[{\"text\":\"Context: {contextBefore}{contextAfter} Batch: {userMessage}\"}]}]}";
+        settings[SettingKeys.Translation.AiPrompt] = "Translate from {sourceLanguage} to {targetLanguage}";
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var geminiResponse = new { candidates = new[] { new { content = new { parts = new[] { new { text = "[{\"position\":1,\"line\":\"Hola\"}]" } } } } } };
+
+        string? requestBody = null;
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, _) =>
+                requestBody = request.Content!.ReadAsStringAsync().GetAwaiter().GetResult())
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = HttpStatusCode.OK,
+                Content = new StringContent(JsonSerializer.Serialize(geminiResponse), Encoding.UTF8, "application/json")
+            });
+
+        var batch = new List<BatchSubtitleItem> { new() { Position = 1, Line = "Hello" } };
+
+        // Act
+        var result = await _service.TranslateBatchAsync(batch, "en", "es", CancellationToken.None);
+
+        // Assert
+        Assert.Equal("Hola", result[1]);
+        Assert.NotNull(requestBody);
+
+        using var body = JsonDocument.Parse(requestBody);
+        Assert.Equal(
+            "Translate from English to Spanish",
+            body.RootElement.GetProperty("systemInstruction").GetProperty("parts")[0].GetProperty("text").GetString());
+
+        var userContent = body.RootElement.GetProperty("contents")[0].GetProperty("parts")[0].GetProperty("text").GetString();
+        Assert.NotNull(userContent);
+        Assert.StartsWith("Context:  Batch: ", userContent);
+
+        var serializedBatch = userContent["Context:  Batch: ".Length..];
+        using var batchJson = JsonDocument.Parse(serializedBatch);
+        Assert.Equal(1, batchJson.RootElement[0].GetProperty("position").GetInt32());
+        Assert.Equal("Hello", batchJson.RootElement[0].GetProperty("line").GetString());
+    }
+
     // Helper to keep the tests clean
     private Dictionary<string, string> GetDefaultSettings()
     {
@@ -588,8 +672,7 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.Gemini.ApiKey, "test-api-key" },
             { SettingKeys.Translation.Gemini.Model, "gemini-pro" },
             { SettingKeys.Translation.AiPrompt, "Prompt" },
-            { SettingKeys.Translation.AiContextPrompt, "" },
-            { SettingKeys.Translation.AiContextPromptEnabled, "false" },
+            { SettingKeys.Translation.AiUserPrompt, "{lineToTranslate}" },
             { SettingKeys.Translation.Gemini.RequestTemplate, "" },
             { SettingKeys.Translation.RequestTimeout, "5" },
             { SettingKeys.Translation.MaxRetries, "3" },
