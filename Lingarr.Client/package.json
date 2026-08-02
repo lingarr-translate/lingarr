@@ -15,7 +15,7 @@
         "axios": "^1.19.0",
         "chart.js": "^4.5.1",
         "cron-validator": "^1.4.0",
-        "pinia": "^3.0.4",
+        "pinia": "^4.0.2",
         "vue": "^3.5.40",
         "vue-chartjs": "^5.3.4",
         "vue-router": "^5.2.0"
@@ -23,12 +23,12 @@
     "devDependencies": {
         "@tailwindcss/postcss": "^4.3.3",
         "@tailwindcss/vite": "^4.3.3",
-        "@types/node": "^25.9.1",
+        "@types/node": "^26.1.2",
         "@vitejs/plugin-vue": "^6.0.8",
         "oxfmt": "^0.61.0",
         "oxlint": "^1.76.0",
         "tailwindcss": "^4.2.4",
-        "typescript": "^6.0.3",
+        "typescript": "^7.0.2",
         "vite": "^8.1.5",
         "vue-tsc": "^3.3.8"
     },
