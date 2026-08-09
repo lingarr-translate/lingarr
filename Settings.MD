@@ -29,7 +29,7 @@ secrets:
 | **Environment Variable**   | **Description**                                                                                                                               |
 |----------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | `BASE_PATH`                | Optional URL prefix to host Lingarr under a sub-path (e.g., behind a reverse proxy). Example: `/lingarr`. Leave unset to serve from the root. |
-| `MAX_CONCURRENT_JOBS`      | Maximum number of Hangfire worker threads processing jobs in parallel. Defaults to the framework default when unset.                          |
+| `MAX_CONCURRENT_JOBS`      | Maximum number of Hangfire worker threads processing jobs in parallel. Defaults to `1` when unset.                                            |
 | `SQLITE_DB_PATH`           | Path to the SQLite database file used when `DB_CONNECTION` is `sqlite`. Defaults to `local.db` within `/app/config/`.                         |
 | `DB_HANGFIRE_SQLITE_PATH`  | Path to the SQLite database file used by the Hangfire job store. Defaults to `/app/config/Hangfire.db`.                                       |
 
@@ -103,31 +103,35 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 | `OPENAI_MODEL`           | The model to use for OpenAI translations. Example: `gpt-4`, `gpt-3.5-turbo`.    |
 | `OPENAI_API_KEY`         | The API key for authenticating with OpenAI.                                     |
 | `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
+| `AI_USER_PROMPT`         | The user message template. Supports `{lineToTranslate}`, `{contextBefore}` and `{contextAfter}`. |
 
 #### **Anthropic**
 
 | **Environment Variable** | **Description**                                                                 |
 |--------------------------|---------------------------------------------------------------------------------|
-| `ANTHROPIC_MODEL`        | The model to use for Anthropic translations. Example: `claude-2`.               |
+| `ANTHROPIC_MODEL`        | The model to use for Anthropic translations. Example: `claude-opus-5`.          |
 | `ANTHROPIC_API_KEY`      | The API key for authenticating with Anthropic.                                  |
 | `ANTHROPIC_VERSION`      | The version of the Anthropic API to use.                                        |
 | `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
+| `AI_USER_PROMPT`         | The user message template. Supports `{lineToTranslate}`, `{contextBefore}` and `{contextAfter}`. |
 
 #### **Gemini**
 
 | **Environment Variable** | **Description**                                                                 |
 |--------------------------|---------------------------------------------------------------------------------|
-| `GEMINI_MODEL`        | The model to use for Anthropic translations. Example: `gemini-2.0-flash`.        |
-| `GEMINI_API_KEY`      | The API key for authenticating with Anthropic.                                  |
-| `AI_PROMPT`            | The prompt template for AI-based translation services.                          |
+| `GEMINI_MODEL`           | The model to use for Gemini translations. Example: `gemini-2.0-flash`.          |
+| `GEMINI_API_KEY`         | The API key for authenticating with Gemini.                                     |
+| `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
+| `AI_USER_PROMPT`         | The user message template. Supports `{lineToTranslate}`, `{contextBefore}` and `{contextAfter}`. |
 
 #### **DeepSeek**
 
 | **Environment Variable** | **Description**                                                                 |
 |--------------------------|---------------------------------------------------------------------------------|
-| `DEEPSEEK_MODEL`        | The model to use for Anthropic translations. Example: `deepseek-chat`.               |
-| `DEEPSEEK_API_KEY`      | The API key for authenticating with Anthropic.                                  |
+| `DEEPSEEK_MODEL`         | The model to use for DeepSeek translations. Example: `deepseek-chat`.           |
+| `DEEPSEEK_API_KEY`       | The API key for authenticating with DeepSeek.                                   |
 | `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
+| `AI_USER_PROMPT`         | The user message template. Supports `{lineToTranslate}`, `{contextBefore}` and `{contextAfter}`. |
 
 #### **LocalAI**
 
@@ -135,8 +139,9 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 |--------------------------|---------------------------------------------------------------------------------|
 | `LOCAL_AI_MODEL`         | The model to use for LocalAI translations.                                      |
 | `LOCAL_AI_API_KEY`       | The API key for authenticating with LocalAI.                                    |
-| `LOCAL_AI_ENDPOINT`      | The endpoint URL for the LocalAI service. Example: `http://localhost:8080`.     |
+| `LOCAL_AI_ENDPOINT`      | The full URL of the completion endpoint. Example: `http://ollama:11434/v1/chat/completions`. |
 | `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
+| `AI_USER_PROMPT`         | The user message template. Supports `{lineToTranslate}`, `{contextBefore}` and `{contextAfter}`. |
 
 #### **DeepL**
 

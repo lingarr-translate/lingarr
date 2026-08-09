@@ -23,7 +23,7 @@ Lingarr now offers multiple services for automated translation:
 - **[Google](https://translate.google.com/)** 
 - **[Bing](https://www.bing.com/translator)**
 - **[Yandex](https://translate.yandex.com/)**
-- **[Azure](https://www.microsoft.com/en-us/translator/business/translator-api/)**
+- **[Microsoft](https://www.microsoft.com/en-us/translator/business/translator-api/)**
 
 Choose the service that best fits your needs.
 
