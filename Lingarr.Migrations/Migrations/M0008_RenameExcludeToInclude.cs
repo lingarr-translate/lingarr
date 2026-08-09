@@ -33,7 +33,7 @@ public class M0008_RenameExcludeToInclude : Migration
         {
             if (Schema.Table(table).Column("exclude_from_translation").Exists())
             {
-                IfDatabase("mysql", "postgres")
+                IfDatabase("mysql", "postgresql")
                     .Delete.Column("exclude_from_translation").FromTable(table);
             }
         }
@@ -57,7 +57,7 @@ public class M0008_RenameExcludeToInclude : Migration
 
         foreach (var table in Tables)
         {
-            IfDatabase("mysql", "postgres")
+            IfDatabase("mysql", "postgresql")
                 .Delete.Column("include_in_translation").FromTable(table);
         }
     }

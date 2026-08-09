@@ -56,7 +56,7 @@ public class M0004_AlterStringsToText : Migration
 
     private void AlterToText(string table, string column, bool nullable = false)
     {
-        var alter = IfDatabase("mysql", "postgres")
+        var alter = IfDatabase("mysql", "postgresql")
             .Alter.Column(column).OnTable(table).AsCustom("TEXT");
 
         if (nullable)
