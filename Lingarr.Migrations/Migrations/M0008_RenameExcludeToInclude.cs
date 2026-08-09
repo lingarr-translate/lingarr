@@ -43,11 +43,14 @@ public class M0008_RenameExcludeToInclude : Migration
     {
         foreach (var table in Tables)
         {
-            Alter.Table(table)
-                .AddColumn("exclude_from_translation")
-                .AsBoolean()
-                .NotNullable()
-                .WithDefaultValue(false);
+            if (!Schema.Table(table).Column("exclude_from_translation").Exists())
+            {
+                Alter.Table(table)
+                    .AddColumn("exclude_from_translation")
+                    .AsBoolean()
+                    .NotNullable()
+                    .WithDefaultValue(false);
+            }
 
             Execute.Sql($"UPDATE {table} SET exclude_from_translation = NOT include_in_translation");
         }

@@ -1,3 +1,4 @@
+using FluentMigrator.Runner;
 using Lingarr.Migrations;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,33 @@ public class MigrationTests
         {
             var connectionString = $"Data Source={dbPath}";
             RunMigrations(connectionString, "sqlite");
+
+            await using var connection = new SqliteConnection(connectionString);
+            await connection.OpenAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(System.Data.ConnectionState.Open, connection.State);
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(dbPath)) File.Delete(dbPath);
+        }
+    }
+
+    [Fact]
+    public async Task Sqlite_MigrationsRollBackSuccessfully()
+    {
+        var dbPath = Path.Combine(Path.GetTempPath(), $"lingarr_test_{Guid.NewGuid()}.db");
+        try
+        {
+            var connectionString = $"Data Source={dbPath}";
+            var services = new ServiceCollection();
+            services.AddFluentMigrator(connectionString, "sqlite");
+
+            var serviceProvider = services.BuildServiceProvider();
+            MigrationConfiguration.RunMigrations(serviceProvider);
+
+            using var scope = serviceProvider.CreateScope();
+            scope.ServiceProvider.GetRequiredService<IMigrationRunner>().MigrateDown(7);
 
             await using var connection = new SqliteConnection(connectionString);
             await connection.OpenAsync(TestContext.Current.CancellationToken);
