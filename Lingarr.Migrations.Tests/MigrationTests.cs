@@ -70,6 +70,38 @@ public class MigrationTests
     }
 
     [Fact]
+    public async Task Sqlite_MigrationsReapplyAfterRollback()
+    {
+        var dbPath = Path.Combine(Path.GetTempPath(), $"lingarr_test_{Guid.NewGuid()}.db");
+        try
+        {
+            var connectionString = $"Data Source={dbPath}";
+            var services = new ServiceCollection();
+            services.AddFluentMigrator(connectionString, "sqlite");
+
+            var serviceProvider = services.BuildServiceProvider();
+            MigrationConfiguration.RunMigrations(serviceProvider);
+
+            using var scope = serviceProvider.CreateScope();
+            var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
+            runner.MigrateDown(2);
+            runner.MigrateUp();
+
+            await using var connection = new SqliteConnection(connectionString);
+            await connection.OpenAsync(TestContext.Current.CancellationToken);
+            await using var command = connection.CreateCommand();
+            command.CommandText =
+                "SELECT COUNT(*) FROM settings WHERE key = 'navigate_to_details_on_request'";
+            Assert.Equal(1L, await command.ExecuteScalarAsync(TestContext.Current.CancellationToken));
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            if (File.Exists(dbPath)) File.Delete(dbPath);
+        }
+    }
+
+    [Fact]
     public async Task MySql_MigrationsRunSuccessfully()
     {
         await using var container = new MySqlBuilder()
