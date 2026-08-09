@@ -79,9 +79,11 @@ The project is organized into several key components:
 
 - `Lingarr.Server/`: Backend application
 - `Lingarr.Core/`: Core domain models and interfaces
+- `Lingarr.Contracts/`: Shared contracts for plugins
 - `Lingarr.Client/`: Vue.js frontend application
-- `Lingarr.Migrations.SQLite/`: SQLite database migrations
-- `Lingarr.Migrations.MySQL/`: MySQL database migrations
+- `Lingarr.Migrations/`: Database migrations for SQLite, MySQL and PostgreSQL
+- `Lingarr.Docs/`: Documentation 
+- `Lingarr.Server.Tests/` and `Lingarr.Migrations.Tests/`: Test projects
 
 ## Building and Testing
 
@@ -106,14 +108,16 @@ Configure and sync with Sonarr and Radarr to create test data.
 The frontend supports hot reload while the backend needs to be rebuilt each time a change has been made.
 ### Services:
 
-| Service    | URL                                           |
-|------------|-----------------------------------------------|
-| Lingarr    | http://localhost:9876                         |
-| Swagger    | http://localhost:9877/swagger/index.html      |
-| Hangfire   | http://localhost:9877/hangfire                |
-| phpmyadmin | http://localhost:9878                         |
-| sonarr     | http://localhost:8989                         |
-| radarr     | http://localhost:7878                         |
+| Service        | URL                                           |
+|----------------|-----------------------------------------------|
+| Lingarr        | http://localhost:9876                         |
+| Swagger        | http://localhost:9877/swagger/index.html      |
+| Hangfire       | http://localhost:9877/hangfire                |
+| Docs           | http://localhost:9879                         |
+| phpmyadmin     | http://localhost:9878                         |
+| LibreTranslate | http://localhost:5000                         |
+| sonarr         | http://localhost:8989                         |
+| radarr         | http://localhost:7878                         |
 
 ## Database Migrations
 

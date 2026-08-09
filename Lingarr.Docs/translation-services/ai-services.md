@@ -25,47 +25,75 @@ All AI services follow the same pattern: select the service, provide an API key,
 
 Every setting can also be provided as an environment variable, listed per service below. See [Configuration](/getting-started/configuration) for more details.
 
+## Prompts
+
+Each request is built from two templates, and both apply to every AI service.
+
+`AI_PROMPT` is the system prompt. It carries the standing instruction on how to translate, and is sent as the system message. Lingarr seeds a default on first run. Clearing it sends an empty system message, leaving the service without translation instructions, so keep a value set.
+
+`AI_USER_PROMPT` is the user message. It carries the line being translated, and is sent as the user message. The default is `{lineToTranslate}`, the subtitle line on its own. When it is left empty, the line is sent unchanged.
+
+Both templates accept the same placeholders:
+
+| **Placeholder** | **Value** |
+|-----------------|-----------|
+| `{lineToTranslate}` | The subtitle line being translated. |
+| `{contextBefore}` | The lines preceding it, as many as the context setting allows. Empty when that setting is `0`. |
+| `{contextAfter}` | The lines following it, as many as the context setting allows. Empty when that setting is `0`. |
+| `{sourceLanguage}` | The language being translated from. |
+| `{targetLanguage}` | The language being translated to. |
+| `{model}` | The configured model. |
+
+Use the user prompt to frame a single line, for example to surround it with its context so the service can see where the line sits.
+
+Batch translation does not use the user prompt. The batch is sent as the user message instead, so only `AI_PROMPT` applies when batching is enabled.
+
 ## Environment variables
 ### OpenAI
 
-| **Environment Variable** | **Description** |
-|--------------------------|-----------------|
+| **Environment Variable** | **Description**                                             |
+|--------------------------|-------------------------------------------------------------|
 | `OPENAI_MODEL` | The model to use for OpenAI translations. Example: `gpt-4`. |
-| `OPENAI_API_KEY` | The API key for authenticating with OpenAI. |
-| `AI_PROMPT` | The prompt template for AI-based translation services. |
+| `OPENAI_API_KEY` | The API key for authenticating with OpenAI.                 |
+| `AI_PROMPT` | The system prompt template.                                 |
+| `AI_USER_PROMPT` | The user message template.                                  |
 
 ### Anthropic
 
-| **Environment Variable** | **Description** |
-|--------------------------|-----------------|
-| `ANTHROPIC_MODEL` | The model to use for Anthropic translations. |
+| **Environment Variable** | **Description**                                |
+|--------------------------|------------------------------------------------|
+| `ANTHROPIC_MODEL` | The model to use for Anthropic translations.   |
 | `ANTHROPIC_API_KEY` | The API key for authenticating with Anthropic. |
-| `ANTHROPIC_VERSION` | The version of the Anthropic API to use. |
-| `AI_PROMPT` | The prompt template for AI-based translation services. |
+| `ANTHROPIC_VERSION` | The version of the Anthropic API to use.       |
+| `AI_PROMPT` | The system prompt template.                    |
+| `AI_USER_PROMPT` | The user message template.                     |
 
 ### Gemini
 
-| **Environment Variable** | **Description** |
-|--------------------------|-----------------|
+| **Environment Variable** | **Description**                                                        |
+|--------------------------|------------------------------------------------------------------------|
 | `GEMINI_MODEL` | The model to use for Gemini translations. Example: `gemini-2.0-flash`. |
-| `GEMINI_API_KEY` | The API key for authenticating with Gemini. |
-| `AI_PROMPT` | The prompt template for AI-based translation services. |
+| `GEMINI_API_KEY` | The API key for authenticating with Gemini.                            |
+| `AI_PROMPT` | The system prompt template.                                            |
+| `AI_USER_PROMPT` | The user message template.                                             |
 
 ### DeepSeek
 
-| **Environment Variable** | **Description** |
-|--------------------------|-----------------|
+| **Environment Variable** | **Description**                                                       |
+|--------------------------|-----------------------------------------------------------------------|
 | `DEEPSEEK_MODEL` | The model to use for DeepSeek translations. Example: `deepseek-chat`. |
-| `DEEPSEEK_API_KEY` | The API key for authenticating with DeepSeek. |
-| `AI_PROMPT` | The prompt template for AI-based translation services. |
+| `DEEPSEEK_API_KEY` | The API key for authenticating with DeepSeek.                         |
+| `AI_PROMPT` | The system prompt template.                                           |
+| `AI_USER_PROMPT` | The user message template.                                            |
 
 ### LocalAI
 
 LocalAI works with Ollama or any other OpenAI-compatible model or router.
 
-| **Environment Variable** | **Description** |
-|--------------------------|-----------------|
-| `LOCAL_AI_MODEL` | The model to use for LocalAI translations. |
+| **Environment Variable** | **Description**                                                                                                           |
+|--------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `LOCAL_AI_MODEL` | The model to use for LocalAI translations.                                                                                |
 | `LOCAL_AI_API_KEY` | The API key for authenticating with LocalAI. This is optional, and only needed if the deployment requires authentication. |
-| `LOCAL_AI_ENDPOINT` | The full URL of the completion endpoint. Example: `http://ollama:11434/v1/chat/completions`. |
-| `AI_PROMPT` | The prompt template for AI-based translation services. |
+| `LOCAL_AI_ENDPOINT` | The full URL of the completion endpoint. Example: `http://ollama:11434/v1/chat/completions`.                              |
+| `AI_PROMPT` | The system prompt template.                                                                                               |
+| `AI_USER_PROMPT` | The user message template.                                                                                                |
