@@ -52,5 +52,7 @@ public class M0003_AddTranslationRequestEvents : Migration
 
         Delete.Column("error_message").FromTable("translation_requests");
         Delete.Column("stack_trace").FromTable("translation_requests");
+
+        Delete.FromTable("settings").Row(new { key = "navigate_to_details_on_request" });
     }
 }

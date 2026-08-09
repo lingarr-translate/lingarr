@@ -25,5 +25,7 @@ public class M0005_SeedRequestTemplates : Migration
         Delete.FromTable("settings").Row(new { key = "local_ai_generate_request_template" });
         Delete.FromTable("settings").Row(new { key = "deepseek_request_template" });
         Delete.FromTable("settings").Row(new { key = "gemini_request_template" });
+
+        Insert.IntoTable("settings").Row(new { key = "custom_ai_parameters", value = "[]" });
     }
 }

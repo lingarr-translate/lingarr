@@ -32,7 +32,6 @@ export const SETTINGS = {
     STRIP_SUBTITLE_FORMATTING: 'strip_subtitle_formatting',
     PRESERVE_LINE_BREAKS: 'preserve_line_breaks',
     ADD_TRANSLATOR_INFO: 'add_translator_info',
-    CUSTOM_AI_PARAMETERS: 'custom_ai_parameters',
     SUBTITLE_VALIDATION_ENABLED: 'subtitle_validation_enabled',
     SUBTITLE_VALIDATION_MAXDURATIONSECS: 'subtitle_validation_maxdurationsecs',
     SUBTITLE_VALIDATION_MINDURATIONMS: 'subtitle_validation_mindurationms',
