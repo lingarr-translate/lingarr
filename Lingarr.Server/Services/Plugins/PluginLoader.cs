@@ -149,7 +149,7 @@ public sealed class PluginLoader
         {
             services.AddKeyedScoped(
                 typeof(ITranslationService),
-                providerAttribute.Provider,
+                providerAttribute.Provider.ToLowerInvariant(),
                 implementationType);
         }
     }
