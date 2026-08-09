@@ -47,6 +47,7 @@ public static class ServiceCollectionExtensions
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
             options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+            options.JsonSerializerOptions.NumberHandling = JsonNumberHandling.AllowReadingFromString;
         });
 
         builder.Services.AddEndpointsApiExplorer();
