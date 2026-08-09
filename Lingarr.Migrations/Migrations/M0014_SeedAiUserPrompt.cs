@@ -9,7 +9,7 @@ public class M0014_SeedAiUserPrompt : Migration
     {
         Insert.IntoTable("settings").Row(new { key = "ai_user_prompt", value = "{lineToTranslate}" });
 
-        IfDatabase("sqlite", "postgres").Execute.Sql("""
+        IfDatabase("sqlite", "postgresql").Execute.Sql("""
             UPDATE settings SET "value" =
                 (SELECT prompt."value" FROM settings prompt WHERE prompt."key" = 'ai_context_prompt')
             WHERE "key" = 'ai_user_prompt'
