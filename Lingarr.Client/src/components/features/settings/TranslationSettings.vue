@@ -13,9 +13,16 @@
                     SERVICE_TYPE.DEEPSEEK,
                     SERVICE_TYPE.GEMINI,
                     SERVICE_TYPE.LOCALAI,
+                    SERVICE_TYPE.MISTRAL,
                     SERVICE_TYPE.OPENAI
                 ].includes(
-                    serviceType as 'openai' | 'anthropic' | 'localai' | 'gemini' | 'deepseek'
+                    serviceType as
+                        | 'openai'
+                        | 'anthropic'
+                        | 'localai'
+                        | 'gemini'
+                        | 'deepseek'
+                        | 'mistral'
                 )
             ">
                 <div class="flex flex-col space-x-2">
@@ -100,7 +107,16 @@ const isValid = reactive({
     retryDelay: true,
     retryDelayMultiplier: true
 })
-const serviceType = computed(() => settingsStore.getSetting(SETTINGS.SERVICE_TYPE))
+
+const serviceType = computed(() => {
+    try {
+        const raw = settingsStore.getSetting(SETTINGS.SERVICE_TYPE) as string
+        const services: string[] = JSON.parse(raw)
+        return services[0] ?? ''
+    } catch {
+        return ''
+    }
+})
 
 const useBatchTranslation = computed({
     get: (): string => settingsStore.getSetting(SETTINGS.USE_BATCH_TRANSLATION) as string,
