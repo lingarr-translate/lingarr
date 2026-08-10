@@ -133,6 +133,15 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 | `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
 | `AI_USER_PROMPT`         | The user message template. Supports `{lineToTranslate}`, `{contextBefore}` and `{contextAfter}`. |
 
+#### **Mistral**
+
+| **Environment Variable** | **Description**                                                                 |
+|--------------------------|---------------------------------------------------------------------------------|
+| `MISTRAL_MODEL`          | The model to use for Mistral translations. Example: `mistral-large-latest`.     |
+| `MISTRAL_API_KEY`        | The API key for authenticating with Mistral.                                    |
+| `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
+| `AI_USER_PROMPT`         | The user message template. Supports `{lineToTranslate}`, `{contextBefore}` and `{contextAfter}`. |
+
 #### **LocalAI**
 
 | **Environment Variable** | **Description**                                                                 |
@@ -145,7 +154,7 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 
 #### **Proofreading**
 
-Proofreading is only available for the AI services above (OpenAI, Anthropic, Gemini, DeepSeek, LocalAI), and only for a `service_type` entry that supports it. It uses two more settings, shared across all AI services the same way `AI_PROMPT` and `AI_USER_PROMPT` are. These are configured through **Settings > Services > Request Settings** in the web interface, or through their environment variables:
+Proofreading is only available for the AI services above (OpenAI, Anthropic, Gemini, DeepSeek, Mistral, LocalAI), and only for a `service_type` entry that supports it. It uses two more settings, shared across all AI services the same way `AI_PROMPT` and `AI_USER_PROMPT` are. These are configured through **Settings > Services > Request Settings** in the web interface, or through their environment variables:
 
 | **Setting** | **Environment Variable** | **Default** |
 |-------------|--------------------------|-------------|
@@ -182,6 +191,7 @@ The supported values are:
 | `anthropic`     | Use Anthropic's models (e.g., Claude-2) for translations.                       |
 | `gemini`        | Use Google's Gemini models for translations.                                    |
 | `deepseek`      | Use DeepSeek's models for translations.                                         |
+| `mistral`       | Use Mistral AI's models for translations.                                       |
 | `localai`       | Use a locally hosted or OpenAI-compatible AI model for translations.            |
 | `deepl`         | Use the DeepL API for translations.                                             |
 | `google`        | Use Google Translate for translations.                                          |

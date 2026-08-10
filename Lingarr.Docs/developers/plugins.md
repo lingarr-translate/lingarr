@@ -60,7 +60,7 @@ Lingarr scans a folder specified by the `PLUGINS_PATH` environment variable at s
 
 Do not use these plugin identifiers (they are used by built-in providers):
 
-`anthropic`, `openai`, `gemini`, `deepseek`, `localai`, `deepl`, `libretranslate`, `google`, `bing`, `microsoft`, `yandex`
+`anthropic`, `openai`, `gemini`, `deepseek`, `mistral`, `localai`, `deepl`, `libretranslate`, `google`, `bing`, `microsoft`, `yandex`
 
 ## Settings
 

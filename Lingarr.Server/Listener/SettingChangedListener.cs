@@ -18,7 +18,7 @@ public class SettingChangedListener
     private readonly ILogger<SettingChangedListener> _logger;
     private static readonly HashSet<string> BatchServiceTypes = new(StringComparer.OrdinalIgnoreCase)
     {
-        "openai", "anthropic", "localai", "gemini"
+        "openai", "anthropic", "localai", "gemini", "mistral"
     };
 
     public SettingChangedListener(IServiceProvider serviceProvider,

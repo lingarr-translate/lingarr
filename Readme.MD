@@ -19,6 +19,7 @@ Lingarr now offers multiple services for automated translation:
 - **[Anthropic](https://www.anthropic.com/)**
 - **[OpenAI](https://openai.com/)**
 - **[DeepSeek](https://deepseek.com)**
+- **[Mistral](https://mistral.ai)**
 - **[Gemini](https://gemini.google.com/)**
 - **[Google](https://translate.google.com/)** 
 - **[Bing](https://www.bing.com/translator)**
