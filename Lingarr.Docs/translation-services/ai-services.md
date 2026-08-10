@@ -52,7 +52,7 @@ Batch translation does not use the user prompt. The batch is sent as the user me
 
 Proofreading re-examines a completed translation. For each subtitle line it sends the source line and the existing translation together to the AI service and asks for a corrected translation, without translating from scratch.
 
-Only services that implement proofreading offer it: OpenAI, Anthropic, Gemini, DeepSeek and LocalAI. LibreTranslate, DeepL, Google, Bing, Microsoft and Yandex do not support proofreading.
+Only services that implement proofreading offer it: OpenAI, Anthropic, Gemini, DeepSeek, Mistral and LocalAI. LibreTranslate, DeepL, Google, Bing, Microsoft and Yandex do not support proofreading.
 
 You can run it two ways:
 
@@ -111,6 +111,15 @@ Both accept the placeholders already listed above, plus two more:
 | `DEEPSEEK_API_KEY` | The API key for authenticating with DeepSeek.                         |
 | `AI_PROMPT` | The system prompt template.                                           |
 | `AI_USER_PROMPT` | The user message template.                                            |
+
+### Mistral
+
+| **Environment Variable** | **Description**                                                             |
+|--------------------------|-----------------------------------------------------------------------------|
+| `MISTRAL_MODEL` | The model to use for Mistral translations. Example: `mistral-large-latest`. |
+| `MISTRAL_API_KEY` | The API key for authenticating with Mistral.                                |
+| `AI_PROMPT` | The system prompt template.                                                 |
+| `AI_USER_PROMPT` | The user message template.                                                  |
 
 ### LocalAI
 

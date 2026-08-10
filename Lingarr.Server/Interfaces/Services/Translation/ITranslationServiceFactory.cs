@@ -9,7 +9,7 @@ public interface ITranslationServiceFactory
     /// <summary>
     /// Creates and returns an instance of a translation service based on the specified service type.
     /// </summary>
-    /// <param name="serviceType">The provider name (case-insensitive), e.g. "libretranslate", "openai", "anthropic", "deepl", "gemini", "deepseek", "localai", "google", "bing", "microsoft", "yandex".</param>
+    /// <param name="serviceType">The provider name (case-insensitive), e.g. "libretranslate", "openai", "anthropic", "deepl", "gemini", "deepseek", "mistral", "localai", "google", "bing", "microsoft", "yandex".</param>
     /// <returns>An instance of <see cref="ITranslationService"/> corresponding to the specified service type.</returns>
     /// <exception cref="ArgumentException">Thrown when an unsupported service type is specified.</exception>
     ITranslationService CreateTranslationService(string serviceType);

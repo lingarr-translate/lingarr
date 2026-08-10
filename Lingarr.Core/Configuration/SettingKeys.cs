@@ -62,6 +62,13 @@ public static class SettingKeys
             public const string RequestTemplate = "deepseek_request_template";
         }
 
+        public static class Mistral
+        {
+            public const string Model = "mistral_model";
+            public const string ApiKey = "mistral_api_key";
+            public const string RequestTemplate = "mistral_request_template";
+        }
+
         public static class LibreTranslate
         {
             public const string Url = "libretranslate_url";

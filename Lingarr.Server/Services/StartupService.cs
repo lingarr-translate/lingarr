@@ -253,6 +253,9 @@ public class StartupService : IHostedService
             { "DEEPSEEK_MODEL", SettingKeys.Translation.DeepSeek.Model },
             { "DEEPSEEK_API_KEY", SettingKeys.Translation.DeepSeek.ApiKey },
 
+            { "MISTRAL_MODEL", SettingKeys.Translation.Mistral.Model },
+            { "MISTRAL_API_KEY", SettingKeys.Translation.Mistral.ApiKey },
+
             { "DEEPL_API_KEY", SettingKeys.Translation.DeepL.DeeplApiKey },
 
             { "AUTH_ENABLED", SettingKeys.Authentication.AuthEnabled },

@@ -129,7 +129,8 @@ const templateMap: Record<string, keyof ISettings> = {
     [SERVICE_TYPE.ANTHROPIC]: SETTINGS.ANTHROPIC_REQUEST_TEMPLATE,
     [SERVICE_TYPE.LOCALAI]: SETTINGS.LOCAL_AI_CHAT_REQUEST_TEMPLATE,
     [SERVICE_TYPE.GEMINI]: SETTINGS.GEMINI_REQUEST_TEMPLATE,
-    [SERVICE_TYPE.DEEPSEEK]: SETTINGS.DEEPSEEK_REQUEST_TEMPLATE
+    [SERVICE_TYPE.DEEPSEEK]: SETTINGS.DEEPSEEK_REQUEST_TEMPLATE,
+    [SERVICE_TYPE.MISTRAL]: SETTINGS.MISTRAL_REQUEST_TEMPLATE
 }
 
 const localAiEndpoint = computed(
@@ -206,7 +207,8 @@ const presetLabelMap: Record<string, string> = {
     gemini_request_template: 'Gemini Content',
     local_ai_generate_request_template: 'Ollama Generate',
     local_ai_chat_request_template: 'LocalAI Chat',
-    deepseek_request_template: 'DeepSeek Chat'
+    deepseek_request_template: 'DeepSeek Chat',
+    mistral_request_template: 'Mistral Chat'
 }
 
 onMounted(async () => {
