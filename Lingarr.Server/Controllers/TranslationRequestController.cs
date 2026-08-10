@@ -163,4 +163,56 @@ public class TranslationRequestController : ControllerBase
 
         return NotFound(result);
     }
+
+    /// <summary>
+    /// Queues a proofread pass over every line of a Completed translation request.
+    /// </summary>
+    /// <param name="proofreadRequest">The translation request to proofread</param>
+    /// <response code="200">Returns a message describing the queued proofread</response>
+    /// <response code="400">If no configured translation service can proofread</response>
+    /// <response code="404">If the request was not found, is not Completed, or has no translated subtitle</response>
+    /// <returns>ActionResult containing the proofread result message</returns>
+    [HttpPost("proofread")]
+    public async Task<ActionResult<string>> ProofreadTranslationRequest(
+        [FromBody] TranslationRequest proofreadRequest)
+    {
+        var status = await _translationRequestService.GetProofreadStatus();
+        if (!status.Supported)
+        {
+            return BadRequest("No configured translation service supports proofreading.");
+        }
+
+        var result = await _translationRequestService.ProofreadTranslationRequest(proofreadRequest);
+        if (result != null)
+        {
+            return Ok(result);
+        }
+
+        return NotFound(result);
+    }
+
+    /// <summary>
+    /// Applies a proofread suggestion to a single line of a translation request.
+    /// </summary>
+    /// <param name="applyRequest">The translation request id, subtitle position and revised line</param>
+    /// <response code="200">Returns a message describing the applied line</response>
+    /// <response code="404">If the request or the position was not found</response>
+    /// <returns>ActionResult containing the apply result message</returns>
+    [HttpPost("proofread/line")]
+    public async Task<ActionResult<string>> ApplyProofreadLine(
+        [FromBody] ProofreadLineApplyRequest applyRequest)
+    {
+        if (applyRequest.Origin == null)
+        {
+            return BadRequest("Origin is required.");
+        }
+
+        var result = await _translationRequestService.ApplyProofreadLine(applyRequest);
+        if (result != null)
+        {
+            return Ok(result);
+        }
+
+        return NotFound(result);
+    }
 }

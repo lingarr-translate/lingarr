@@ -3,6 +3,8 @@ import {
     IActiveTranslation,
     IFilter,
     IPagedResult,
+    IProofreadLineApplyRequest,
+    IProofreadStatus,
     IRequestProgress,
     ITranslationRequest,
     IUseTranslationRequestStore,
@@ -27,7 +29,8 @@ export const useTranslationRequestStore = defineStore('translateRequest', {
             pageNumber: 1
         },
         selectedRequests: [] as ITranslationRequest[],
-        selectAll: false
+        selectAll: false,
+        proofreadSupported: false
     }),
     getters: {
         getActiveTranslationCount: (state: IUseTranslationRequestStore): number =>
@@ -78,6 +81,17 @@ export const useTranslationRequestStore = defineStore('translateRequest', {
         async resume(translationRequest: ITranslationRequest) {
             await services.translationRequest.resume<string>(translationRequest)
             await this.fetch()
+        },
+        async proofread(translationRequest: ITranslationRequest) {
+            await services.translationRequest.proofread<string>(translationRequest)
+            await this.fetch()
+        },
+        async applyProofreadLine(request: IProofreadLineApplyRequest) {
+            return await services.translationRequest.applyProofreadLine<string>(request)
+        },
+        async fetchProofreadStatus() {
+            const status = await services.translate.proofreadStatus<IProofreadStatus>()
+            this.proofreadSupported = status.supported
         },
         async updateProgress(requestProgress: IRequestProgress) {
             const completionStatuses: TranslationStatus[] = [

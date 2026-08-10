@@ -13,7 +13,7 @@ using Lingarr.Server.Services.Translation.Base;
 
 namespace Lingarr.Server.Services.Translation;
 
-public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTranslationService
+public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTranslationService, IProofreadService
 {
     private readonly HttpClient _httpClient;
     private readonly IRequestTemplateService _requestTemplateService;
@@ -69,6 +69,8 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 SettingKeys.Translation.LocalAi.GenerateRequestTemplate,
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiUserPrompt,
+                SettingKeys.Translation.ProofreadPrompt,
+                SettingKeys.Translation.ProofreadUserPrompt,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
@@ -92,6 +94,8 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
             _prompt = settings[SettingKeys.Translation.AiPrompt];
             _userPrompt = settings[SettingKeys.Translation.AiUserPrompt];
+            _proofreadPrompt = settings.GetValueOrDefault(SettingKeys.Translation.ProofreadPrompt);
+            _proofreadUserPrompt = settings.GetValueOrDefault(SettingKeys.Translation.ProofreadUserPrompt);
             _isChatEndpoint = _endpoint.TrimEnd('/').EndsWith("completions", StringComparison.OrdinalIgnoreCase);
 
             var requestTimeout = int.TryParse(settings[SettingKeys.Translation.RequestTimeout],
@@ -147,9 +151,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         {
             try
             {
-                return _isChatEndpoint
-                    ? await TranslateWithChatApi(replacements, retry.Token)
-                    : await TranslateWithGenerateApi(replacements, retry.Token);
+                return await CompleteWithLocalAiApi(replacements, retry.Token);
             }
             catch (TranslationResponseException ex)
             {
@@ -178,6 +180,65 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         }
 
         throw new TranslationException("Translation failed after maximum retry attempts.");
+    }
+
+    /// <inheritdoc />
+    public async Task<string> ProofreadAsync(
+        string sourceText,
+        string translatedText,
+        string sourceLanguage,
+        string targetLanguage,
+        CancellationToken cancellationToken)
+    {
+        await InitializeAsync(sourceLanguage, targetLanguage);
+
+        var replacements = GetProofreadReplacements(_model!, sourceText, translatedText);
+        using var retry = new CancellationTokenSource();
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
+
+        var delay = _retryDelay;
+        for (var attempt = 1; attempt <= _maxRetries; attempt++)
+        {
+            try
+            {
+                return await CompleteWithLocalAiApi(replacements, linked.Token);
+            }
+            catch (TranslationResponseException ex)
+            {
+                if (attempt == _maxRetries)
+                {
+                    _logger.LogError(ex, "Too many requests. Max retries exhausted for text: {Text}", translatedText);
+                    throw new TranslationException("Too many requests. Retry limit reached.", ex);
+                }
+
+                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
+                delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
+
+                _logger.LogWarning(
+                    "429 Too Many Requests. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    delay, attempt, _maxRetries);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error during proofread attempt {Attempt}", attempt);
+                throw new TranslationException("Unexpected error occurred during proofread.", ex);
+            }
+        }
+
+        throw new TranslationException("Proofread failed after maximum retry attempts.");
+    }
+
+    private async Task<string> CompleteWithLocalAiApi(
+        Dictionary<string, string> replacements,
+        CancellationToken cancellationToken)
+    {
+        return _isChatEndpoint
+            ? await TranslateWithChatApi(replacements, cancellationToken)
+            : await TranslateWithGenerateApi(replacements, cancellationToken);
     }
 
     /// <summary>

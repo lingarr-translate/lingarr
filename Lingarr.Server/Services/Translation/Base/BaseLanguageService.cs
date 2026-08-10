@@ -15,6 +15,8 @@ public abstract class BaseLanguageService : BaseTranslationService
     private Task<List<SourceLanguage>>? _cachedLanguages;
     protected string? _prompt;
     protected string? _userPrompt;
+    protected string? _proofreadPrompt;
+    protected string? _proofreadUserPrompt;
     protected Dictionary<string, string> _replacements;
 
     protected BaseLanguageService(
@@ -71,6 +73,29 @@ public abstract class BaseLanguageService : BaseTranslationService
         };
         replacements["systemPrompt"] = ReplacePlaceholders(_prompt, replacements);
         replacements["userMessage"] = serializedBatch;
+        return replacements;
+    }
+
+    protected Dictionary<string, string> GetProofreadReplacements(
+        string model,
+        string sourceLine,
+        string translatedLine)
+    {
+        var replacements = new Dictionary<string, string>(_replacements)
+        {
+            ["model"] = model,
+            ["sourceLine"] = sourceLine,
+            ["translatedLine"] = translatedLine,
+            ["lineToTranslate"] = string.Empty,
+            ["contextBefore"] = string.Empty,
+            ["contextAfter"] = string.Empty
+        };
+        var systemPrompt = ReplacePlaceholders(_proofreadPrompt, replacements);
+        var userMessage = string.IsNullOrEmpty(_proofreadUserPrompt)
+            ? translatedLine
+            : ReplacePlaceholders(_proofreadUserPrompt, replacements);
+        replacements["systemPrompt"] = systemPrompt;
+        replacements["userMessage"] = userMessage;
         return replacements;
     }
 

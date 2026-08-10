@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using Lingarr.Contracts.Exceptions;
 using Lingarr.Contracts.Models;
+using Lingarr.Contracts.Translation;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models.Integrations.Translation;
@@ -10,7 +11,7 @@ using Lingarr.Server.Services.Translation.Base;
 
 namespace Lingarr.Server.Services.Translation;
 
-public class DeepSeekService : BaseLanguageService
+public class DeepSeekService : BaseLanguageService, IProofreadService
 {
     private string? _endpoint = "https://api.deepseek.com";
     private readonly HttpClient _httpClient;
@@ -58,6 +59,8 @@ public class DeepSeekService : BaseLanguageService
                 SettingKeys.Translation.DeepSeek.RequestTemplate,
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiUserPrompt,
+                SettingKeys.Translation.ProofreadPrompt,
+                SettingKeys.Translation.ProofreadUserPrompt,
                 SettingKeys.Translation.LanguageCodeFormat
             ]);
             _model = settings[SettingKeys.Translation.DeepSeek.Model];
@@ -74,7 +77,9 @@ public class DeepSeekService : BaseLanguageService
             SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
             _prompt = settings[SettingKeys.Translation.AiPrompt];
             _userPrompt = settings[SettingKeys.Translation.AiUserPrompt];
-            
+            _proofreadPrompt = settings.GetValueOrDefault(SettingKeys.Translation.ProofreadPrompt);
+            _proofreadUserPrompt = settings.GetValueOrDefault(SettingKeys.Translation.ProofreadUserPrompt);
+
             _httpClient.DefaultRequestHeaders.Accept.Clear();
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
@@ -99,6 +104,21 @@ public class DeepSeekService : BaseLanguageService
         await InitializeAsync(sourceLanguage, targetLanguage);
 
         var replacements = GetReplacements(_model!, text, contextLinesBefore, contextLinesAfter);
+
+        return await TranslateWithChatApi(replacements, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<string> ProofreadAsync(
+        string sourceText,
+        string translatedText,
+        string sourceLanguage,
+        string targetLanguage,
+        CancellationToken cancellationToken)
+    {
+        await InitializeAsync(sourceLanguage, targetLanguage);
+
+        var replacements = GetProofreadReplacements(_model!, sourceText, translatedText);
 
         return await TranslateWithChatApi(replacements, cancellationToken);
     }

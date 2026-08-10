@@ -11,7 +11,7 @@ using Lingarr.Server.Services.Translation.Base;
 
 namespace Lingarr.Server.Services.Translation;
 
-public class AnthropicService : BaseLanguageService, ITranslationService, IBatchTranslationService
+public class AnthropicService : BaseLanguageService, ITranslationService, IBatchTranslationService, IProofreadService
 {
     private readonly string? _endpoint = "https://api.anthropic.com/v1";
     private readonly HttpClient _httpClient;
@@ -65,6 +65,8 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 SettingKeys.Translation.Anthropic.RequestTemplate,
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiUserPrompt,
+                SettingKeys.Translation.ProofreadPrompt,
+                SettingKeys.Translation.ProofreadUserPrompt,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
@@ -86,7 +88,9 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
             _prompt = settings[SettingKeys.Translation.AiPrompt];
             _userPrompt = settings[SettingKeys.Translation.AiUserPrompt];
-            
+            _proofreadPrompt = settings.GetValueOrDefault(SettingKeys.Translation.ProofreadPrompt);
+            _proofreadUserPrompt = settings.GetValueOrDefault(SettingKeys.Translation.ProofreadUserPrompt);
+
             var requestTimeout = int.TryParse(settings[SettingKeys.Translation.RequestTimeout],
                 out var timeOut)
                 ? timeOut
@@ -135,67 +139,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             try
             {
                 var replacements = GetReplacements(_model!, text, contextLinesBefore, contextLinesAfter);
-                var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
-                var content = new StringContent(
-                    bodyJson,
-                    Encoding.UTF8,
-                    "application/json"
-                );
-
-                var response =
-                    await _httpClient.PostAsync($"{_endpoint}/messages", content, linked.Token);
-                if (!response.IsSuccessStatusCode)
-                {
-                    if (response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
-                    {
-                        throw new HttpRequestException(
-                            $"Anthropic returned {response.StatusCode}",
-                            null, response.StatusCode);
-                    }
-
-                    var responseContent = await response.Content.ReadAsStringAsync(cancellationToken: linked.Token);
-                    _logger.LogError(
-                        "Anthropic API request failed with status {StatusCode}: {ResponseContent}",
-                        response.StatusCode, 
-                        responseContent);
-                    throw new TranslationException(
-                        $"Anthropic API request failed with status {response.StatusCode}: {responseContent}");
-                }
-
-                var responseBody = await response.Content.ReadAsStringAsync(linked.Token);
-                var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
-
-                var stopReason = jsonResponse.TryGetProperty("stop_reason", out var stopReasonProperty)
-                    ? stopReasonProperty.GetString()
-                    : null;
-
-                if (!jsonResponse.TryGetProperty("content", out var contentArray) ||
-                    contentArray.GetArrayLength() == 0)
-                {
-                    throw new TranslationException(
-                        $"Anthropic returned no content (stop_reason: {stopReason ?? "unknown"}).");
-                }
-
-                JsonElement? textContent = null;
-                foreach (var contentItem in contentArray.EnumerateArray())
-                {
-                    if (!contentItem.TryGetProperty("type", out var typeProperty) ||
-                        typeProperty.GetString() != "text")
-                    {
-                        continue;
-                    }
-                    textContent = contentItem;
-                    break;
-                }
-
-                if (!textContent.HasValue ||
-                    !textContent.Value.TryGetProperty("text", out var textProperty))
-                {
-                    throw new TranslationException(
-                        $"Anthropic response contained no text block (stop_reason: {stopReason ?? "unknown"}).");
-                }
-
-                return textProperty.GetString() ?? throw new InvalidOperationException();
+                return await CompleteWithAnthropicApi(replacements, linked.Token);
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {
@@ -224,6 +168,122 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         }
 
         throw new TranslationException("Translation failed after maximum retry attempts.");
+    }
+
+    /// <inheritdoc />
+    public async Task<string> ProofreadAsync(
+        string sourceText,
+        string translatedText,
+        string sourceLanguage,
+        string targetLanguage,
+        CancellationToken cancellationToken)
+    {
+        await InitializeAsync(sourceLanguage, targetLanguage);
+
+        using var retry = new CancellationTokenSource();
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
+
+        var delay = _retryDelay;
+        for (var attempt = 1; attempt <= _maxRetries; attempt++)
+        {
+            try
+            {
+                var replacements = GetProofreadReplacements(_model!, sourceText, translatedText);
+                return await CompleteWithAnthropicApi(replacements, linked.Token);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
+            {
+                if (attempt == _maxRetries)
+                {
+                    _logger.LogError(ex, "Max retries exhausted ({StatusCode}) for text: {Text}", ex.StatusCode, translatedText);
+                    throw new TranslationException($"Retry limit reached after {ex.StatusCode}.", ex);
+                }
+
+                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
+                delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
+
+                _logger.LogWarning(
+                    "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    "Anthropic", ex.StatusCode, delay, attempt, _maxRetries);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during Anthropic proofread");
+                throw new TranslationException("Failed to proofread using Anthropic", ex);
+            }
+        }
+
+        throw new TranslationException("Proofread failed after maximum retry attempts.");
+    }
+
+    private async Task<string> CompleteWithAnthropicApi(
+        Dictionary<string, string> replacements,
+        CancellationToken cancellationToken)
+    {
+        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
+        var content = new StringContent(
+            bodyJson,
+            Encoding.UTF8,
+            "application/json"
+        );
+
+        var response = await _httpClient.PostAsync($"{_endpoint}/messages", content, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            if (response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
+            {
+                throw new HttpRequestException(
+                    $"Anthropic returned {response.StatusCode}",
+                    null, response.StatusCode);
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError(
+                "Anthropic API request failed with status {StatusCode}: {ResponseContent}",
+                response.StatusCode,
+                responseContent);
+            throw new TranslationException(
+                $"Anthropic API request failed with status {response.StatusCode}: {responseContent}");
+        }
+
+        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+        var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseBody);
+
+        var stopReason = jsonResponse.TryGetProperty("stop_reason", out var stopReasonProperty)
+            ? stopReasonProperty.GetString()
+            : null;
+
+        if (!jsonResponse.TryGetProperty("content", out var contentArray) ||
+            contentArray.GetArrayLength() == 0)
+        {
+            throw new TranslationException(
+                $"Anthropic returned no content (stop_reason: {stopReason ?? "unknown"}).");
+        }
+
+        JsonElement? textContent = null;
+        foreach (var contentItem in contentArray.EnumerateArray())
+        {
+            if (!contentItem.TryGetProperty("type", out var typeProperty) ||
+                typeProperty.GetString() != "text")
+            {
+                continue;
+            }
+            textContent = contentItem;
+            break;
+        }
+
+        if (!textContent.HasValue ||
+            !textContent.Value.TryGetProperty("text", out var textProperty))
+        {
+            throw new TranslationException(
+                $"Anthropic response contained no text block (stop_reason: {stopReason ?? "unknown"}).");
+        }
+
+        return textProperty.GetString() ?? throw new InvalidOperationException();
     }
 
     /// <summary>

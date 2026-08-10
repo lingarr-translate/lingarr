@@ -1,4 +1,10 @@
-import { IActiveTranslation, ILineTranslated, IRequestProgress, ISettings } from '@/ts'
+import {
+    IActiveTranslation,
+    ILineProofread,
+    ILineTranslated,
+    IRequestProgress,
+    ISettings
+} from '@/ts'
 import type { HubConnection as SignalRHubConnection } from '@microsoft/signalr'
 
 export interface SignalRStore {
@@ -23,6 +29,7 @@ export type EventCallbacks = {
     ActiveTranslations: (activeTranslations: IActiveTranslation[]) => void
     JobStateUpdated: (jobId: string, state: string) => void
     LineTranslated: (line: ILineTranslated) => void
+    LineProofread: (line: ILineProofread) => void
 }
 
 export interface Hub {

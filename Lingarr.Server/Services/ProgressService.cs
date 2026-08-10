@@ -5,6 +5,7 @@ using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Extensions;
 
 namespace Lingarr.Server.Services;
@@ -108,6 +109,50 @@ public class ProgressService : IProgressService
                 Tier = fallback?.Tier.ToString()
             });
         }
+    }
+
+    /// <inheritdoc />
+    public async Task EmitProofreadLine(
+        TranslationRequest request,
+        int position,
+        string source,
+        string target,
+        string? service)
+    {
+        var line = await _dbContext.TranslationRequestLines
+            .Where(requestLine => requestLine.TranslationRequestId == request.Id && requestLine.Position == position)
+            .OrderByDescending(requestLine => requestLine.Id)
+            .FirstOrDefaultAsync();
+
+        if (line == null)
+        {
+            _dbContext.TranslationRequestLines.Add(new TranslationRequestLine
+            {
+                TranslationRequestId = request.Id,
+                Position = position,
+                Source = source,
+                Target = target,
+                Service = service
+            });
+        }
+        else
+        {
+            line.Target = target;
+            if (service != null)
+            {
+                line.Service = service;
+            }
+        }
+        await _dbContext.SaveChangesAsync();
+
+        await _hubContext.Clients.Group("TranslationRequests").SendAsync("LineProofread", new
+        {
+            request.Id,
+            Position = position,
+            Source = source,
+            Target = target,
+            Service = service
+        });
     }
 
     /// <summary>

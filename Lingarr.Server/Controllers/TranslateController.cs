@@ -2,6 +2,7 @@
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Attributes;
 using Microsoft.AspNetCore.Mvc;
+using Lingarr.Server.Models;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Interfaces.Services;
@@ -118,6 +119,36 @@ public class TranslateController : ControllerBase
         {
             return StatusCode(500, new { Error = ex.Message });
         }
+    }
+
+    /// <summary>
+    /// Reports whether proofreading is available and which configured service would perform it.
+    /// </summary>
+    /// <returns>The capability flag and the provider name, or null when no configured service qualifies.</returns>
+    [HttpGet("proofread/status")]
+    public async Task<ActionResult<ProofreadStatusResponse>> GetProofreadStatus()
+    {
+        return Ok(await _translationRequestService.GetProofreadStatus());
+    }
+
+    /// <summary>
+    /// Proofreads a single translated line against its source line without persisting anything.
+    /// </summary>
+    /// <param name="proofreadLineRequest">The source line, its translation and the language pair</param>
+    /// <param name="cancellationToken">Token to cancel the proofread operation</param>
+    /// <returns>Returns the corrected translation if a configured service can proofread.</returns>
+    [HttpPost("proofread")]
+    public async Task<ActionResult<string>> ProofreadLine(
+        [FromBody] ProofreadLineRequest proofreadLineRequest,
+        CancellationToken cancellationToken)
+    {
+        var result = await _translationRequestService.ProofreadLine(proofreadLineRequest, cancellationToken);
+        if (result == null)
+        {
+            return BadRequest("No configured translation service supports proofreading.");
+        }
+
+        return Ok(result);
     }
 
     /// <summary>

@@ -36,6 +36,7 @@ public class TranslationRequestService : ITranslationRequestService
     private readonly ISubtitleService _subtitleService;
     private readonly ITranslationRequestEventService _eventService;
     private readonly ILogger<TranslationRequestService> _logger;
+    private const string ManualService = "manual";
     private static readonly ConcurrentDictionary<int, CancellationTokenSource> _asyncTranslationJobs = new();
 
     public TranslationRequestService(
@@ -168,7 +169,8 @@ public class TranslationRequestService : ITranslationRequestService
             TargetLanguage = translationRequest.TargetLanguage,
             SubtitleToTranslate = translationRequest.SubtitleToTranslate,
             MediaType = translationRequest.MediaType,
-            Status = TranslationStatus.Pending
+            Status = TranslationStatus.Pending,
+            JobType = TranslationJobType.Translation
         };
 
         _dbContext.TranslationRequests.Add(translationRequestCopy);
@@ -348,6 +350,19 @@ public class TranslationRequestService : ITranslationRequestService
             await cts.CancelAsync();
         }
 
+        if (translationRequest.JobType == TranslationJobType.Proofread &&
+            !string.IsNullOrEmpty(translationRequest.TranslatedSubtitle))
+        {
+            translationRequest.Status = TranslationStatus.Completed;
+            translationRequest.ErrorMessage = null;
+            await _dbContext.SaveChangesAsync();
+            await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Cancelled, "Proofread was cancelled");
+            await UpdateActiveCount();
+            await _progressService.Emit(translationRequest, 100);
+
+            return $"Translation request with id {cancelRequest.Id} has been cancelled";
+        }
+
         translationRequest.CompletedAt = DateTime.UtcNow;
         translationRequest.Status = TranslationStatus.Cancelled;
         translationRequest.ErrorMessage = "Translation was cancelled";
@@ -418,6 +433,7 @@ public class TranslationRequestService : ITranslationRequestService
         translationRequest.ErrorMessage = null;
         translationRequest.StackTrace = null;
         translationRequest.CompletedAt = null;
+        translationRequest.JobType = TranslationJobType.Translation;
         await _dbContext.SaveChangesAsync();
         await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Pending, "Resumed");
 
@@ -429,6 +445,145 @@ public class TranslationRequestService : ITranslationRequestService
         return $"Translation request with id {resumeRequest.Id} has been resumed, new job id {jobId}";
     }
     
+    /// <inheritdoc />
+    public async Task<ProofreadStatusResponse> GetProofreadStatus()
+    {
+        var entry = await ResolveProofreadService();
+        return new ProofreadStatusResponse
+        {
+            Supported = entry != null,
+            Service = entry?.Name
+        };
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> ProofreadLine(
+        ProofreadLineRequest proofreadLineRequest,
+        CancellationToken cancellationToken)
+    {
+        var entry = await ResolveProofreadService();
+        if (entry == null)
+        {
+            return null;
+        }
+
+        return await entry.Value.Service.ProofreadAsync(
+            proofreadLineRequest.SourceLine,
+            proofreadLineRequest.TranslatedLine,
+            proofreadLineRequest.SourceLanguage,
+            proofreadLineRequest.TargetLanguage,
+            cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> ProofreadTranslationRequest(TranslationRequest proofreadRequest)
+    {
+        var translationRequest = await _dbContext.TranslationRequests.FirstOrDefaultAsync(
+            candidate => candidate.Id == proofreadRequest.Id);
+        if (translationRequest == null)
+        {
+            return null;
+        }
+
+        if (translationRequest.Status != TranslationStatus.Completed)
+        {
+            _logger.LogInformation(
+                "Proofread skipped for request {Id}: status {Status} is not Completed.",
+                translationRequest.Id, translationRequest.Status);
+            return null;
+        }
+
+        if (string.IsNullOrEmpty(translationRequest.TranslatedSubtitle))
+        {
+            _logger.LogInformation(
+                "Proofread skipped for request {Id}: no translated subtitle is recorded.",
+                translationRequest.Id);
+            return null;
+        }
+
+        translationRequest.Status = TranslationStatus.Pending;
+        translationRequest.ErrorMessage = null;
+        translationRequest.StackTrace = null;
+        translationRequest.JobType = TranslationJobType.Proofread;
+        await _dbContext.SaveChangesAsync();
+
+        var jobId = _backgroundJobClient.Enqueue<ProofreadJob>(job =>
+            job.Execute(translationRequest, CancellationToken.None));
+        await UpdateTranslationRequest(translationRequest, TranslationStatus.Pending, jobId);
+        await UpdateActiveCount();
+
+        return $"Translation request with id {proofreadRequest.Id} is being proofread, new job id {jobId}";
+    }
+
+    /// <inheritdoc />
+    public async Task<string?> ApplyProofreadLine(ProofreadLineApplyRequest applyRequest)
+    {
+        var translationRequest = await _dbContext.TranslationRequests.FirstOrDefaultAsync(
+            candidate => candidate.Id == applyRequest.Id);
+        if (translationRequest == null || string.IsNullOrEmpty(translationRequest.TranslatedSubtitle))
+        {
+            return null;
+        }
+
+        var stripSubtitleFormatting =
+            await _settingService.GetSetting(SettingKeys.Translation.StripSubtitleFormatting) == "true";
+
+        var translatedSubtitles = await _subtitleService.ReadSubtitles(translationRequest.TranslatedSubtitle);
+        var target = translatedSubtitles.FirstOrDefault(subtitle => subtitle.Position == applyRequest.Position);
+        if (target == null)
+        {
+            return null;
+        }
+
+        var sourceSubtitles = await _subtitleService.ReadSubtitles(translationRequest.SubtitleToTranslate);
+        var sourceSubtitle = sourceSubtitles.FirstOrDefault(subtitle => subtitle.Position == applyRequest.Position);
+        var sourceText = sourceSubtitle == null
+            ? string.Empty
+            : string.Join(" ", stripSubtitleFormatting ? sourceSubtitle.PlaintextLines : sourceSubtitle.Lines);
+
+        foreach (var subtitle in translatedSubtitles)
+        {
+            subtitle.TranslatedLines = subtitle.Lines;
+        }
+        target.TranslatedLines = [applyRequest.Target];
+
+        var service = applyRequest.Origin == ProofreadLineOrigin.Manual
+            ? ManualService
+            : (await ResolveProofreadService())?.Name;
+
+        await _progressService.EmitProofreadLine(
+            translationRequest,
+            applyRequest.Position,
+            sourceText,
+            applyRequest.Target,
+            service);
+
+        await _subtitleService.WriteSubtitles(
+            translationRequest.TranslatedSubtitle,
+            translatedSubtitles,
+            stripSubtitleFormatting);
+
+        return $"Line {applyRequest.Position} of translation request with id {applyRequest.Id} has been updated";
+    }
+
+    private async Task<(string Name, IProofreadService Service)?> ResolveProofreadService()
+    {
+        var serviceNames = TranslationServices.Parse(
+            await _settingService.GetSetting(SettingKeys.Translation.ServiceType),
+            _logger);
+        var services = _translationServiceFactory.CreateTranslationServices(serviceNames);
+
+        foreach (var entry in services)
+        {
+            if (entry.Service is IProofreadService proofreadService)
+            {
+                return (entry.Name, proofreadService);
+            }
+        }
+
+        return null;
+    }
+
     /// <inheritdoc />
     public async Task<TranslationRequest> UpdateTranslationRequest(TranslationRequest translationRequest,
         TranslationStatus status, string? jobId = null)
@@ -459,6 +614,15 @@ public class TranslationRequestService : ITranslationRequestService
 
         foreach (var request in requests)
         {
+            if (request.JobType == TranslationJobType.Proofread &&
+                !string.IsNullOrEmpty(request.TranslatedSubtitle))
+            {
+                await _eventService.LogEvent(request.Id, TranslationStatus.Interrupted,
+                    "Proofread did not finish, translation is unchanged");
+                await UpdateTranslationRequest(request, TranslationStatus.Completed);
+                continue;
+            }
+
             if (request.JobId == null)
             {
                 // Async translation job. Set as Interrupted and don't run
@@ -574,7 +738,8 @@ public class TranslationRequestService : ITranslationRequestService
             SubtitleToTranslate = translateAbleContent.SourceSubtitlePath,
             TranslatedSubtitle = translateAbleContent.TranslatedSubtitlePath,
             MediaType = translateAbleContent.MediaType,
-            Status = TranslationStatus.InProgress
+            Status = TranslationStatus.InProgress,
+            JobType = TranslationJobType.Translation
         };
 
         // Link cancel token with new source to be able to cancel the async translation

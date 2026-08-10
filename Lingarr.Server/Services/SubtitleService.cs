@@ -112,7 +112,7 @@ public class SubtitleService : ISubtitleService
             _ => throw new NotSupportedException($"Subtitle format {extension} is not supported")
         };
 
-        await using var fileStream = File.OpenWrite(filePath);
+        await using var fileStream = File.Create(filePath);
         await writer.WriteStreamAsync(fileStream, subtitles, stripSubtitleFormatting);
     }
 

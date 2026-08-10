@@ -53,5 +53,17 @@ export const PLACEHOLDER: Record<string, IPlaceholder> = {
         placeholderText: 'insert {contextAfter}',
         title: 'Context After',
         description: 'Subtitles after the subtitle line that can be used as context'
+    },
+    SOURCE_LINE: {
+        placeholder: '{sourceLine}',
+        placeholderText: 'insert {sourceLine}',
+        title: 'Source Line',
+        description: 'The original subtitle line being proofread'
+    },
+    TRANSLATED_LINE: {
+        placeholder: '{translatedLine}',
+        placeholderText: 'insert {translatedLine}',
+        title: 'Translated Line',
+        description: 'The existing translation being proofread'
     }
 }

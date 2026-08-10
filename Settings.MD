@@ -143,6 +143,17 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 | `AI_PROMPT`              | The prompt template for AI-based translation services.                          |
 | `AI_USER_PROMPT`         | The user message template. Supports `{lineToTranslate}`, `{contextBefore}` and `{contextAfter}`. |
 
+#### **Proofreading**
+
+Proofreading is only available for the AI services above (OpenAI, Anthropic, Gemini, DeepSeek, LocalAI), and only for a `service_type` entry that supports it. It uses two more settings, shared across all AI services the same way `AI_PROMPT` and `AI_USER_PROMPT` are. These are configured through **Settings > Services > Request Settings** in the web interface, or through their environment variables:
+
+| **Setting** | **Environment Variable** | **Default** |
+|-------------|--------------------------|-------------|
+| `proofread_prompt` | `PROOFREAD_PROMPT` | `You are proofreading a subtitle translated from {sourceLanguage} to {targetLanguage}. Compare the translation against the source and correct mistranslations, wrong names, grammar and punctuation, preserving the tone and meaning without censoring the content. Keep the length close to the original so it still fits on screen. If the translation is already correct, repeat it unchanged. Provide only the corrected translation as output, with no additional comments.` |
+| `proofread_user_prompt` | `PROOFREAD_USER_PROMPT` | `[SOURCE] {sourceLine}\n[TRANSLATION] {translatedLine}` |
+
+See the AI services documentation for the full placeholder list.
+
 #### **DeepL**
 
 | **Environment Variable** | **Description**                                                                 |

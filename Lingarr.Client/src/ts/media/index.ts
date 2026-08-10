@@ -73,6 +73,41 @@ export interface ILineTranslated {
     service?: string | null
 }
 
+export interface ILineProofread {
+    id: number
+    position: number
+    source: string
+    target: string
+    service?: string | null
+}
+
+export interface IProofreadStatus {
+    supported: boolean
+    service?: string
+}
+
+export interface IProofreadLineRequest {
+    sourceLine: string
+    translatedLine: string
+    sourceLanguage: string
+    targetLanguage: string
+}
+
+export interface IProofreadLineApplyRequest {
+    id: number
+    position: number
+    target: string
+    origin: ProofreadLineOrigin
+}
+
+export const PROOFREAD_LINE_ORIGIN = {
+    PROOFREAD: 'Proofread',
+    MANUAL: 'Manual'
+} as const
+
+export type ProofreadLineOrigin =
+    (typeof PROOFREAD_LINE_ORIGIN)[keyof typeof PROOFREAD_LINE_ORIGIN]
+
 export interface IActiveTranslation {
     mediaId: number | null
     mediaType: MediaType
@@ -156,5 +191,6 @@ export enum TRANSLATION_ACTIONS {
     CANCEL,
     REMOVE,
     RETRY,
-    RESUME
+    RESUME,
+    PROOFREAD
 }
