@@ -24,6 +24,8 @@ export const SETTINGS = {
     DEEPSEEK_MODEL: 'deepseek_model',
     AI_PROMPT: 'ai_prompt',
     AI_USER_PROMPT: 'ai_user_prompt',
+    PROOFREAD_PROMPT: 'proofread_prompt',
+    PROOFREAD_USER_PROMPT: 'proofread_user_prompt',
     THEME: 'theme',
     LOCALE: 'locale',
     MOVIE_AGE_THRESHOLD: 'movie_age_threshold',
@@ -88,6 +90,8 @@ export interface ISettings {
     deepseek_model: string
     ai_prompt: string
     ai_user_prompt: string
+    proofread_prompt: string
+    proofread_user_prompt: string
     movie_age_threshold: string
     show_age_threshold: string
     fix_overlapping_subtitles: string

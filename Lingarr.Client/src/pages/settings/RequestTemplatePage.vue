@@ -18,8 +18,8 @@
 
         <div
             class="grid grid-flow-row auto-rows-max grid-cols-1 gap-4 p-4 md:grid-cols-2 xl:grid-cols-2">
-            <SystemPrompt />
-            <UserPrompt />
+            <TranslationPrompt />
+            <ProofreadPrompt />
         </div>
 
         <div class="grid grid-flow-row auto-rows-max grid-cols-1 gap-4 px-4 pb-4">
@@ -38,8 +38,8 @@ import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import TabComponent from '@/components/common/TabComponent.vue'
 import ArrowLeft from '@/components/icons/ArrowLeft.vue'
 import RequestTemplate from '@/components/features/settings/template/RequestTemplate.vue'
-import SystemPrompt from '@/components/features/settings/SystemPrompt.vue'
-import UserPrompt from '@/components/features/settings/UserPrompt.vue'
+import TranslationPrompt from '@/components/features/settings/TranslationPrompt.vue'
+import ProofreadPrompt from '@/components/features/settings/ProofreadPrompt.vue'
 
 const router = useRouter()
 const settingsStore = useSettingStore()

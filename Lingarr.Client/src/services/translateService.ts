@@ -1,5 +1,5 @@
 import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
-import { ILanguage, ISubtitle, ITranslateService, MediaType } from '@/ts'
+import { ILanguage, IProofreadLineRequest, ISubtitle, ITranslateService, MediaType } from '@/ts'
 
 const service = (http: AxiosStatic, resource = '/api/translate'): ITranslateService => ({
     translateSubtitle<T>(
@@ -49,6 +49,28 @@ const service = (http: AxiosStatic, resource = '/api/translate'): ITranslateServ
     getLanguages<T>(): Promise<T> {
         return new Promise((resolve, reject) => {
             http.get(`${resource}/languages`)
+                .then((response: AxiosResponse<T>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
+    },
+    proofreadStatus<T>(): Promise<T> {
+        return new Promise((resolve, reject) => {
+            http.get(`${resource}/proofread/status`)
+                .then((response: AxiosResponse<T>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
+    },
+    proofreadLine<T>(request: IProofreadLineRequest): Promise<T> {
+        return new Promise((resolve, reject) => {
+            http.post(`${resource}/proofread`, request)
                 .then((response: AxiosResponse<T>) => {
                     resolve(response.data)
                 })

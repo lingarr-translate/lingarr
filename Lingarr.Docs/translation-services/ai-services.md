@@ -48,6 +48,32 @@ Use the user prompt to frame a single line, for example to surround it with its 
 
 Batch translation does not use the user prompt. The batch is sent as the user message instead, so only `AI_PROMPT` applies when batching is enabled.
 
+## Proofreading
+
+Proofreading re-examines a completed translation. For each subtitle line it sends the source line and the existing translation together to the AI service and asks for a corrected translation, without translating from scratch.
+
+Only services that implement proofreading offer it: OpenAI, Anthropic, Gemini, DeepSeek and LocalAI. LibreTranslate, DeepL, Google, Bing, Microsoft and Yandex do not support proofreading.
+
+You can run it two ways:
+
+- **Whole request.** On the translations list, a `Completed` request with a translated subtitle shows a Proofread action beside Retry, Resume and Remove. This queues a job that proofreads every line and rewrites the translated subtitle file in place once it finishes. Lingarr keeps no copy of the pre-proofread text, in the file or in the database, so there is nothing to revert to afterwards.
+- **Single line.** On the translation detail page, each line has its own Proofread button. It fetches a suggested correction for that line, shows it inline, and you apply or dismiss it.
+
+A whole-request proofread calls the AI service once per subtitle line, the same as a non-batch translation, batching does not apply. Proofreading a long subtitle track costs roughly as much as translating it again.
+
+The subtitle file is rewritten only after every line has been checked, so cancelling a proofread, or restarting Lingarr while one is running, leaves the existing translation and its file exactly as they were. The request returns to `Completed` and can be proofread again.
+
+Proofreading uses two more templates, `proofread_prompt` (the system prompt) and `proofread_user_prompt` (the user message), configured on the same Request Settings panel as `AI_PROMPT` and `AI_USER_PROMPT`, or through the `PROOFREAD_PROMPT` and `PROOFREAD_USER_PROMPT` environment variables.
+
+Both accept the placeholders already listed above, plus two more:
+
+| **Placeholder** | **Value** |
+|-----------------|-----------|
+| `{sourceLine}` | The original subtitle line. |
+| `{translatedLine}` | The existing translation being checked. |
+
+`{lineToTranslate}`, `{contextBefore}` and `{contextAfter}` are sent as empty strings during a proofread call, so a request template that already contains them still renders correctly.
+
 ## Environment variables
 ### OpenAI
 

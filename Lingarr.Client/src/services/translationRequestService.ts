@@ -1,5 +1,5 @@
 import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
-import { ITranslationRequest, ITranslationRequestService } from '@/ts'
+import { IProofreadLineApplyRequest, ITranslationRequest, ITranslationRequestService } from '@/ts'
 
 const service = (
     http: AxiosStatic,
@@ -86,6 +86,28 @@ const service = (
     resume<T>(translationRequest: ITranslationRequest): Promise<T> {
         return new Promise((resolve, reject) => {
             http.post(`${resource}/resume`, translationRequest)
+                .then((response: AxiosResponse<T>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
+    },
+    proofread<T>(translationRequest: ITranslationRequest): Promise<T> {
+        return new Promise((resolve, reject) => {
+            http.post(`${resource}/proofread`, translationRequest)
+                .then((response: AxiosResponse<T>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
+    },
+    applyProofreadLine<T>(request: IProofreadLineApplyRequest): Promise<T> {
+        return new Promise((resolve, reject) => {
+            http.post(`${resource}/proofread/line`, request)
                 .then((response: AxiosResponse<T>) => {
                     resolve(response.data)
                 })

@@ -29,4 +29,10 @@ public interface IProgressService
     /// Saves multiple translated lines to the database and broadcasts them via SignalR.
     /// </summary>
     Task EmitLines(TranslationRequest request, List<TranslatedLineData> lines);
+
+    /// <summary>
+    /// Applies a proofread revision to the stored line for a position and broadcasts it via SignalR.
+    /// The service that originally translated the line is preserved.
+    /// </summary>
+    Task EmitProofreadLine(TranslationRequest request, int position, string source, string target, string? service);
 }

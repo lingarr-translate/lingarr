@@ -6,4 +6,5 @@ export interface IUseTranslationRequestStore {
     filter: IFilter
     selectedRequests: ITranslationRequest[]
     selectAll: boolean
+    proofreadSupported: boolean
 }

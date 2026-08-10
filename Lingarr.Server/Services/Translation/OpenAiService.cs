@@ -13,7 +13,7 @@ using Lingarr.Server.Services.Translation.Base;
 
 namespace Lingarr.Server.Services.Translation;
 
-public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTranslationService
+public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTranslationService, IProofreadService
 {
     private readonly string? _endpoint = "https://api.openai.com/v1/";
     private string? _model;
@@ -66,6 +66,8 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                 SettingKeys.Translation.OpenAi.RequestTemplate,
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiUserPrompt,
+                SettingKeys.Translation.ProofreadPrompt,
+                SettingKeys.Translation.ProofreadUserPrompt,
                 SettingKeys.Translation.RequestTimeout,
                 SettingKeys.Translation.MaxRetries,
                 SettingKeys.Translation.RetryDelay,
@@ -87,6 +89,8 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
             SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
             _prompt = settings[SettingKeys.Translation.AiPrompt];
             _userPrompt = settings[SettingKeys.Translation.AiUserPrompt];
+            _proofreadPrompt = settings.GetValueOrDefault(SettingKeys.Translation.ProofreadPrompt);
+            _proofreadUserPrompt = settings.GetValueOrDefault(SettingKeys.Translation.ProofreadUserPrompt);
 
             var requestTimeout = int.TryParse(settings[SettingKeys.Translation.RequestTimeout],
                 out var timeOut)
@@ -134,39 +138,8 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
         {
             try
             {
-                var requestUrl = $"{_endpoint}chat/completions";
                 var replacements = GetReplacements(_model!, text, contextLinesBefore, contextLinesAfter);
-                var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
-                var requestContent = new StringContent(
-                    bodyJson,
-                    Encoding.UTF8,
-                    "application/json");
-
-                var response = await _httpClient.PostAsync(requestUrl, requestContent, linked.Token);
-                if (!response.IsSuccessStatusCode)
-                {
-                    if (response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
-                    {
-                        throw new HttpRequestException(
-                            $"OpenAI returned {response.StatusCode}", null, response.StatusCode);
-                    }
-
-                    var responseContent = await response.Content.ReadAsStringAsync(cancellationToken: linked.Token);
-                    _logger.LogError(
-                        "OpenAI API request failed with status {StatusCode}: {ResponseContent}",
-                        response.StatusCode, responseContent);
-                    throw new TranslationException(
-                        $"OpenAI API request failed with status {response.StatusCode}: {responseContent}");
-                }
-
-                var completionResponse =
-                    await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(linked.Token);
-                if (completionResponse?.Choices == null || completionResponse.Choices.Count == 0)
-                {
-                    throw new TranslationException("No completion choices returned from OpenAI");
-                }
-
-                return completionResponse.Choices[0].Message.Content;
+                return await CompleteWithOpenAiApi(replacements, linked.Token);
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {
@@ -195,6 +168,94 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
         }
 
         throw new TranslationException("Translation failed after maximum retry attempts.");
+    }
+
+    /// <inheritdoc />
+    public async Task<string> ProofreadAsync(
+        string sourceText,
+        string translatedText,
+        string sourceLanguage,
+        string targetLanguage,
+        CancellationToken cancellationToken)
+    {
+        await InitializeAsync(sourceLanguage, targetLanguage);
+
+        using var retry = new CancellationTokenSource();
+        using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
+
+        var delay = _retryDelay;
+        for (var attempt = 1; attempt <= _maxRetries; attempt++)
+        {
+            try
+            {
+                var replacements = GetProofreadReplacements(_model!, sourceText, translatedText);
+                return await CompleteWithOpenAiApi(replacements, linked.Token);
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
+            {
+                if (attempt == _maxRetries)
+                {
+                    _logger.LogError(ex, "Max retries exhausted ({StatusCode}) for text: {Text}", ex.StatusCode, translatedText);
+                    throw new TranslationException($"Retry limit reached after {ex.StatusCode}.", ex);
+                }
+
+                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
+                delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
+
+                _logger.LogWarning(
+                    "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    "OpenAI", ex.StatusCode, delay, attempt, _maxRetries);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occurred during OpenAI proofread");
+                throw new TranslationException("Failed to proofread using OpenAI", ex);
+            }
+        }
+
+        throw new TranslationException("Proofread failed after maximum retry attempts.");
+    }
+
+    private async Task<string> CompleteWithOpenAiApi(
+        Dictionary<string, string> replacements,
+        CancellationToken cancellationToken)
+    {
+        var requestUrl = $"{_endpoint}chat/completions";
+        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
+        var requestContent = new StringContent(
+            bodyJson,
+            Encoding.UTF8,
+            "application/json");
+
+        var response = await _httpClient.PostAsync(requestUrl, requestContent, cancellationToken);
+        if (!response.IsSuccessStatusCode)
+        {
+            if (response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
+            {
+                throw new HttpRequestException(
+                    $"OpenAI returned {response.StatusCode}", null, response.StatusCode);
+            }
+
+            var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError(
+                "OpenAI API request failed with status {StatusCode}: {ResponseContent}",
+                response.StatusCode, responseContent);
+            throw new TranslationException(
+                $"OpenAI API request failed with status {response.StatusCode}: {responseContent}");
+        }
+
+        var completionResponse =
+            await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(cancellationToken);
+        if (completionResponse?.Choices == null || completionResponse.Choices.Count == 0)
+        {
+            throw new TranslationException("No completion choices returned from OpenAI");
+        }
+
+        return completionResponse.Choices[0].Message.Content;
     }
 
     /// <summary>

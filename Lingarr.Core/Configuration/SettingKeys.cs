@@ -72,6 +72,8 @@ public static class SettingKeys
         public const string TargetLanguages = "target_languages";
         public const string AiPrompt = "ai_prompt";
         public const string AiUserPrompt = "ai_user_prompt";
+        public const string ProofreadPrompt = "proofread_prompt";
+        public const string ProofreadUserPrompt = "proofread_user_prompt";
         public const string AiContextBefore = "ai_context_before";
         public const string AiContextAfter = "ai_context_after";
         public const string FixOverlappingSubtitles = "fix_overlapping_subtitles";

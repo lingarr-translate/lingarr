@@ -12,6 +12,28 @@ You create a plugin as a .NET 10 class library (a DLL file) that references the 
 
 A single plugin can include one or both of these.
 
+## Optional capabilities
+
+A provider class can also implement interfaces from `Lingarr.Contracts.Translation` to opt into extra features. These are purely additive: a plugin that does not implement them keeps working exactly as it does today, no change is required.
+
+### `IProofreadService`
+
+Implement this to let your provider proofread an existing translation, comparing it against its source line and returning a corrected version:
+
+```csharp
+public interface IProofreadService
+{
+    Task<string> ProofreadAsync(
+        string sourceText,
+        string translatedText,
+        string sourceLanguage,
+        string targetLanguage,
+        CancellationToken cancellationToken);
+}
+```
+
+Return `translatedText` unchanged when nothing needs correcting. Lingarr only shows the Proofread action, in the UI and through the API, for providers whose class implements this interface. Providers that don't implement it are unaffected and are simply left out of proofreading.
+
 ## Required setup
 
 Every provider class must be marked with:

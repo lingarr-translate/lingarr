@@ -106,6 +106,48 @@ public interface ITranslationRequestService
     );
 
     /// <summary>
+    /// Reports whether any configured translation service can proofread, and which one would do it.
+    /// </summary>
+    /// <returns>The capability flag and the provider name, or null when no configured service qualifies</returns>
+    Task<ProofreadStatusResponse> GetProofreadStatus();
+
+    /// <summary>
+    /// Proofreads a single line against its source without persisting anything, used for the
+    /// suggestion shown on the translation detail page.
+    /// </summary>
+    /// <param name="proofreadLineRequest">The source line, its translation and the language pair</param>
+    /// <param name="cancellationToken">Token to cancel the proofread operation</param>
+    /// <returns>The corrected translation, or null when no configured service can proofread</returns>
+    Task<string?> ProofreadLine(
+        ProofreadLineRequest proofreadLineRequest,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Queues a proofread pass over every line of a completed translation request.
+    /// </summary>
+    /// <param name="proofreadRequest">The translation request to proofread (only Id is required)</param>
+    /// <returns>
+    /// A message indicating the result of the proofread operation, or null if the request wasn't
+    /// found, is not Completed, or has no translated subtitle
+    /// </returns>
+    Task<string?> ProofreadTranslationRequest(
+        TranslationRequest proofreadRequest
+    );
+
+    /// <summary>
+    /// Applies a proofread suggestion to a single line, updating the stored line and rewriting
+    /// the translated subtitle file with that one line replaced.
+    /// </summary>
+    /// <param name="applyRequest">The translation request id, subtitle position and revised line</param>
+    /// <returns>
+    /// A message indicating the result, or null if the request, its translated subtitle
+    /// or the position could not be found
+    /// </returns>
+    Task<string?> ApplyProofreadLine(
+        ProofreadLineApplyRequest applyRequest
+    );
+
+    /// <summary>
     /// Cancels an existing translation request and its associated background job.
     /// </summary>
     /// <param name="cancelRequest">The translation request to cancel</param>
