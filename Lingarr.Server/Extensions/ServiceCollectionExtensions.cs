@@ -254,7 +254,7 @@ public static class ServiceCollectionExtensions
                 .UseSimpleAssemblyNameTypeSerializer()
                 .UseRecommendedSerializerSettings();
 
-            var dbConnection = Environment.GetEnvironmentVariable("DB_CONNECTION")?.ToLower() ?? "sqlite";
+            var dbConnection = DatabaseConfiguration.GetDbConnection();
             switch (dbConnection)
             {
                 case "mysql":
@@ -264,9 +264,12 @@ public static class ServiceCollectionExtensions
                 case "postgresql":
                     ConfigurePostgresStorage(configuration, tablePrefix);
                     break;
-                default:
+                case "sqlite":
                     ConfigureSqLiteStorage(configuration);
                     break;
+                default:
+                    throw new InvalidOperationException(
+                        $"Database connection '{dbConnection}' is not supported.");
             }
 
             configuration.UseFilter(new JobContextFilter());
