@@ -4,18 +4,31 @@ namespace Lingarr.Core.Configuration;
 
 public static class DatabaseConfiguration
 {
+    private static readonly string[] SupportedConnections = ["mysql", "postgres", "postgresql", "sqlite"];
+
     /// <summary>
     /// Gets the current database connection type from environment.
-    /// Defaults to sqlite
+    /// Throws when unset or set to an unsupported value.
     /// </summary>
     public static string GetDbConnection()
     {
-        return Environment.GetEnvironmentVariable("DB_CONNECTION")?.ToLower() ?? "sqlite";
+        var dbConnection = Environment.GetEnvironmentVariable("DB_CONNECTION")?.ToLower();
+        if (string.IsNullOrEmpty(dbConnection))
+        {
+            throw new InvalidOperationException(
+                $"DB_CONNECTION is not set. Set it to one of: {string.Join(", ", SupportedConnections)}.");
+        }
+
+        if (!SupportedConnections.Contains(dbConnection))
+        {
+            throw UnsupportedConnection(dbConnection);
+        }
+
+        return dbConnection;
     }
 
     /// <summary>
     /// Gets the connection string for the current database configuration.
-    /// Defaults to sqlite
     /// </summary>
     public static string GetConnectionString(string? dbConnection = null)
     {
@@ -25,7 +38,8 @@ public static class DatabaseConfiguration
         {
             "mysql" => GetMySqlConnectionString(),
             "postgres" or "postgresql" => GetPostgresConnectionString(),
-            _ => GetSqliteConnectionString()
+            "sqlite" => GetSqliteConnectionString(),
+            _ => throw UnsupportedConnection(dbConnection)
         };
     }
 
@@ -42,10 +56,18 @@ public static class DatabaseConfiguration
             case "postgresql":
                 ConfigurePostgres(options);
                 break;
-            default:
+            case "sqlite":
                 ConfigureSqlite(options);
                 break;
+            default:
+                throw UnsupportedConnection(dbConnection);
         }
+    }
+
+    private static InvalidOperationException UnsupportedConnection(string dbConnection)
+    {
+        return new InvalidOperationException(
+            $"Database connection '{dbConnection}' is not supported. Set DB_CONNECTION to one of: {string.Join(", ", SupportedConnections)}.");
     }
 
     private static string GetMySqlConnectionString()
