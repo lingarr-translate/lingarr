@@ -112,6 +112,24 @@ Both accept the placeholders already listed above, plus two more:
 | `AI_PROMPT` | The system prompt template.                                           |
 | `AI_USER_PROMPT` | The user message template.                                            |
 
+### Mistral
+
+| **Environment Variable** | **Description**                                                             |
+|--------------------------|-----------------------------------------------------------------------------|
+| `MISTRAL_MODEL` | The model to use for Mistral translations. Example: `mistral-large-latest`. |
+| `MISTRAL_API_KEY` | The API key for authenticating with Mistral.                                |
+| `AI_PROMPT` | The system prompt template.                                                 |
+| `AI_USER_PROMPT` | The user message template.                                                  |
+
+### xAI
+
+| **Environment Variable** | **Description**                                          |
+|--------------------------|----------------------------------------------------------|
+| `XAI_MODEL` | The model to use for xAI translations. Example: `grok-4.5`. |
+| `XAI_API_KEY` | The API key for authenticating with xAI.                 |
+| `AI_PROMPT` | The system prompt template.                              |
+| `AI_USER_PROMPT` | The user message template.                               |
+
 ### LocalAI
 
 LocalAI works with Ollama or any other OpenAI-compatible model or router.
