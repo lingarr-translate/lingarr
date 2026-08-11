@@ -151,7 +151,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         {
             try
             {
-                return await CompleteWithLocalAiApi(replacements, retry.Token);
+                return await CompleteWithLocalAiApi(replacements, linked.Token);
             }
             catch (TranslationResponseException ex)
             {
