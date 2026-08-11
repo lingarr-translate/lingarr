@@ -318,6 +318,8 @@ public class MistralService : BaseLanguageService, ITranslationService, IBatchTr
         CancellationToken cancellationToken)
     {
         var requestUrl = $"{_endpoint}/chat/completions";
+        // Mistral only honours a json_schema response format when the schema object also
+        // carries name and strict, unlike the OpenAI dialect where strict is optional.
         var responseFormat = new
         {
             type = "json_schema",
