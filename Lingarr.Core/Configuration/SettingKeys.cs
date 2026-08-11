@@ -69,6 +69,13 @@ public static class SettingKeys
             public const string RequestTemplate = "mistral_request_template";
         }
 
+        public static class XAi
+        {
+            public const string Model = "xai_model";
+            public const string ApiKey = "xai_api_key";
+            public const string RequestTemplate = "xai_request_template";
+        }
+
         public static class LibreTranslate
         {
             public const string Url = "libretranslate_url";

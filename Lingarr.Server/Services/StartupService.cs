@@ -256,6 +256,9 @@ public class StartupService : IHostedService
             { "MISTRAL_MODEL", SettingKeys.Translation.Mistral.Model },
             { "MISTRAL_API_KEY", SettingKeys.Translation.Mistral.ApiKey },
 
+            { "XAI_MODEL", SettingKeys.Translation.XAi.Model },
+            { "XAI_API_KEY", SettingKeys.Translation.XAi.ApiKey },
+
             { "DEEPL_API_KEY", SettingKeys.Translation.DeepL.DeeplApiKey },
 
             { "AUTH_ENABLED", SettingKeys.Authentication.AuthEnabled },

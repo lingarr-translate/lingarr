@@ -26,7 +26,9 @@ public class RequestTemplateService : IRequestTemplateService
         [SettingKeys.Translation.Gemini.RequestTemplate] =
             () => JsonSerializer.Serialize(new GeminiTemplate()),
         [SettingKeys.Translation.Mistral.RequestTemplate] =
-            () => JsonSerializer.Serialize(new MistralTemplate())
+            () => JsonSerializer.Serialize(new MistralTemplate()),
+        [SettingKeys.Translation.XAi.RequestTemplate] =
+            () => JsonSerializer.Serialize(new XAiTemplate())
     };
 
     /// <inheritdoc />

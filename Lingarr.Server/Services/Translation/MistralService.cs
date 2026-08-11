@@ -318,8 +318,6 @@ public class MistralService : BaseLanguageService, ITranslationService, IBatchTr
         CancellationToken cancellationToken)
     {
         var requestUrl = $"{_endpoint}/chat/completions";
-        // Mistral only honours a json_schema response format when the schema object also
-        // carries name and strict, unlike the OpenAI dialect where strict is optional.
         var responseFormat = new
         {
             type = "json_schema",
@@ -448,10 +446,13 @@ public class MistralService : BaseLanguageService, ITranslationService, IBatchTr
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError("Failed to fetch models. Status: {StatusCode}", response.StatusCode);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError(
+                    "Failed to fetch models. Status: {StatusCode}, response: {ResponseContent}",
+                    response.StatusCode, responseContent);
                 return new ModelsResponse
                 {
-                    Message = $"Failed to fetch models. Status: {response.StatusCode}"
+                    Message = $"Failed to fetch models. Status: {response.StatusCode}, response: {responseContent}"
                 };
             }
 

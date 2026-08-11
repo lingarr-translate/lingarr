@@ -78,7 +78,7 @@ The plugin accepts standard language codes (`en`, `nl`, `ja`, etc.). If a langua
 
 Do not use these plugin identifiers (they are used by built-in providers):
 
-`anthropic`, `openai`, `gemini`, `deepseek`, `mistral`, `localai`, `deepl`, `libretranslate`, `google`, `bing`, `microsoft`, `yandex`.
+`anthropic`, `openai`, `gemini`, `deepseek`, `mistral`, `xai`, `localai`, `deepl`, `libretranslate`, `google`, `bing`, `microsoft`, `yandex`.
 
 ## Security
 

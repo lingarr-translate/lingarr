@@ -110,6 +110,14 @@ public class TranslationFactory : ITranslationServiceFactory
                 _serviceProvider.GetRequiredService<IRequestTemplateService>()
             ),
 
+            "xai" => new XAiService(
+                _serviceProvider.GetRequiredService<ISettingService>(),
+                _serviceProvider.GetRequiredService<HttpClient>(),
+                _serviceProvider.GetRequiredService<ILogger<XAiService>>(),
+                languageCodeService,
+                _serviceProvider.GetRequiredService<IRequestTemplateService>()
+            ),
+
             "gemini" => new GoogleGeminiService(
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<HttpClient>(),

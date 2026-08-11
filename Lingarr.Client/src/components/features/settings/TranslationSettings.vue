@@ -14,7 +14,8 @@
                     SERVICE_TYPE.GEMINI,
                     SERVICE_TYPE.LOCALAI,
                     SERVICE_TYPE.MISTRAL,
-                    SERVICE_TYPE.OPENAI
+                    SERVICE_TYPE.OPENAI,
+                    SERVICE_TYPE.XAI
                 ].includes(
                     serviceType as
                         | 'openai'
@@ -23,6 +24,7 @@
                         | 'gemini'
                         | 'deepseek'
                         | 'mistral'
+                        | 'xai'
                 )
             ">
                 <div class="flex flex-col space-x-2">
