@@ -7,9 +7,7 @@
   <Folder Name="/Lingarr.Root/">
     <File Path=".dockerignore" />
     <File Path=".gitignore" />
-    <File Path="build-and-push.ps1" />
     <File Path="CONTRIBUTING.md" />
-    <File Path="create-migrations.ps1" />
     <File Path="Directory.Packages.props" />
     <File Path="docker-compose.dev.yml" />
     <File Path="launchSettings.json" />
