@@ -91,7 +91,7 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 
 The supported values are:
 
-- **[AI services](/translation-services/ai-services)**: [`openai`](/translation-services/ai-services#openai), [`anthropic`](/translation-services/ai-services#anthropic), [`gemini`](/translation-services/ai-services#gemini), [`deepseek`](/translation-services/ai-services#deepseek), [`mistral`](/translation-services/ai-services#mistral) and [`localai`](/translation-services/ai-services#localai)
+- **[AI services](/translation-services/ai-services)**: [`openai`](/translation-services/ai-services#openai), [`anthropic`](/translation-services/ai-services#anthropic), [`gemini`](/translation-services/ai-services#gemini), [`deepseek`](/translation-services/ai-services#deepseek), [`mistral`](/translation-services/ai-services#mistral), [`xai`](/translation-services/ai-services#xai) and [`localai`](/translation-services/ai-services#localai)
 - **[Machine translation](/translation-services/machine-translation)**: [`libretranslate`](/translation-services/machine-translation#libretranslate), [`deepl`](/translation-services/machine-translation#deepl), [`google`](/translation-services/machine-translation#google-bing-microsoft-and-yandex), [`bing`](/translation-services/machine-translation#google-bing-microsoft-and-yandex), [`microsoft`](/translation-services/machine-translation#google-bing-microsoft-and-yandex) and [`yandex`](/translation-services/machine-translation#google-bing-microsoft-and-yandex)
 
 Each service has its own configuration variables, such as API keys and model selection, documented on its settings page.

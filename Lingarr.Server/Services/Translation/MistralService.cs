@@ -448,10 +448,13 @@ public class MistralService : BaseLanguageService, ITranslationService, IBatchTr
 
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError("Failed to fetch models. Status: {StatusCode}", response.StatusCode);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError(
+                    "Failed to fetch models. Status: {StatusCode}, response: {ResponseContent}",
+                    response.StatusCode, responseContent);
                 return new ModelsResponse
                 {
-                    Message = $"Failed to fetch models. Status: {response.StatusCode}"
+                    Message = $"Failed to fetch models. Status: {response.StatusCode}, response: {responseContent}"
                 };
             }
 

@@ -1,4 +1,5 @@
-﻿using System.Net;
+using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Lingarr.Contracts.Exceptions;
@@ -7,19 +8,19 @@ using Lingarr.Contracts.Models.Batch;
 using Lingarr.Contracts.Translation;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Interfaces.Services;
-using Lingarr.Server.Models.Integrations.Translation;
+using Lingarr.Server.Models;
 using Lingarr.Server.Services.Translation.Base;
 
 namespace Lingarr.Server.Services.Translation;
 
-public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBatchTranslationService, IProofreadService
+public class XAiService : BaseLanguageService, ITranslationService, IBatchTranslationService, IProofreadService
 {
-    private readonly string? _endpoint = "https://generativelanguage.googleapis.com/v1beta";
-    private readonly HttpClient _httpClient;
-    private readonly IRequestTemplateService _requestTemplateService;
+    private readonly string? _endpoint = "https://api.x.ai/v1";
     private string? _model;
     private string? _apiKey;
     private string? _requestTemplate;
+    private readonly HttpClient _httpClient;
+    private readonly IRequestTemplateService _requestTemplateService;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
@@ -31,10 +32,10 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
     private TimeSpan _retryDelay;
     private int _retryDelayMultiplier;
 
-    public GoogleGeminiService(
+    public XAiService(
         ISettingService settings,
         HttpClient httpClient,
-        ILogger<GoogleGeminiService> logger,
+        ILogger<XAiService> logger,
         LanguageCodeService languageCodeService,
         IRequestTemplateService requestTemplateService)
         : base(settings, logger, languageCodeService)
@@ -55,14 +56,14 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
     {
         if (_initialized) return;
 
-        await _initLock.WaitAsync();
         try
         {
+            await _initLock.WaitAsync();
             if (_initialized) return;
 
             var settings = await _settings.GetSettings([
-                SettingKeys.Translation.Gemini.Model,
-                SettingKeys.Translation.Gemini.RequestTemplate,
+                SettingKeys.Translation.XAi.Model,
+                SettingKeys.Translation.XAi.RequestTemplate,
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiUserPrompt,
                 SettingKeys.Translation.ProofreadPrompt,
@@ -73,15 +74,16 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                 SettingKeys.Translation.RetryDelayMultiplier,
                 SettingKeys.Translation.LanguageCodeFormat
             ]);
-            _apiKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.Gemini.ApiKey);
-            _model = settings[SettingKeys.Translation.Gemini.Model];
-            _requestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.Gemini.RequestTemplate])
-                ? settings[SettingKeys.Translation.Gemini.RequestTemplate]
-                : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.Gemini.RequestTemplate);
+
+            _model = settings[SettingKeys.Translation.XAi.Model];
+            _apiKey = await _settings.GetEncryptedSetting(SettingKeys.Translation.XAi.ApiKey);
+            _requestTemplate = !string.IsNullOrEmpty(settings[SettingKeys.Translation.XAi.RequestTemplate])
+                ? settings[SettingKeys.Translation.XAi.RequestTemplate]
+                : _requestTemplateService.GetDefaultTemplate(SettingKeys.Translation.XAi.RequestTemplate);
 
             if (string.IsNullOrEmpty(_model) || string.IsNullOrEmpty(_apiKey))
             {
-                throw new InvalidOperationException("Gemini API key or model is not configured.");
+                throw new InvalidOperationException("xAI API key or model is not configured.");
             }
 
             SetLanguageReplacements(sourceLanguage, targetLanguage, settings[SettingKeys.Translation.LanguageCodeFormat]);
@@ -95,18 +97,18 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                 ? timeOut
                 : 5;
             _httpClient.Timeout = TimeSpan.FromMinutes(requestTimeout);
-            _httpClient.DefaultRequestHeaders.Accept.Clear();
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
             _httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
 
-            _maxRetries = int.TryParse(settings[SettingKeys.Translation.MaxRetries], out var maxRetries) 
-                ? maxRetries 
+            _maxRetries = int.TryParse(settings[SettingKeys.Translation.MaxRetries], out var maxRetries)
+                ? maxRetries
                 : 5;
-            var retryDelaySeconds = int.TryParse(settings[SettingKeys.Translation.RetryDelay], out var delaySeconds) 
-                ? delaySeconds 
+            var retryDelaySeconds = int.TryParse(settings[SettingKeys.Translation.RetryDelay], out var delaySeconds)
+                ? delaySeconds
                 : 1;
             _retryDelay = TimeSpan.FromSeconds(retryDelaySeconds);
-            _retryDelayMultiplier = int.TryParse(settings[SettingKeys.Translation.RetryDelayMultiplier], out var multiplier) 
-                ? multiplier 
+            _retryDelayMultiplier = int.TryParse(settings[SettingKeys.Translation.RetryDelayMultiplier], out var multiplier)
+                ? multiplier
                 : 2;
 
             _initialized = true;
@@ -128,7 +130,6 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
 
-        var replacements = GetReplacements(_model!, text, contextLinesBefore, contextLinesAfter);
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
 
@@ -137,7 +138,8 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         {
             try
             {
-                return await TranslateWithGeminiApi(replacements, linked.Token);
+                var replacements = GetReplacements(_model!, text, contextLinesBefore, contextLinesAfter);
+                return await CompleteWithXAiApi(replacements, linked.Token);
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {
@@ -152,7 +154,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
 
                 _logger.LogWarning(
                     "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
-                    "Gemini", ex.StatusCode, delay, attempt, _maxRetries);
+                    "xAI", ex.StatusCode, delay, attempt, _maxRetries);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -160,8 +162,8 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error during translation attempt {Attempt}", attempt);
-                throw new TranslationException("Unexpected error occurred during translation.", ex);
+                _logger.LogError(ex, "Error occurred during xAI translation");
+                throw new TranslationException("Failed to translate using xAI", ex);
             }
         }
 
@@ -178,7 +180,6 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
 
-        var replacements = GetProofreadReplacements(_model!, sourceText, translatedText);
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
 
@@ -187,7 +188,8 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         {
             try
             {
-                return await TranslateWithGeminiApi(replacements, linked.Token);
+                var replacements = GetProofreadReplacements(_model!, sourceText, translatedText);
+                return await CompleteWithXAiApi(replacements, linked.Token);
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {
@@ -202,7 +204,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
 
                 _logger.LogWarning(
                     "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
-                    "Gemini", ex.StatusCode, delay, attempt, _maxRetries);
+                    "xAI", ex.StatusCode, delay, attempt, _maxRetries);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -210,131 +212,54 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error during proofread attempt {Attempt}", attempt);
-                throw new TranslationException("Unexpected error occurred during proofread.", ex);
+                _logger.LogError(ex, "Error occurred during xAI proofread");
+                throw new TranslationException("Failed to proofread using xAI", ex);
             }
         }
 
         throw new TranslationException("Proofread failed after maximum retry attempts.");
     }
 
-    private async Task<string> TranslateWithGeminiApi(
+    private async Task<string> CompleteWithXAiApi(
         Dictionary<string, string> replacements,
         CancellationToken cancellationToken)
     {
-        var endpoint = $"{_endpoint}/models/{_model}:generateContent?key={_apiKey}";
+        var requestUrl = $"{_endpoint}/chat/completions";
         var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
-
-        var content = new StringContent(
+        var requestContent = new StringContent(
             bodyJson,
             Encoding.UTF8,
             "application/json");
 
-        var response = await _httpClient.PostAsync(endpoint, content, cancellationToken);
-
+        var response = await _httpClient.PostAsync(requestUrl, requestContent, cancellationToken);
         if (!response.IsSuccessStatusCode)
         {
+            if (response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
+            {
+                throw new HttpRequestException(
+                    $"xAI returned {response.StatusCode}", null, response.StatusCode);
+            }
+
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogError(
-                "Gemini API request failed with status {StatusCode}: {ResponseContent}",
-                response.StatusCode, 
-                responseContent);
-            throw new HttpRequestException(
-                $"Gemini API request failed with status {response.StatusCode}: {responseContent}",
-                null, 
-                response.StatusCode);
+                "xAI API request failed with status {StatusCode}: {ResponseContent}",
+                response.StatusCode, responseContent);
+            throw new TranslationException(
+                $"xAI API request failed with status {response.StatusCode}: {responseContent}");
         }
 
-        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-        var geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(responseBody);
-
-        if (geminiResponse?.Candidates == null || geminiResponse.Candidates.Count == 0 ||
-            geminiResponse.Candidates[0].Content?.Parts == null ||
-            geminiResponse.Candidates[0].Content?.Parts.Count == 0)
+        var completionResponse =
+            await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(cancellationToken);
+        if (completionResponse?.Choices == null || completionResponse.Choices.Count == 0)
         {
-            throw new TranslationException("Invalid or empty response from Gemini API.");
+            throw new TranslationException("No completion choices returned from xAI");
         }
 
-        return geminiResponse.Candidates[0].Content?.Parts[0].Text ?? string.Empty;
-    }
-
-    /// <inheritdoc />
-    public override async Task<ModelsResponse> GetModels()
-    {
-        var supportedGenerationMethods = new List<string> { "generateMessage", "generateContent", "generateText" };
-        var apiKey = await _settings.GetEncryptedSetting(
-            SettingKeys.Translation.Gemini.ApiKey
-        );
-
-        if (string.IsNullOrEmpty(apiKey))
-        {
-            return new ModelsResponse
-            {
-                Message = "Gemini API key is not configured."
-            };
-        }
-
-        try
-        {
-            var request = new HttpRequestMessage(HttpMethod.Get, $"{_endpoint}/models?key={apiKey}");
-            var response = await _httpClient.SendAsync(request);
-
-            var responseContent = await response.Content.ReadAsStringAsync();
-            if (!response.IsSuccessStatusCode)
-            {
-                _logger.LogError(
-                    "Failed to fetch models. Status: {StatusCode}, response: {ResponseContent}",
-                    response.StatusCode, responseContent);
-                return new ModelsResponse
-                {
-                    Message = $"Failed to fetch models. Status: {response.StatusCode}, response: {responseContent}"
-                };
-            }
-
-            var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
-
-            if (!jsonResponse.TryGetProperty("models", out var modelsElement))
-            {
-                return new ModelsResponse
-                {
-                    Message = "Invalid response format from Gemini API."
-                };
-            }
-
-            var labelValues = modelsElement.EnumerateArray()
-                .Where(model =>
-                {
-                    if (!model.TryGetProperty("supportedGenerationMethods", out var methods))
-                        return false;
-
-                    return methods.EnumerateArray()
-                        .Any(method => supportedGenerationMethods.Contains(method.GetString()));
-                })
-                .Select(model => new LabelValue
-                {
-                    // Set label to be name instead of displayName
-                    Label = model.GetProperty("name").GetString() ?? string.Empty,
-                    Value = model.GetProperty("name").GetString()?.Replace("models/", "") ?? string.Empty
-                })
-                .ToList();
-
-            return new ModelsResponse
-            {
-                Options = labelValues
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error fetching models from Gemini API");
-            return new ModelsResponse
-            {
-                Message = "Error fetching models from Gemini API: " + ex.Message
-            };
-        }
+        return completionResponse.Choices[0].Message.Content;
     }
 
     /// <summary>
-    /// Translates a batch of subtitles in a single API call
+    /// Translates a batch of subtitles in a single API call using structured outputs
     /// </summary>
     /// <param name="subtitleBatch">List of subtitles with position and content</param>
     /// <param name="sourceLanguage">Source language code</param>
@@ -348,16 +273,16 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         CancellationToken cancellationToken)
     {
         await InitializeAsync(sourceLanguage, targetLanguage);
-        
+
         using var retry = new CancellationTokenSource();
         using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, retry.Token);
-        
+
         var delay = _retryDelay;
         for (var attempt = 1; attempt <= _maxRetries; attempt++)
         {
             try
             {
-                return await TranslateBatchWithGeminiApi(subtitleBatch, linked.Token);
+                return await TranslateBatchWithXAiApi(subtitleBatch, linked.Token);
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {
@@ -372,7 +297,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
 
                 _logger.LogWarning(
                     "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
-                    "Gemini", ex.StatusCode, delay, attempt, _maxRetries);
+                    "xAI", ex.StatusCode, delay, attempt, _maxRetries);
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
@@ -388,73 +313,99 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         throw new TranslationException("Batch translation failed after maximum retry attempts.");
     }
 
-    private async Task<Dictionary<int, string>> TranslateBatchWithGeminiApi(
+    private async Task<Dictionary<int, string>> TranslateBatchWithXAiApi(
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
-        var endpoint = $"{_endpoint}/models/{_model}:generateContent?key={_apiKey}";
+        var requestUrl = $"{_endpoint}/chat/completions";
+        var responseFormat = new
+        {
+            type = "json_schema",
+            json_schema = new
+            {
+                name = "batch_translation_response",
+                strict = true,
+                schema = new
+                {
+                    type = "object",
+                    properties = new
+                    {
+                        translations = new
+                        {
+                            type = "array",
+                            items = new
+                            {
+                                type = "object",
+                                properties = new
+                                {
+                                    position = new
+                                    {
+                                        type = "integer"
+                                    },
+                                    line = new
+                                    {
+                                        type = "string"
+                                    }
+                                },
+                                required = new[] { "position", "line" },
+                                additionalProperties = false
+                            }
+                        }
+                    },
+                    required = new[] { "translations" },
+                    additionalProperties = false
+                }
+            }
+        };
+
         var replacements = GetBatchReplacements(_model!, JsonSerializer.Serialize(subtitleBatch));
         var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
         bodyJson = _requestTemplateService.SetRequestFields(bodyJson, new Dictionary<string, object?>
         {
-            ["generationConfig"] = new Dictionary<string, object>
-            {
-                ["response_mime_type"] = "application/json",
-                ["response_schema"] = new
-                {
-                    type = "array",
-                    items = new
-                    {
-                        type = "object",
-                        properties = new
-                        {
-                            position = new
-                            {
-                                type = "integer"
-                            },
-                            line = new
-                            {
-                                type = "string"
-                            }
-                        },
-                        required = new[] { "position", "line" }
-                    }
-                }
-            }
+            ["response_format"] = responseFormat
         });
 
-        var content = new StringContent(
+        var requestContent = new StringContent(
             bodyJson,
             Encoding.UTF8,
             "application/json");
 
-        var response = await _httpClient.PostAsync(endpoint, content, cancellationToken);
+        var response = await _httpClient.PostAsync(requestUrl, requestContent, cancellationToken);
+
         if (!response.IsSuccessStatusCode)
         {
+            if (response.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
+            {
+                throw new HttpRequestException(
+                    $"Batch translation using xAI API failed with {response.StatusCode}.",
+                    null, response.StatusCode);
+            }
+
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogError(
-                "Gemini batch API request failed with status {StatusCode}: {ResponseContent}",
-                response.StatusCode, 
-                responseContent);
-            throw new HttpRequestException(
-                $"Gemini batch API request failed with status {response.StatusCode}: {responseContent}",
-                null, 
-                response.StatusCode);
+                "xAI batch API request failed with status {StatusCode}: {ResponseContent}",
+                response.StatusCode, responseContent);
+            throw new TranslationException(
+                $"xAI batch API request failed with status {response.StatusCode}: {responseContent}");
         }
 
-        var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-        var geminiResponse = JsonSerializer.Deserialize<GeminiResponse>(responseBody);
-        if (geminiResponse?.Candidates == null || geminiResponse.Candidates.Count == 0 ||
-            geminiResponse.Candidates[0].Content?.Parts == null ||
-            geminiResponse.Candidates[0].Content?.Parts.Count == 0)
+        var completionResponse = await response.Content.ReadFromJsonAsync<ChatCompletionResponse>(cancellationToken);
+        if (completionResponse?.Choices == null || completionResponse.Choices.Count == 0)
         {
-            throw new TranslationException("Invalid or empty response from Gemini API.");
+            throw new TranslationException("No completion choices returned from xAI");
         }
 
-        var translatedJson = geminiResponse.Candidates[0].Content?.Parts[0].Text ?? string.Empty;
+        var translatedJson = completionResponse.Choices[0].Message.Content;
         try
         {
-            var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translatedJson);
+            var responseWrapper = JsonSerializer.Deserialize<JsonElement>(translatedJson);
+            if (!responseWrapper.TryGetProperty("translations", out var translationsElement))
+            {
+                throw new TranslationException("Response does not contain 'translations' property");
+            }
+
+            var translatedItems =
+                JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translationsElement.GetRawText());
             if (translatedItems == null)
             {
                 throw new TranslationException("Failed to deserialize translated subtitles");
@@ -462,43 +413,87 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
 
             return MergeByPosition(translatedItems);
         }
-
         catch (JsonException ex)
         {
-            try
-            {
-                var repairedJson = TryRepairJson(translatedJson);
-                if (repairedJson != translatedJson)
-                {
-                    var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(repairedJson);
-                    if (translatedItems != null)
-                    {
-                        _logger.LogWarning("Successfully repaired the truncated JSON response from Gemini. Please verify the result.");
-                        return MergeByPosition(translatedItems);
-                    }
-                }
-            }
-            catch
-            {
-                // Ignore repair failure
-            }
-
             _logger.LogError(ex, "Failed to parse translated JSON: {Json}", translatedJson);
             throw new TranslationException("Failed to parse translated subtitles", ex);
         }
     }
 
-    private static string TryRepairJson(string json)
+    /// <inheritdoc />
+    public override async Task<ModelsResponse> GetModels()
     {
-        json = json.Trim();
-        if (json.StartsWith("[") && !json.EndsWith("]"))
+        var apiKey = await _settings.GetEncryptedSetting(
+            SettingKeys.Translation.XAi.ApiKey
+        );
+
+        if (string.IsNullOrEmpty(apiKey))
         {
-            var lastBrace = json.LastIndexOf('}');
-            if (lastBrace > -1)
+            return new ModelsResponse
             {
-                return json.Substring(0, lastBrace + 1) + "]";
-            }
+                Message = "xAI API key is not configured."
+            };
         }
-        return json;
+
+        try
+        {
+            var client = new HttpClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+            client.DefaultRequestHeaders.Add("Accept", "application/json");
+
+            var requestUrl = $"{_endpoint}/models";
+            var response = await client.GetAsync(requestUrl);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var responseContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError(
+                    "Failed to fetch models. Status: {StatusCode}, response: {ResponseContent}",
+                    response.StatusCode, responseContent);
+                return new ModelsResponse
+                {
+                    Message = $"Failed to fetch models. Status: {response.StatusCode}, response: {responseContent}"
+                };
+            }
+
+            var modelsResponse = await response.Content.ReadFromJsonAsync<ModelsListResponse>();
+
+            if (modelsResponse?.Data == null)
+            {
+                return new ModelsResponse
+                {
+                    Message = "No models data returned from xAI API."
+                };
+            }
+
+            var labelValues = modelsResponse.Data
+                .Select(model => new LabelValue
+                {
+                    Label = model.Id,
+                    Value = model.Id
+                })
+                .ToList();
+
+            return new ModelsResponse
+            {
+                Options = labelValues
+            };
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "HTTP error fetching models from xAI API");
+            return new ModelsResponse
+            {
+                Message = $"HTTP error fetching models from xAI API: {ex.Message}"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching models from xAI API");
+            return new ModelsResponse
+            {
+                Message = $"Error fetching models from xAI API: {ex.Message}"
+            };
+        }
     }
 }

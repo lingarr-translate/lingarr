@@ -23,6 +23,7 @@ export const SETTINGS = {
     GEMINI_MODEL: 'gemini_model',
     DEEPSEEK_MODEL: 'deepseek_model',
     MISTRAL_MODEL: 'mistral_model',
+    XAI_MODEL: 'xai_model',
     AI_PROMPT: 'ai_prompt',
     AI_USER_PROMPT: 'ai_user_prompt',
     PROOFREAD_PROMPT: 'proofread_prompt',
@@ -63,7 +64,6 @@ export const SETTINGS = {
     LOCAL_AI_GENERATE_REQUEST_TEMPLATE: 'local_ai_generate_request_template',
     DEEPSEEK_REQUEST_TEMPLATE: 'deepseek_request_template',
     GEMINI_REQUEST_TEMPLATE: 'gemini_request_template',
-    MISTRAL_REQUEST_TEMPLATE: 'mistral_request_template',
     LANGUAGE_CODE_FORMAT: 'language_code_format',
     RADARR_DEFAULT_INCLUDE: 'radarr_default_include',
     SONARR_DEFAULT_INCLUDE: 'sonarr_default_include'
@@ -90,7 +90,6 @@ export interface ISettings {
     local_ai_model: string
     gemini_model: string
     deepseek_model: string
-    mistral_model: string
     ai_prompt: string
     ai_user_prompt: string
     proofread_prompt: string
@@ -131,7 +130,6 @@ export interface ISettings {
     local_ai_generate_request_template: string
     deepseek_request_template: string
     gemini_request_template: string
-    mistral_request_template: string
     language_code_format: string
     radarr_default_include: string
     sonarr_default_include: string
@@ -146,7 +144,6 @@ export const ENCRYPTED_SETTINGS = {
     ANTHROPIC_API_KEY: 'anthropic_api_key',
     GEMINI_API_KEY: 'gemini_api_key',
     DEEPSEEK_API_KEY: 'deepseek_api_key',
-    MISTRAL_API_KEY: 'mistral_api_key',
     DEEPL_API_KEY: 'deepl_api_key',
     LIBRETRANSLATE_API_KEY: 'libretranslate_api_key',
     LOCAL_AI_API_KEY: 'local_ai_api_key',
@@ -160,7 +157,6 @@ export interface IEncryptedSettings {
     anthropic_api_key: string
     gemini_api_key: string
     deepseek_api_key: string
-    mistral_api_key: string
     deepl_api_key: string
     libretranslate_api_key: string
     local_ai_api_key: string
@@ -174,7 +170,6 @@ export const SERVICE_TYPE = {
     DEEPL: 'deepl',
     GEMINI: 'gemini',
     DEEPSEEK: 'deepseek',
-    MISTRAL: 'mistral',
     GOOGLE: 'google',
     BING: 'bing',
     MICROSOFT: 'microsoft',

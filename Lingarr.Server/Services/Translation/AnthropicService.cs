@@ -504,16 +504,18 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
 
             var response = await _httpClient.SendAsync(request);
 
+            var responseContent = await response.Content.ReadAsStringAsync();
             if (!response.IsSuccessStatusCode)
             {
-                _logger.LogError("Failed to fetch models. Status: {StatusCode}", response.StatusCode);
+                _logger.LogError(
+                    "Failed to fetch models. Status: {StatusCode}, response: {ResponseContent}",
+                    response.StatusCode, responseContent);
                 return new ModelsResponse
                 {
-                    Message = $"Failed to fetch models. Status: {response.StatusCode}"
+                    Message = $"Failed to fetch models. Status: {response.StatusCode}, response: {responseContent}"
                 };
             }
 
-            var responseContent = await response.Content.ReadAsStringAsync();
             var jsonResponse = JsonSerializer.Deserialize<JsonElement>(responseContent);
 
             if (!jsonResponse.TryGetProperty("data", out var dataElement))

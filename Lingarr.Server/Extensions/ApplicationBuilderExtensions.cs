@@ -80,6 +80,7 @@ public static class ApplicationBuilderExtensions
             SettingKeys.Translation.Gemini.ApiKey,
             SettingKeys.Translation.DeepSeek.ApiKey,
             SettingKeys.Translation.Mistral.ApiKey,
+            SettingKeys.Translation.XAi.ApiKey,
             SettingKeys.Translation.DeepL.DeeplApiKey,
             SettingKeys.Translation.LibreTranslate.ApiKey,
             SettingKeys.Translation.LocalAi.ApiKey,
