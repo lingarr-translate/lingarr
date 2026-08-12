@@ -104,8 +104,7 @@ public class MigrationTests
     [Fact]
     public async Task MySql_MigrationsRunSuccessfully()
     {
-        await using var container = new MySqlBuilder()
-            .WithImage("mysql:latest")
+        await using var container = new MySqlBuilder("mysql:latest")
             .Build();
         await container.StartAsync(TestContext.Current.CancellationToken);
 
@@ -120,8 +119,7 @@ public class MigrationTests
     [Fact]
     public async Task Postgres_MigrationsRunSuccessfully()
     {
-        await using var container = new PostgreSqlBuilder()
-            .WithImage("postgres:latest")
+        await using var container = new PostgreSqlBuilder("postgres:latest")
             .Build();
         await container.StartAsync(TestContext.Current.CancellationToken);
 
