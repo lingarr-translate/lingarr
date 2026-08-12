@@ -185,7 +185,7 @@ public class AuthController : ControllerBase
     /// Generate a new API key (only during onboarding or if not already exists)
     /// </summary>
     [HttpPost("apikey/generate")]
-    [AllowAnonymous]
+    [LingarrAuthorize]
     public async Task<ActionResult<ApiKeyResponse>> GenerateNewApiKey()
     {
         var apiKey = _authService.GenerateApiKey();
@@ -261,7 +261,7 @@ public class AuthController : ControllerBase
                 return BadRequest(new { message = "Password must be at least 4 characters long" });
             }
 
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
+            user.PasswordHash = _authService.HashPassword(request.Password);
         }
 
         await _context.SaveChangesAsync();

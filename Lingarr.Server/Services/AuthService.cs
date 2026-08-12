@@ -92,7 +92,7 @@ public class AuthService : IAuthService
         return apiKey == storedApiKey;
     }
 
-    private static string HashPassword(string password)
+    public string HashPassword(string password)
     {
         // random salt
         var salt = new byte[128 / 8];

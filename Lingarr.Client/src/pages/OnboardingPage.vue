@@ -187,11 +187,11 @@ const completeSetup = async () => {
             })
         }
 
-        await services.auth.generateApiKey()
         await services.auth.completeOnboarding({
             enableUserAuth: onboardingStore.enableAuth,
             enableApiKey: onboardingStore.enableAuth
         })
+        await services.auth.generateApiKey()
 
         await settingStore.updateSetting(
             SETTINGS.TELEMETRY_ENABLED,
