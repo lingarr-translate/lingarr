@@ -48,19 +48,23 @@ public class LingarrDbContext : DbContext
             {
                 if (property.ClrType == typeof(DateTime))
                 {
+                    property.SetColumnType("timestamp without time zone");
                     property.SetValueConverter(new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime, DateTime>(
-                        v => v.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(v, DateTimeKind.Utc) : v.ToUniversalTime(),
-                        v => v));
+                        value => value.Kind == DateTimeKind.Unspecified
+                            ? value
+                            : DateTime.SpecifyKind(value.ToUniversalTime(), DateTimeKind.Unspecified),
+                        value => value));
                 }
                 else if (property.ClrType == typeof(DateTime?))
                 {
+                    property.SetColumnType("timestamp without time zone");
                     property.SetValueConverter(new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime?, DateTime?>(
-                        v => v.HasValue 
-                            ? (v.Value.Kind == DateTimeKind.Unspecified 
-                                ? DateTime.SpecifyKind(v.Value, DateTimeKind.Utc) 
-                                : v.Value.ToUniversalTime()) 
-                            : v,
-                        v => v));
+                        value => value.HasValue
+                            ? (value.Value.Kind == DateTimeKind.Unspecified
+                                ? value.Value
+                                : DateTime.SpecifyKind(value.Value.ToUniversalTime(), DateTimeKind.Unspecified))
+                            : value,
+                        value => value));
                 }
             }
         }
