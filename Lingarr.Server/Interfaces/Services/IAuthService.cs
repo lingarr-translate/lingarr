@@ -39,4 +39,9 @@ public interface IAuthService
     /// Check if a user exists in the database
     /// </summary>
     Task<bool> HasAnyUsers();
+
+    /// <summary>
+    /// Hashes a password
+    /// </summary>
+    string HashPassword(string password);
 }
