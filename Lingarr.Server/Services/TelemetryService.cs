@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Lingarr.Core;
 using Lingarr.Core.Configuration;
 using Lingarr.Server.Interfaces.Services;
@@ -31,20 +30,18 @@ public class TelemetryService : ITelemetryService
     public async Task<TelemetryPayload> GenerateTelemetryPayload()
     {
         var stats = await _statisticsService.GetStatistics();
-        var deltaLines = Math.Max(0, stats.TotalLinesTranslated - await GetNumericSetting(SettingKeys.Telemetry.LastReportedLines));
-        var deltaFiles = Math.Max(0, stats.TotalFilesTranslated - await GetNumericSetting(SettingKeys.Telemetry.LastReportedFiles));
-        var deltaChars = Math.Max(0, stats.TotalCharactersTranslated - await GetNumericSetting(SettingKeys.Telemetry.LastReportedCharacters));
 
         return new TelemetryPayload
         {
+            InstallationId = await GetOrCreateInstallationId(),
             Version = LingarrVersion.Number,
             ReportDate = $"{DateTime.UtcNow:yyyy-MM-dd}",
-            Platform = GetPlatformInfo(),
+            Platform = LingarrVersion.Platform,
             Metrics = new TelemetryMetrics
             {
-                FilesTranslated = deltaFiles,
-                LinesTranslated = deltaLines,
-                CharactersTranslated = deltaChars,
+                FilesTranslated = stats.TotalFilesTranslated,
+                LinesTranslated = stats.TotalLinesTranslated,
+                CharactersTranslated = stats.TotalCharactersTranslated,
                 ServiceUsage = stats.TranslationsByService,
                 LanguagePairs = stats.SubtitlesByLanguage,
                 MediaTypeUsage = stats.TranslationsByMediaType,
@@ -53,10 +50,18 @@ public class TelemetryService : ITelemetryService
         };
     }
 
-    private async Task<long> GetNumericSetting(string key)
+    private async Task<string> GetOrCreateInstallationId()
     {
-        var value = await _settingService.GetSetting(key);
-        return long.TryParse(value, out var result) ? result : 0;
+        var installationId = await _settingService.GetSetting(SettingKeys.Telemetry.InstallationId);
+        if (!string.IsNullOrWhiteSpace(installationId))
+        {
+            return installationId;
+        }
+
+        installationId = Guid.NewGuid().ToString("N");
+        await _settingService.SetSetting(SettingKeys.Telemetry.InstallationId, installationId);
+
+        return installationId;
     }
 
     public async Task<bool> CanSubmitTelemetry()
@@ -90,12 +95,7 @@ public class TelemetryService : ITelemetryService
                 return false;
             }
 
-            // Update snapshot on success
-            var stats = await _statisticsService.GetStatistics();
             await _settingService.SetSetting(SettingKeys.Telemetry.LastSubmission, DateTime.UtcNow.ToString("O"));
-            await _settingService.SetSetting(SettingKeys.Telemetry.LastReportedLines, stats.TotalLinesTranslated.ToString());
-            await _settingService.SetSetting(SettingKeys.Telemetry.LastReportedFiles, stats.TotalFilesTranslated.ToString());
-            await _settingService.SetSetting(SettingKeys.Telemetry.LastReportedCharacters, stats.TotalCharactersTranslated.ToString());
 
             return true;
         }
@@ -104,25 +104,5 @@ public class TelemetryService : ITelemetryService
             _logger.LogError(ex, "Error submitting telemetry");
             return false;
         }
-    }
-    
-    private string GetPlatformInfo()
-    {
-        var arch = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-        {
-            return $"linux/{arch}";
-        }
-
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return $"windows/{arch}";
-        }
-
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-        {
-            return $"macos/{arch}";
-        }
-        return $"unknown/{arch}";
     }
 }

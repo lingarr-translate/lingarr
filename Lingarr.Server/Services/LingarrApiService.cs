@@ -29,7 +29,7 @@ public class LingarrApiService : ILingarrApiService
         {
             Scheme = Uri.UriSchemeHttps,
             Host = $"api.{LingarrVersion.Name.ToLower()}.com"
-        }.Uri.ToString();
+        }.Uri.ToString().TrimEnd('/');
     }
 
     public async Task<string?> GetLatestVersion()
@@ -45,6 +45,7 @@ public class LingarrApiService : ILingarrApiService
         {
             var httpClient = _httpClientFactory.CreateClient();
             httpClient.DefaultRequestHeaders.Add("User-Agent", $"{LingarrVersion.Name}/{LingarrVersion.Number}");
+            httpClient.DefaultRequestHeaders.Add("x-lingarr-platform", LingarrVersion.Platform);
 
             var response = await httpClient.GetAsync($"{_baseUrl}/version/latest");
 

@@ -68,6 +68,10 @@ secrets:
 |--------------------------|---------------------------------------------------------------------------------|
 | `TELEMETRY_ENABLED`      | Opt-in for anonymized telemetry to help other Lingarr users, defaults to false. |
 
+When enabled, Lingarr submits a report at most once every 7 days, and never from a development build. Each report contains the running Lingarr version, the platform, the report date, and the same lifetime totals shown on the Statistics page: files, lines and characters translated, plus the breakdowns by translation service, language pair, media type and model. No file names, subtitle content or other personal information is collected. Resetting statistics resets these totals as well.
+
+Each report also carries an installation identifier. This is a random value generated once on first submission and stored locally as a setting; it is not derived from the machine, the network, the IP address or any hardware. The service that receives the report stores only a hash of it, never the original value, and uses it solely to tell one installation's reports apart from another's over time.
+
 ---
 
 ### **Translation Service Configuration**

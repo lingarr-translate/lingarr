@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Runtime.InteropServices;
 using Lingarr.Core.Models;
 
 namespace Lingarr.Core;
@@ -8,6 +9,29 @@ public static class LingarrVersion
     public const string Name = "Lingarr";
 
     public static readonly string Number = GetCurrentVersion();
+
+    public static string Platform { get; } = BuildPlatform();
+
+    private static string BuildPlatform()
+    {
+        var arch = RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            return $"linux/{arch}";
+        }
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return $"windows/{arch}";
+        }
+
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+        {
+            return $"macos/{arch}";
+        }
+
+        return $"unknown/{arch}";
+    }
 
     private static string GetCurrentVersion()
     {

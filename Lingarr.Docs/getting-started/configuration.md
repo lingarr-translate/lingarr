@@ -69,6 +69,9 @@ The following settings are all **optional** and can be provided via environment 
 |--------------------------|-----------------|
 | `TELEMETRY_ENABLED` | Opt-in for anonymized telemetry to help other Lingarr users, defaults to false. |
 
+When enabled, Lingarr submits a report at most once every 7 days, Each report also carries an installation identifier.
+This is a random value generated once on first submission and stored locally as a setting and doesn't persist on reinstallations.
+
 ## Translation services
 
 | **Environment Variable** | **Description** |
