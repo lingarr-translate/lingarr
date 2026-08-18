@@ -157,15 +157,6 @@ public class StatisticsService : IStatisticsService
         var dailyStats = await _dbContext.DailyStatistics.ToListAsync();
         _dbContext.DailyStatistics.RemoveRange(dailyStats);
 
-        // Reset telemetry snapshot settings
-        var telemetrySettings = new Dictionary<string, string>
-        {
-            { "telemetry_last_reported_lines", "0" },
-            { "telemetry_last_reported_files", "0" },
-            { "telemetry_last_reported_characters", "0" }
-        };
-        await _settingService.SetSettings(telemetrySettings);
-
         await _dbContext.SaveChangesAsync();
     }
 }

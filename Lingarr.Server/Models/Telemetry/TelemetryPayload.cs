@@ -2,6 +2,7 @@ namespace Lingarr.Server.Models.Telemetry;
 
 public class TelemetryPayload
 {
+    public required string InstallationId { get; set; }
     public required string Version { get; set; }
     public required string ReportDate { get; set; }
     public string? Platform { get; set; }
