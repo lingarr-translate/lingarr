@@ -117,11 +117,11 @@ public class AutomatedTranslationJob
                 return false;
             }
 
-            fileAge = DateTime.UtcNow - media.DateAdded.Value.ToUniversalTime();
+            fileAge = DateTimeOffset.UtcNow - media.DateAdded.Value;
         }
         else
         {
-            fileAge = DateTime.UtcNow - fileInfo.LastWriteTimeUtc;
+            fileAge = DateTimeOffset.UtcNow - new DateTimeOffset(fileInfo.LastWriteTimeUtc);
         }
 
         var threshold = customAgeThreshold ??

@@ -14,12 +14,12 @@ public class TranslationRequestDetail
     public string? TranslatedSubtitle { get; set; }
     public required MediaType MediaType { get; set; }
     public required TranslationStatus Status { get; set; }
-    public DateTime? CompletedAt { get; set; }
+    public DateTimeOffset? CompletedAt { get; set; }
     public string? ErrorMessage { get; set; }
     public string? StackTrace { get; set; }
     public int Progress { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
+    public DateTimeOffset CreatedAt { get; set; }
+    public DateTimeOffset UpdatedAt { get; set; }
     public List<TranslationRequestEventDetail> Events { get; set; } = [];
     public List<TranslationRequestSubtitleLines> Lines { get; set; } = [];
 }

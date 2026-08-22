@@ -1,4 +1,4 @@
-using Hangfire;
+﻿using Hangfire;
 using Lingarr.Core;
 using Lingarr.Core.Configuration;
 using Lingarr.Migrations;
@@ -116,7 +116,9 @@ public static class ApplicationBuilderExtensions
             configBuilder =>
             {
                 var index = File.ReadAllText(Path.Combine(app.Environment.WebRootPath, "index.html"));
-                index = index.Replace("<head>", $"<head><base href=\"{basePath}/\">");
+                index = index.Replace("<head>",
+                    $"<head><base href=\"{basePath}/\">" +
+                    $"<meta name=\"lingarr-timezone\" content=\"{TimeZoneConfiguration.IanaId}\">");
 
                 configBuilder.Run(async ctx =>
                 {

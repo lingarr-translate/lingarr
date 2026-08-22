@@ -1,5 +1,7 @@
 ﻿
 
+using System.Globalization;
+using Lingarr.Core.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Lingarr.Core.Logging;
@@ -29,7 +31,9 @@ public class ColoredConsoleLogger : ILogger
         var message = formatter(state, exception);
         message = ApplyColorEmphasis(message);
 
-        Console.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] [{logLevel}] {_categoryName}: {message}");
+        var timestamp = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TimeZoneConfiguration.Current);
+        Console.WriteLine(
+            $"[{timestamp.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.InvariantCulture)}] [{logLevel}] {_categoryName}: {message}");
 
         if (exception != null)
         {

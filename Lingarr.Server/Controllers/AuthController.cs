@@ -48,7 +48,7 @@ public class AuthController : ControllerBase
             return Unauthorized(new { message = "Invalid username or password" });
         }
 
-        user.LastLoginAt = DateTime.UtcNow;
+        user.LastLoginAt = DateTimeOffset.UtcNow;
         await _context.SaveChangesAsync();
         var claims = new List<Claim>
         {

@@ -193,7 +193,7 @@ public class ProofreadJob
         int total,
         CancellationToken cancellationToken)
     {
-        translationRequest.CompletedAt = DateTime.UtcNow;
+        translationRequest.CompletedAt = DateTimeOffset.UtcNow;
         translationRequest.Status = TranslationStatus.Completed;
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Completed,

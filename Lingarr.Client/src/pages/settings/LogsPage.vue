@@ -60,7 +60,7 @@
                 <div
                     class="hover:bg-secondary/20 border-secondary/30 grid grid-cols-12 border-b py-2 transition-colors">
                     <div class="col-span-1 px-4 text-gray-400">
-                        {{ log.formattedTime }}
+                        {{ formatTime(log.timestamp) }}
                     </div>
                     <div class="col-span-1 px-4">
                         <span
@@ -103,6 +103,7 @@
 import { ref, onMounted, onUnmounted, nextTick, computed, watch } from 'vue'
 import { ILogEntry, IFilterOptions } from '@/ts'
 import services from '@/services'
+import { formatDate, formatTime } from '@/utils/date'
 
 const logs = ref<ILogEntry[]>([])
 const autoScroll = ref(true)
@@ -176,7 +177,7 @@ const exportLogs = () => {
     exportContent += `${'='.repeat(80)}\n\n`
 
     filteredLogs.value.forEach((log) => {
-        exportContent += `[${log.formattedDate} ${log.formattedTime}] [${log.logLevel}] [${log.category}] ${log.message}\n`
+        exportContent += `[${formatDate(log.timestamp)} ${formatTime(log.timestamp)}] [${log.logLevel}] [${log.category}] ${log.message}\n`
 
         // Include stack trace
         if (log.stackTrace) {
@@ -220,8 +221,7 @@ onMounted(() => {
             const fallbackEntry: ILogEntry = {
                 logLevel: 'Error',
                 message: `Failed to process log data: ${typeof event.data === 'string' ? event.data.substring(0, 100) + '...' : 'Invalid format'}`,
-                formattedTime: new Date().toTimeString().split(' ')[0],
-                formattedDate: new Date().toDateString(),
+                timestamp: new Date().toISOString(),
                 formattedSource: 'System',
                 category: 'System',
                 stackTrace: error instanceof Error ? error.stack : undefined
@@ -236,8 +236,7 @@ onMounted(() => {
         logs.value.push({
             logLevel: 'error',
             message: `Log stream connection error. Attempting to reconnect in 5 seconds...`,
-            formattedTime: new Date().toTimeString().split(' ')[0],
-            formattedDate: new Date().toLocaleDateString(),
+            timestamp: new Date().toISOString(),
             formattedSource: 'System',
             category: 'System'
         })

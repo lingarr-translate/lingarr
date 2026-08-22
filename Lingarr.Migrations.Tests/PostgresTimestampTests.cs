@@ -15,10 +15,10 @@ public class PostgresTimestampTests
     private const string ServerTimeZone = "Europe/Amsterdam";
 
     [Fact]
-    public async Task Postgres_UtcTimestampRoundTripsUnderNonUtcServerTimeZone()
+    public async Task Postgres_DayBucketRoundTripsUnderNonUtcServerTimeZone()
     {
         var token = TestContext.Current.CancellationToken;
-        var written = new DateTime(2026, 1, 15, 12, 0, 0, DateTimeKind.Utc);
+        var written = new DateOnly(2026, 1, 15);
 
         await using var container = new PostgreSqlBuilder("postgres:latest")
             .WithDatabase(DatabaseName)

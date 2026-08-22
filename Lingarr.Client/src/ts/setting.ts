@@ -197,8 +197,7 @@ export interface IFilterOptions {
 export interface ILogEntry {
     logLevel: string
     message: string
-    formattedTime: string
-    formattedDate: string
+    timestamp: string
     formattedSource: string
     category: string
     stackTrace?: string

@@ -1,4 +1,5 @@
-﻿using Lingarr.Core.Data;
+﻿using Lingarr.Core.Configuration;
+using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models.Batch.Response;
@@ -11,6 +12,9 @@ public class StatisticsService : IStatisticsService
 {
     private readonly LingarrDbContext _dbContext;
     private readonly ISettingService _settingService;
+
+    private static DateOnly Today =>
+        DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TimeZoneConfiguration.Current).DateTime);
 
     public StatisticsService(
         LingarrDbContext dbContext,
@@ -27,7 +31,7 @@ public class StatisticsService : IStatisticsService
 
     public async Task<IEnumerable<DailyStatistics>> GetDailyStatistics(int days = 30)
     {
-        var startDate = DateTime.UtcNow.Date.AddDays(-days + 1); // +1 to include today
+        var startDate = Today.AddDays(-days + 1); // +1 to include today
         var stats = await _dbContext.DailyStatistics
             .Where(d => d.Date >= startDate)
             .OrderBy(d => d.Date)
@@ -49,7 +53,7 @@ public class StatisticsService : IStatisticsService
         return stats;
     }
 
-    private async Task<DailyStatistics> GetOrCreateDailyStatistics(DateTime today)
+    private async Task<DailyStatistics> GetOrCreateDailyStatistics(DateOnly today)
     {
         var dailyStats = await _dbContext.DailyStatistics
             .Where(d => d.Date >= today)
@@ -98,7 +102,7 @@ public class StatisticsService : IStatisticsService
         int totalCharacters)
     {
         var stats = await GetOrCreateStatistics();
-        var today = DateTime.UtcNow.Date;
+        var today = Today;
 
         // Update total counts
         stats.TotalLinesTranslated += totalLines;
