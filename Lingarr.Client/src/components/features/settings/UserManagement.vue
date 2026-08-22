@@ -115,7 +115,7 @@
                             </div>
                             <div
                                 class="col-span-3 hidden items-center whitespace-nowrap px-4 py-2 text-sm md:flex">
-                                {{ user.lastLoginAt ? formatDate(user.lastLoginAt) : 'Never' }}
+                                {{ user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'Never' }}
                             </div>
                             <div
                                 class="col-span-2 flex items-center justify-end gap-2 px-4 py-2 md:col-span-5">
@@ -209,13 +209,9 @@ import InputComponent from '@/components/common/InputComponent.vue'
 import LoaderCircleIcon from '@/components/icons/LoaderCircleIcon.vue'
 import StatusMessage from '@/components/common/StatusMessage.vue'
 import { useAuthStore } from '@/store/auth'
+import { formatDateTime } from '@/utils/date'
 
 const authStore = useAuthStore()
-
-const formatDate = (dateString: string): string => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
-}
 
 const deleteUserConfirm = async (user: IUser) => {
     if (!confirm(`Are you sure you want to delete user "${user.username}"?`)) {

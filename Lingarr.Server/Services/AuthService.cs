@@ -67,7 +67,7 @@ public class AuthService : IAuthService
         {
             Username = username,
             PasswordHash = HashPassword(password),
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTimeOffset.UtcNow
         };
 
         _context.Users.Add(user);

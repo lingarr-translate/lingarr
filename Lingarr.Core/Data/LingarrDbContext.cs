@@ -1,5 +1,6 @@
 ﻿using Lingarr.Core.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Lingarr.Core.Entities;
 
 namespace Lingarr.Core.Data;
@@ -34,37 +35,44 @@ public class LingarrDbContext : DbContext
         modelBuilder.ApplyConfiguration(new EpisodeConfiguration());
         modelBuilder.ApplyConfiguration(new ImageConfiguration());
 
-        if (Database.IsNpgsql())
-        {
-            ConvertDateTimePropertiesToUtc(modelBuilder);
-        }
+        ConvertTimestampsToUtc(modelBuilder, Database.IsNpgsql());
     }
 
-    private static void ConvertDateTimePropertiesToUtc(ModelBuilder modelBuilder)
+    private static void ConvertTimestampsToUtc(ModelBuilder modelBuilder, bool isNpgsql)
     {
+        var converter = new ValueConverter<DateTimeOffset, DateTime>(
+            value => DateTime.SpecifyKind(value.UtcDateTime, DateTimeKind.Unspecified),
+            value => new DateTimeOffset(DateTime.SpecifyKind(value, DateTimeKind.Utc)));
+
+        var nullableConverter = new ValueConverter<DateTimeOffset?, DateTime?>(
+            value => value.HasValue
+                ? DateTime.SpecifyKind(value.Value.UtcDateTime, DateTimeKind.Unspecified)
+                : null,
+            value => value.HasValue
+                ? new DateTimeOffset(DateTime.SpecifyKind(value.Value, DateTimeKind.Utc))
+                : null);
+
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {
             foreach (var property in entityType.GetProperties())
             {
-                if (property.ClrType == typeof(DateTime))
+                if (property.ClrType != typeof(DateTimeOffset) && property.ClrType != typeof(DateTimeOffset?))
                 {
-                    property.SetColumnType("timestamp without time zone");
-                    property.SetValueConverter(new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime, DateTime>(
-                        value => value.Kind == DateTimeKind.Unspecified
-                            ? value
-                            : DateTime.SpecifyKind(value.ToUniversalTime(), DateTimeKind.Unspecified),
-                        value => value));
+                    continue;
                 }
-                else if (property.ClrType == typeof(DateTime?))
+
+                if (isNpgsql)
                 {
                     property.SetColumnType("timestamp without time zone");
-                    property.SetValueConverter(new Microsoft.EntityFrameworkCore.Storage.ValueConversion.ValueConverter<DateTime?, DateTime?>(
-                        value => value.HasValue
-                            ? (value.Value.Kind == DateTimeKind.Unspecified
-                                ? value.Value
-                                : DateTime.SpecifyKind(value.Value.ToUniversalTime(), DateTimeKind.Unspecified))
-                            : value,
-                        value => value));
+                }
+
+                if (property.ClrType == typeof(DateTimeOffset))
+                {
+                    property.SetValueConverter(converter);
+                }
+                else
+                {
+                    property.SetValueConverter(nullableConverter);
                 }
             }
         }
@@ -85,10 +93,10 @@ public class LingarrDbContext : DbContext
         {
             if (entity.State == EntityState.Added)
             {
-                ((BaseEntity)entity.Entity).CreatedAt = DateTime.UtcNow;
+                ((BaseEntity)entity.Entity).CreatedAt = DateTimeOffset.UtcNow;
             }
 
-            ((BaseEntity)entity.Entity).UpdatedAt = DateTime.UtcNow;
+            ((BaseEntity)entity.Entity).UpdatedAt = DateTimeOffset.UtcNow;
         }
     }
 }

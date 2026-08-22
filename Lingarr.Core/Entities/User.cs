@@ -15,7 +15,7 @@ public class User
     [MaxLength(255)]
     public required string PasswordHash { get; set; }
 
-    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;
 
-    public DateTime? LastLoginAt { get; set; }
+    public DateTimeOffset? LastLoginAt { get; set; }
 }

@@ -31,7 +31,7 @@ public class CleanupJob
         var jobName = JobContextFilter.GetCurrentJobTypeName();
         await _scheduleService.UpdateJobState(jobName, JobStatus.Processing.GetDisplayName());
 
-        var oneWeekAgo = DateTime.UtcNow.AddDays(-7);
+        var oneWeekAgo = DateTimeOffset.UtcNow.AddDays(-7);
         var oldJobs = await _dbContext.TranslationRequests
             .Where(pg => pg.CreatedAt < oneWeekAgo)
             .ToListAsync();

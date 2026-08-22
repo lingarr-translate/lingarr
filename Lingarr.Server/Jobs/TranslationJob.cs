@@ -327,7 +327,7 @@ public class TranslationJob
         TranslationRequest translationRequest,
         CancellationToken cancellationToken)
     {
-        translationRequest.CompletedAt = DateTime.UtcNow;
+        translationRequest.CompletedAt = DateTimeOffset.UtcNow;
         translationRequest.Status = TranslationStatus.Completed;
         await _dbContext.SaveChangesAsync(cancellationToken);
         await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Completed);
@@ -346,7 +346,7 @@ public class TranslationJob
 
         if (translationRequest != null)
         {
-            translationRequest.CompletedAt = DateTime.UtcNow;
+            translationRequest.CompletedAt = DateTimeOffset.UtcNow;
             translationRequest.Status = TranslationStatus.Cancelled;
             translationRequest.ErrorMessage = "Translation was cancelled";
             await _dbContext.SaveChangesAsync();

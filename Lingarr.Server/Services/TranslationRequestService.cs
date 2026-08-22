@@ -363,7 +363,7 @@ public class TranslationRequestService : ITranslationRequestService
             return $"Translation request with id {cancelRequest.Id} has been cancelled";
         }
 
-        translationRequest.CompletedAt = DateTime.UtcNow;
+        translationRequest.CompletedAt = DateTimeOffset.UtcNow;
         translationRequest.Status = TranslationStatus.Cancelled;
         translationRequest.ErrorMessage = "Translation was cancelled";
         await _dbContext.SaveChangesAsync();
@@ -900,13 +900,13 @@ public class TranslationRequestService : ITranslationRequestService
         catch (TaskCanceledException ex)
         {
             // ExecuteUpdateAsync bypasses change-tracking so a concurrent write cannot abort this save.
-            var now = DateTime.UtcNow;
+            var now = DateTimeOffset.UtcNow;
             await _dbContext.TranslationRequests
                 .Where(r => r.Id == translationRequest.Id)
                 .ExecuteUpdateAsync(s => s
                     .SetProperty(r => r.Status, TranslationStatus.Cancelled)
                     .SetProperty(r => r.ErrorMessage, ex.Message)
-                    .SetProperty(r => r.CompletedAt, (DateTime?)now)
+                    .SetProperty(r => r.CompletedAt, now)
                     .SetProperty(r => r.UpdatedAt, now));
             translationRequest.CompletedAt = now;
             translationRequest.Status = TranslationStatus.Cancelled;
@@ -919,14 +919,14 @@ public class TranslationRequestService : ITranslationRequestService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error translating subtitle content");
-            var now = DateTime.UtcNow;
+            var now = DateTimeOffset.UtcNow;
             await _dbContext.TranslationRequests
                 .Where(r => r.Id == translationRequest.Id)
                 .ExecuteUpdateAsync(s => s
                     .SetProperty(r => r.Status, TranslationStatus.Failed)
                     .SetProperty(r => r.ErrorMessage, ex.Message)
                     .SetProperty(r => r.StackTrace, ex.ToString())
-                    .SetProperty(r => r.CompletedAt, (DateTime?)now)
+                    .SetProperty(r => r.CompletedAt, now)
                     .SetProperty(r => r.UpdatedAt, now));
             translationRequest.CompletedAt = now;
             translationRequest.Status = TranslationStatus.Failed;
@@ -973,12 +973,12 @@ public class TranslationRequestService : ITranslationRequestService
     {
         await _statisticsService.UpdateTranslationStatisticsFromLines(translationRequest, serviceType, translationService.ModelName, results);
 
-        var now = DateTime.UtcNow;
+        var now = DateTimeOffset.UtcNow;
         await _dbContext.TranslationRequests
             .Where(r => r.Id == translationRequest.Id)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(r => r.Status, TranslationStatus.Completed)
-                .SetProperty(r => r.CompletedAt, (DateTime?)now)
+                .SetProperty(r => r.CompletedAt, now)
                 .SetProperty(r => r.UpdatedAt, now), cancellationToken);
         translationRequest.CompletedAt = now;
         translationRequest.Status = TranslationStatus.Completed;

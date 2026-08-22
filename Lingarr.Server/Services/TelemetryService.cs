@@ -1,5 +1,7 @@
+using System.Globalization;
 using Lingarr.Core;
 using Lingarr.Core.Configuration;
+using Lingarr.Core.Helpers;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models.Telemetry;
 
@@ -35,7 +37,7 @@ public class TelemetryService : ITelemetryService
         {
             InstallationId = await GetOrCreateInstallationId(),
             Version = LingarrVersion.Number,
-            ReportDate = $"{DateTime.UtcNow:yyyy-MM-dd}",
+            ReportDate = DateOnly.FromDateTime(DateTime.UtcNow).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
             Platform = LingarrVersion.Platform,
             Metrics = new TelemetryMetrics
             {
@@ -77,12 +79,12 @@ public class TelemetryService : ITelemetryService
         }
 
         var lastSubmission = await _settingService.GetSetting(SettingKeys.Telemetry.LastSubmission);
-        if (string.IsNullOrEmpty(lastSubmission) || !DateTime.TryParse(lastSubmission, out var lastDate))
+        if (string.IsNullOrEmpty(lastSubmission) || !UtcDateTime.TryParse(lastSubmission, out var lastDate))
         {
             return true;
         }
 
-        return DateTime.UtcNow - lastDate >= TimeSpan.FromDays(7);
+        return DateTimeOffset.UtcNow - lastDate >= TimeSpan.FromDays(7);
     }
 
     public async Task<bool> SubmitTelemetry(TelemetryPayload payload)
@@ -95,7 +97,7 @@ public class TelemetryService : ITelemetryService
                 return false;
             }
 
-            await _settingService.SetSetting(SettingKeys.Telemetry.LastSubmission, DateTime.UtcNow.ToString("O"));
+            await _settingService.SetSetting(SettingKeys.Telemetry.LastSubmission, DateTimeOffset.UtcNow.ToString("O"));
 
             return true;
         }

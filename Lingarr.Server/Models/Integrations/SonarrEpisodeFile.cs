@@ -8,5 +8,5 @@ public class SonarrEpisodeFile
     public string? Path { get; set; } = string.Empty;
 
     [JsonPropertyName("dateAdded")]
-    public DateTime? DateAdded { get; set; }
+    public DateTimeOffset? DateAdded { get; set; }
 }

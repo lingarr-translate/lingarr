@@ -41,6 +41,11 @@ public class ScheduleService : IScheduleService
             SettingKeys.Telemetry.TelemetryEnabled
         ]);
 
+        if (TimeZoneConfiguration.ResolutionWarning != null)
+        {
+            _logger.LogWarning("{Warning}", TimeZoneConfiguration.ResolutionWarning);
+        }
+        
         _logger.LogInformation("Configuring media indexers.");
         foreach (var setting in settings)
         {
@@ -50,13 +55,15 @@ public class ScheduleService : IScheduleService
                     RecurringJob.AddOrUpdate<SyncMovieJob>(
                         "SyncMovieJob",
                         job => job.Execute(),
-                        setting.Value);
+                        setting.Value,
+                        new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
                     break;
                 case "show_schedule":
                     RecurringJob.AddOrUpdate<SyncShowJob>(
                         "SyncShowJob",
                         job => job.Execute(),
-                        setting.Value);
+                        setting.Value,
+                        new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
                     break;
                 case "automation_enabled":
                     if (setting.Value == "true")
@@ -66,7 +73,7 @@ public class ScheduleService : IScheduleService
                             "AutomatedTranslationJob",
                             job => job.Execute(),
                             translationSchedule,
-                            new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+                            new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
                     }
                     break;
                 case "telemetry_enabled":
@@ -76,7 +83,7 @@ public class ScheduleService : IScheduleService
                             "TelemetryJob",
                             job => job.Execute(),
                             "0 9 * * 5",
-                            new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+                            new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
                     }
                     break;
             }
@@ -86,13 +93,13 @@ public class ScheduleService : IScheduleService
             "CleanupJob",
             job => job.Execute(),
             Cron.Weekly,
-            new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
 
         RecurringJob.AddOrUpdate<StatisticsJob>(
             "StatisticsJob",
             job => job.Execute(),
             Cron.Daily,
-            new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+            new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
 
         _logger.LogInformation("Cleaning up orphaned processing jobs.");
         var monitor = JobStorage.Current.GetMonitoringApi();

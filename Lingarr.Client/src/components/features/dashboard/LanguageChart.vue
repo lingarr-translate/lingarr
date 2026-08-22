@@ -29,6 +29,7 @@ import {
 } from 'chart.js/auto'
 import { Bar } from 'vue-chartjs'
 import { DailyStatistic } from '@/ts'
+import { formatDayLabel } from '@/utils/date'
 import { useInstanceStore } from '@/store/instance'
 
 ChartJS.register(
@@ -83,11 +84,7 @@ const calculateMovingAverage = (data: number[], windowSize: number): number[] =>
     })
 }
 
-const dates = computed(() =>
-    props.dailyStats.map((stat) =>
-        new Date(stat.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    )
-)
+const dates = computed(() => props.dailyStats.map((stat) => formatDayLabel(stat.date)))
 
 const translationCounts = computed(() => props.dailyStats.map((stat) => stat.translationCount))
 const movingAverage = computed(() => calculateMovingAverage(translationCounts.value, 7))

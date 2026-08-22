@@ -11,11 +11,11 @@ public class RecurringJobStatus
     
     public string JobMethod { get; set; } = string.Empty;
     
-    public DateTime? NextExecution { get; set; }
+    public DateTimeOffset? NextExecution { get; set; }
     public string? LastJobId { get; set; }
     public string? LastJobState { get; set; }
-    public DateTime? LastExecution { get; set; }
-    public DateTime? CreatedAt { get; set; }
+    public DateTimeOffset? LastExecution { get; set; }
+    public DateTimeOffset? CreatedAt { get; set; }
     public string? TimeZoneId { get; set; }
     public string CurrentState { get; set; } = JobStatus.Planned.GetDisplayName();
     public bool IsCurrentlyRunning { get; set; }

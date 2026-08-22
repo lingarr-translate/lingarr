@@ -20,16 +20,10 @@ namespace Lingarr.Server.Providers
         public string? Message { get; set; }
         
         [JsonPropertyName("timestamp")] 
-        public DateTime Timestamp { get; set; }
+        public DateTimeOffset Timestamp { get; set; }
         
         [JsonPropertyName("category")] 
         public string? Category { get; set; }
-
-        [JsonPropertyName("formattedTime")] 
-        public string FormattedTime => Timestamp.ToString("HH:mm:ss");
-        
-        [JsonPropertyName("formattedDate")] 
-        public string FormattedDate => Timestamp.ToString("yyyy-MM-dd");
 
         [JsonPropertyName("formattedSource")]
         public string FormattedSource => Category?.Split('.').LastOrDefault() ?? Category ?? string.Empty;
@@ -48,7 +42,7 @@ namespace Lingarr.Server.Providers
             while (Logs.Count > MaxLogCount && Logs.TryDequeue(out _))
             {
             }
-            var cutoffTime = DateTime.UtcNow.AddHours(-24);
+            var cutoffTime = DateTimeOffset.UtcNow.AddHours(-24);
             while (Logs.TryPeek(out var oldestLog) && oldestLog.Timestamp < cutoffTime && Logs.TryDequeue(out _))
             {
             }
@@ -89,7 +83,7 @@ namespace Lingarr.Server.Providers
             {
                 LogLevel = logLevel,
                 Message = message,
-                Timestamp = DateTime.UtcNow,
+                Timestamp = DateTimeOffset.UtcNow,
                 Category = _categoryName
             };
 
