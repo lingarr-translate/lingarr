@@ -68,6 +68,18 @@ public class TranslationJob
             await _scheduleService.UpdateJobState(jobName, JobStatus.Processing.GetDisplayName());
             cancellationToken.ThrowIfCancellationRequested();
 
+            var storedStatus = await _dbContext.TranslationRequests
+                .Where(storedRequest => storedRequest.Id == translationRequest.Id)
+                .Select(storedRequest => (TranslationStatus?)storedRequest.Status)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (storedStatus is null or TranslationStatus.Completed or TranslationStatus.Cancelled)
+            {
+                _logger.LogInformation(
+                    "Skipping translation job for request {RequestId}, it is no longer runnable ({Status}).",
+                    translationRequest.Id, storedStatus);
+                return;
+            }
+
             var request = await _translationRequestService.UpdateTranslationRequest(translationRequest,
                 TranslationStatus.InProgress,
                 jobId);
