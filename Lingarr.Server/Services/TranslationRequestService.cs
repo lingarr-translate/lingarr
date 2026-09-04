@@ -612,6 +612,16 @@ public class TranslationRequestService : ITranslationRequestService
                          tr.Status == TranslationStatus.InProgress)
             .ToListAsync();
 
+        var monitoringApi = JobStorage.Current.GetMonitoringApi();
+        var queuedJobIds = monitoringApi.EnqueuedJobs("translation", 0, int.MaxValue)
+            .Select(queuedJob => new
+            {
+                JobId = queuedJob.Key,
+                Request = queuedJob.Value?.Job?.Args?.FirstOrDefault() as TranslationRequest
+            })
+            .Where(queuedJob => queuedJob.Request != null)
+            .ToLookup(queuedJob => queuedJob.Request!.Id, queuedJob => queuedJob.JobId);
+
         foreach (var request in requests)
         {
             if (request.JobType == TranslationJobType.Proofread &&
@@ -630,6 +640,14 @@ public class TranslationRequestService : ITranslationRequestService
                 await UpdateTranslationRequest(request, TranslationStatus.Interrupted);
                 await _eventService.LogEvent(request.Id, TranslationStatus.Interrupted);
                 continue;
+            }
+
+            foreach (var queuedJobId in queuedJobIds[request.Id])
+            {
+                BackgroundJob.Delete(queuedJobId);
+                _logger.LogWarning(
+                    "Removed queued translation job {JobId} for request {RequestId} before resuming.",
+                    queuedJobId, request.Id);
             }
 
             var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
