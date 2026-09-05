@@ -53,8 +53,8 @@
 
             <div class="flex flex-col space-x-2">
                 <span class="font-semibold">Request timeout:</span>
-                Maximum time in minutes to wait for a translation response before the request is
-                cancelled. Increase this if you run a slow local AI on minimal hardware for example.
+                Maximum time in minutes to wait for a single request to the translation service.
+                Increase this if you run a slow local AI on minimal hardware for example.
             </div>
             <InputComponent
                 v-model="requestTimeout"

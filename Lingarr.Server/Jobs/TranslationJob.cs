@@ -283,7 +283,7 @@ public class TranslationJob
             await WriteSubtitles(request, translatedSubtitles, stripSubtitleFormatting, subtitleTag, removeLanguageTag);
             await HandleCompletion(jobName, request, cancellationToken);
         }
-        catch (TaskCanceledException)
+        catch (OperationCanceledException)
         {
             await HandleCancellation(jobName, translationRequest);
         }
