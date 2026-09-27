@@ -1,3 +1,6 @@
+using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Lingarr.Contracts.Exceptions;
 using Lingarr.Contracts.Models;
 using Lingarr.Contracts.Models.Batch;
@@ -14,19 +17,64 @@ namespace Lingarr.Server.Services;
 public class SubtitleTranslationService
 {
     private const int MaxLineLength = 42;
+
+    /// <summary>
+    /// The wire shape of one context line when structured context is enabled: the position, the
+    /// line text, and the translation for lines that already have one. Written only, Lingarr never
+    /// reads it back; the shape is documented for plugin authors in the plugin docs.
+    /// </summary>
+    private sealed class ContextLine
+    {
+        [JsonPropertyName("position")]
+        public int Position { get; init; }
+
+        [JsonPropertyName("line")]
+        public string Line { get; init; } = string.Empty;
+
+        [JsonPropertyName("translation")]
+        public string? Translation { get; init; }
+    }
+
+    /// <summary>
+    /// Keeps non-ASCII text readable in context lines instead of \uXXXX escapes, and drops the
+    /// translation property for lines that do not have one yet.
+    /// </summary>
+    private static readonly JsonSerializerOptions ContextLineJsonOptions = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
     private int _lastProgression = -1;
     private readonly IReadOnlyList<TranslationServiceEntry> _services;
     private readonly IProgressService? _progressService;
     private readonly ILogger _logger;
+    private readonly bool _useTranslatedContext;
+    private readonly bool _mergeStackedLines;
     private readonly Dictionary<int, (string Service, LanguagePair Pair)> _translationByPosition = [];
     private readonly HashSet<string> _loggedSkips = [];
     private readonly HashSet<TranslationCandidate> _loggedFallbacks = [];
     private readonly Dictionary<(string Source, string Target), IReadOnlyList<TranslationCandidate>> _candidatesByPair = [];
 
+    /// <param name="services">Ordered translation service chain; the first entry is the primary, the rest are fallbacks.</param>
+    /// <param name="logger">Logger for progress and fallback diagnostics.</param>
+    /// <param name="progressService">Progress reporter, required by <see cref="TranslateSubtitles"/> and <see cref="TranslateSubtitlesBatch"/>.</param>
+    /// <param name="useTranslatedContext">
+    /// When true, context lines are passed as one JSON object per line carrying the position and
+    /// line text, plus the translation for lines that already have one.
+    /// When false, context lines are passed as plain source text.
+    /// </param>
+    /// <param name="mergeStackedLines">
+    /// When true (the default), subtitles that share start time, end time and text are translated once
+    /// and the result is reused, which collapses the stacked Dialogue layers of fansub .ass files.
+    /// Pass false for input without timing information, where nothing can be stacked.
+    /// </param>
     public SubtitleTranslationService(
         IReadOnlyList<TranslationServiceEntry> services,
         ILogger logger,
-        IProgressService? progressService = null)
+        IProgressService? progressService = null,
+        bool useTranslatedContext = false,
+        bool mergeStackedLines = true)
     {
         if (services.Count == 0)
         {
@@ -35,6 +83,8 @@ public class SubtitleTranslationService
         _services = services;
         _progressService = progressService;
         _logger = logger;
+        _useTranslatedContext = useTranslatedContext;
+        _mergeStackedLines = mergeStackedLines;
     }
 
     private readonly record struct TranslationCandidate(TranslationServiceEntry Entry, LanguagePair Pair, int ChainIndex);
@@ -86,7 +136,7 @@ public class SubtitleTranslationService
             if (subtitle.TranslatedLines.Count > 0)
             {
                 var existingContentLines = stripSubtitleFormatting ? subtitle.PlaintextLines : subtitle.Lines;
-                if (!(preserveLineBreaks && existingContentLines.Count > 1))
+                if (_mergeStackedLines && !(preserveLineBreaks && existingContentLines.Count > 1))
                 {
                     var sourceLine = string.Join(" ", existingContentLines);
                     if (!string.IsNullOrWhiteSpace(sourceLine))
@@ -121,7 +171,7 @@ public class SubtitleTranslationService
                 }
 
                 var cacheKey = $"{subtitle.StartTime}|{subtitle.EndTime}|{subtitleLine}";
-                if (translationCache.TryGetValue(cacheKey, out var cachedTranslation))
+                if (_mergeStackedLines && translationCache.TryGetValue(cacheKey, out var cachedTranslation))
                 {
                     translatedLines.Add(cachedTranslation);
                     continue;
@@ -135,7 +185,10 @@ public class SubtitleTranslationService
                     ContextLinesBefore = contextLinesBefore.Count > 0 ? contextLinesBefore : null,
                     ContextLinesAfter = contextLinesAfter.Count > 0 ? contextLinesAfter : null
                 }, cancellationToken);
-                translationCache[cacheKey] = result.Translation;
+                if (_mergeStackedLines)
+                {
+                    translationCache[cacheKey] = result.Translation;
+                }
                 translatedLines.Add(result.Translation);
                 service ??= result.Service;
                 pair ??= result.Pair;
@@ -495,7 +548,13 @@ public class SubtitleTranslationService
     /// <param name="count">The number of subtitles to include before or after the index.</param>
     /// <param name="stripSubtitleFormatting">Whether to strip formatting from subtitles.</param>
     /// <param name="isBeforeContext">If true, builds context before the index; otherwise, builds after.</param>
-    private static List<string> BuildContext(
+    /// <remarks>
+    /// With <c>useTranslatedContext</c> enabled every context line becomes one JSON object with its
+    /// position and text; "before" lines that already carry a non-empty translation include it, so
+    /// the model sees how earlier lines were translated. "After" lines never have a translation yet.
+    /// With the option disabled, lines are plain source text.
+    /// </remarks>
+    private List<string> BuildContext(
         List<SubtitleItem> subtitles, 
         int startIndex, 
         int count,
@@ -515,8 +574,28 @@ public class SubtitleTranslationService
         for (var i = start; i < end; i++)
         {
             var contextSubtitle = subtitles[i];
-            context.Add(string.Join(" ",
-                stripSubtitleFormatting ? contextSubtitle.PlaintextLines : contextSubtitle.Lines));
+            var sourceText = string.Join(" ",
+                stripSubtitleFormatting ? contextSubtitle.PlaintextLines : contextSubtitle.Lines);
+
+            if (!_useTranslatedContext)
+            {
+                context.Add(sourceText);
+                continue;
+            }
+
+            // An empty stored translation (the model answered nothing) is not an example to follow,
+            // so such a line is passed like one that has not been translated yet.
+            var translatedText = isBeforeContext && contextSubtitle.TranslatedLines.Count > 0
+                ? string.Join(" ", contextSubtitle.TranslatedLines)
+                : null;
+            if (string.IsNullOrWhiteSpace(translatedText))
+            {
+                translatedText = null;
+            }
+
+            context.Add(JsonSerializer.Serialize(
+                new ContextLine { Position = contextSubtitle.Position, Line = sourceText, Translation = translatedText },
+                ContextLineJsonOptions));
         }
 
         return context.Count > 0 ? context : [];

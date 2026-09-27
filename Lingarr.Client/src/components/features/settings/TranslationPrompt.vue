@@ -50,6 +50,20 @@
                         :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                         label="Context after"
                         @update:validation="(val) => (isValid.contextAfter = val)" />
+
+                    <div class="flex flex-col">
+                        <span class="font-semibold">Structured context with translations</span>
+                        Sends {contextBefore} and {contextAfter} as one JSON object per line with
+                        its position and text, plus the translation for lines that are already
+                        translated, so the AI can keep names and terms consistent. Only applies when
+                        the placeholders are used in the user prompt; tell the model in the prompt
+                        to follow the earlier translations.
+                    </div>
+                    <ToggleButton v-model="useTranslatedContext">
+                        <span class="text-primary-content text-sm font-medium">
+                            {{ useTranslatedContext == 'true' ? 'Enabled' : 'Disabled' }}
+                        </span>
+                    </ToggleButton>
                 </div>
                 <div v-else class="text-xs">
                     The user prompt is not applied when sending subtitles in batch; the subtitle
@@ -67,6 +81,7 @@ import { INPUT_TYPE, INPUT_VALIDATION_TYPE, PLACEHOLDER, SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import TextAreaComponent from '@/components/common/TextAreaComponent.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
+import ToggleButton from '@/components/common/ToggleButton.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 
 const settingsStore = useSettingStore()
@@ -131,6 +146,14 @@ const contextAfter = computed({
         if (isValid.contextAfter) {
             saveNotification.value?.show()
         }
+    }
+})
+
+const useTranslatedContext = computed({
+    get: () => settingsStore.getSetting(SETTINGS.AI_CONTEXT_USE_TRANSLATED) as string,
+    set: (newValue: string) => {
+        settingsStore.updateSetting(SETTINGS.AI_CONTEXT_USE_TRANSLATED, newValue, true)
+        saveNotification.value?.show()
     }
 })
 </script>

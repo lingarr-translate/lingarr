@@ -83,6 +83,7 @@ See the sample plugin for a full example of HTTP handling and retries.
 - Only depend on `Lingarr.Contracts`, this is the only stable API.
 - Plugins share the same process. Use dependency versions compatible with Lingarr to avoid conflicts.
 - Plugins run with full permissions (no sandbox). Only add DLLs you trust.
+- When the `ai_context_use_translated` setting is on, the `contextLinesBefore` / `contextLinesAfter` arguments of `TranslateAsync` contain JSON objects (`position`, `line`, and `translation` for lines already translated) instead of plain lines; a plugin that does not need the structure can pass them through as text.
 
 ## Reference plugin
 Check the `samples/CloudflarePlugin/` folder for a complete working example. It demonstrates:

@@ -90,6 +90,7 @@ public static class SettingKeys
         public const string ProofreadUserPrompt = "proofread_user_prompt";
         public const string AiContextBefore = "ai_context_before";
         public const string AiContextAfter = "ai_context_after";
+        public const string AiContextUseTranslated = "ai_context_use_translated";
         public const string FixOverlappingSubtitles = "fix_overlapping_subtitles";
         public const string StripSubtitleFormatting = "strip_subtitle_formatting";
         public const string PreserveLineBreaks = "preserve_line_breaks";

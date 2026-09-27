@@ -104,6 +104,7 @@ public class TranslationJob
 
                 SettingKeys.Translation.AiContextBefore,
                 SettingKeys.Translation.AiContextAfter,
+                SettingKeys.Translation.AiContextUseTranslated,
                 SettingKeys.Translation.UseBatchTranslation,
                 SettingKeys.Translation.MaxBatchSize,
                 SettingKeys.Translation.RemoveLanguageTag,
@@ -126,6 +127,7 @@ public class TranslationJob
                 out var linesAfter)
                 ? linesAfter
                 : 0;
+            var useTranslatedContext = settings[SettingKeys.Translation.AiContextUseTranslated] == "true";
 
             // validate subtitles
             if (validateSubtitles)
@@ -180,7 +182,7 @@ public class TranslationJob
                 throw new TranslationException($"No usable translation services configured: [{string.Join(", ", serviceNames)}]");
             }
             var translationService = services[0].Service;
-            var translator = new SubtitleTranslationService(services, _logger, _progressService);
+            var translator = new SubtitleTranslationService(services, _logger, _progressService, useTranslatedContext);
             var subtitles = await _subtitleService.ReadSubtitles(request.SubtitleToTranslate);
 
             // subtitle already carries a translation from an earlier prior run.
@@ -233,8 +235,8 @@ public class TranslationJob
                 if (contextBefore > 0 || contextAfter > 0)
                 {
                     _logger.LogInformation(
-                        "Using individual translation with context (before: {contextBefore}, after: {contextAfter}) for subtitle: {filePath}",
-                        contextBefore, contextAfter, translationRequest.SubtitleToTranslate);
+                        "Using individual translation with context (before: {contextBefore}, after: {contextAfter}, translated context: {useTranslatedContext}) for subtitle: {filePath}",
+                        contextBefore, contextAfter, useTranslatedContext, translationRequest.SubtitleToTranslate);
                 }
 
                 translatedSubtitles = await translator.TranslateSubtitles(

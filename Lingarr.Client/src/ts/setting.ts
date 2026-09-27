@@ -44,6 +44,7 @@ export const SETTINGS = {
     SUBTITLE_VALIDATION_MAXFILESIZEBYTES: 'subtitle_validation_maxfilesizebytes',
     AI_CONTEXT_BEFORE: 'ai_context_before',
     AI_CONTEXT_AFTER: 'ai_context_after',
+    AI_CONTEXT_USE_TRANSLATED: 'ai_context_use_translated',
     USE_BATCH_TRANSLATION: 'use_batch_translation',
     MAX_BATCH_SIZE: 'max_batch_size',
     USE_SUBTITLE_TAGGING: 'use_subtitle_tagging',
@@ -114,6 +115,7 @@ export interface ISettings {
     subtitle_validation_maxdurationsecs: string
     ai_context_before: string
     ai_context_after: string
+    ai_context_use_translated: string
     use_batch_translation: string
     max_batch_size: string
     use_subtitle_tagging: string

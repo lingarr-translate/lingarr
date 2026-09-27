@@ -33,16 +33,35 @@ Each request is built from two templates, and both apply to every AI service.
 
 `AI_USER_PROMPT` is the user message. It carries the line being translated, and is sent as the user message. The default is `{lineToTranslate}`, the subtitle line on its own. When it is left empty, the line is sent unchanged.
 
+A recommended layout when using context frames the line with its neighbours and keeps the instructions closest to the answer:
+
+```
+[Context-Before]
+{contextBefore}
+
+[Context-After]
+{contextAfter}
+
+[Target-to-Translate]
+{lineToTranslate}
+
+Translate only the text under [Target-to-Translate]. The lines under [Context-Before] and [Context-After] are neighbouring subtitle lines for context only: use them to keep names, terms and tone consistent, and never translate or repeat them.
+```
+
+The two context sections are empty while the context settings are `0`.
+
 Both templates accept the same placeholders:
 
 | **Placeholder** | **Value** |
 |-----------------|-----------|
 | `{lineToTranslate}` | The subtitle line being translated. |
-| `{contextBefore}` | The lines preceding it, as many as the context setting allows. Empty when that setting is `0`. |
-| `{contextAfter}` | The lines following it, as many as the context setting allows. Empty when that setting is `0`. |
+| `{contextBefore}` | The lines preceding it, as many as the context setting allows. Empty when that setting is `0`. Plain lines by default, JSON objects with **Structured context with translations** enabled (see below). |
+| `{contextAfter}` | The lines following it, as many as the context setting allows. Empty when that setting is `0`. Same form as `{contextBefore}`, without translations. |
 | `{sourceLanguage}` | The language being translated from. |
 | `{targetLanguage}` | The language being translated to. |
 | `{model}` | The configured model. |
+
+With **Structured context with translations** enabled, each context line is one JSON object with `position`, `line` and, once the line has been translated, `translation`, for example `{"position":12,"line":"Hold it!","translation":"Wacht even!"}`. If you enable it, tell the model in your prompt to follow those earlier translations, for example: `When a [Context-Before] entry includes a "translation" field, follow that earlier translation.`
 
 Use the user prompt to frame a single line, for example to surround it with its context so the service can see where the line sits.
 
