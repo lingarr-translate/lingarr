@@ -16,6 +16,7 @@ using Lingarr.Server.Models.Api;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Models.TranslationRequests;
+using Lingarr.Server.Services.Subtitle;
 using Lingarr.Server.Services.Translation;
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.SignalR;
@@ -902,10 +903,16 @@ public class TranslationRequestService : ITranslationRequestService
                 // Surface it here so the request is marked Cancelled and nothing partial reaches statistics.
                 cancellationToken.ThrowIfCancellationRequested();
 
-                results = subtitleItems.Select(subtitle => new BatchTranslatedLine
+                results = subtitleItems.Select(subtitle =>
                 {
-                    Position = subtitle.Position,
-                    Line = string.Join(" ", subtitle.TranslatedLines)
+                    var translatedText = string.Join(" ", subtitle.TranslatedLines);
+                    return new BatchTranslatedLine
+                    {
+                        Position = subtitle.Position,
+                        Line = stripSubtitleFormatting
+                            ? SubtitleFormatterService.RemoveMarkup(translatedText)
+                            : translatedText
+                    };
                 }).ToArray();
 
                 _logger.LogInformation("Individual line translation completed. Processed {resultCount} lines", results.Length);
