@@ -26,6 +26,7 @@ public class StartupServiceTests : IDisposable
         ("SONARR_API_KEY", SettingKeys.Integration.SonarrApiKey),
         ("SOURCE_LANGUAGES", SettingKeys.Translation.SourceLanguages),
         ("TARGET_LANGUAGES", SettingKeys.Translation.TargetLanguages),
+        ("USE_BATCH_TRANSLATION", SettingKeys.Translation.UseBatchTranslation),
         ("LIBRE_TRANSLATE_URL", SettingKeys.Translation.LibreTranslate.Url),
         ("LIBRE_TRANSLATE_API_KEY", SettingKeys.Translation.LibreTranslate.ApiKey),
         ("AI_PROMPT", SettingKeys.Translation.AiPrompt),

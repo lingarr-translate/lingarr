@@ -84,6 +84,7 @@ Each report also carries an installation identifier. This is a random value gene
 | `SERVICE_TYPE`           | An ordered JSON array of translation services. The first entry is the primary; the rest are fallbacks tried in order when the primary fails. A single value (e.g. `openai`) is still accepted and is normalised to a one-element array on startup. |
 | `SOURCE_LANGUAGES`       | A minified JSON array of source languages for translation. |
 | `TARGET_LANGUAGES`       | A minified JSON array of target languages for translation. |
+| `USE_BATCH_TRANSLATION`  | Set to `true` to translate subtitles in batches with AI services, defaults to false. |
 
 The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a minified JSON array. Each object in the array should contain the `name` and `code` of the language.
 
