@@ -235,7 +235,7 @@ public class SettingChangedListener
                 case "ServiceType":
                     var serviceTypeRaw = await settingService.GetSetting(SettingKeys.Translation.ServiceType);
                     var primary = TranslationServices.Parse(serviceTypeRaw)[0];
-                    if (BatchServiceTypes.Contains(primary))
+                    if (!BatchServiceTypes.Contains(primary))
                     {
                         await settingService.SetSetting(SettingKeys.Translation.UseBatchTranslation, "false");
                     }
