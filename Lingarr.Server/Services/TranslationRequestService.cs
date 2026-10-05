@@ -278,8 +278,12 @@ public class TranslationRequestService : ITranslationRequestService
         }
 
         var subtitles = await _subtitleService.GetSubtitles(path, fileName);
-        var selected = _subtitleService.SelectSourceSubtitle(subtitles, sourceCodes, ignoreCaptions);
-        if (selected == null)
+
+        var sourceLanguage = subtitles
+            .Select(s => s.Language.ToLowerInvariant())
+            .FirstOrDefault(language => sourceCodes.Contains(language));
+
+        if (sourceLanguage == null)
         {
             _logger.LogDebug("Bulk: skipping mediaId {MediaId} — no source subtitle found (sourceCodes: {SourceCodes}, available: {Available})",
                 mediaId, string.Join(", ", sourceCodes),
@@ -287,22 +291,38 @@ public class TranslationRequestService : ITranslationRequestService
             return;
         }
 
-        if (selected.AvailableLanguages.Contains(targetLanguage.ToLowerInvariant()))
+        var sourceSubtitles = subtitles
+            .Where(s => s.Language.Equals(sourceLanguage, StringComparison.OrdinalIgnoreCase))
+            .Where(s => ignoreCaptions != "true" || string.IsNullOrEmpty(s.Caption))
+            .ToList();
+
+        foreach (var sourceSubtitle in sourceSubtitles)
         {
-            _logger.LogDebug("Bulk: skipping mediaId {MediaId} — target language {Target} already exists",
-                mediaId, targetLanguage);
-            return;
+            var targetExists = subtitles.Any(s =>
+                s.Language.Equals(targetLanguage, StringComparison.OrdinalIgnoreCase)
+                && string.Equals(s.Caption, sourceSubtitle.Caption, StringComparison.OrdinalIgnoreCase));
+
+            if (targetExists)
+            {
+                _logger.LogDebug(
+                    "Bulk: skipping subtitle {SubtitlePath} — target language {Target} with caption {Caption} already exists",
+                    sourceSubtitle.Path,
+                    targetLanguage,
+                    sourceSubtitle.Caption);
+                continue;
+            }
+
+            await CreateRequest(new TranslateAbleSubtitle
+            {
+                MediaId = mediaId,
+                MediaType = mediaType,
+                SubtitlePath = sourceSubtitle.Path,
+                TargetLanguage = targetLanguage,
+                SourceLanguage = sourceLanguage,
+                SubtitleFormat = sourceSubtitle.Format
+            });
         }
 
-        await CreateRequest(new TranslateAbleSubtitle
-        {
-            MediaId = mediaId,
-            MediaType = mediaType,
-            SubtitlePath = selected.Subtitle.Path,
-            TargetLanguage = targetLanguage,
-            SourceLanguage = selected.SourceLanguage,
-            SubtitleFormat = selected.Subtitle.Format
-        });
     }
 
     /// <inheritdoc />
