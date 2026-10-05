@@ -74,7 +74,7 @@ public class SubtitleService : ISubtitleService
                 {
                     Path = file,
                     FileName = fileName,
-                    Language = language ?? "unknown",
+                    Language = string.IsNullOrEmpty(language) ? "unknown" : language,
                     Caption = caption,
                     Format = extension
                 };
