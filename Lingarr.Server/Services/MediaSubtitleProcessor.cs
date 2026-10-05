@@ -129,10 +129,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             })
             .ToListAsync();
 
-        var sourceSubtitles = subtitles
-            .Where(s => s.Language.Equals(selected.SourceLanguage, StringComparison.OrdinalIgnoreCase))
-            .Where(s => ignoreCaptions != "true" || string.IsNullOrEmpty(s.Caption))
-            .ToList();
+        var sourceSubtitles = selected.Subtitles;
 
         var requestCreated = false;
         foreach (var sourceSubtitle in sourceSubtitles)
@@ -140,7 +137,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             var languagesToTranslate = targetLanguages
                 .Where(targetLanguage => !subtitles.Any(s =>
                     s.Language.Equals(targetLanguage, StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(s.Caption, sourceSubtitle.Caption, StringComparison.OrdinalIgnoreCase)))
+                    && (ignoreCaptions == "true" || string.Equals(s.Caption, sourceSubtitle.Caption, StringComparison.OrdinalIgnoreCase))))
                 .Where(targetLanguage => !existingTranslationRequests.Any(r =>
                     string.Equals(r.SubtitleToTranslate, sourceSubtitle.Path, StringComparison.OrdinalIgnoreCase)
                     && string.Equals(r.TargetLanguage, targetLanguage, StringComparison.OrdinalIgnoreCase)))
@@ -155,7 +152,8 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
                     SubtitlePath = sourceSubtitle.Path,
                     TargetLanguage = targetLanguage,
                     SourceLanguage = selected.SourceLanguage,
-                    SubtitleFormat = sourceSubtitle.Format
+                    SubtitleFormat = sourceSubtitle.Format,
+                    Caption = sourceSubtitle.Caption
                 });
 
                 requestCreated = true;

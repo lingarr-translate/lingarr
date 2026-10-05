@@ -88,9 +88,9 @@ public class SubtitleFormatTests : MediaSubtitleProcessorTestBase
     }
 
     [Fact]
-    public async Task ProcessMedia_WithMultipleFormats_ShouldProcessAll()
+    public async Task ProcessMedia_WithMultipleFormats_ShouldProcessOnlyOneFormat()
     {
-        // Arrange - Multiple subtitle formats (.srt, .ass, .ssa)
+        // Arrange - Multiple subtitle formats with the same caption
         var movie = await CreateTestMovie();
         var subtitles = new List<Subtitles>
         {
@@ -129,12 +129,92 @@ public class SubtitleFormatTests : MediaSubtitleProcessorTestBase
         // Act
         var result = await Processor.ProcessMedia(movie, MediaType.Movie);
 
-        // Assert - Should process first matched subtitle (srt in this case)
+        // Assert - Only one format should be translated for the same caption
         Assert.True(result);
+
         TranslationRequestServiceMock.Verify(
             s => s.CreateRequest(It.Is<TranslateAbleSubtitle>(t =>
                 t.SourceLanguage == "en" &&
-                t.TargetLanguage == "ro")),
+                t.TargetLanguage == "ro" &&
+                string.IsNullOrEmpty(t.Caption))),
             Times.Once);
+
+        TranslationRequestServiceMock.Verify(
+            s => s.CreateRequest(It.IsAny<TranslateAbleSubtitle>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task ProcessMedia_WithMultipleCaptionVariants_ShouldProcessEachCaption()
+    {
+        // Arrange - Different caption variants should each be translated
+        var movie = await CreateTestMovie();
+        var subtitles = new List<Subtitles>
+        {
+            new()
+            {
+                Path = "/movies/test/test.movie.en.srt",
+                FileName = "test.movie.en",
+                Language = "en",
+                Caption = "",
+                Format = ".srt"
+            },
+            new()
+            {
+                Path = "/movies/test/test.movie.en.forced.srt",
+                FileName = "test.movie.en.forced",
+                Language = "en",
+                Caption = "forced",
+                Format = ".srt"
+            },
+            new()
+            {
+                Path = "/movies/test/test.movie.en.sdh.srt",
+                FileName = "test.movie.en.sdh",
+                Language = "en",
+                Caption = "sdh",
+                Format = ".srt"
+            }
+        };
+
+        SubtitleServiceMock
+            .Setup(s => s.GetSubtitles(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(subtitles);
+
+        SetupStandardSettings("false");
+
+        // Act
+        var result = await Processor.ProcessMedia(movie, MediaType.Movie);
+
+        // Assert - Each caption variant should be translated separately
+        Assert.True(result);
+
+        TranslationRequestServiceMock.Verify(
+            s => s.CreateRequest(It.Is<TranslateAbleSubtitle>(t =>
+                t.SourceLanguage == "en" &&
+                t.TargetLanguage == "ro" &&
+                t.Caption == "" &&
+                t.SubtitlePath.Contains("test.movie.en.srt"))),
+            Times.Once);
+
+        TranslationRequestServiceMock.Verify(
+            s => s.CreateRequest(It.Is<TranslateAbleSubtitle>(t =>
+                t.SourceLanguage == "en" &&
+                t.TargetLanguage == "ro" &&
+                t.Caption == "forced" &&
+                t.SubtitlePath.Contains("test.movie.en.forced.srt"))),
+            Times.Once);
+
+        TranslationRequestServiceMock.Verify(
+            s => s.CreateRequest(It.Is<TranslateAbleSubtitle>(t =>
+                t.SourceLanguage == "en" &&
+                t.TargetLanguage == "ro" &&
+                t.Caption == "sdh" &&
+                t.SubtitlePath.Contains("test.movie.en.sdh.srt"))),
+            Times.Once);
+
+        TranslationRequestServiceMock.Verify(
+            s => s.CreateRequest(It.IsAny<TranslateAbleSubtitle>()),
+            Times.Exactly(3));
     }
 }

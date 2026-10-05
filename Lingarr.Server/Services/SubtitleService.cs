@@ -439,19 +439,35 @@ public class SubtitleService : ISubtitleService
             return null;
         }
 
-        var sourceSubtitle = ignoreCaptions == "true"
-            ? matchingSubtitles.FirstOrDefault(s => s.Language == sourceLanguage && string.IsNullOrEmpty(s.Caption))
-                ?? matchingSubtitles.FirstOrDefault(s => s.Language == sourceLanguage)
-            : matchingSubtitles.FirstOrDefault(s => s.Language == sourceLanguage);
+        var sourceSubtitles = matchingSubtitles
+            .Where(s => s.Language.Equals(sourceLanguage, StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
-        if (sourceSubtitle == null)
+        if (ignoreCaptions == "true")
+        {
+            var nonCaptionSubtitles = sourceSubtitles
+                .Where(s => string.IsNullOrEmpty(s.Caption))
+                .ToList();
+
+            if (nonCaptionSubtitles.Count > 0)
+            {
+                sourceSubtitles = nonCaptionSubtitles;
+            }
+        }
+
+        sourceSubtitles = sourceSubtitles
+            .GroupBy(s => s.Caption, StringComparer.OrdinalIgnoreCase)
+            .Select(group => group.First())
+            .ToList();
+
+        if (sourceSubtitles.Count == 0)
         {
             return null;
         }
 
         return new SelectedSourceSubtitle
         {
-            Subtitle = sourceSubtitle,
+            Subtitles = sourceSubtitles,
             SourceLanguage = sourceLanguage,
             AvailableLanguages = availableLanguages
         };
