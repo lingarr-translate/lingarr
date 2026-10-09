@@ -81,6 +81,13 @@ public class AuthController : ControllerBase
     {
         try
         {
+            var authEnabled = await _settingService.GetSetting(SettingKeys.Authentication.AuthEnabled);
+            var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+            if (authEnabled != "false" && !isAuthenticated)
+            {
+                return Unauthorized(new { message = "Authentication required" });
+            }
+
             if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 2)
             {
                 return BadRequest(new { message = "Username must be at least 2 characters long" });
@@ -172,6 +179,12 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<ActionResult> CompleteOnboarding([FromBody] OnboardingRequest request)
     {
+        var onboardingCompleted = await _settingService.GetSetting(SettingKeys.Authentication.OnboardingCompleted);
+        if (onboardingCompleted == "true")
+        {
+            return Conflict(new { message = "Onboarding has already been completed" });
+        }
+
         await _settingService.SetSettings(new Dictionary<string, string>
         {
             { SettingKeys.Authentication.AuthEnabled, request.EnableUserAuth },
