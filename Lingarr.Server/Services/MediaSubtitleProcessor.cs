@@ -112,25 +112,6 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             return false;
         }
 
-        var languagesToTranslate = targetLanguages.Except(selected.AvailableLanguages).ToList();
-        if (ignoreCaptions == "true")
-        {
-            var targetLanguagesWithCaptions = subtitles
-                .Where(s => targetLanguages.Contains(s.Language) && !string.IsNullOrEmpty(s.Caption))
-                .Select(s => s.Language)
-                .Distinct()
-                .ToList();
-
-            if (targetLanguagesWithCaptions.Any())
-            {
-                _logger.LogInformation(
-                    "Translation skipped because captions exist for target languages: |Green|{CaptionLanguages}|/Green| and ignoreCaptions is disabled",
-                    string.Join(", ", targetLanguagesWithCaptions));
-                await UpdateHash();
-                return false;
-            }
-        }
-        
         var activeStatuses = new[]
         {
             TranslationStatus.Pending,
@@ -141,33 +122,53 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             .Where(translationRequest => translationRequest.MediaId == _media.Id
                                          && translationRequest.MediaType == _mediaType
                                          && activeStatuses.Contains(translationRequest.Status))
-            .Select(translationRequest => translationRequest.TargetLanguage)
-            .Distinct()
+            .Select(translationRequest => new
+            {
+                translationRequest.SubtitleToTranslate,
+                translationRequest.TargetLanguage
+            })
             .ToListAsync();
 
-        languagesToTranslate = languagesToTranslate.Except(existingTranslationRequests).ToList();
-        if (!languagesToTranslate.Any())
+        var sourceSubtitles = selected.Subtitles;
+
+        var requestCreated = false;
+        foreach (var sourceSubtitle in sourceSubtitles)
+        {
+            var languagesToTranslate = targetLanguages
+                .Where(targetLanguage => !subtitles.Any(s =>
+                    s.Language.Equals(targetLanguage, StringComparison.OrdinalIgnoreCase)
+                    && (ignoreCaptions == "true" || string.Equals(s.Caption, sourceSubtitle.Caption, StringComparison.OrdinalIgnoreCase))))
+                .Where(targetLanguage => !existingTranslationRequests.Any(r =>
+                    string.Equals(r.SubtitleToTranslate, sourceSubtitle.Path, StringComparison.OrdinalIgnoreCase)
+                    && string.Equals(r.TargetLanguage, targetLanguage, StringComparison.OrdinalIgnoreCase)))
+                .ToList();
+
+            foreach (var targetLanguage in languagesToTranslate)
+            {
+                await _translationRequestService.CreateRequest(new TranslateAbleSubtitle
+                {
+                    MediaId = _media.Id,
+                    MediaType = _mediaType,
+                    SubtitlePath = sourceSubtitle.Path,
+                    TargetLanguage = targetLanguage,
+                    SourceLanguage = selected.SourceLanguage,
+                    SubtitleFormat = sourceSubtitle.Format,
+                    Caption = sourceSubtitle.Caption
+                });
+
+                requestCreated = true;
+                _logger.LogInformation(
+                    "Initiating translation from |Orange|{sourceLanguage}|/Orange| to |Orange|{targetLanguage}|/Orange| for |Green|{subtitleFile}|/Green|",
+                    selected.SourceLanguage,
+                    targetLanguage,
+                    sourceSubtitle.Path);
+            }
+        }
+
+        if (!requestCreated)
         {
             await UpdateHash();
             return false;
-        }
-
-        foreach (var targetLanguage in languagesToTranslate)
-        {
-            await _translationRequestService.CreateRequest(new TranslateAbleSubtitle
-            {
-                MediaId = _media.Id,
-                MediaType = _mediaType,
-                SubtitlePath = selected.Subtitle.Path,
-                TargetLanguage = targetLanguage,
-                SourceLanguage = selected.SourceLanguage,
-                SubtitleFormat = selected.Subtitle.Format
-            });
-            _logger.LogInformation(
-                "Initiating translation from |Orange|{sourceLanguage}|/Orange| to |Orange|{targetLanguage}|/Orange| for |Green|{subtitleFile}|/Green|",
-                selected.SourceLanguage,
-                targetLanguage,
-                selected.Subtitle.Path);
         }
 
         await UpdateHash();

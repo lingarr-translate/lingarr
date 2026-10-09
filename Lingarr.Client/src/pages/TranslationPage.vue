@@ -88,13 +88,13 @@
                 </div>
                 <div class="flex items-center md:col-span-1 md:px-4 md:py-2">
                     <BadgeComponent classes="text-primary-content border-accent bg-secondary">
-                        {{ item.sourceLanguage.toUpperCase() }}
+                        {{ item.sourceLanguage.toUpperCase() }}{{ item.caption ? ` - ${item.caption.toUpperCase()}` : '' }}
                     </BadgeComponent>
                 </div>
                 <div class="flex items-center gap-2 md:col-span-1 md:px-4 md:py-2">
                     <span class="text-primary-content/50 md:hidden">→</span>
                     <BadgeComponent classes="text-primary-content border-accent bg-secondary">
-                        {{ item.targetLanguage.toUpperCase() }}
+                        {{ item.targetLanguage.toUpperCase() }}{{ item.caption ? ` - ${item.caption.toUpperCase()}` : '' }}
                     </BadgeComponent>
                 </div>
                 <div class="flex items-center md:col-span-1 md:px-4 md:py-2">

@@ -36,6 +36,7 @@ export interface ITranslationRequest {
     sourceLanguage: string
     targetLanguage: string
     subtitleToTranslate?: string
+    caption?: string
     translatedSubtitle?: string
     mediaType: MediaType
     status: TranslationStatus

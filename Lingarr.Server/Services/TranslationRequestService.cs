@@ -129,6 +129,7 @@ public class TranslationRequestService : ITranslationRequestService
             SourceLanguage = translateAbleSubtitle.SourceLanguage,
             TargetLanguage = translateAbleSubtitle.TargetLanguage,
             SubtitleToTranslate = translateAbleSubtitle.SubtitlePath,
+            Caption = translateAbleSubtitle.Caption,
             MediaType = translateAbleSubtitle.MediaType,
             Status = TranslationStatus.Pending
         };
@@ -142,8 +143,10 @@ public class TranslationRequestService : ITranslationRequestService
         {
             var existing = await _dbContext.TranslationRequests
                 .Where(activeRequest =>
-                    activeRequest.SubtitleToTranslate == translationRequest.SubtitleToTranslate &&
+                    activeRequest.MediaId == translationRequest.MediaId &&
+                    activeRequest.SourceLanguage == translationRequest.SourceLanguage &&
                     activeRequest.TargetLanguage == translationRequest.TargetLanguage &&
+                    (activeRequest.Caption ?? "") == (translationRequest.Caption ?? "") &&
                     new[]
                         {
                             TranslationStatus.Pending, 
@@ -169,6 +172,7 @@ public class TranslationRequestService : ITranslationRequestService
             SourceLanguage = translationRequest.SourceLanguage,
             TargetLanguage = translationRequest.TargetLanguage,
             SubtitleToTranslate = translationRequest.SubtitleToTranslate,
+            Caption = translationRequest.Caption,
             MediaType = translationRequest.MediaType,
             Status = TranslationStatus.Pending,
             JobType = TranslationJobType.Translation
@@ -278,7 +282,9 @@ public class TranslationRequestService : ITranslationRequestService
         }
 
         var subtitles = await _subtitleService.GetSubtitles(path, fileName);
+
         var selected = _subtitleService.SelectSourceSubtitle(subtitles, sourceCodes, ignoreCaptions);
+
         if (selected == null)
         {
             _logger.LogDebug("Bulk: skipping mediaId {MediaId} — no source subtitle found (sourceCodes: {SourceCodes}, available: {Available})",
@@ -287,22 +293,35 @@ public class TranslationRequestService : ITranslationRequestService
             return;
         }
 
-        if (selected.AvailableLanguages.Contains(targetLanguage.ToLowerInvariant()))
+        foreach (var sourceSubtitle in selected.Subtitles)
         {
-            _logger.LogDebug("Bulk: skipping mediaId {MediaId} — target language {Target} already exists",
-                mediaId, targetLanguage);
-            return;
+            var targetExists = subtitles.Any(s =>
+                s.Language.Equals(targetLanguage, StringComparison.OrdinalIgnoreCase)
+                && (ignoreCaptions == "true" ||
+                    string.Equals(s.Caption, sourceSubtitle.Caption, StringComparison.OrdinalIgnoreCase)));
+
+            if (targetExists)
+            {
+                _logger.LogDebug(
+                    "Bulk: skipping subtitle {SubtitlePath} — target language {Target} with caption {Caption} already exists",
+                    sourceSubtitle.Path,
+                    targetLanguage,
+                    sourceSubtitle.Caption);
+                continue;
+            }
+
+            await CreateRequest(new TranslateAbleSubtitle
+            {
+                MediaId = mediaId,
+                MediaType = mediaType,
+                SubtitlePath = sourceSubtitle.Path,
+                TargetLanguage = targetLanguage,
+                SourceLanguage = selected.SourceLanguage,
+                SubtitleFormat = sourceSubtitle.Format,
+                Caption = sourceSubtitle.Caption
+            });
         }
 
-        await CreateRequest(new TranslateAbleSubtitle
-        {
-            MediaId = mediaId,
-            MediaType = mediaType,
-            SubtitlePath = selected.Subtitle.Path,
-            TargetLanguage = targetLanguage,
-            SourceLanguage = selected.SourceLanguage,
-            SubtitleFormat = selected.Subtitle.Format
-        });
     }
 
     /// <inheritdoc />

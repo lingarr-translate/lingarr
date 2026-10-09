@@ -11,6 +11,7 @@ public class TranslationRequestDetail
     public required string SourceLanguage { get; set; }
     public required string TargetLanguage { get; set; }
     public string? SubtitleToTranslate { get; set; }
+    public string? Caption { get; set; }
     public string? TranslatedSubtitle { get; set; }
     public required MediaType MediaType { get; set; }
     public required TranslationStatus Status { get; set; }

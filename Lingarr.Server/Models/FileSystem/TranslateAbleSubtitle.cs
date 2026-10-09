@@ -10,4 +10,5 @@ public class TranslateAbleSubtitle
     public required string TargetLanguage { get; set; }
     public required MediaType MediaType { get; set; }
     public required string SubtitleFormat { get; set; }
+    public string Caption { get; set; } = string.Empty;
 }

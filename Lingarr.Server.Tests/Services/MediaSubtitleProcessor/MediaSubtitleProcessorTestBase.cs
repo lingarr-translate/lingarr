@@ -49,21 +49,29 @@ public abstract class MediaSubtitleProcessorTestBase : IDisposable
                 var candidates = subs.Where(s => sources.Contains(s.Language)).ToList();
                 if (!candidates.Any()) return null;
 
-                Subtitles selected;
+                var sourceSubtitles = candidates;
+
                 if (ignoreCaptions == "true")
                 {
-                    selected = candidates.FirstOrDefault(s => string.IsNullOrEmpty(s.Caption))
-                               ?? candidates.First();
+                    var nonCaptionSubtitles = sourceSubtitles
+                        .Where(s => string.IsNullOrEmpty(s.Caption))
+                        .ToList();
+
+                    if (nonCaptionSubtitles.Any())
+                    {
+                        sourceSubtitles = nonCaptionSubtitles;
+                    }
                 }
-                else
-                {
-                    selected = candidates.First();
-                }
+
+                sourceSubtitles = sourceSubtitles
+                    .GroupBy(s => s.Caption, StringComparer.OrdinalIgnoreCase)
+                    .Select(group => group.First())
+                    .ToList();
 
                 return new SelectedSourceSubtitle
                 {
-                    Subtitle = selected,
-                    SourceLanguage = selected.Language,
+                    Subtitles = sourceSubtitles,
+                    SourceLanguage = sourceSubtitles.First().Language,
                     AvailableLanguages = subs.Select(s => s.Language).ToHashSet()
                 };
             });
