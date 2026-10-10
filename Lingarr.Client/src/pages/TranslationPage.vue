@@ -1,138 +1,91 @@
 <template>
-    <div class="w-full">
-        <!-- Search and Filters -->
-        <div class="ui-toolbar">
-            <SearchComponent v-model="filter" />
-            <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
-                <button
-                    v-if="isSelectMode"
-                    type="button"
-                    class="ui-border hover:bg-accent/10 min-h-11 cursor-pointer rounded-lg border px-4 py-2 text-sm font-medium"
+    <div class="media-library w-full">
+        <div class="media-toolbar">
+            <div class="translation-toolbar-query">
+                <SearchComponent v-model="filter" />
+                <div class="translation-toolbar-controls">
+                    <ButtonComponent size="sm" variant="secondary" @click="toggleSelectMode">
+                        {{ isSelectMode ? 'Cancel' : 'Select' }}
+                    </ButtonComponent>
+                    <div class="media-toolbar-sort min-w-0 flex-1">
+                        <SortControls
+                            v-model="filter"
+                            :options="[
+                                { label: 'Sort by Added', value: 'CreatedAt' },
+                                { label: 'Sort by Completed', value: 'CompletedAt' },
+                                { label: 'Sort by Title', value: 'Title' }
+                            ]" />
+                        <ReloadComponent @toggle:update="translationRequestStore.fetch()" />
+                    </div>
+                </div>
+            </div>
+            <div v-if="isSelectMode" class="media-toolbar-actions">
+                <CheckboxComponent
+                    label="Select all on this page"
+                    :model-value="translationRequestStore.selectAll"
+                    @change="translationRequestStore.toggleSelectAll()" />
+                <ButtonComponent
+                    size="sm"
+                    variant="accent"
+                    :disabled="translationRequestStore.selectedRequests.length === 0"
                     @click="handleDelete">
                     Delete ({{ translationRequestStore.selectedRequests.length }})
-                </button>
-                <button
-                    type="button"
-                    class="ui-border hover:bg-accent/10 min-h-11 cursor-pointer rounded-lg border px-4 py-2 text-sm font-medium"
-                    @click="toggleSelectMode">
-                    {{ isSelectMode ? 'Cancel' : 'Select' }}
-                </button>
-                <div class="flex flex-wrap items-center gap-2">
-                    <SortControls
-                        v-model="filter"
-                        :options="[
-                            {
-                                label: 'Sort by Added',
-                                value: 'CreatedAt'
-                            },
-                            {
-                                label: 'Sort by Completed',
-                                value: 'CompletedAt'
-                            },
-                            {
-                                label: 'Sort by Title',
-                                value: 'Title'
-                            }
-                        ]" />
-                    <ReloadComponent @toggle:update="translationRequestStore.fetch()" />
-                </div>
+                </ButtonComponent>
             </div>
         </div>
 
-        <div class="w-full px-4 sm:px-6">
-            <div class="media-table-heading hidden border-b font-semibold xl:grid xl:grid-cols-12">
-                <div class="col-span-3 px-3 py-2">Title</div>
-                <div class="col-span-1 px-4 py-2">Source</div>
-                <div class="col-span-1 px-4 py-2">Target</div>
-                <div class="col-span-1 px-4 py-2">Status</div>
-                <div class="px-4 py-2" :class="isSelectMode ? 'col-span-1' : 'col-span-2'">
-                    Progress
-                </div>
-                <div class="col-span-1 px-4 py-2">Completed</div>
-                <div class="col-span-3 px-3 py-2 text-right">Actions</div>
-                <div
-                    v-if="isSelectMode"
-                    class="col-span-1 flex items-center justify-center px-4 py-2">
-                    <CheckboxComponent
-                        aria-label="Select all items on this page"
-                        :model-value="translationRequestStore.selectAll"
-                        @change="translationRequestStore.toggleSelectAll()" />
-                </div>
+        <div class="translation-list mx-4 sm:mx-6" :class="{ 'is-selecting': isSelectMode }">
+            <div class="translation-heading media-table-heading border-b font-semibold">
+                <div>Translation</div>
+                <div>Status / progress</div>
+                <div class="text-right">Actions</div>
             </div>
             <div
                 v-for="item in translationRequests.items"
                 :key="item.id"
-                class="media-row hover:bg-accent/5 flex flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 transition-colors xl:grid xl:grid-cols-12 xl:gap-0 xl:py-2">
-                <div
-                    class="flex w-full flex-wrap items-center gap-2 xl:col-span-3 xl:w-auto xl:px-2 xl:py-2">
-                    <span class="min-w-0 flex-1 basis-full font-medium xl:basis-auto">
-                        {{ item.title }}
-                    </span>
-                    <span class="flex w-full flex-wrap items-center gap-2 xl:hidden">
-                        <TranslationAction
-                            :item="item"
-                            :on-action="(action) => handleAction(item, action)" />
-                        <CheckboxComponent
-                            v-if="isSelectMode"
-                            :model-value="
-                                translationRequestStore.selectedRequests.some(
-                                    (request) => request.id === item.id
-                                )
-                            "
-                            @change="translationRequestStore.toggleSelect(item)" />
-                    </span>
-                </div>
-                <div class="flex items-center xl:col-span-1 xl:px-2 xl:py-2">
-                    <BadgeComponent classes="text-primary-content ui-border bg-secondary">
-                        {{ item.sourceLanguage.toUpperCase() }}
-                    </BadgeComponent>
-                </div>
-                <div class="flex items-center gap-2 xl:col-span-1 xl:px-2 xl:py-2">
-                    <span class="text-secondary-content xl:hidden">→</span>
-                    <BadgeComponent classes="text-primary-content ui-border bg-secondary">
-                        {{ item.targetLanguage.toUpperCase() }}
-                    </BadgeComponent>
-                </div>
-                <div class="flex items-center xl:col-span-1 xl:px-2 xl:py-2">
-                    <TranslationStatus :translation-status="item.status" />
-                </div>
-                <div
-                    class="items-center xl:flex xl:px-2 xl:py-2"
-                    :class="[
-                        isSelectMode ? 'xl:col-span-1' : 'xl:col-span-2',
-                        item.status === TRANSLATION_STATUS.INPROGRESS && item.progress
-                            ? 'flex w-full xl:w-auto'
-                            : 'hidden'
-                    ]">
+                class="translation-row media-row border-b transition-colors">
+                <div class="translation-identity">
+                    <div class="translation-title font-medium">{{ item.title }}</div>
                     <div
-                        v-if="item.status === TRANSLATION_STATUS.INPROGRESS && item.progress"
-                        class="w-full">
-                        <TranslationProgress :progress="item.progress" />
+                        class="translation-languages flex flex-wrap items-center gap-2"
+                        :aria-label="`From ${item.sourceLanguage.toUpperCase()} to ${item.targetLanguage.toUpperCase()}`">
+                        <BadgeComponent classes="text-primary-content ui-border bg-secondary">
+                            <span class="sr-only">Source:</span>
+                            {{ item.sourceLanguage.toUpperCase() }}
+                        </BadgeComponent>
+                        <span class="text-secondary-content" aria-hidden="true">→</span>
+                        <BadgeComponent classes="text-primary-content ui-border bg-secondary">
+                            <span class="sr-only">Target:</span>
+                            {{ item.targetLanguage.toUpperCase() }}
+                        </BadgeComponent>
                     </div>
                 </div>
-                <div
-                    :class="item.completedAt ? 'flex' : 'hidden xl:flex'"
-                    class="items-center gap-2 xl:col-span-1 xl:px-2 xl:py-2">
-                    <TranslationCompletedAt
-                        v-if="item.completedAt"
-                        :completed-at="item.completedAt" />
-                    <span
-                        class="text-secondary-content text-xs font-semibold tracking-wide uppercase xl:hidden">
-                        Completed
-                    </span>
-                </div>
-                <div
-                    class="hidden items-center justify-between xl:col-span-3 xl:flex xl:justify-end xl:py-2">
-                    <div class="flex items-center justify-center gap-1">
-                        <TranslationAction
-                            :item="item"
-                            :on-action="(action) => handleAction(item, action)" />
+                <div class="translation-state">
+                    <TranslationStatus :translation-status="item.status" class="font-medium" />
+                    <div
+                        v-if="item.status === TRANSLATION_STATUS.INPROGRESS"
+                        class="translation-progress"
+                        role="progressbar"
+                        :aria-label="`Translation progress for ${item.title}`"
+                        :aria-valuenow="item.progress ?? 0"
+                        :aria-valuemin="0"
+                        :aria-valuemax="100">
+                        <TranslationProgress :progress="item.progress ?? 0" />
+                        <span class="text-secondary-content text-xs tabular-nums">
+                            {{ item.progress ?? 0 }}%
+                        </span>
+                    </div>
+                    <div v-if="item.completedAt" class="text-secondary-content text-xs">
+                        <span class="sr-only">Completed:</span>
+                        <TranslationCompletedAt :completed-at="item.completedAt" />
                     </div>
                 </div>
-                <div
-                    v-if="isSelectMode"
-                    class="hidden items-center justify-center py-2 xl:col-span-1 xl:flex xl:px-2">
+                <div class="translation-actions">
+                    <TranslationAction
+                        :item="item"
+                        :on-action="(action) => handleAction(item, action)" />
                     <CheckboxComponent
+                        v-if="isSelectMode"
                         :aria-label="`Select ${item.title}`"
                         :model-value="
                             translationRequestStore.selectedRequests.some(
@@ -174,6 +127,7 @@ import TranslationAction from '@/components/common/TranslationAction.vue'
 import TranslationCompletedAt from '@/components/common/TranslationCompletedAt.vue'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
 import CheckboxComponent from '@/components/common/CheckboxComponent.vue'
+import ButtonComponent from '@/components/common/ButtonComponent.vue'
 
 const signalR = useSignalR()
 const hubConnection = ref<Hub>()
@@ -240,3 +194,93 @@ const handleDelete = async () => {
     translationRequestStore.fetch()
 }
 </script>
+
+<style scoped>
+.translation-toolbar-query {
+    display: grid;
+    align-items: center;
+    gap: 0.75rem;
+}
+.translation-toolbar-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
+}
+.translation-toolbar-controls > button {
+    flex-shrink: 0;
+}
+.translation-list {
+    container: translations / inline-size;
+    --translation-actions-width: 12rem;
+}
+.translation-list.is-selecting {
+    --translation-actions-width: 15rem;
+}
+.translation-heading {
+    display: none;
+}
+.translation-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'identity' 'state' 'actions';
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 0;
+}
+.translation-identity {
+    grid-area: identity;
+    display: grid;
+    gap: 0.375rem;
+}
+.translation-title {
+    overflow-wrap: anywhere;
+}
+.translation-state {
+    grid-area: state;
+    display: grid;
+    gap: 0.25rem;
+    align-content: center;
+}
+.translation-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    max-width: 14rem;
+}
+.translation-actions {
+    grid-area: actions;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+@container media-library (min-width: 42rem) {
+    .translation-toolbar-query {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+}
+@container translations (min-width: 28rem) {
+    .translation-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: 'identity identity' 'state actions';
+    }
+    .translation-actions {
+        justify-content: flex-end;
+    }
+}
+@container translations (min-width: 42rem) {
+    .translation-heading,
+    .translation-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 9rem var(--translation-actions-width);
+        grid-template-areas: 'identity state actions';
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem;
+    }
+    .translation-row {
+        min-height: 4.5rem;
+    }
+}
+</style>
