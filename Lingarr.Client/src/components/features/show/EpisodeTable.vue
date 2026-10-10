@@ -1,30 +1,27 @@
 <template>
-    <div class="bg-tertiary text-tertiary-content w-full">
-        <div class="border-primary hidden grid-cols-12 border-b-2 font-bold xl:grid">
-            <div class="col-span-1 px-4 py-2">
-                <span class="hidden lg:block">Episodes</span>
-                <span class="block lg:hidden">#</span>
-            </div>
-            <div class="col-span-5 px-4 py-2">Title</div>
-            <div class="col-span-5 flex justify-between py-2 pr-4">
-                <span>Subtitles</span>
-                <span>Include</span>
-            </div>
+    <div class="media-list media-list--episodes bg-tertiary text-tertiary-content w-full px-2">
+        <div class="media-table-heading media-library-heading border-b font-semibold">
+            <div>#</div>
+            <div>Episode</div>
+            <div>Subtitles</div>
+            <div>Include</div>
         </div>
         <div
             v-for="episode in episodes"
             :key="episode.id"
-            class="border-accent/20 hover:bg-accent/5 flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3 transition-colors xl:grid xl:grid-cols-12 xl:gap-0 xl:border-b-0 xl:px-0 xl:py-0">
-            <div class="hidden px-4 py-2 xl:col-span-1 xl:block">
+            class="media-row media-library-row border-b transition-colors">
+            <div class="media-episode-number text-secondary-content">
                 {{ episode.episodeNumber }}
             </div>
-            <div class="flex w-full items-center gap-2 xl:col-span-5 xl:w-auto xl:px-4 xl:py-2">
-                <span class="text-secondary-content xl:hidden">{{ episode.episodeNumber }}.</span>
+            <div class="media-title flex items-center gap-2">
+                <span class="media-episode-inline text-secondary-content">
+                    {{ episode.episodeNumber }}.
+                </span>
                 <span>{{ episode.title }}</span>
                 <ActiveTranslationBadge :media-id="episode.id" :media-type="MEDIA_TYPE.EPISODE" />
             </div>
-            <div class="flex w-full items-center justify-between xl:col-span-5 xl:w-auto xl:pr-4">
-                <div v-if="episode?.fileName" class="flex flex-wrap items-center gap-2">
+            <div class="media-subtitles flex-wrap items-center gap-2">
+                <template v-if="episode?.fileName">
                     <ContextMenu
                         v-for="(subtitle, jndex) in getSubtitle(episode.fileName)"
                         :key="`${episode.id}-${jndex}`"
@@ -38,8 +35,10 @@
                             </span>
                         </BadgeComponent>
                     </ContextMenu>
-                </div>
-                <div class="ml-auto flex items-center gap-2 px-1 xl:py-2">
+                </template>
+            </div>
+            <div class="media-controls">
+                <div class="media-control media-include">
                     <ToggleButton
                         v-model="episode.includeInTranslation"
                         :aria-label="`Include ${episode.title} in automatic translation`"
@@ -52,8 +51,7 @@
                                     episode.includeInTranslation
                                 )
                         " />
-                    <span
-                        class="text-secondary-content text-xs font-semibold tracking-wide uppercase xl:hidden">
+                    <span class="media-control-label text-secondary-content text-xs font-semibold">
                         Include
                     </span>
                 </div>

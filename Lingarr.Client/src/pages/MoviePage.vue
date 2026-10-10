@@ -1,41 +1,9 @@
 <template>
-    <div v-if="settingsCompleted === 'true'" class="w-full">
-        <div class="ui-toolbar">
-            <SearchComponent v-model="filter" />
-            <div class="flex w-full flex-wrap items-center gap-2">
-                <ToggleButton
-                    v-model="navigateToDetails"
-                    size="small"
-                    label="Open details on request" />
-                <ContextMenu
-                    v-if="isSelectMode && movieStore.selectedMovies.length > 0"
-                    @select="handleTranslate">
-                    <ButtonComponent size="sm" variant="accent">
-                        Translate ({{ movieStore.selectedMovies.length }})
-                    </ButtonComponent>
-                </ContextMenu>
-                <ButtonComponent size="sm" variant="accent" @click="toggleSelectMode">
-                    {{ isSelectMode ? 'Cancel' : 'Translate multiple' }}
-                </ButtonComponent>
-                <ButtonComponent
-                    size="sm"
-                    variant="secondary"
-                    v-tooltip="'Applies to the entire library, including items outside this page.'"
-                    @click="movieStore.includeAll(MEDIA_TYPE.MOVIE, true)">
-                    Include all
-                </ButtonComponent>
-                <ButtonComponent
-                    size="sm"
-                    variant="secondary"
-                    v-tooltip="'Applies to the entire library, including items outside this page.'"
-                    @click="movieStore.includeAll(MEDIA_TYPE.MOVIE, false)">
-                    Exclude all
-                </ButtonComponent>
-                <span class="text-secondary-content px-2 text-sm">
-                    {{ movieStore.includeSummary.included }}/{{ movieStore.includeSummary.total }}
-                    included
-                </span>
-                <div class="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
+    <div v-if="settingsCompleted === 'true'" class="media-library w-full">
+        <div class="media-toolbar">
+            <div class="media-toolbar-query">
+                <SearchComponent v-model="filter" />
+                <div class="media-toolbar-sort">
                     <SortControls
                         v-model="filter"
                         :options="[
@@ -51,16 +19,60 @@
                     <ReloadComponent @toggle:update="movieStore.fetch()" />
                 </div>
             </div>
+            <div class="media-toolbar-actions">
+                <ToggleButton
+                    v-model="navigateToDetails"
+                    size="small"
+                    label="Open details on request" />
+                <div class="media-toolbar-selection">
+                    <ContextMenu
+                        v-if="isSelectMode && movieStore.selectedMovies.length > 0"
+                        @select="handleTranslate">
+                        <ButtonComponent size="sm" variant="accent">
+                            Translate ({{ movieStore.selectedMovies.length }})
+                        </ButtonComponent>
+                    </ContextMenu>
+                    <ButtonComponent size="sm" variant="accent" @click="toggleSelectMode">
+                        {{ isSelectMode ? 'Cancel' : 'Translate multiple' }}
+                    </ButtonComponent>
+                </div>
+                <div class="media-toolbar-inclusion">
+                    <ButtonComponent
+                        size="sm"
+                        variant="secondary"
+                        v-tooltip="
+                            'Applies to the entire library, including items outside this page.'
+                        "
+                        @click="movieStore.includeAll(MEDIA_TYPE.MOVIE, true)">
+                        Include all
+                    </ButtonComponent>
+                    <ButtonComponent
+                        size="sm"
+                        variant="secondary"
+                        v-tooltip="
+                            'Applies to the entire library, including items outside this page.'
+                        "
+                        @click="movieStore.includeAll(MEDIA_TYPE.MOVIE, false)">
+                        Exclude all
+                    </ButtonComponent>
+                    <span class="text-secondary-content px-2 text-sm">
+                        {{ movieStore.includeSummary.included }}/{{
+                            movieStore.includeSummary.total
+                        }}
+                        included
+                    </span>
+                </div>
+            </div>
         </div>
 
-        <div class="w-full px-4 sm:px-6">
-            <div class="media-table-heading hidden border-b font-semibold xl:grid xl:grid-cols-12">
-                <div :class="isSelectMode ? 'col-span-4' : 'col-span-5'" class="px-4 py-2">
-                    Title
-                </div>
-                <div class="col-span-4 px-4 py-2">Subtitles</div>
-                <div class="col-span-1 px-4 py-2">Include</div>
-                <div class="col-span-2 px-4 py-2">
+        <div
+            class="media-list media-list--movies mx-4 sm:mx-6"
+            :class="{ 'is-selecting': isSelectMode }">
+            <div class="media-table-heading media-library-heading border-b font-semibold">
+                <div>Title</div>
+                <div>Subtitles</div>
+                <div>Include</div>
+                <div class="media-delay-heading">
                     Delay
                     <button
                         type="button"
@@ -72,9 +84,7 @@
                         ?
                     </button>
                 </div>
-                <div
-                    v-if="isSelectMode"
-                    class="col-span-1 flex items-center justify-center px-4 py-2">
+                <div v-if="isSelectMode" class="media-select-cell">
                     <CheckboxComponent
                         aria-label="Select all items on this page"
                         :model-value="movieStore.selectAll"
@@ -82,16 +92,13 @@
                 </div>
             </div>
             <div v-for="item in movies.items" :key="item.id">
-                <div
-                    class="media-row hover:bg-accent/5 flex flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 transition-colors xl:grid xl:grid-cols-12 xl:gap-0 xl:py-2">
-                    <div
-                        :class="isSelectMode ? 'xl:col-span-4' : 'xl:col-span-5'"
-                        class="flex w-full items-center gap-2 xl:w-auto xl:px-4 xl:py-2">
+                <div class="media-row media-library-row border-b transition-colors">
+                    <div class="media-title flex items-center gap-2">
                         <span class="font-medium">{{ item.title }}</span>
                         <ActiveTranslationBadge
                             :media-id="item.id"
                             :media-type="MEDIA_TYPE.MOVIE" />
-                        <span v-if="isSelectMode" class="ml-auto xl:hidden">
+                        <span v-if="isSelectMode" class="media-select-inline ml-auto shrink-0">
                             <CheckboxComponent
                                 :aria-label="`Select ${item.title}`"
                                 :model-value="
@@ -100,9 +107,7 @@
                                 @change="movieStore.toggleSelect(item)" />
                         </span>
                     </div>
-                    <div
-                        :class="item.subtitles?.length ? 'flex' : 'hidden xl:flex'"
-                        class="w-full flex-wrap items-center gap-2 xl:col-span-4 xl:w-auto xl:px-4 xl:py-2">
+                    <div class="media-subtitles flex-wrap items-center gap-2">
                         <ContextMenu
                             v-for="(subtitle, index) in item.subtitles"
                             :key="`${index}-${subtitle.fileName}`"
@@ -118,47 +123,47 @@
                             </BadgeComponent>
                         </ContextMenu>
                     </div>
-                    <div class="flex items-center gap-2 xl:col-span-1 xl:px-4 xl:py-2">
-                        <ToggleButton
-                            v-model="item.includeInTranslation"
-                            :aria-label="`Include ${item.title} in automatic translation`"
-                            size="small"
-                            @toggle:update="
-                                () =>
-                                    movieStore.include(
-                                        MEDIA_TYPE.MOVIE,
-                                        item.id,
-                                        item.includeInTranslation
-                                    )
-                            " />
-                        <span
-                            class="text-secondary-content text-xs font-semibold tracking-wide uppercase xl:hidden">
-                            Include
-                        </span>
+                    <div class="media-controls">
+                        <div class="media-control media-include">
+                            <ToggleButton
+                                v-model="item.includeInTranslation"
+                                :aria-label="`Include ${item.title} in automatic translation`"
+                                size="small"
+                                @toggle:update="
+                                    () =>
+                                        movieStore.include(
+                                            MEDIA_TYPE.MOVIE,
+                                            item.id,
+                                            item.includeInTranslation
+                                        )
+                                " />
+                            <span
+                                class="media-control-label text-secondary-content text-xs font-semibold">
+                                Include
+                            </span>
+                        </div>
+                        <div class="media-control media-delay" @click.stop>
+                            <InputComponent
+                                :model-value="item?.translationAgeThreshold"
+                                placeholder="hours"
+                                :aria-label="`Translation delay in hours for ${item.title}`"
+                                class="w-20"
+                                size="sm"
+                                :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
+                                :type="INPUT_TYPE.NUMBER"
+                                @update:value="
+                                    (value) => {
+                                        item.translationAgeThreshold = value
+                                        movieStore.updateThreshold(MEDIA_TYPE.MOVIE, item.id, value)
+                                    }
+                                " />
+                            <span
+                                class="media-control-label text-secondary-content text-xs font-semibold">
+                                Delay (h)
+                            </span>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-2 xl:col-span-2 xl:px-4 xl:py-2" @click.stop>
-                        <InputComponent
-                            :model-value="item?.translationAgeThreshold"
-                            placeholder="hours"
-                            :aria-label="`Translation delay in hours for ${item.title}`"
-                            class="w-20"
-                            size="sm"
-                            :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
-                            :type="INPUT_TYPE.NUMBER"
-                            @update:value="
-                                (value) => {
-                                    item.translationAgeThreshold = value
-                                    movieStore.updateThreshold(MEDIA_TYPE.MOVIE, item.id, value)
-                                }
-                            " />
-                        <span
-                            class="text-secondary-content text-xs font-semibold tracking-wide uppercase xl:hidden">
-                            Delay (hours)
-                        </span>
-                    </div>
-                    <div
-                        v-if="isSelectMode"
-                        class="hidden items-center justify-center px-4 py-2 xl:col-span-1 xl:flex">
+                    <div v-if="isSelectMode" class="media-select-cell">
                         <CheckboxComponent
                             :aria-label="`Select ${item.title}`"
                             :model-value="movieStore.selectedMovies.some((m) => m.id === item.id)"
