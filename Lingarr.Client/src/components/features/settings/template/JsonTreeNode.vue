@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="group">
         <div
             class="hover:bg-accent/5 flex items-center gap-2 rounded px-1.5 py-1.5"
@@ -6,7 +6,7 @@
             <CaretButton
                 v-if="node.type === NODE_TYPE.OBJECT || node.type === NODE_TYPE.ARRAY"
                 :is-expanded="!node.expanded"
-                class="text-secondary-content/60 shrink-0 transition-colors duration-200 hover:text-primary-content"
+                class="text-secondary-content/60 hover:text-primary-content shrink-0 transition-colors duration-200"
                 @click="toggleExpand" />
             <div v-else class="h-6 w-6 shrink-0" />
 
@@ -20,7 +20,7 @@
                 @update:model-value="updateKey" />
             <span
                 v-else-if="parentType === 'array'"
-                class="bg-accent/20 rounded px-1.5 py-0.5 text-xs font-medium text-accent-content">
+                class="bg-accent/20 text-primary-content rounded px-1.5 py-0.5 text-xs font-medium">
                 [{{ arrayIndex }}]
             </span>
 
@@ -71,7 +71,7 @@
             </template>
 
             <button
-                class="text-primary-content hover:text-primary-content/50 ml-auto h-4 w-4 cursor-pointer shrink-0 opacity-0 transition-colors group-hover:opacity-100"
+                class="text-primary-content hover:text-primary-content/50 ml-auto h-4 w-4 shrink-0 cursor-pointer opacity-0 transition-colors group-hover:opacity-100"
                 title="Remove"
                 @click="$emit('delete')">
                 <TrashIcon class="h-4 w-4" />
@@ -79,7 +79,9 @@
         </div>
 
         <div
-            v-if="(node.type === NODE_TYPE.OBJECT || node.type === NODE_TYPE.ARRAY) && node.expanded"
+            v-if="
+                (node.type === NODE_TYPE.OBJECT || node.type === NODE_TYPE.ARRAY) && node.expanded
+            "
             class="border-accent/15 ml-2 border-l"
             :style="{ marginLeft: `${depth * 1.25 + 0.5}rem` }">
             <JsonTreeNode

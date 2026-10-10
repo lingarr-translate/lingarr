@@ -1,12 +1,13 @@
-﻿<template>
+<template>
     <div class="relative h-full w-full">
         <Bar
             v-if="chartData"
             :key="key"
+            aria-label="Daily translations and seven-day moving average"
             :data="chartData"
             :options="chartOptions"
             class="h-full w-full" />
-        <div v-else class="flex h-full w-full items-center justify-center text-primary-content">
+        <div v-else class="text-primary-content flex h-full w-full items-center justify-center">
             No data available
         </div>
     </div>
@@ -55,11 +56,11 @@ const colors = computed(() => {
     return {
         key: key.value, // force reload
         bar: {
-            background: getCssVariable('--accent') + '80', // added opacity
+            background: getCssVariable('--accent'),
             border: getCssVariable('--primary')
         },
         line: {
-            border: getCssVariable('--accent-content')
+            border: getCssVariable('--primary-content')
         },
         card: {
             background: getCssVariable('--primary'),
@@ -98,7 +99,7 @@ const chartData = computed<ChartData<'bar'> | undefined>(() => {
             data: translationCounts.value,
             backgroundColor: colors.value.bar.background,
             borderColor: colors.value.bar.border,
-            barThickness: 6,
+            barThickness: 8,
             borderRadius: 4,
             maxBarThickness: 12,
             order: 2
@@ -122,8 +123,9 @@ const chartData = computed<ChartData<'bar'> | undefined>(() => {
     } as ChartData<'bar'>
 })
 
-const chartOptions: ChartOptions<'bar'> = {
+const chartOptions = computed<ChartOptions<'bar'>>(() => ({
     responsive: true,
+    animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : undefined,
     maintainAspectRatio: false,
     layout: {
         padding: {
@@ -134,12 +136,12 @@ const chartOptions: ChartOptions<'bar'> = {
         y: {
             beginAtZero: true,
             grid: {
-                color: '#466e8c20'
+                color: getCssVariable('--secondary-content') + '20'
             },
             ticks: {
-                color: '#c0c8d2',
+                color: getCssVariable('--secondary-content'),
                 font: {
-                    size: 11
+                    size: 12
                 },
                 padding: 8,
                 maxTicksLimit: 5
@@ -153,9 +155,9 @@ const chartOptions: ChartOptions<'bar'> = {
                 display: false
             },
             ticks: {
-                color: '#c0c8d2',
+                color: getCssVariable('--secondary-content'),
                 font: {
-                    size: 11
+                    size: 12
                 },
                 maxRotation: 45,
                 minRotation: 45,
@@ -171,7 +173,7 @@ const chartOptions: ChartOptions<'bar'> = {
         legend: {
             position: 'top' as const,
             labels: {
-                color: '#c0c8d2',
+                color: getCssVariable('--secondary-content'),
                 font: {
                     size: 12
                 },
@@ -185,8 +187,8 @@ const chartOptions: ChartOptions<'bar'> = {
             borderColor: colors.value.card.border,
             borderWidth: 1,
             padding: 12,
-            titleColor: '#c0c8d2',
-            bodyColor: '#c0c8d2',
+            titleColor: getCssVariable('--primary-content'),
+            bodyColor: getCssVariable('--primary-content'),
             titleFont: {
                 size: 13
             },
@@ -211,5 +213,5 @@ const chartOptions: ChartOptions<'bar'> = {
         intersect: false,
         mode: 'index'
     }
-}
+}))
 </script>

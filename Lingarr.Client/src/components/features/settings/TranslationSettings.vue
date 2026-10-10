@@ -1,40 +1,41 @@
-﻿<template>
+<template>
     <CardComponent title="Translation Request">
         <template #description>
-            Modify translation request settings by changing retry options or batch size if available in the service.
+            Modify translation request settings by changing retry options or batch size if available
+            in the service.
         </template>
         <template #content>
             <SaveNotification ref="saveNotification" />
 
             <template
                 v-if="
-                [
-                    SERVICE_TYPE.ANTHROPIC,
-                    SERVICE_TYPE.DEEPSEEK,
-                    SERVICE_TYPE.GEMINI,
-                    SERVICE_TYPE.LOCALAI,
-                    SERVICE_TYPE.MISTRAL,
-                    SERVICE_TYPE.OPENAI,
-                    SERVICE_TYPE.XAI
-                ].includes(
-                    serviceType as
-                        | 'openai'
-                        | 'anthropic'
-                        | 'localai'
-                        | 'gemini'
-                        | 'deepseek'
-                        | 'mistral'
-                        | 'xai'
-                )
-            ">
+                    [
+                        SERVICE_TYPE.ANTHROPIC,
+                        SERVICE_TYPE.DEEPSEEK,
+                        SERVICE_TYPE.GEMINI,
+                        SERVICE_TYPE.LOCALAI,
+                        SERVICE_TYPE.MISTRAL,
+                        SERVICE_TYPE.OPENAI,
+                        SERVICE_TYPE.XAI
+                    ].includes(
+                        serviceType as
+                            | 'openai'
+                            | 'anthropic'
+                            | 'localai'
+                            | 'gemini'
+                            | 'deepseek'
+                            | 'mistral'
+                            | 'xai'
+                    )
+                ">
                 <div class="flex flex-col space-x-2">
                     <span class="font-semibold">Use batch translation</span>
                     Process multiple subtitle lines together in batches to improve translation
-                    efficiency and context awareness. Note that single-line translations with context
-                    are still more reliable and of higher quality.
+                    efficiency and context awareness. Note that single-line translations with
+                    context are still more reliable and of higher quality.
                 </div>
                 <ToggleButton v-model="useBatchTranslation">
-                    <span class="text-sm font-medium text-primary-content">
+                    <span class="text-primary-content text-sm font-medium">
                         {{ useBatchTranslation == 'true' ? 'Enabled' : 'Disabled' }}
                     </span>
                 </ToggleButton>
@@ -47,6 +48,7 @@
                 </div>
                 <InputComponent
                     v-model="maxBatchSize"
+                    aria-label="Batch size"
                     :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                     @update:validation="(val) => (isValid.maxBatchSize = val)" />
             </template>
@@ -58,6 +60,7 @@
             </div>
             <InputComponent
                 v-model="requestTimeout"
+                aria-label="Request timeout in minutes"
                 :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                 @update:validation="(val) => (isValid.requestTimeout = val)" />
 
@@ -67,6 +70,7 @@
             </div>
             <InputComponent
                 v-model="maxRetries"
+                aria-label="Maximum translation retries"
                 :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                 @update:validation="(val) => (isValid.maxRetries = val)" />
 
@@ -76,6 +80,7 @@
             </div>
             <InputComponent
                 v-model="retryDelay"
+                aria-label="Delay between retries in seconds"
                 :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                 @update:validation="(val) => (isValid.retryDelay = val)" />
 
@@ -85,6 +90,7 @@
             </div>
             <InputComponent
                 v-model="retryDelayMultiplier"
+                aria-label="Retry delay multiplier"
                 :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                 @update:validation="(val) => (isValid.retryDelayMultiplier = val)" />
         </template>

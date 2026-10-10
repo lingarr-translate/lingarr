@@ -1,9 +1,16 @@
-﻿<template>
-    <div title="Refresh" @click="reload">
+<template>
+    <button
+        type="button"
+        class="ui-icon-button"
+        aria-label="Refresh results"
+        v-tooltip="'Refresh results'"
+        :disabled="reloading"
+        :aria-busy="reloading"
+        @click="reload">
         <ReloadIcon
             class="h-6 w-6 cursor-pointer transition-all duration-300 ease-in-out"
             :class="{ 'animate-spin': reloading }" />
-    </div>
+    </button>
 </template>
 
 <script setup lang="ts">

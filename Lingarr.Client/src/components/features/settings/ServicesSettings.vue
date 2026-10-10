@@ -13,18 +13,18 @@
                     <li
                         v-for="(serviceName, index) in services"
                         :key="`${serviceName}-${index}`"
-                        class="flex items-center gap-3 rounded-md border p-3"
+                        class="flex flex-wrap items-center gap-2 rounded-xl border p-3"
                         :class="
                             index === configuringIndex
                                 ? 'border-accent bg-accent/10'
                                 : 'border-accent/30'
                         ">
                         <span
-                            class="bg-accent/20 text-accent-content shrink-0 rounded px-2 py-0.5 text-xs font-semibold tracking-wider uppercase"
+                            class="bg-accent/20 text-primary-content shrink-0 rounded px-2 py-0.5 text-xs font-semibold tracking-wider uppercase"
                             aria-hidden="true">
                             {{ index === 0 ? 'Primary' : `Fallback ${index}` }}
                         </span>
-                        <div class="min-w-0 flex-1">
+                        <div class="min-w-40 flex-1">
                             <SelectComponent
                                 :selected="serviceName"
                                 :options="optionsForRow(index)"
@@ -33,7 +33,7 @@
                         </div>
                         <button
                             type="button"
-                            class="text-primary-content hover:text-primary-content/50 focus-visible:ring-accent cursor-pointer rounded p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-30"
+                            class="ui-icon-button"
                             :disabled="index === configuringIndex"
                             :aria-pressed="index === configuringIndex"
                             title="Configure credentials"
@@ -43,27 +43,27 @@
                         </button>
                         <button
                             type="button"
-                            class="text-primary-content hover:text-primary-content/50 focus-visible:ring-accent cursor-pointer rounded p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-30"
+                            class="ui-icon-button"
                             :disabled="index === 0"
-                            title="Move up"
+                            v-tooltip="'Move up'"
                             aria-label="Move up"
                             @click="moveRow(index, -1)">
                             <CaretUpIcon class="h-4 w-4" />
                         </button>
                         <button
                             type="button"
-                            class="text-primary-content hover:text-primary-content/50 focus-visible:ring-accent cursor-pointer rounded p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-30"
+                            class="ui-icon-button"
                             :disabled="index === services.length - 1"
-                            title="Move down"
+                            v-tooltip="'Move down'"
                             aria-label="Move down"
                             @click="moveRow(index, 1)">
                             <CaretDownIcon class="h-4 w-4" />
                         </button>
                         <button
                             type="button"
-                            class="text-primary-content hover:text-primary-content/50 focus-visible:ring-accent cursor-pointer rounded p-1 transition-colors focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-30"
+                            class="ui-icon-button"
                             :disabled="services.length <= 1"
-                            title="Remove service"
+                            v-tooltip="'Remove service'"
                             aria-label="Remove service"
                             @click="removeRow(index)">
                             <TrashIcon class="h-4 w-4" />
@@ -80,14 +80,16 @@
 
             <div v-if="configuringManifest || manifestError" class="mt-4 space-y-2">
                 <div class="text-sm">
-                    <span class="text-secondary-content/60">Configuring credentials for</span>
+                    <span class="text-secondary-content">Configuring credentials for</span>
                     <span class="ml-1 font-semibold">{{ configuringLabel }}</span>
                 </div>
                 <DynamicPluginForm
                     v-if="configuringManifest"
                     :manifest="configuringManifest"
                     @save="saveNotification?.show()" />
-                <p v-else-if="manifestError" class="text-sm text-red-500">{{ manifestError }}</p>
+                <p v-else-if="manifestError" class="text-sm text-[var(--danger)]">
+                    {{ manifestError }}
+                </p>
             </div>
 
             <div v-if="configuringManifest?.hasRequestTemplate" class="mt-6">
@@ -230,11 +232,7 @@ watch(
     }
 )
 
-watch(
-    () => services.value[configuringIndex.value],
-    loadManifest,
-    { immediate: true }
-)
+watch(() => services.value[configuringIndex.value], loadManifest, { immediate: true })
 
 onMounted(async () => {
     try {

@@ -1,14 +1,20 @@
-﻿<template>
-    <component :is="type === INPUT_TYPE.PASSWORD ? 'form' : 'div'" class="relative">
-        <label v-if="label" :for="id" class="mb-1 block text-sm">
+<template>
+    <div class="relative min-w-0">
+        <label v-if="label" :for="inputId" class="mb-2 block text-sm font-medium">
             {{ label }}
         </label>
-        <div v-if="$slots.default" class="mb-1">
+        <div v-if="$slots.default" :id="`${inputId}-label`" class="mb-2">
             <slot></slot>
         </div>
         <div class="relative">
             <input
-                :id="id"
+                :id="inputId"
+                :aria-label="ariaLabel || (!label && !$slots.default ? placeholder : undefined)"
+                :aria-labelledby="
+                    !label && !ariaLabel && $slots.default ? `${inputId}-label` : undefined
+                "
+                :aria-invalid="validationType && isInvalid ? true : undefined"
+                :aria-describedby="validationType && isInvalid ? `${inputId}-error` : undefined"
                 autocomplete="off"
                 :value="modelValue"
                 :type="type == INPUT_TYPE.PASSWORD ? (showPassword ? 'text' : 'password') : type"
@@ -17,6 +23,7 @@
                 @input="handleInput" />
             <ValidationIcon
                 v-if="validationType"
+                class="pointer-events-none"
                 :is-valid="isValid"
                 :is-invalid="isInvalid"
                 :size="size"
@@ -28,18 +35,25 @@
             <button
                 v-if="type === INPUT_TYPE.PASSWORD"
                 type="button"
-                class="absolute inset-y-0 right-0 flex cursor-pointer items-center pr-3"
+                class="absolute inset-y-0 right-0 flex w-11 cursor-pointer items-center justify-center rounded-lg"
+                :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                v-tooltip="showPassword ? 'Hide password' : 'Show password'"
                 @click="togglePassword">
                 <EyeOnIcon v-if="showPassword" class="h-5 w-5" />
                 <EyeOffIcon v-else class="h-5 w-5" />
             </button>
         </div>
-        <p v-if="validationType && isInvalid" class="mt-1 text-sm text-red-600" v-html="error" />
-    </component>
+        <p
+            v-if="validationType && isInvalid"
+            :id="`${inputId}-error`"
+            role="alert"
+            class="mt-2 text-sm text-[var(--danger)]"
+            v-html="error" />
+    </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, useId } from 'vue'
 import { InputType, INPUT_TYPE, InputValidationType } from '@/ts'
 import useValidation from '@/composables/useValidation'
 import useDebounce from '@/composables/useDebounce'
@@ -50,6 +64,7 @@ import EyeOffIcon from '@/components/icons/EyeOffIcon.vue'
 const props = withDefaults(
     defineProps<{
         id?: string
+        ariaLabel?: string
         type?: InputType
         label?: string
         modelValue: string | number | null
@@ -74,19 +89,21 @@ const emit = defineEmits<{
 }>()
 const { isValid, isInvalid, error, validate } = useValidation(props)
 
+const generatedId = useId()
+const inputId = computed(() => props.id || generatedId)
 const showPassword = ref(false)
 const inputClasses = computed(() => [
     '[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none',
-    'w-full rounded-md border bg-transparent outline-hidden transition-colors duration-200 ',
+    'ui-input w-full',
     {
         'px-6 py-3 text-lg': props.size === 'lg',
         'px-4 py-2': props.size === 'md',
-        'px-2 py-0.5 leading-3 text-sm': props.size === 'sm'
+        'px-2 py-2 text-sm': props.size === 'sm'
     },
     { 'border-green-500': props.validationType && isValid.value },
     { 'border-red-500': props.validationType && isInvalid.value },
-    { 'border-accent': !props.validationType || (!isValid.value && !isInvalid.value) },
-    { 'pr-10': props.type === 'password' }
+    { 'pr-10': props.type === 'password' || (props.validationType && props.size !== 'sm') },
+    { 'pr-6': props.validationType && props.size === 'sm' }
 ])
 
 const emitValue = (event: Event) => {

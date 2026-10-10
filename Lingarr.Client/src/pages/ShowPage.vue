@@ -1,9 +1,8 @@
-﻿<template>
+<template>
     <div v-if="settingsCompleted === 'true'" class="w-full">
-        <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
+        <div class="ui-toolbar">
             <SearchComponent v-model="filter" />
-            <div
-                class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:items-center md:justify-between md:space-x-2">
+            <div class="flex w-full flex-wrap items-center gap-2">
                 <ToggleButton
                     v-model="navigateToDetails"
                     size="small"
@@ -20,21 +19,23 @@
                 </ButtonComponent>
                 <ButtonComponent
                     size="sm"
-                    variant="accent"
+                    variant="secondary"
+                    v-tooltip="'Applies to the entire library, including items outside this page.'"
                     @click="showStore.includeAll(MEDIA_TYPE.SHOW, true)">
-                    Include All
+                    Include all
                 </ButtonComponent>
                 <ButtonComponent
                     size="sm"
-                    variant="accent"
+                    variant="secondary"
+                    v-tooltip="'Applies to the entire library, including items outside this page.'"
                     @click="showStore.includeAll(MEDIA_TYPE.SHOW, false)">
-                    Exclude All
+                    Exclude all
                 </ButtonComponent>
-                <span class="text-sm text-accent-content">
+                <span class="text-secondary-content px-2 text-sm">
                     {{ showStore.includeSummary.included }}/{{ showStore.includeSummary.total }}
                     included
                 </span>
-                <div class="flex flex-wrap items-center gap-2">
+                <div class="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
                     <SortControls
                         v-model="filter"
                         :options="[
@@ -52,41 +53,61 @@
             </div>
         </div>
 
-        <div class="w-full px-4">
+        <div class="w-full px-4 sm:px-6">
             <!-- Shows -->
-            <div class="border-accent hidden border-b font-bold md:grid md:grid-cols-12">
+            <div class="media-table-heading hidden border-b font-semibold xl:grid xl:grid-cols-12">
                 <div :class="isSelectMode ? 'col-span-7' : 'col-span-8'" class="px-4 py-2">
                     Title
                 </div>
                 <div class="col-span-1 px-4 py-2">Include</div>
-                <div class="col-span-3 px-4 py-2">Delay</div>
+                <div class="col-span-3 px-4 py-2">
+                    Delay
+                    <button
+                        type="button"
+                        class="ui-border ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full border text-xs normal-case"
+                        aria-label="About translation delay"
+                        v-tooltip="
+                            'Minimum media age in hours before automatic translation. Leave empty to use the global delay.'
+                        ">
+                        ?
+                    </button>
+                </div>
                 <div
                     v-if="isSelectMode"
                     class="col-span-1 flex items-center justify-center px-4 py-2">
                     <CheckboxComponent
+                        aria-label="Select all items on this page"
                         :model-value="showStore.selectAll"
                         @change="showStore.toggleSelectAll()" />
                 </div>
             </div>
             <div v-for="item in shows.items" :key="item.id">
                 <div
-                    class="border-accent flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 md:grid md:grid-cols-12 md:gap-0 md:py-0"
+                    class="media-row flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 xl:grid xl:grid-cols-12 xl:gap-0 xl:py-2"
                     @click="toggleShow(item)">
                     <div
-                        :class="isSelectMode ? 'md:col-span-7' : 'md:col-span-8'"
-                        class="flex w-full items-center gap-2 md:w-auto md:px-4 md:py-2">
+                        :class="isSelectMode ? 'xl:col-span-7' : 'xl:col-span-8'"
+                        class="flex w-full items-center gap-2 xl:w-auto xl:px-4 xl:py-2">
                         <CaretButton :is-expanded="expandedShow !== item.id" class="pr-2" />
-                        <span>{{ item.title }}</span>
+                        <button
+                            type="button"
+                            class="min-h-11 flex-1 cursor-pointer text-left font-medium"
+                            :aria-expanded="expandedShow === item.id"
+                            @click.stop="toggleShow(item)">
+                            {{ item.title }}
+                        </button>
                         <ActiveTranslationBadge :show="item" />
-                        <span v-if="isSelectMode" class="ml-auto md:hidden" @click.stop>
+                        <span v-if="isSelectMode" class="ml-auto xl:hidden" @click.stop>
                             <CheckboxComponent
+                                :aria-label="`Select ${item.title}`"
                                 :model-value="showStore.selectedShows.some((s) => s.id === item.id)"
                                 @change="showStore.toggleSelect(item)" />
                         </span>
                     </div>
-                    <div class="flex items-center gap-2 md:col-span-1 md:px-4 md:py-2" @click.stop>
+                    <div class="flex items-center gap-2 xl:col-span-1 xl:px-4 xl:py-2" @click.stop>
                         <ToggleButton
                             v-model="item.includeInTranslation"
+                            :aria-label="`Include ${item.title} in automatic translation`"
                             size="small"
                             @toggle:update="
                                 () =>
@@ -97,15 +118,16 @@
                                     )
                             " />
                         <span
-                            class="text-primary-content/50 text-xs font-semibold tracking-wide uppercase md:hidden">
+                            class="text-secondary-content text-xs font-semibold tracking-wide uppercase xl:hidden">
                             Include
                         </span>
                     </div>
-                    <div class="flex items-center gap-2 md:col-span-3 md:px-4 md:py-2" @click.stop>
+                    <div class="flex items-center gap-2 xl:col-span-3 xl:px-4 xl:py-2" @click.stop>
                         <InputComponent
                             :model-value="item.translationAgeThreshold ?? null"
                             placeholder="hours"
-                            class="w-14"
+                            :aria-label="`Translation delay in hours for ${item.title}`"
+                            class="w-20"
                             size="sm"
                             :validation-type="INPUT_VALIDATION_TYPE.NUMBER"
                             :type="INPUT_TYPE.NUMBER"
@@ -116,15 +138,16 @@
                                 }
                             " />
                         <span
-                            class="text-primary-content/50 text-xs font-semibold tracking-wide uppercase md:hidden">
-                            Delay
+                            class="text-secondary-content text-xs font-semibold tracking-wide uppercase xl:hidden">
+                            Delay (hours)
                         </span>
                     </div>
                     <div
                         v-if="isSelectMode"
-                        class="hidden items-center justify-center px-4 py-2 md:col-span-1 md:flex"
+                        class="hidden items-center justify-center px-4 py-2 xl:col-span-1 xl:flex"
                         @click.stop>
                         <CheckboxComponent
+                            :aria-label="`Select ${item.title}`"
                             :model-value="showStore.selectedShows.some((s) => s.id === item.id)"
                             @change="showStore.toggleSelect(item)" />
                     </div>
@@ -144,7 +167,16 @@
 
 <script setup lang="ts">
 import { ref, Ref, computed, onMounted, ComputedRef } from 'vue'
-import { IFilter, ILanguage, INPUT_TYPE, INPUT_VALIDATION_TYPE, IPagedResult, IShow, MEDIA_TYPE, SETTINGS } from '@/ts'
+import {
+    IFilter,
+    ILanguage,
+    INPUT_TYPE,
+    INPUT_VALIDATION_TYPE,
+    IPagedResult,
+    IShow,
+    MEDIA_TYPE,
+    SETTINGS
+} from '@/ts'
 import useDebounce from '@/composables/useDebounce'
 import { useInstanceStore } from '@/store/instance'
 import { useSettingStore } from '@/store/setting'

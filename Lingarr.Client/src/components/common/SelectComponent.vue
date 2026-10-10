@@ -1,60 +1,46 @@
-﻿<template>
-    <div class="relative">
-        <label v-if="label" class="mb-1 block text-sm">
+<template>
+    <div class="relative min-w-0">
+        <label v-if="label" :for="id || selectId" class="mb-2 block text-sm font-medium">
             {{ label }}
         </label>
-        <div
-            ref="excludeClickOutside"
-
-            class="flex cursor-pointer items-center justify-between rounded-md border border-accent"
-            :class="size === 'sm' ? 'h-6 px-1.5 py-0.5 text-xs' : 'h-12 px-4 py-2'"
-            @click="toggleDropdown">
-            <span v-if="!selected" class="text-gray-400">{{ placeholder }}</span>
-            <span v-else-if="size === 'sm'" class="truncate">{{ displaySelectedLabel }}</span>
-            <div v-else class="flex max-h-12 flex-wrap gap-2 overflow-auto">
-                <span
-                    class="flex cursor-pointer items-center rounded-md bg-accent px-3 py-1 text-sm font-medium">
-                    <span class="mr-2 text-accent-content">{{ displaySelectedLabel }}</span>
-                </span>
-            </div>
-            <div class="flex shrink-0 items-center">
-                <LoaderCircleIcon v-if="isLoading" class="mr-2 h-4 w-4 animate-spin" />
-                <CaretRightIcon
-                    class="arrow-right transition-transform duration-200"
-                    :class="[{ 'rotate-90': isOpen }, size === 'sm' ? 'h-3 w-3' : 'h-5 w-5']" />
-            </div>
+        <div class="relative">
+            <select
+                :id="id || selectId"
+                :value="selected"
+                :disabled="disabled"
+                :aria-label="label || placeholder"
+                :aria-busy="isLoading"
+                class="ui-input w-full cursor-pointer px-3 py-2 disabled:opacity-50"
+                :class="size === 'sm' ? 'text-sm' : ''"
+                @focus="loadOptions"
+                @pointerdown="loadOptions"
+                @keydown.enter="loadOptions"
+                @keydown.space="loadOptions"
+                @change="selectOption">
+                <option value="" disabled>
+                    {{ isLoading ? 'Loading options…' : placeholder }}
+                </option>
+                <option
+                    v-if="selected && !options.some((option) => option.value === selected)"
+                    :value="selected">
+                    {{ selected }}
+                </option>
+                <option v-if="!sortedOptions.length" disabled>{{ noOptions }}</option>
+                <option v-for="option in sortedOptions" :key="option.value" :value="option.value">
+                    {{ option.label }}
+                </option>
+            </select>
         </div>
-        <ul
-            v-show="isOpen"
-            ref="clickOutside"
-            class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-accent bg-primary shadow-lg">
-            <li v-if="!sortedOptions.length" :class="size === 'sm' ? 'p-1.5 text-xs' : 'p-3'">
-                {{ noOptions }}
-            </li>
-            <li
-                v-for="(option, index) in sortedOptions"
-                :key="`${option.value}-${index}`"
-                class="cursor-pointer"
-                :class="[
-                    size === 'sm' ? 'px-2 py-1 text-xs' : 'px-4 py-2',
-                    { 'bg-accent/20': isSelected(option.value) }
-                ]"
-                @click="selectOption(option)">
-                {{ option.label }}
-            </li>
-        </ul>
     </div>
 </template>
 
 <script setup lang="ts">
-import { Ref, ref, nextTick, computed } from 'vue'
-import CaretRightIcon from '@/components/icons/CaretRightIcon.vue'
-import LoaderCircleIcon from '@/components/icons/LoaderCircleIcon.vue'
-import useClickOutside from '@/composables/useClickOutside'
+import { ref, computed, useId } from 'vue'
 import { ISelectOption } from '@/ts'
 
 const props = withDefaults(
     defineProps<{
+        id?: string
         label?: string
         options: ISelectOption[]
         selected?: string
@@ -70,62 +56,25 @@ const props = withDefaults(
         selected: '',
         placeholder: 'Select items...',
         noOptions: 'Select a source language first.',
-        selectedLabel: '',
         size: 'md'
     }
 )
-
 const emit = defineEmits(['update:selected', 'fetch-options'])
-
-const isOpen: Ref<boolean> = ref(false)
-const isLoading: Ref<boolean> = ref(false)
-const clickOutside: Ref<HTMLElement | undefined> = ref()
-const excludeClickOutside: Ref<HTMLElement | undefined> = ref()
-
-const sortedOptions = computed(() => {
-    return [...props.options].sort((a, b) => a.label.localeCompare(b.label))
-})
-
-const displaySelectedLabel = computed(() => {
-    const option = props.options.find((item) => item.value === props.selected)
-    return option ? option.label : props.selected
-})
-
-const toggleDropdown = async () => {
-    if (props.disabled) return
-
-    isOpen.value = !isOpen.value
-
-    if (isOpen.value && props.loadOnOpen) {
+const selectId = useId()
+const isLoading = ref(false)
+const sortedOptions = computed(() =>
+    [...props.options].sort((a, b) => a.label.localeCompare(b.label))
+)
+const loadOptions = () => {
+    if (!props.disabled && props.loadOnOpen && !isLoading.value) {
         isLoading.value = true
         emit('fetch-options')
     }
-
-    await nextTick()
 }
-
-const setLoadingState = async (loading: boolean) => {
+const selectOption = (event: Event) =>
+    emit('update:selected', (event.target as HTMLSelectElement).value)
+const setLoadingState = (loading: boolean) => {
     isLoading.value = loading
 }
-
-const selectOption = (option: ISelectOption) => {
-    emit('update:selected', option.value)
-    isOpen.value = false
-}
-
-const isSelected = (option: string) => {
-    return props.selected == option
-}
-
-useClickOutside(
-    clickOutside,
-    () => {
-        isOpen.value = false
-    },
-    excludeClickOutside
-)
-
-defineExpose({
-    setLoadingState
-})
+defineExpose({ setLoadingState })
 </script>

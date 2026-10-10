@@ -1,49 +1,63 @@
-﻿<template>
-    <label v-if="label" class="mb-1 block text-sm">
-        {{ label }}
-    </label>
-    <div class="flex items-center space-x-3">
+<template>
+    <div class="flex min-h-11 items-center gap-3">
         <button
+            :id="switchId"
             type="button"
             role="switch"
             :aria-checked="isActive"
-            :class="[
-                'relative inline-flex shrink-0 cursor-pointer items-center border border-accent transition-colors duration-200 ease-in-out',
-                isActive ? 'bg-accent/30' : '',
-                size === 'small'
-                    ? 'h-[1.17rem] w-[2.08rem] rounded-sm p-0.5'
-                    : 'h-7 w-[3.125rem] rounded-md p-1'
-            ]"
+            :aria-label="ariaLabel"
+            :aria-labelledby="
+                !ariaLabel && (label || $slots.default) ? `${switchId}-label` : undefined
+            "
+            class="group inline-flex min-h-11 min-w-11 shrink-0 cursor-pointer items-center rounded-lg"
             @click="toggle">
             <span
-                aria-hidden="true"
                 :class="[
-                    'pointer-events-none inline-block transform bg-accent shadow-sm ring-0 transition duration-200 ease-in-out',
-                    size === 'small' ? 'h-[0.83rem] w-[0.83rem] rounded-sm' : 'h-5 w-5 rounded-md',
-                    isActive
-                        ? size === 'small'
-                            ? 'translate-x-[0.83rem]'
-                            : 'translate-x-5'
-                        : 'translate-x-0'
-                ]"></span>
+                    isActive ? 'border-accent bg-accent' : 'ui-border bg-primary',
+                    size === 'small' ? 'h-6 w-10' : 'h-7 w-12'
+                ]"
+                class="relative inline-flex items-center rounded-full border-2 transition-colors">
+                <span
+                    aria-hidden="true"
+                    :class="[
+                        isActive ? 'bg-accent-content' : 'bg-primary-content',
+                        size === 'small' ? 'h-4 w-4' : 'h-5 w-5',
+                        isActive
+                            ? size === 'small'
+                                ? 'translate-x-[18px]'
+                                : 'translate-x-[22px]'
+                            : 'translate-x-0.5'
+                    ]"
+                    class="rounded-full shadow-sm transition-transform"></span>
+            </span>
         </button>
-        <slot></slot>
+        <label
+            v-if="label || $slots.default"
+            :id="`${switchId}-label`"
+            :for="switchId"
+            class="cursor-pointer text-sm leading-relaxed">
+            <template v-if="label">{{ label }}</template>
+            <slot></slot>
+        </label>
     </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, useId } from 'vue'
 
 const {
     label,
+    ariaLabel,
     modelValue = 'false',
     size = 'default'
 } = defineProps<{
     label?: string
+    ariaLabel?: string
     modelValue?: string | boolean
     size?: 'default' | 'small'
 }>()
 
+const switchId = useId()
 const isActive = computed(() => {
     return modelValue.toString() === 'true'
 })

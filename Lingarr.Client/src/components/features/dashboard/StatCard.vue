@@ -1,24 +1,23 @@
-﻿<template>
-    <div class="rounded-lg bg-primary p-4 shadow-sm">
-        <div class="flex justify-between">
-            <div>
-                <h3 class="text-primary-content/70 text-sm font-medium">
-                    {{ title }}
-                </h3>
-                <p class="mt-2 text-2xl font-bold text-primary-content">
-                    {{ formatNumber(total) }}
-                </p>
-            </div>
-            <div class="text-right">
-                <h3 class="text-primary-content/70 text-sm font-medium">Translated</h3>
-                <p class="mt-2 text-xl font-bold text-accent">
-                    {{ formatNumber(translated) }}
-                </p>
-            </div>
+<template>
+    <div class="ui-panel stat-card min-w-0 p-5 sm:p-6" :data-tone="tone">
+        <div class="flex items-center gap-3">
+            <span class="text-secondary-content" aria-hidden="true"><slot name="icon"></slot></span>
+            <h3 class="text-secondary-content text-sm font-medium">{{ title }}</h3>
         </div>
-        <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-secondary">
+        <div class="my-5 flex flex-wrap items-end justify-between gap-x-5 gap-y-2">
+            <p class="text-4xl leading-none font-semibold tracking-tight tabular-nums">
+                {{ formatNumber(total) }}
+            </p>
+            <p class="text-secondary-content text-sm">
+                <span class="text-primary-content font-semibold tabular-nums">
+                    {{ formatNumber(translated) }}
+                </span>
+                translated
+            </p>
+        </div>
+        <div class="bg-primary h-1 w-full overflow-hidden rounded-full">
             <div
-                class="h-full rounded-full bg-accent transition-all duration-500"
+                class="stat-progress h-full rounded-full transition-all duration-500"
                 :style="{ width: `${calculatePercentage(translated, total)}%` }"></div>
         </div>
     </div>
@@ -27,11 +26,13 @@
 <script setup lang="ts">
 interface Props {
     title: string
+    tone?: string
     total: number
     translated: number
 }
 
 withDefaults(defineProps<Props>(), {
+    tone: 'blue',
     total: 0,
     translated: 0
 })

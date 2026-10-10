@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <CardComponent title="AI Request Body Template">
         <template #description>
             Customize the JSON structure sent to your AI provider. Placeholders are replaced across
@@ -27,7 +27,7 @@
                             :class="
                                 mode === 'builder'
                                     ? 'bg-accent text-accent-content'
-                                    : 'text-secondary-content/70 hover:bg-accent/10 hover:text-accent-content'
+                                    : 'text-secondary-content/70 hover:bg-accent/10 hover:text-primary-content'
                             "
                             @click="mode = 'builder'">
                             Builder
@@ -37,7 +37,7 @@
                             :class="
                                 mode === 'json'
                                     ? 'bg-accent text-accent-content'
-                                    : 'text-secondary-content/70 hover:bg-accent/10 hover:text-accent-content'
+                                    : 'text-secondary-content/70 hover:bg-accent/10 hover:text-primary-content'
                             "
                             @click="mode = 'json'">
                             JSON

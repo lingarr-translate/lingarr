@@ -1,6 +1,6 @@
-﻿<template>
-    <div class="w-full bg-tertiary text-tertiary-content">
-        <div class="border-primary hidden grid-cols-12 border-b-2 font-bold md:grid">
+<template>
+    <div class="bg-tertiary text-tertiary-content w-full">
+        <div class="border-primary hidden grid-cols-12 border-b-2 font-bold xl:grid">
             <div class="col-span-1 px-4 py-2">
                 <span class="hidden lg:block">Episodes</span>
                 <span class="block lg:hidden">#</span>
@@ -14,16 +14,16 @@
         <div
             v-for="episode in episodes"
             :key="episode.id"
-            class="border-accent/20 hover:bg-accent/5 flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3 transition-colors md:grid md:grid-cols-12 md:gap-0 md:border-b-0 md:px-0 md:py-0">
-            <div class="hidden px-4 py-2 md:col-span-1 md:block">
+            class="border-accent/20 hover:bg-accent/5 flex flex-wrap items-center gap-x-3 gap-y-2 border-b px-4 py-3 transition-colors xl:grid xl:grid-cols-12 xl:gap-0 xl:border-b-0 xl:px-0 xl:py-0">
+            <div class="hidden px-4 py-2 xl:col-span-1 xl:block">
                 {{ episode.episodeNumber }}
             </div>
-            <div class="flex w-full items-center gap-2 md:col-span-5 md:w-auto md:px-4 md:py-2">
-                <span class="text-primary-content/50 md:hidden">{{ episode.episodeNumber }}.</span>
+            <div class="flex w-full items-center gap-2 xl:col-span-5 xl:w-auto xl:px-4 xl:py-2">
+                <span class="text-secondary-content xl:hidden">{{ episode.episodeNumber }}.</span>
                 <span>{{ episode.title }}</span>
                 <ActiveTranslationBadge :media-id="episode.id" :media-type="MEDIA_TYPE.EPISODE" />
             </div>
-            <div class="flex w-full items-center justify-between md:col-span-5 md:w-auto md:pr-4">
+            <div class="flex w-full items-center justify-between xl:col-span-5 xl:w-auto xl:pr-4">
                 <div v-if="episode?.fileName" class="flex flex-wrap items-center gap-2">
                     <ContextMenu
                         v-for="(subtitle, jndex) in getSubtitle(episode.fileName)"
@@ -33,15 +33,16 @@
                         :subtitle="subtitle">
                         <BadgeComponent>
                             {{ subtitle.language.toUpperCase() }}
-                            <span v-if="subtitle.caption" class="text-primary-content/50">
+                            <span v-if="subtitle.caption" class="text-secondary-content">
                                 - {{ subtitle.caption.toUpperCase() }}
                             </span>
                         </BadgeComponent>
                     </ContextMenu>
                 </div>
-                <div class="ml-auto flex items-center gap-2 px-1 md:py-2">
+                <div class="ml-auto flex items-center gap-2 px-1 xl:py-2">
                     <ToggleButton
                         v-model="episode.includeInTranslation"
+                        :aria-label="`Include ${episode.title} in automatic translation`"
                         size="small"
                         @toggle:update="
                             () =>
@@ -52,7 +53,7 @@
                                 )
                         " />
                     <span
-                        class="text-primary-content/50 text-xs font-semibold tracking-wide uppercase md:hidden">
+                        class="text-secondary-content text-xs font-semibold tracking-wide uppercase xl:hidden">
                         Include
                     </span>
                 </div>

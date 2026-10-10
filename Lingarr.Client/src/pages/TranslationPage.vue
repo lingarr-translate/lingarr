@@ -1,18 +1,19 @@
-﻿<template>
+<template>
     <div class="w-full">
         <!-- Search and Filters -->
-        <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
+        <div class="ui-toolbar">
             <SearchComponent v-model="filter" />
-            <div
-                class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:justify-between md:space-x-2">
+            <div class="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                 <button
                     v-if="isSelectMode"
-                    class="hover:text-primary-content/50 cursor-pointer rounded-md border border-accent px-2 py-1 text-primary-content transition-colors"
+                    type="button"
+                    class="ui-border hover:bg-accent/10 min-h-11 cursor-pointer rounded-lg border px-4 py-2 text-sm font-medium"
                     @click="handleDelete">
                     Delete ({{ translationRequestStore.selectedRequests.length }})
                 </button>
                 <button
-                    class="hover:text-primary-content/50 cursor-pointer rounded-md border border-accent px-2 py-1 text-primary-content transition-colors"
+                    type="button"
+                    class="ui-border hover:bg-accent/10 min-h-11 cursor-pointer rounded-lg border px-4 py-2 text-sm font-medium"
                     @click="toggleSelectMode">
                     {{ isSelectMode ? 'Cancel' : 'Select' }}
                 </button>
@@ -38,21 +39,22 @@
             </div>
         </div>
 
-        <div class="w-full px-4">
-            <div class="hidden border-b border-accent font-bold md:grid md:grid-cols-12">
-                <div class="col-span-4 px-4 py-2">Title</div>
+        <div class="w-full px-4 sm:px-6">
+            <div class="media-table-heading hidden border-b font-semibold xl:grid xl:grid-cols-12">
+                <div class="col-span-3 px-3 py-2">Title</div>
                 <div class="col-span-1 px-4 py-2">Source</div>
                 <div class="col-span-1 px-4 py-2">Target</div>
                 <div class="col-span-1 px-4 py-2">Status</div>
-                <div class="px-4 py-2" :class="isSelectMode ? 'col-span-2' : 'col-span-3'">
+                <div class="px-4 py-2" :class="isSelectMode ? 'col-span-1' : 'col-span-2'">
                     Progress
                 </div>
                 <div class="col-span-1 px-4 py-2">Completed</div>
-                <div class="col-span-1"></div>
+                <div class="col-span-3 px-3 py-2 text-right">Actions</div>
                 <div
                     v-if="isSelectMode"
                     class="col-span-1 flex items-center justify-center px-4 py-2">
                     <CheckboxComponent
+                        aria-label="Select all items on this page"
                         :model-value="translationRequestStore.selectAll"
                         @change="translationRequestStore.toggleSelectAll()" />
                 </div>
@@ -60,19 +62,13 @@
             <div
                 v-for="item in translationRequests.items"
                 :key="item.id"
-                class="border-accent hover:bg-accent/5 flex flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 transition-colors md:grid md:grid-cols-12 md:gap-0 md:py-0">
-                <div class="flex w-full items-center gap-2 md:col-span-4 md:w-auto md:px-4 md:py-2">
-                    <span
-                        v-if="item.mediaType === MEDIA_TYPE.EPISODE"
-                        v-show-title
-                        class="block min-w-0 flex-1 cursor-help md:flex-none"
-                        :title="item.title">
+                class="media-row hover:bg-accent/5 flex flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 transition-colors xl:grid xl:grid-cols-12 xl:gap-0 xl:py-2">
+                <div
+                    class="flex w-full flex-wrap items-center gap-2 xl:col-span-3 xl:w-auto xl:px-2 xl:py-2">
+                    <span class="min-w-0 flex-1 basis-full font-medium xl:basis-auto">
                         {{ item.title }}
                     </span>
-                    <span v-else class="min-w-0 flex-1 md:flex-none">
-                        {{ item.title }}
-                    </span>
-                    <span class="ml-auto flex flex-none items-center gap-2 md:hidden">
+                    <span class="flex w-full flex-wrap items-center gap-2 xl:hidden">
                         <TranslationAction
                             :item="item"
                             :on-action="(action) => handleAction(item, action)" />
@@ -86,26 +82,26 @@
                             @change="translationRequestStore.toggleSelect(item)" />
                     </span>
                 </div>
-                <div class="flex items-center md:col-span-1 md:px-4 md:py-2">
-                    <BadgeComponent classes="text-primary-content border-accent bg-secondary">
+                <div class="flex items-center xl:col-span-1 xl:px-2 xl:py-2">
+                    <BadgeComponent classes="text-primary-content ui-border bg-secondary">
                         {{ item.sourceLanguage.toUpperCase() }}
                     </BadgeComponent>
                 </div>
-                <div class="flex items-center gap-2 md:col-span-1 md:px-4 md:py-2">
-                    <span class="text-primary-content/50 md:hidden">→</span>
-                    <BadgeComponent classes="text-primary-content border-accent bg-secondary">
+                <div class="flex items-center gap-2 xl:col-span-1 xl:px-2 xl:py-2">
+                    <span class="text-secondary-content xl:hidden">→</span>
+                    <BadgeComponent classes="text-primary-content ui-border bg-secondary">
                         {{ item.targetLanguage.toUpperCase() }}
                     </BadgeComponent>
                 </div>
-                <div class="flex items-center md:col-span-1 md:px-4 md:py-2">
+                <div class="flex items-center xl:col-span-1 xl:px-2 xl:py-2">
                     <TranslationStatus :translation-status="item.status" />
                 </div>
                 <div
-                    class="items-center md:flex md:px-4 md:py-2"
+                    class="items-center xl:flex xl:px-2 xl:py-2"
                     :class="[
-                        isSelectMode ? 'md:col-span-2' : 'md:col-span-3',
+                        isSelectMode ? 'xl:col-span-1' : 'xl:col-span-2',
                         item.status === TRANSLATION_STATUS.INPROGRESS && item.progress
-                            ? 'flex w-full md:w-auto'
+                            ? 'flex w-full xl:w-auto'
                             : 'hidden'
                     ]">
                     <div
@@ -115,18 +111,18 @@
                     </div>
                 </div>
                 <div
-                    :class="item.completedAt ? 'flex' : 'hidden md:flex'"
-                    class="items-center gap-2 md:col-span-1 md:px-4 md:py-2">
+                    :class="item.completedAt ? 'flex' : 'hidden xl:flex'"
+                    class="items-center gap-2 xl:col-span-1 xl:px-2 xl:py-2">
                     <TranslationCompletedAt
                         v-if="item.completedAt"
                         :completed-at="item.completedAt" />
                     <span
-                        class="text-primary-content/50 text-xs font-semibold tracking-wide uppercase md:hidden">
+                        class="text-secondary-content text-xs font-semibold tracking-wide uppercase xl:hidden">
                         Completed
                     </span>
                 </div>
                 <div
-                    class="hidden items-center justify-between md:col-span-1 md:flex md:justify-end md:py-2">
+                    class="hidden items-center justify-between xl:col-span-3 xl:flex xl:justify-end xl:py-2">
                     <div class="flex items-center justify-center gap-1">
                         <TranslationAction
                             :item="item"
@@ -135,8 +131,9 @@
                 </div>
                 <div
                     v-if="isSelectMode"
-                    class="hidden items-center justify-center py-2 md:col-span-1 md:flex md:px-4">
+                    class="hidden items-center justify-center py-2 xl:col-span-1 xl:flex xl:px-2">
                     <CheckboxComponent
+                        :aria-label="`Select ${item.title}`"
                         :model-value="
                             translationRequestStore.selectedRequests.some(
                                 (request) => request.id === item.id
@@ -161,7 +158,6 @@ import {
     IFilter,
     IPagedResult,
     ITranslationRequest,
-    MEDIA_TYPE,
     TRANSLATION_ACTIONS,
     TRANSLATION_STATUS
 } from '@/ts'

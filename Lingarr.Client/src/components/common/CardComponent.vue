@@ -1,7 +1,13 @@
-﻿<template>
-    <div class="bg-linear-to-br relative rounded-md from-secondary to-tertiary p-6 shadow-md">
-        <h2 v-if="title" class="mb-2 text-2xl font-bold text-primary-content">{{ title }}</h2>
-        <p class="text-secondary-content/80 mb-6"><slot name="description"></slot></p>
+<template>
+    <div class="ui-panel relative min-w-0 p-5 sm:p-6">
+        <h2
+            v-if="title"
+            class="text-primary-content mb-4 text-lg font-semibold tracking-tight sm:text-xl">
+            {{ title }}
+        </h2>
+        <p v-if="$slots.description" class="text-secondary-content mb-6 text-sm leading-relaxed">
+            <slot name="description"></slot>
+        </p>
 
         <div class="space-y-4">
             <slot name="content"></slot>

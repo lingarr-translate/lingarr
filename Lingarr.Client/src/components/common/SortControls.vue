@@ -1,6 +1,7 @@
-﻿<template>
+<template>
     <select
-        class="block w-full rounded-md border border-accent bg-primary px-2 py-1 text-sm text-primary-content focus:border-accent focus:ring-2 focus:ring-accent md:w-auto"
+        aria-label="Sort by"
+        class="ui-input min-w-0 flex-1 px-3 py-2 text-sm sm:w-auto sm:flex-none"
         :value="modelValue.sortBy"
         @change="sortBy">
         <option
@@ -11,9 +12,15 @@
         </option>
     </select>
     <button
-        class="ml-auto flex cursor-pointer items-center justify-end space-x-2 md:ml-0 md:justify-center"
+        type="button"
+        class="ui-icon-button"
+        :aria-label="modelValue.isAscending ? 'Sort descending' : 'Sort ascending'"
+        v-tooltip="
+            modelValue.isAscending
+                ? 'Ascending order. Click to reverse.'
+                : 'Descending order. Click to reverse.'
+        "
         @click="orderBy">
-        <span class="md:hidden">Order by</span>
         <CaretUpIcon v-if="modelValue.isAscending" class="h-6 w-6" />
         <CaretDownIcon v-else class="h-6 w-6" />
     </button>

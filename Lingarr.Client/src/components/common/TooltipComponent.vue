@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="relative inline-block">
         <slot></slot>
         <Transition
@@ -10,8 +10,9 @@
             leave-to-class="transform opacity-0 scale-95">
             <div
                 v-if="isVisible"
+                role="status"
                 :class="alignmentClass"
-                class="absolute -top-5 z-50 w-36 transform rounded-sm border border-accent bg-secondary px-3 py-1 text-center text-sm shadow-lg">
+                class="border-accent bg-secondary absolute bottom-full z-50 mb-2 w-36 transform rounded-sm border px-3 py-1 text-center text-sm shadow-lg">
                 {{ tooltip }}
             </div>
         </Transition>
@@ -19,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, ComputedRef } from 'vue'
+import { ref, computed, ComputedRef, onUnmounted } from 'vue'
 
 const {
     tooltip = 'Translation started',
@@ -43,9 +44,12 @@ const alignmentClass: ComputedRef<string> = computed(() => {
     }
 })
 
+let timer: ReturnType<typeof setTimeout> | undefined
+onUnmounted(() => clearTimeout(timer))
 const showTooltip = () => {
+    clearTimeout(timer)
     isVisible.value = true
-    setTimeout(() => {
+    timer = setTimeout(() => {
         isVisible.value = false
     }, duration)
 }

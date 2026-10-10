@@ -7,6 +7,7 @@
             </label>
             <SelectComponent
                 ref="remoteSelect"
+                :id="field.key"
                 :options="remoteOptions"
                 :selected="fieldValue"
                 :load-on-open="true"
@@ -19,14 +20,16 @@
             v-else
             :id="field.key"
             v-model="fieldValue"
-            :type="field.type === PLUGIN_SETTING_TYPE.SECRET ? INPUT_TYPE.PASSWORD : INPUT_TYPE.TEXT"
+            :type="
+                field.type === PLUGIN_SETTING_TYPE.SECRET ? INPUT_TYPE.PASSWORD : INPUT_TYPE.TEXT
+            "
             :label="field.label"
             :placeholder="field.default ?? ''"
             :validation-type="validationType"
             :min-length="field.minLength ?? undefined"
             :error-message="field.validationErrorMessage ?? undefined"
             @update:validation="(value: boolean) => (isValid = value)" />
-        <div v-if="field.description" class="mt-1 text-xs opacity-60">
+        <div v-if="field.description" class="text-secondary-content mt-2 text-sm">
             {{ field.description }}
         </div>
     </div>
@@ -101,11 +104,7 @@ const fieldValue = computed<string>({
                 isValid.value
             )
         } else {
-            settingsStore.updateSetting(
-                props.field.key as keyof ISettings,
-                newValue,
-                isValid.value
-            )
+            settingsStore.updateSetting(props.field.key as keyof ISettings, newValue, isValid.value)
         }
         if (isValid.value) {
             emit('save')

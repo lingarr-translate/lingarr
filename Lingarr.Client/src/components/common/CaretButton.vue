@@ -1,5 +1,9 @@
-﻿<template>
-    <button class="p-1">
+<template>
+    <button
+        type="button"
+        class="ui-icon-button"
+        :aria-expanded="!isExpanded"
+        :aria-label="isExpanded ? 'Expand details' : 'Collapse details'">
         <CaretRightIcon v-if="isExpanded" class="h-4 w-4" />
         <CaretDownIcon v-else class="h-4 w-4" />
     </button>

@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4">
+    <div class="mx-auto max-w-[1600px] p-4 sm:p-6 lg:p-8">
         <StatisticsComponent />
     </div>
 </template>

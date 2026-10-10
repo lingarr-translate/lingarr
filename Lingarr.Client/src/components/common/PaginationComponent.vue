@@ -1,43 +1,53 @@
-﻿<template>
-    <div class="flex w-full justify-center p-4 md:items-center md:justify-between">
-        <div class="hidden md:block">
+<template>
+    <nav
+        aria-label="Pagination"
+        class="flex flex-col items-center justify-between gap-3 px-4 py-6 sm:flex-row sm:px-6">
+        <p class="text-secondary-content text-sm" aria-live="polite">
             Page
-            <span class="font-bold">{{ modelValue.pageNumber }}</span>
-            of
-            <span class="font-bold">{{ numberOfPages }}</span>
-            of
-            <span class="font-bold">{{ totalCount }}</span>
-            items
-        </div>
-        <div>
-            <ul v-if="numberOfPages >= 1" class="flex space-x-1 md:space-x-2">
-                <li
-                    class="text-md flex h-7 w-8 cursor-pointer items-center justify-center border border-accent bg-secondary font-semibold text-primary-content md:h-9 md:w-10 md:text-lg"
+            <span class="text-primary-content font-semibold">{{ modelValue.pageNumber }}</span>
+            of {{ numberOfPages }}
+            <span class="mx-1" aria-hidden="true">·</span>
+            {{ totalCount }} items
+        </p>
+        <div class="flex max-w-full items-center gap-1">
+            <button
+                type="button"
+                class="ui-icon-button ui-border border"
+                aria-label="Previous page"
+                :disabled="modelValue.pageNumber <= 1"
+                @click="previous">
+                ‹
+            </button>
+            <template v-for="(page, index) in pages" :key="index">
+                <span v-if="page === '...'" class="hidden px-1 sm:inline" aria-hidden="true">
+                    …
+                </span>
+                <button
+                    v-else
+                    type="button"
+                    class="ui-icon-button ui-border hidden border text-sm sm:inline-flex"
                     :class="{
-                        disabled: modelValue.pageNumber === 1
+                        'bg-accent/20 border-accent! font-semibold': modelValue.pageNumber === page
                     }"
-                    @click="previous">
-                    <span>&laquo;</span>
-                </li>
-                <li
-                    v-for="page in pages"
-                    :key="page"
-                    class="flex h-7 w-8 items-center justify-center border border-accent text-xs font-semibold text-primary-content md:h-9 md:w-10"
-                    :class="{
-                        'cursor-pointer': page !== '...',
-                        'bg-secondary': modelValue.pageNumber === page
-                    }"
-                    @click="page !== '...' && setCurrentPage(page)">
-                    <span>{{ page }}</span>
-                </li>
-                <li
-                    class="text-md flex h-7 w-8 cursor-pointer items-center justify-center border border-accent bg-secondary font-semibold text-primary-content md:h-9 md:w-10 md:text-lg"
-                    @click="next">
-                    <div>&raquo;</div>
-                </li>
-            </ul>
+                    :aria-label="`Page ${page}`"
+                    :aria-current="modelValue.pageNumber === page ? 'page' : undefined"
+                    @click="setCurrentPage(page)">
+                    {{ page }}
+                </button>
+            </template>
+            <span class="px-4 text-sm font-semibold sm:hidden">
+                {{ modelValue.pageNumber }} / {{ numberOfPages }}
+            </span>
+            <button
+                type="button"
+                class="ui-icon-button ui-border border"
+                aria-label="Next page"
+                :disabled="modelValue.pageNumber >= numberOfPages"
+                @click="next">
+                ›
+            </button>
         </div>
-    </div>
+    </nav>
 </template>
 
 <script setup lang="ts">
@@ -55,7 +65,9 @@ const {
     pageSize?: number
 }>()
 
-const numberOfPages: ComputedRef<number> = computed(() => Math.ceil(totalCount / pageSize))
+const numberOfPages: ComputedRef<number> = computed(() =>
+    pageSize > 0 ? Math.max(1, Math.ceil(totalCount / pageSize)) : 1
+)
 
 const pages: ComputedRef<(string | number)[]> = computed(() => {
     const pages = []

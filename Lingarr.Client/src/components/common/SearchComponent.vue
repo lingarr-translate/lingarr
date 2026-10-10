@@ -1,17 +1,23 @@
-﻿<template>
-    <div class="relative w-full md:w-96">
+<template>
+    <div class="relative w-full sm:max-w-sm">
         <input
             :value="modelValue.searchQuery"
-            type="text"
+            type="search"
+            aria-label="Search media"
             placeholder="Search media..."
-            class="placeholder-primary/60 outline-hidden block w-full rounded-md border border-accent bg-primary px-8 py-1 text-sm text-primary-content"
+            class="ui-input block w-full px-11 py-2 text-sm [&::-webkit-search-cancel-button]:appearance-none"
             @input="search" />
         <SearchIcon
-            class="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 transform text-accent-content" />
-        <TimesIcon
+            class="text-primary-content absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 transform" />
+        <button
             v-if="modelValue.searchQuery"
-            class="absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 transform cursor-pointer text-accent-content"
-            @click="clear" />
+            type="button"
+            class="ui-icon-button absolute top-0 right-0"
+            aria-label="Clear search"
+            v-tooltip="'Clear search'"
+            @click="clear">
+            <TimesIcon class="h-4 w-4" />
+        </button>
     </div>
 </template>
 

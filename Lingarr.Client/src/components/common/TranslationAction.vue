@@ -1,15 +1,21 @@
-﻿<template>
-    <div class="flex items-center gap-2">
+<template>
+    <div class="flex flex-wrap items-center gap-1">
         <button
-            class="hover:text-primary-content/50 cursor-pointer text-primary-content transition-colors"
+            type="button"
+            class="ui-icon-button"
+            aria-label="View translation details"
+            v-tooltip="'View translation details'"
             @click="router.push({ name: 'translation-detail', params: { id: item.id } })">
             <EyeOnIcon class="h-5 w-5" />
         </button>
-        <div class="flex w-20 items-center gap-2">
+        <div class="flex flex-wrap items-center gap-1">
             <LoaderCircleIcon v-if="loading" class="h-5 w-5 animate-spin" />
             <button
                 v-else-if="inProgress"
-                class="hover:text-primary-content/50 cursor-pointer text-primary-content transition-colors"
+                type="button"
+                class="ui-icon-button"
+                aria-label="Cancel translation"
+                v-tooltip="'Cancel translation'"
                 @click="executeAction(TRANSLATION_ACTIONS.CANCEL)">
                 <TimesIcon class="h-5 w-5" />
             </button>
@@ -17,29 +23,38 @@
                 <button
                     v-if="resumable"
                     :disabled="loading"
-                    title="Resume, reuse already-translated lines"
-                    class="hover:text-primary-content/50 cursor-pointer text-primary-content transition-colors"
+                    aria-label="Resume translation"
+                    v-tooltip="'Resume, reuse already-translated lines'"
+                    type="button"
+                    class="ui-icon-button"
                     @click="executeAction(TRANSLATION_ACTIONS.RESUME)">
                     <StartIcon class="h-5 w-5" />
                 </button>
                 <button
                     v-if="proofreadable"
                     :disabled="loading"
-                    title="Proofread, compare against the source and correct mistranslations"
-                    class="hover:text-primary-content/50 cursor-pointer text-primary-content transition-colors"
+                    aria-label="Proofread translation"
+                    v-tooltip="'Proofread, compare against the source and correct mistranslations'"
+                    type="button"
+                    class="ui-icon-button"
                     @click="executeAction(TRANSLATION_ACTIONS.PROOFREAD)">
                     <SearchIcon class="h-5 w-5" />
                 </button>
                 <button
                     :disabled="loading"
-                    title="Retry, start over"
-                    class="hover:text-primary-content/50 cursor-pointer text-primary-content transition-colors"
+                    aria-label="Retry translation"
+                    v-tooltip="'Retry, start over'"
+                    type="button"
+                    class="ui-icon-button"
                     @click="executeAction(TRANSLATION_ACTIONS.RETRY)">
                     <RetryIcon class="h-5 w-5" />
                 </button>
                 <button
                     :disabled="loading"
-                    class="hover:text-primary-content/50 cursor-pointer text-primary-content transition-colors"
+                    type="button"
+                    class="ui-icon-button"
+                    aria-label="Remove translation request"
+                    v-tooltip="'Remove translation request'"
                     @click="executeAction(TRANSLATION_ACTIONS.REMOVE)">
                     <TrashIcon class="h-5 w-5" />
                 </button>

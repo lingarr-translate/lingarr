@@ -5,6 +5,7 @@ import router from '@/router'
 import App from './App.vue'
 
 import { highlight, showTitle } from '@/directives'
+import tooltip from '@/directives/tooltip'
 import '@/assets/style.css'
 import './utils'
 
@@ -15,6 +16,7 @@ new Promise((resolve) => resolve(true))
     .then(() => {
         app.directive('highlight', highlight)
         app.directive('show-title', showTitle)
+        app.directive('tooltip', tooltip)
     })
     .then(() => {
         app.use(pinia)

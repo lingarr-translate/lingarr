@@ -1,9 +1,9 @@
-﻿<template>
-    <div class="bg-secondary p-4">
+<template>
+    <div class="ui-border bg-secondary rounded-xl border p-2 sm:p-4">
         <div
-            class="grid grid-cols-12 border-b-2 border-secondary bg-primary font-bold text-secondary-content">
-            <div class="col-span-6 px-4 py-2 md:col-span-3">Season</div>
-            <div class="col-span-6 flex justify-between px-4 py-2 md:col-span-8">
+            class="border-secondary bg-primary text-secondary-content grid grid-cols-12 border-b-2 font-bold">
+            <div class="col-span-6 px-2 py-2 sm:px-4 md:col-span-3">Season</div>
+            <div class="col-span-6 flex justify-between px-2 py-2 sm:px-4 md:col-span-8">
                 <span>Episodes</span>
                 <span class="hidden md:block">Include</span>
                 <span class="block md:hidden">✓</span>
@@ -13,12 +13,13 @@
         <div
             v-for="season in seasons"
             :key="season.id"
-            class="bg-primary text-sm text-accent-content md:text-base">
+            class="bg-primary text-primary-content text-sm md:text-base">
             <div
                 class="grid grid-cols-12 transition-colors"
-                :class="{ 'cursor-pointer hover:bg-accent/5': season.episodes.length }"
+                :class="{ 'hover:bg-accent/5 cursor-pointer': season.episodes.length }"
                 @click="toggleSeason(season)">
-                <div class="col-span-6 flex select-none items-center px-4 py-2 md:col-span-3">
+                <div
+                    class="col-span-6 flex items-center px-2 py-2 select-none sm:px-4 md:col-span-3">
                     <CaretButton
                         v-if="season.episodes.length"
                         :is-expanded="expandedSeason?.id !== season.id"
@@ -27,7 +28,8 @@
                     <span v-if="season.seasonNumber == 0">Specials</span>
                     <span v-else>Season {{ season.seasonNumber }}</span>
                 </div>
-                <div class="col-span-6 flex select-none justify-between px-4 py-2 md:col-span-8">
+                <div
+                    class="col-span-6 flex items-center justify-between px-2 py-2 select-none sm:px-4 md:col-span-8">
                     <span>
                         {{ season.episodes.length }}
                         episodes
@@ -35,6 +37,7 @@
                     <span @click.stop>
                         <ToggleButton
                             v-model="season.includeInTranslation"
+                            :aria-label="`Include season ${season.seasonNumber} in automatic translation`"
                             size="small"
                             @toggle:update="
                                 () =>

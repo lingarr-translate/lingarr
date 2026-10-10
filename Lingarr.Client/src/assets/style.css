@@ -3,17 +3,19 @@
 
 /* Default Lingarr theme */
 @layer base {
-    :root {
-        --primary: #1a202c;
-        --primary-content: #c0c8d2;
-        --secondary: #242d3c;
-        --secondary-content: #d2d7dc;
-        --tertiary: #1f2734;
-        --tertiary-content: #c0c8d2;
-        --accent: #466e8c;
-        --accent-content: #c0c8d2;
+    :root,
+    .lingarr {
+        --primary: #121416;
+        --primary-content: #f5f7fa;
+        --secondary: #272b30;
+        --secondary-content: #c9cfd8;
+        --tertiary: #1d2024;
+        --tertiary-content: #e0e4ea;
+        --accent: #6ee7c7;
+        --accent-content: #102d26;
 
         /* Syntax highlighting */
+        --danger: #ff8b94;
         --syntax-key: #7eb8da;
         --syntax-string: #a8d4a0;
         --syntax-number: #e0a870;
@@ -22,14 +24,15 @@
 }
 
 .solarized-light {
+    --danger: #b42335;
     --primary: #fdf6e3;
-    --primary-content: #586e75;
+    --primary-content: #40565f;
     --secondary: #eee8d5;
-    --secondary-content: #657b83;
+    --secondary-content: #475c63;
     --tertiary: #f5efdc;
-    --tertiary-content: #586e75;
-    --accent: #268bd2;
-    --accent-content: #f5efdc;
+    --tertiary-content: #40565f;
+    --accent: #1c70a4;
+    --accent-content: #ffffff;
     --syntax-key: #268bd2;
     --syntax-string: #2aa198;
     --syntax-number: #cb4b16;
@@ -44,7 +47,7 @@
     --tertiary: #04313c;
     --tertiary-content: #fdf6e3;
     --accent: #2aa198;
-    --accent-content: #fdf6e3;
+    --accent-content: #002b36;
     --syntax-key: #268bd2;
     --syntax-string: #2aa198;
     --syntax-number: #cb4b16;
@@ -59,7 +62,7 @@
     --tertiary: #363948;
     --tertiary-content: #f8f8f2;
     --accent: #bd93f9;
-    --accent-content: #f8f8f2;
+    --accent-content: #282a36;
     --syntax-key: #8be9fd;
     --syntax-string: #50fa7b;
     --syntax-number: #ffb86c;
@@ -73,8 +76,8 @@
     --secondary-content: #e5e9f0;
     --tertiary: #353b49;
     --tertiary-content: #d8dee9;
-    --accent: #5e81ac;
-    --accent-content: #e5e9f0;
+    --accent: #8cafd6;
+    --accent-content: #1d2735;
     --syntax-key: #81a1c1;
     --syntax-string: #a3be8c;
     --syntax-number: #d08770;
@@ -89,7 +92,7 @@
     --tertiary: #31322c;
     --tertiary-content: #f8f8f2;
     --accent: #66d9ef;
-    --accent-content: #f8f8f2;
+    --accent-content: #272822;
     --syntax-key: #66d9ef;
     --syntax-string: #a6e22e;
     --syntax-number: #ae81ff;
@@ -104,7 +107,7 @@
     --tertiary: #181818;
     --tertiary-content: #ff00ff;
     --accent: #ff0084;
-    --accent-content: #ffff00;
+    --accent-content: #121212;
     --syntax-key: #00ffff;
     --syntax-string: #39ff14;
     --syntax-number: #ffff00;
@@ -119,7 +122,7 @@
     --tertiary: #292929;
     --tertiary-content: #ffffff;
     --accent: #03a9f4;
-    --accent-content: #ffffff;
+    --accent-content: #12212b;
     --syntax-key: #82b1ff;
     --syntax-string: #c3e88d;
     --syntax-number: #f78c6c;
@@ -134,7 +137,7 @@
     --tertiary: #301548;
     --tertiary-content: #fff5f5;
     --accent: #f472b6;
-    --accent-content: #fff5f5;
+    --accent-content: #29113f;
     --syntax-key: #f472b6;
     --syntax-string: #fab795;
     --syntax-number: #e95678;
@@ -149,7 +152,7 @@
     --tertiary: #232425;
     --tertiary-content: #ebdbb2;
     --accent: #fb4934;
-    --accent-content: #ebdbb2;
+    --accent-content: #1d2021;
     --syntax-key: #83a598;
     --syntax-string: #b8bb26;
     --syntax-number: #fe8019;
@@ -163,8 +166,8 @@
     --secondary-content: #d6d8d6;
     --tertiary: #111822;
     --tertiary-content: #c5c8c6;
-    --accent: #5e81ac;
-    --accent-content: #d6d8d6;
+    --accent: #8cafd6;
+    --accent-content: #0a0f19;
     --syntax-key: #599cab;
     --syntax-string: #99d1ce;
     --syntax-number: #d26937;
@@ -179,7 +182,7 @@
     --tertiary: #2d2d2d;
     --tertiary-content: #cccccc;
     --accent: #35c5f0;
-    --accent-content: #ffffff;
+    --accent-content: #192329;
     --syntax-key: #35c5f0;
     --syntax-string: #7ad17a;
     --syntax-number: #ffc230;
@@ -208,7 +211,7 @@
     --secondary-content: #e8e8e8;
     --tertiary: #2d2d2d;
     --tertiary-content: #cccccc;
-    --accent: #be4bdb;
+    --accent: #a735c4;
     --accent-content: #ffffff;
     --syntax-key: #be4bdb;
     --syntax-string: #7ad17a;
@@ -238,7 +241,7 @@
 }
 
 .shell-scroll::-webkit-scrollbar-thumb {
-    background: #242d3c;
+    background: color-mix(in srgb, var(--primary-content) 35%, var(--primary));
 }
 
 .fade-enter-active,
@@ -248,4 +251,335 @@
 .fade-enter-from,
 .fade-leave-to {
     opacity: 0;
+}
+
+/* Shared UI foundations; colors follow the selected theme. */
+@layer base {
+    html {
+        color-scheme: dark;
+        background: var(--primary);
+        font-family:
+            ui-sans-serif,
+            system-ui,
+            -apple-system,
+            BlinkMacSystemFont,
+            'Segoe UI',
+            sans-serif;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
+    html.solarized-light {
+        color-scheme: light;
+    }
+    body {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+    button,
+    input,
+    select,
+    textarea {
+        font: inherit;
+    }
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        -webkit-tap-highlight-color: transparent;
+    }
+    :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 3px;
+    }
+    :where(input, textarea)::placeholder {
+        color: color-mix(in srgb, var(--primary-content) 65%, var(--primary));
+        opacity: 1;
+    }
+    :where(button, input, select, textarea):disabled {
+        cursor: not-allowed;
+    }
+}
+
+@layer components {
+    .ui-shell {
+        background: color-mix(in srgb, var(--primary) 65%, var(--secondary));
+    }
+    .ui-panel {
+        border: 1px solid color-mix(in srgb, var(--primary-content) 12%, transparent);
+        border-radius: 0.75rem;
+        background: linear-gradient(
+            150deg,
+            color-mix(in srgb, var(--secondary) 94%, var(--primary-content)),
+            var(--secondary) 55%
+        );
+        box-shadow:
+            inset 0 1px 0 color-mix(in srgb, var(--primary-content) 7%, transparent),
+            0 2px 3px rgb(0 0 0 / 10%),
+            0 12px 28px rgb(0 0 0 / 12%);
+    }
+    .feature-icon {
+        --icon-top: #6d48b9;
+        --icon-bottom: #302555;
+        display: inline-flex;
+        flex: none;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgb(255 255 255 / 18%);
+        border-radius: 0.65rem;
+        background: linear-gradient(145deg, var(--icon-top), var(--icon-bottom));
+        box-shadow:
+            inset 0 1px 0 rgb(255 255 255 / 16%),
+            0 3px 6px rgb(0 0 0 / 20%);
+    }
+    .feature-icon svg {
+        width: 80%;
+        height: 80%;
+    }
+    .feature-icon[data-kind='dashboard'] {
+        --icon-top: #247baa;
+        --icon-bottom: #263b73;
+    }
+    .feature-icon[data-kind='movies'] {
+        --icon-top: #367bd0;
+        --icon-bottom: #233f7a;
+    }
+    .feature-icon[data-kind='shows'] {
+        --icon-top: #8850ce;
+        --icon-bottom: #4a2a78;
+    }
+    .feature-icon[data-kind='translations'] {
+        --icon-top: #a87529;
+        --icon-bottom: #5b492a;
+    }
+    .feature-icon[data-kind='files'] {
+        --icon-top: #268768;
+        --icon-bottom: #1c5147;
+    }
+    .feature-icon[data-kind='lines'] {
+        --icon-top: #ad7627;
+        --icon-bottom: #69451c;
+    }
+    .feature-icon[data-kind='characters'] {
+        --icon-top: #b95188;
+        --icon-bottom: #652957;
+    }
+    .stat-card {
+        --section-accent: #82bcff;
+        border-top-color: color-mix(in srgb, var(--section-accent) 55%, var(--secondary));
+        background:
+            radial-gradient(
+                ellipse at top right,
+                color-mix(in srgb, var(--section-accent) 14%, transparent),
+                transparent 70%
+            ),
+            var(--secondary);
+    }
+    .stat-card[data-tone='violet'] {
+        --section-accent: #c4a0ff;
+    }
+    .stat-progress {
+        background: var(--section-accent);
+    }
+    .dashboard-divider {
+        border-color: color-mix(in srgb, var(--primary-content) 12%, transparent);
+    }
+    .dashboard-metrics > :not(:last-child) {
+        border-bottom: 1px solid color-mix(in srgb, var(--primary-content) 12%, transparent);
+    }
+    .theme-trigger {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: 2.75rem;
+        min-width: 2.75rem;
+        padding: 0.5rem 0.75rem;
+        border: 1px solid color-mix(in srgb, var(--primary-content) 18%, transparent);
+        border-radius: 0.5rem;
+        cursor: pointer;
+    }
+    .theme-trigger:hover,
+    .theme-option:hover {
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+    }
+    .theme-option {
+        border: 1px solid transparent;
+    }
+    .theme-option.is-selected {
+        border-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 10%, transparent);
+    }
+    .theme-swatch {
+        background: var(--primary);
+        border: 1px solid color-mix(in srgb, var(--primary-content) 20%, transparent);
+    }
+
+    .ui-border {
+        border-color: color-mix(in srgb, var(--primary-content) 24%, transparent);
+    }
+    .ui-input {
+        min-height: 2.75rem;
+        border: 1px solid color-mix(in srgb, var(--primary-content) 45%, transparent);
+        border-radius: 0.625rem;
+        background: var(--primary);
+        color: var(--primary-content);
+        transition:
+            border-color 150ms,
+            box-shadow 150ms;
+    }
+    .ui-input:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+        outline: none;
+    }
+    .ui-icon-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 0.625rem;
+        color: var(--primary-content);
+        cursor: pointer;
+        transition: background 150ms;
+    }
+    .ui-icon-button:hover {
+        background: color-mix(in srgb, var(--accent) 15%, transparent);
+    }
+    .ui-icon-button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+    .ui-nav-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        min-height: 2.875rem;
+        padding: 0.625rem 0.875rem;
+        border: 1px solid transparent;
+        border-radius: 0.75rem;
+        color: var(--secondary-content);
+        font-weight: 500;
+        transition:
+            background 150ms,
+            border-color 150ms;
+    }
+    .ui-nav-link:hover {
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+    }
+    .ui-nav-link.is-active {
+        color: var(--primary-content);
+        background: color-mix(in srgb, var(--accent) 16%, transparent);
+        border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+        box-shadow: inset 3px 0 var(--accent);
+    }
+    .ui-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin: 1.25rem;
+        padding: 0 0 1.25rem;
+        border-bottom: 1px solid color-mix(in srgb, var(--primary-content) 12%, transparent);
+    }
+    .media-table-heading {
+        color: var(--primary-content);
+        background: var(--tertiary);
+        border-radius: 0.5rem 0.5rem 0 0;
+        font-size: 0.8125rem;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        border-color: color-mix(in srgb, var(--primary-content) 22%, transparent);
+    }
+    .media-row {
+        border-color: color-mix(in srgb, var(--primary-content) 12%, transparent);
+        min-height: 4.25rem;
+        overflow-wrap: anywhere;
+    }
+    .media-row:hover {
+        background: color-mix(in srgb, var(--accent) 5%, transparent);
+    }
+    .media-row > div {
+        min-width: 0;
+    }
+    .ui-tooltip {
+        position: fixed;
+        z-index: 100;
+        max-width: min(18rem, calc(100vw - 1rem));
+        padding: 0.625rem 0.875rem;
+        border: 1px solid color-mix(in srgb, var(--primary-content) 30%, transparent);
+        border-radius: 0.625rem;
+        background: var(--secondary);
+        color: var(--primary-content);
+        font-size: 0.8125rem;
+        line-height: 1.5;
+        box-shadow: 0 8px 24px rgb(0 0 0 / 24%);
+        overflow-wrap: anywhere;
+    }
+    .skip-link {
+        position: fixed;
+        top: 0.5rem;
+        left: 0.5rem;
+        z-index: 100;
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        background: var(--accent);
+        color: var(--accent-content);
+        transform: translateY(-200%);
+    }
+    .skip-link:focus {
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 767px) {
+    .ui-toolbar {
+        margin: 1rem;
+    }
+    /* 16px avoids automatic zoom when editing fields on iOS. */
+    input:not([type='checkbox']),
+    select,
+    textarea {
+        font-size: 1rem;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+@media (min-width: 640px) {
+    .dashboard-metrics > :not(:last-child) {
+        border-bottom: 0;
+        border-right: 1px solid color-mix(in srgb, var(--primary-content) 12%, transparent);
+    }
+}
+
+/* Category accents stay legible on the light theme as well. */
+.solarized-light .stat-card {
+    --section-accent: #2563eb;
+}
+.solarized-light .stat-card[data-tone='violet'] {
+    --section-accent: #7c3aed;
+}
+@layer components {
+    .ui-button-raised {
+        background-image: linear-gradient(rgb(255 255 255 / 8%), rgb(0 0 0 / 5%));
+        box-shadow:
+            inset 0 1px 0 rgb(255 255 255 / 14%),
+            0 2px 3px rgb(0 0 0 / 16%);
+    }
+    .ui-button-raised:active:not(:disabled) {
+        transform: translateY(1px);
+    }
 }
