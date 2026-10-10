@@ -54,8 +54,8 @@
                     </ToggleButton>
                 </div>
 
-                <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                    <div>
+                <div class="request-template-layout grid gap-4">
+                    <div class="min-w-0">
                         <Transition name="fade" mode="out-in">
                             <JsonTreeBuilder
                                 v-if="mode === 'builder'"
@@ -258,3 +258,10 @@ watch(serviceType, () => {
     selectedPreset.value = ''
 })
 </script>
+
+<style scoped>
+.request-template-layout {
+    /* Keep both panes readable after accounting for the navigation and card padding. */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 36rem), 1fr));
+}
+</style>

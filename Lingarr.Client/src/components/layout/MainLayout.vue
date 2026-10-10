@@ -1,6 +1,6 @@
 <template>
     <div :class="[`${instanceStore.getTheme}`, 'bg-primary text-primary-content flex min-h-dvh']">
-        <a href="#main-content" class="skip-link">Skip to content</a>
+        <a href="#main-content" class="skip-link" @click.prevent="skipToContent">Skip to content</a>
         <AsideNavigation />
 
         <div :inert="isOpen" class="flex min-w-0 flex-1 flex-col">
@@ -69,7 +69,7 @@
                 </DropdownComponent>
             </header>
             <!-- Main Content -->
-            <main id="main-content" tabindex="-1" class="min-w-0 flex-1">
+            <main id="main-content" ref="mainContent" tabindex="-1" class="min-w-0 flex-1">
                 <router-view v-slot="{ Component }">
                     <transition name="fade" mode="out-in">
                         <component :is="Component" />
@@ -99,6 +99,12 @@ const instanceStore = useInstanceStore()
 const translationRequestStore = useTranslationRequestStore()
 const signalR = useSignalR()
 const route = useRoute()
+const mainContent = ref<HTMLElement>()
+const skipToContent = () => {
+    // Stay in this document even when the server injects a different base URL.
+    mainContent.value?.focus({ preventScroll: true })
+    mainContent.value?.scrollIntoView({ block: 'start' })
+}
 const pageInfo: Record<string, [string, string]> = {
     dashboard: ['Dashboard', 'Your media library and translation activity at a glance.'],
     movies: ['Movies', 'Manage subtitles and translation preferences for your movies.'],

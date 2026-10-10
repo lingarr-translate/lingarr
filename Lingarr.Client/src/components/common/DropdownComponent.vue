@@ -2,7 +2,7 @@
     <div
         ref="clickOutside"
         class="relative z-30 inline-block text-left"
-        @keydown.esc.stop.prevent="close(true)">
+        @keydown.esc.prevent="close(true)">
         <button
             ref="trigger"
             v-tooltip="label"

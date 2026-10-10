@@ -1,7 +1,7 @@
 <template>
     <div class="group">
         <div
-            class="hover:bg-accent/5 flex items-center gap-2 rounded px-1.5 py-1.5"
+            class="hover:bg-accent/5 flex flex-wrap items-center gap-2 rounded px-1.5 py-1.5"
             :style="{ paddingLeft: `${depth * 1.25}rem` }">
             <CaretButton
                 v-if="node.type === NODE_TYPE.OBJECT || node.type === NODE_TYPE.ARRAY"
@@ -39,7 +39,7 @@
                     size="sm"
                     :debounce="0"
                     placeholder="value"
-                    class="min-w-0 flex-1"
+                    class="min-w-0 grow basis-48"
                     @update:model-value="updateValue" />
             </template>
             <template v-else-if="node.type === NODE_TYPE.NUMBER">
