@@ -14,7 +14,8 @@
             @keydown="handleKeydown"
             :class="isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
             class="ui-shell ui-border fixed top-0 left-0 z-50 flex h-dvh w-64 flex-col overflow-hidden border-r transition-transform duration-200 ease-in-out md:sticky md:w-60">
-            <div class="ui-border flex min-h-24 items-center gap-3 border-b px-6">
+            <div
+                class="navigation-header ui-border flex min-h-24 shrink-0 items-center gap-3 border-b px-6">
                 <FeatureIcon kind="translations" class="h-10 w-10" />
                 <div>
                     <span class="text-xl font-bold tracking-tight">Lingarr</span>
@@ -29,7 +30,9 @@
                 </button>
             </div>
             <!-- Navigation -->
-            <nav aria-label="Main" class="grow overflow-y-auto px-3 py-6">
+            <nav
+                aria-label="Main"
+                class="navigation-links min-h-0 flex-1 overflow-y-auto px-3 py-6">
                 <ul class="space-y-1.5">
                     <li v-for="(item, index) in menuItems" :key="index">
                         <router-link
@@ -53,15 +56,17 @@
                 </ul>
             </nav>
             <!-- Version and media section -->
-            <div class="pointer-events-none relative h-48 w-full shrink-0">
+            <div
+                class="navigation-footer pointer-events-none relative flex w-full shrink-0 items-end"
+                :class="{ 'has-poster': instanceStore.getPoster }">
                 <img
                     v-if="instanceStore.getPoster"
                     :src="`/api/image/${instanceStore.getPoster}`"
-                    class="mask-gradient h-full w-full object-cover"
+                    class="mask-gradient absolute inset-0 h-full w-full object-cover"
                     alt="poster" />
                 <div
                     v-if="instanceStore.getVersion.currentVersion.length"
-                    class="absolute right-0 bottom-0 flex w-full justify-center p-4">
+                    class="relative flex w-full justify-center p-4">
                     <BadgeComponent
                         v-if="instanceStore.getVersion.isDevelopment"
                         classes="text-white border-amber-200 bg-amber-500/50">
@@ -189,3 +194,24 @@ const isActive = (item: MenuItem) => {
     return false
 }
 </script>
+
+<style scoped>
+.navigation-footer.has-poster {
+    min-height: 12rem;
+}
+
+/* Keep decorative content from crowding the menu in short windows. */
+@media (max-height: 640px) {
+    .navigation-header {
+        min-height: 4rem;
+    }
+
+    .navigation-links {
+        padding-block: 0.75rem;
+    }
+
+    .navigation-footer.has-poster {
+        min-height: 0;
+    }
+}
+</style>
