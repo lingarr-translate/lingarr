@@ -8,7 +8,8 @@
                 :id="id || selectId"
                 :value="selected"
                 :disabled="disabled"
-                :aria-label="label || placeholder"
+                :aria-label="!label && !ariaLabelledby ? placeholder : undefined"
+                :aria-labelledby="ariaLabelledby"
                 :aria-busy="isLoading"
                 class="ui-input w-full cursor-pointer px-3 py-2 disabled:opacity-50"
                 :class="size === 'sm' ? 'text-sm' : ''"
@@ -42,6 +43,7 @@ const props = withDefaults(
     defineProps<{
         id?: string
         label?: string
+        ariaLabelledby?: string
         options: ISelectOption[]
         selected?: string
         disabled?: boolean

@@ -25,6 +25,11 @@
                     size="small"
                     label="Open details on request" />
                 <div class="media-toolbar-selection">
+                    <CheckboxComponent
+                        v-if="isSelectMode"
+                        label="Select all on this page"
+                        :model-value="showStore.selectAll"
+                        @change="showStore.toggleSelectAll()" />
                     <ContextMenu
                         v-if="isSelectMode && showStore.selectedShows.length > 0"
                         @select="handleTranslate">
@@ -81,12 +86,6 @@
                         ">
                         ?
                     </button>
-                </div>
-                <div v-if="isSelectMode" class="media-select-cell">
-                    <CheckboxComponent
-                        aria-label="Select all items on this page"
-                        :model-value="showStore.selectAll"
-                        @change="showStore.toggleSelectAll()" />
                 </div>
             </div>
             <div v-for="item in shows.items" :key="item.id">
