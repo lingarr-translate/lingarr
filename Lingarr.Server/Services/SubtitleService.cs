@@ -439,10 +439,10 @@ public class SubtitleService : ISubtitleService
             return null;
         }
 
-        var sourceSubtitle = ignoreCaptions == "true"
-            ? matchingSubtitles.FirstOrDefault(s => s.Language == sourceLanguage && string.IsNullOrEmpty(s.Caption))
-                ?? matchingSubtitles.FirstOrDefault(s => s.Language == sourceLanguage)
-            : matchingSubtitles.FirstOrDefault(s => s.Language == sourceLanguage);
+        var sourceSubtitle = matchingSubtitles
+            .Where(s => s.Language.Equals(sourceLanguage, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(s => string.IsNullOrEmpty(s.Caption) ? 0 : 1)
+            .FirstOrDefault();
 
         if (sourceSubtitle == null)
         {
