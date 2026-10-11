@@ -262,7 +262,7 @@ public class SubtitleService : ISubtitleService
             }
 
             var expectedPosition = 1;
-            SubtitleItem previousItem = null;
+            SubtitleItem? previousItem = null;
 
             foreach (var item in subtitles)
             {
