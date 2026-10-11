@@ -19,7 +19,7 @@
                 v-if="isOpen"
                 :id="menuId"
                 ref="excludeClickOutside"
-                class="ui-panel text-primary-content fixed z-50 w-56 max-w-[calc(100vw-1rem)] overflow-y-auto p-2"
+                class="ui-panel text-primary-content absolute z-50 w-56 max-w-[calc(100vw-1rem)] overflow-y-auto p-2"
                 :style="menuPosition"
                 role="group"
                 aria-label="Translate to"
@@ -99,15 +99,19 @@ const toggle = async () => {
     }
     isOpen.value = true
     await nextTick()
+    const menu = excludeClickOutside.value
+    if (!menu || !clickOutside.value) return
     const anchor = clickOutside.value.getBoundingClientRect()
-    const availableBelow = window.innerHeight - anchor.bottom - 16
-    const below = availableBelow >= 180 || anchor.top < 180
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+    const availableBelow = Math.max(0, viewportHeight - anchor.bottom - 16)
+    const availableAbove = Math.max(0, anchor.top - 16)
+    const menuHeight = menu.scrollHeight + menu.offsetHeight - menu.clientHeight
+    const below = menuHeight <= availableBelow || availableBelow >= availableAbove
+    // Use document coordinates for the teleported menu; page scrolling closes it.
     menuPosition.value = {
-        left: `${Math.max(8, Math.min(anchor.left, window.innerWidth - 232))}px`,
-        ...(below
-            ? { top: `${anchor.bottom + 8}px` }
-            : { bottom: `${window.innerHeight - anchor.top + 8}px` }),
-        maxHeight: `${Math.max(100, below ? availableBelow : anchor.top - 16)}px`
+        left: `${window.scrollX + Math.max(8, Math.min(anchor.left, window.innerWidth - menu.getBoundingClientRect().width - 8))}px`,
+        top: `${window.scrollY + (below ? anchor.bottom + 8 : anchor.top - 8 - Math.min(menuHeight, availableAbove))}px`,
+        maxHeight: `${below ? availableBelow : availableAbove}px`
     }
     await nextTick()
     excludeClickOutside.value?.querySelector('button, a')?.focus({ preventScroll: true })

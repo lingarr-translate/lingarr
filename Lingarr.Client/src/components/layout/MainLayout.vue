@@ -31,12 +31,11 @@
                         <span class="hidden text-sm font-medium sm:inline">Theme</span>
                     </template>
                     <template #content>
-                        <div class="dashboard-divider border-b px-4 py-4">
+                        <div class="dashboard-divider shrink-0 border-b px-4 py-4">
                             <h2 class="text-sm font-semibold">Appearance</h2>
                             <p class="text-secondary-content mt-1 text-xs">Choose a color theme</p>
                         </div>
-                        <div
-                            class="grid max-h-[min(28rem,60dvh)] grid-cols-2 gap-2 overflow-y-auto p-3">
+                        <div class="grid max-h-112 min-h-0 grid-cols-2 gap-2 overflow-y-auto p-3">
                             <button
                                 v-for="theme in Object.values(THEMES)"
                                 :key="theme"

@@ -21,7 +21,8 @@
                 :id="panelId"
                 ref="panel"
                 :class="getClasses()"
-                class="ui-panel absolute right-0 mt-2 max-w-[calc(100vw-2rem)] overflow-hidden"
+                :style="{ maxHeight: panelMaxHeight }"
+                class="ui-panel absolute right-0 mt-2 flex max-w-[calc(100vw-2rem)] flex-col overflow-hidden"
                 @click="closeAfterSelection"
                 @keydown="moveFocus"
                 @focusout="handleFocusOut">
@@ -32,13 +33,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, Ref, useId, nextTick } from 'vue'
+import { ref, Ref, useId, nextTick, onMounted, onUnmounted } from 'vue'
 import useClickOutside from '@/composables/useClickOutside'
 
 const isOpen = ref(false)
 const clickOutside: Ref<HTMLElement | undefined> = ref()
 const trigger = ref<HTMLButtonElement>()
 const panel = ref<HTMLElement>()
+const panelMaxHeight = ref<string>()
 const panelId = useId()
 const {
     width = 'medium',
@@ -57,7 +59,11 @@ const close = (restoreFocus = false) => {
 const openAndFocus = async () => {
     isOpen.value = true
     await nextTick()
-    panel.value?.querySelector<HTMLElement>('button, a[href]')?.focus()
+    if (!panel.value) return
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight
+    panelMaxHeight.value = `${Math.max(0, viewportHeight - panel.value.getBoundingClientRect().top - 8)}px`
+    await nextTick()
+    panel.value?.querySelector<HTMLElement>('button, a[href]')?.focus({ preventScroll: true })
 }
 const toggleDropdown = () => (isOpen.value ? close() : openAndFocus())
 const closeAfterSelection = (event: MouseEvent) => {
@@ -83,4 +89,16 @@ const moveFocus = (event: KeyboardEvent) => {
     items[index].focus()
 }
 useClickOutside(clickOutside, () => close())
+const handleScroll = (event: Event) => {
+    if (!panel.value?.contains(event.target as Node)) close()
+}
+const handleResize = () => close()
+onMounted(() => {
+    window.addEventListener('scroll', handleScroll, true)
+    window.addEventListener('resize', handleResize)
+})
+onUnmounted(() => {
+    window.removeEventListener('scroll', handleScroll, true)
+    window.removeEventListener('resize', handleResize)
+})
 </script>
