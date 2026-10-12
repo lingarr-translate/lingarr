@@ -287,9 +287,14 @@ public class TranslationRequestService : ITranslationRequestService
             return;
         }
 
-        if (selected.AvailableLanguages.Contains(targetLanguage.ToLowerInvariant()))
+        var targetExists = subtitles.Any(s =>
+            s.Language.Equals(targetLanguage, StringComparison.OrdinalIgnoreCase) &&
+            (ignoreCaptions == "true" ||
+             string.Equals(s.Caption, selected.Subtitle.Caption, StringComparison.OrdinalIgnoreCase)));
+
+        if (targetExists)
         {
-            _logger.LogDebug("Bulk: skipping mediaId {MediaId} — target language {Target} already exists",
+            _logger.LogDebug("Bulk: skipping mediaId {MediaId} — matching target subtitle {Target} already exists",
                 mediaId, targetLanguage);
             return;
         }
