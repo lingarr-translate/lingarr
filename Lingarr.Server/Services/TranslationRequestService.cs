@@ -526,7 +526,9 @@ public class TranslationRequestService : ITranslationRequestService
     {
         var translationRequest = await _dbContext.TranslationRequests.FirstOrDefaultAsync(
             candidate => candidate.Id == applyRequest.Id);
-        if (translationRequest == null || string.IsNullOrEmpty(translationRequest.TranslatedSubtitle))
+        if (translationRequest == null ||
+            string.IsNullOrEmpty(translationRequest.TranslatedSubtitle) ||
+            string.IsNullOrEmpty(translationRequest.SubtitleToTranslate))
         {
             return null;
         }
