@@ -31,7 +31,7 @@ public class ShowSyncService : IShowSyncService
     }
 
     /// <inheritdoc />
-    public async Task SyncShows(List<SonarrShow> shows, bool defaultInclude)
+    public async Task SyncShows(List<SonarrShow> shows, bool defaultInclude, bool excludeUnmonitored = false)
     {
         var processedCount = 0;
 
@@ -42,7 +42,7 @@ public class ShowSyncService : IShowSyncService
             foreach (var season in show.Seasons)
             {
                 var seasonEntity = await _seasonSync.SyncSeason(showEntity, show, season, defaultInclude);
-                await _episodeSync.SyncEpisodes(show, seasonEntity, defaultInclude);
+                await _episodeSync.SyncEpisodes(show, seasonEntity, defaultInclude, excludeUnmonitored);
             }
 
             processedCount++;
@@ -60,14 +60,14 @@ public class ShowSyncService : IShowSyncService
     }
 
     /// <inheritdoc />
-    public async Task<Show> SyncShow(SonarrShow show, bool defaultInclude)
+    public async Task<Show> SyncShow(SonarrShow show, bool defaultInclude, bool excludeUnmonitored = false)
     {
         var showEntity = await _showSync.SyncShow(show, defaultInclude);
 
         foreach (var season in show.Seasons)
         {
             var seasonEntity = await _seasonSync.SyncSeason(showEntity, show, season, defaultInclude);
-            await _episodeSync.SyncEpisodes(show, seasonEntity, defaultInclude);
+            await _episodeSync.SyncEpisodes(show, seasonEntity, defaultInclude, excludeUnmonitored);
         }
 
         await _dbContext.SaveChangesAsync();

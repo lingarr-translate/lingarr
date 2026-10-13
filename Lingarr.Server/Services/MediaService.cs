@@ -159,6 +159,7 @@ public class MediaService : IMediaService
             return episode.Id;
         }
         var defaultInclude = await _settingService.GetSetting(SettingKeys.Integration.SonarrDefaultInclude) == "true";
+        var excludeUnmonitored = await _settingService.GetSetting(SettingKeys.Integration.SonarrScanFilter) == "unmonitored_episodes";
 
         // Episode not found, maybe out of sync.
         // Sync the show
@@ -177,7 +178,7 @@ public class MediaService : IMediaService
                 return 0;
             }
 
-            var show = await _showSyncService.SyncShow(episodeFetched.Show, defaultInclude);
+            var show = await _showSyncService.SyncShow(episodeFetched.Show, defaultInclude, excludeUnmonitored);
             // Find the episode id or return 0 if not found
             return show.Seasons
                 .SelectMany(s => s.Episodes)
@@ -194,7 +195,7 @@ public class MediaService : IMediaService
                 var shows = await _sonarrService.GetShows();
                 if (shows != null && shows.Any())
                 {
-                    await _showSyncService.SyncShows(shows, defaultInclude);
+                    await _showSyncService.SyncShows(shows, defaultInclude, excludeUnmonitored);
                     // Try to find the episode again after resync
                     var matchedEpisode = await _dbContext.Episodes.Where(s => s.SonarrId == episodeNumber).FirstOrDefaultAsync();
                     if (matchedEpisode != null)

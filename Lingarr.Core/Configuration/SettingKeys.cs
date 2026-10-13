@@ -10,6 +10,9 @@ public static class SettingKeys
         public const string SonarrUrl = "sonarr_url";
         public const string SonarrApiKey = "sonarr_api_key";
         public const string SonarrDefaultInclude = "sonarr_default_include";
+        public const string RadarrExcludeUnmonitored = "radarr_exclude_unmonitored";
+        public const string SonarrExcludeUnmonitored = "sonarr_exclude_unmonitored"; // legacy
+        public const string SonarrScanFilter = "sonarr_scan_filter";
         public const string RadarrSettingsCompleted = "radarr_settings_completed";
         public const string SonarrSettingsCompleted = "sonarr_settings_completed";
     }

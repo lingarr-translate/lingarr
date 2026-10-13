@@ -53,9 +53,20 @@ public class SyncShowJob
             _logger.LogInformation("Fetched {ShowCount} shows from Sonarr", shows.Count);
 
             var defaultInclude = await _settingService.GetSetting(SettingKeys.Integration.SonarrDefaultInclude) == "true";
+            var scanFilter = await _settingService.GetSetting(SettingKeys.Integration.SonarrScanFilter) ?? "none";
+            var showsToSync = scanFilter == "unmonitored_series"
+                ? shows.Where(show => show.Monitored).ToList()
+                : shows;
+            var excludeUnmonitoredEpisodes = scanFilter == "unmonitored_episodes";
+
+            _logger.LogInformation(
+                "Sonarr scan filter: mode={Mode}, total={Total}, selected={Selected}, skipped={Skipped}",
+                scanFilter, shows.Count, showsToSync.Count, shows.Count - showsToSync.Count);
+
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-            await _showSyncService.SyncShows(shows, defaultInclude);
+            await _showSyncService.SyncShows(showsToSync, defaultInclude, excludeUnmonitoredEpisodes);
+            // Gebruik de volledige lijst: overslaan door een filter mag nooit als verwijdering gelden.
             await _showSyncService.RemoveNonExistentShows(shows.Select(s => s.Id).ToHashSet());
 
             await transaction.CommitAsync();

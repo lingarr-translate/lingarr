@@ -27,6 +27,13 @@
                         </span>
                     </ToggleButton>
                 </div>
+                <div class="flex items-center space-x-2">
+                    <ToggleButton v-model="radarrExcludeUnmonitored">
+                        <span class="text-sm font-medium text-primary-content">
+                            Exclude unmonitored movies while scanning
+                        </span>
+                    </ToggleButton>
+                </div>
             </div>
             <div class="flex flex-col space-y-2">
                 <span class="font-semibold">Sonarr Settings:</span>
@@ -51,6 +58,19 @@
                             Include new imports by default
                         </span>
                     </ToggleButton>
+                </div>
+                <div class="flex flex-col space-y-1">
+                    <label for="sonarr-scan-filter" class="text-sm font-medium">
+                        Exclude while scanning
+                    </label>
+                    <select
+                        id="sonarr-scan-filter"
+                        v-model="sonarrScanFilter"
+                        class="h-10 rounded-md border border-accent bg-primary px-3 text-sm">
+                        <option value="none">Nothing — scan all series and episodes</option>
+                        <option value="unmonitored_series">Unmonitored series</option>
+                        <option value="unmonitored_episodes">Unmonitored episodes</option>
+                    </select>
                 </div>
             </div>
             <div>
@@ -126,6 +146,20 @@ const sonarrDefaultInclude = computed({
     get: (): string => (settingsStore.getSetting(SETTINGS.SONARR_DEFAULT_INCLUDE) as string),
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.SONARR_DEFAULT_INCLUDE, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+const radarrExcludeUnmonitored = computed({
+    get: (): string => (settingsStore.getSetting(SETTINGS.RADARR_EXCLUDE_UNMONITORED) as string) ?? 'false',
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.RADARR_EXCLUDE_UNMONITORED, newValue, true)
+        saveNotification.value?.show()
+    }
+})
+const sonarrScanFilter = computed({
+    get: (): string => (settingsStore.getSetting(SETTINGS.SONARR_SCAN_FILTER) as string) ?? 'none',
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.SONARR_SCAN_FILTER, newValue, true)
         saveNotification.value?.show()
     }
 })

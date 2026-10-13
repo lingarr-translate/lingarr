@@ -20,12 +20,16 @@ public class EpisodeSync : IEpisodeSync
     }
 
     /// <inheritdoc />
-    public async Task SyncEpisodes(SonarrShow show, Season season, bool defaultInclude = true)
+    public async Task SyncEpisodes(SonarrShow show, Season season, bool defaultInclude = true, bool excludeUnmonitored = false)
     {
         var episodes = await _sonarrService.GetEpisodes(show.Id, season.SeasonNumber);
         if (episodes == null) return;
 
-        foreach (var episode in episodes.Where(e => e.HasFile))
+        var episodesWithFiles = episodes.Where(e => e.HasFile).ToList();
+        var episodesToSync = episodesWithFiles.Where(e => !excludeUnmonitored || e.Monitored).ToList();
+
+
+        foreach (var episode in episodesToSync)
         {
             var episodePathResult = await _sonarrService.GetEpisodePath(episode.Id);
             var episodePath = _pathConversionService.ConvertAndMapPath(

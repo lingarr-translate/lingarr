@@ -53,10 +53,20 @@ public class SyncMovieJob
             _logger.LogInformation("Fetched {Count} movies from Radarr", movies.Count());
 
             var defaultInclude = await _settingService.GetSetting(SettingKeys.Integration.RadarrDefaultInclude) == "true";
+            var excludeUnmonitored = await _settingService.GetSetting(SettingKeys.Integration.RadarrExcludeUnmonitored) == "true";
+            var allMovieIds = movies.Select(m => m.Id).ToList();
+            var moviesToSync = excludeUnmonitored
+                ? movies.Where(movie => movie.Monitored).ToList()
+                : movies;
+
+            _logger.LogInformation(
+                "Scanning {ScanCount} of {TotalCount} Radarr movies (exclude unmonitored: {ExcludeUnmonitored})",
+                moviesToSync.Count, movies.Count, excludeUnmonitored);
+
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-            await _movieSyncService.SyncMovies(movies, defaultInclude);
-            await _movieSyncService.RemoveNonExistentMovies(movies.Select(m => m.Id));
+            await _movieSyncService.SyncMovies(moviesToSync, defaultInclude);
+            await _movieSyncService.RemoveNonExistentMovies(allMovieIds);
 
             await transaction.CommitAsync();
             await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());

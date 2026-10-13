@@ -31,6 +31,7 @@ public class StartupService : IHostedService
 
         await NormaliseServiceType(dbContext);
         await ApplySettingsFromEnvironment(dbContext);
+        await EnsureUnmonitoredSettings(dbContext);
 
         var pluginRegistry = scope.ServiceProvider.GetService<IPluginRegistry>();
         var pluginLoader = scope.ServiceProvider.GetService<PluginLoader>();
@@ -48,6 +49,40 @@ public class StartupService : IHostedService
             SettingKeys.Integration.SonarrUrl,
             SettingKeys.Integration.SonarrApiKey
         ]);
+    }
+
+    private static async Task EnsureUnmonitoredSettings(LingarrDbContext dbContext)
+    {
+        var radarrKey = SettingKeys.Integration.RadarrExcludeUnmonitored;
+        var scanFilterKey = SettingKeys.Integration.SonarrScanFilter;
+        var legacySonarrKey = SettingKeys.Integration.SonarrExcludeUnmonitored;
+
+        var settings = await dbContext.Settings
+            .Where(setting => setting.Key == radarrKey
+                || setting.Key == scanFilterKey
+                || setting.Key == legacySonarrKey)
+            .ToDictionaryAsync(setting => setting.Key, setting => setting.Value);
+
+        if (!settings.ContainsKey(radarrKey))
+        {
+            dbContext.Settings.Add(new Setting { Key = radarrKey, Value = "false" });
+        }
+
+        if (!settings.ContainsKey(scanFilterKey))
+        {
+            var migratedValue = settings.TryGetValue(legacySonarrKey, out var legacyValue)
+                && legacyValue == "true"
+                    ? "unmonitored_episodes"
+                    : "none";
+
+            dbContext.Settings.Add(new Setting
+            {
+                Key = scanFilterKey,
+                Value = migratedValue
+            });
+        }
+
+        await dbContext.SaveChangesAsync();
     }
 
     /// <summary>
