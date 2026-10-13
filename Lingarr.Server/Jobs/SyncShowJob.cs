@@ -66,7 +66,6 @@ public class SyncShowJob
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
             await _showSyncService.SyncShows(showsToSync, defaultInclude, excludeUnmonitoredEpisodes);
-            // Gebruik de volledige lijst: overslaan door een filter mag nooit als verwijdering gelden.
             await _showSyncService.RemoveNonExistentShows(shows.Select(s => s.Id).ToHashSet());
 
             await transaction.CommitAsync();
