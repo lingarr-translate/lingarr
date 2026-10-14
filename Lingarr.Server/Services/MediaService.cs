@@ -159,7 +159,7 @@ public class MediaService : IMediaService
             return episode.Id;
         }
         var defaultInclude = await _settingService.GetSetting(SettingKeys.Integration.SonarrDefaultInclude) == "true";
-        var excludeUnmonitored = await _settingService.GetSetting(SettingKeys.Integration.SonarrScanFilter) == "unmonitored_episodes";
+        var excludeUnmonitored = await _settingService.GetSetting(SettingKeys.Integration.SonarrExcludeUnmonitoredEpisodes) == "true";
 
         // Episode not found, maybe out of sync.
         // Sync the show

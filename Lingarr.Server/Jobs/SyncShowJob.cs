@@ -53,15 +53,15 @@ public class SyncShowJob
             _logger.LogInformation("Fetched {ShowCount} shows from Sonarr", shows.Count);
 
             var defaultInclude = await _settingService.GetSetting(SettingKeys.Integration.SonarrDefaultInclude) == "true";
-            var scanFilter = await _settingService.GetSetting(SettingKeys.Integration.SonarrScanFilter) ?? "none";
-            var showsToSync = scanFilter == "unmonitored_series"
+            var excludeUnmonitoredSeries = await _settingService.GetSetting(SettingKeys.Integration.SonarrExcludeUnmonitoredSeries) == "true";
+            var excludeUnmonitoredEpisodes = await _settingService.GetSetting(SettingKeys.Integration.SonarrExcludeUnmonitoredEpisodes) == "true";
+            var showsToSync = excludeUnmonitoredSeries
                 ? shows.Where(show => show.Monitored).ToList()
                 : shows;
-            var excludeUnmonitoredEpisodes = scanFilter == "unmonitored_episodes";
 
             _logger.LogInformation(
-                "Sonarr scan filter: mode={Mode}, total={Total}, selected={Selected}, skipped={Skipped}",
-                scanFilter, shows.Count, showsToSync.Count, shows.Count - showsToSync.Count);
+                "Sonarr scan settings: exclude unmonitored series={ExcludeSeries}, exclude unmonitored episodes={ExcludeEpisodes}, total={Total}, selected={Selected}, skipped={Skipped}",
+                excludeUnmonitoredSeries, excludeUnmonitoredEpisodes, shows.Count, showsToSync.Count, shows.Count - showsToSync.Count);
 
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 

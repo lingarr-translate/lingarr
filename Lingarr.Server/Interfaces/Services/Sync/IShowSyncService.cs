@@ -10,6 +10,7 @@ public interface IShowSyncService
     /// </summary>
     /// <param name="shows">The list of Sonarr shows to sync</param>
     /// <param name="defaultInclude">Whether new shows/seasons/episodes should be included in translation by default</param>
+    /// <param name="excludeUnmonitored">Whether unmonitored shows should be excluded from synchronization</param>
     /// <returns>A task representing the asynchronous operation</returns>
     Task SyncShows(List<SonarrShow> shows, bool defaultInclude, bool excludeUnmonitored = false);
 
@@ -18,6 +19,7 @@ public interface IShowSyncService
     /// </summary>
     /// <param name="show">The show to sync</param>
     /// <param name="defaultInclude">Whether new shows/seasons/episodes should be included in translation by default</param>
+    /// <param name="excludeUnmonitored">Whether unmonitored shows should be excluded from synchronization</param>
     /// <returns>A task representing the asynchronous operation</returns>
     Task<Show> SyncShow(SonarrShow show, bool defaultInclude, bool excludeUnmonitored = false);
 
