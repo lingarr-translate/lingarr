@@ -67,6 +67,20 @@ Lingarr variables for LibreTranslate:
 
 Note: DeepL does not support pt-BR.
 
+## Ray Local
+
+Ray Headless (Sunlight) translates subtitle batches by uploading temporary SRT cue groups to a Ray server and returning translated cues. Enable **batch translation** in Lingarr. Prefer processing target `local` so work stays on your machine; use `cloud` only when you intend Ray Cloud.
+
+| **Environment Variable** | **Description** |
+|--------------------------|-----------------|
+| `RAY_ENDPOINT` | Base URL of the Ray Headless API. Example: `http://127.0.0.1:8787`. |
+| `RAY_API_KEY` | Ray server API key (stored encrypted when set via the UI). |
+| `RAY_TARGET` | Processing target: `local` (default) or `cloud`. |
+| `RAY_BATCH_SIZE` | Subtitle cues per Ray job (1-500). Default: `200`. |
+| `RAY_JOB_TIMEOUT_MINUTES` | Maximum wait for each Ray job in minutes. Default: `180`. |
+
+Set `SERVICE_TYPE` to include `ray` (for example `["ray"]`). Configure the fields under **Settings → Services → Ray Local**.
+
 ## Google, Bing, Microsoft and Yandex
 
 These services require no API key or further configuration. Set `SERVICE_TYPE` to `google`, `bing`, `microsoft` or `yandex` and they are ready to use.

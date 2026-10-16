@@ -29,6 +29,11 @@ public class TranslationFactory : ITranslationServiceFactory
                 _serviceProvider.GetRequiredService<ILogger<LibreService>>(),
                 languageCodeService),
 
+            "ray" => new RayService(
+                _serviceProvider.GetRequiredService<ISettingService>(),
+                _serviceProvider.GetRequiredService<ILogger<RayService>>(),
+                languageCodeService),
+
             "google" => new GTranslatorService<GoogleTranslator>(
                 _serviceProvider,
                 _serviceProvider.GetRequiredService<IHttpClientFactory>(),

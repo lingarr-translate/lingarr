@@ -232,6 +232,13 @@ public class StartupService : IHostedService
             { "USE_BATCH_TRANSLATION", SettingKeys.Translation.UseBatchTranslation },
             { "LIBRE_TRANSLATE_URL", SettingKeys.Translation.LibreTranslate.Url },
             { "LIBRE_TRANSLATE_API_KEY", SettingKeys.Translation.LibreTranslate.ApiKey },
+
+            { "RAY_ENDPOINT", SettingKeys.Translation.Ray.Endpoint },
+            { "RAY_API_KEY", SettingKeys.Translation.Ray.ApiKey },
+            { "RAY_TARGET", SettingKeys.Translation.Ray.Target },
+            { "RAY_BATCH_SIZE", SettingKeys.Translation.Ray.BatchSize },
+            { "RAY_JOB_TIMEOUT_MINUTES", SettingKeys.Translation.Ray.JobTimeoutMinutes },
+
             { "AI_PROMPT", SettingKeys.Translation.AiPrompt },
             { "AI_USER_PROMPT", SettingKeys.Translation.AiUserPrompt },
             { "PROOFREAD_PROMPT", SettingKeys.Translation.ProofreadPrompt },

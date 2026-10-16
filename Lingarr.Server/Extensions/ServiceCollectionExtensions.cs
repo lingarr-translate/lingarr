@@ -191,6 +191,7 @@ public static class ServiceCollectionExtensions
         builder.Services.AddSingleton<IPluginManifest, LocalAiPluginManifest>();
         builder.Services.AddSingleton<IPluginManifest, DeepLPluginManifest>();
         builder.Services.AddSingleton<IPluginManifest, LibreTranslatePluginManifest>();
+        builder.Services.AddSingleton<IPluginManifest, RayPluginManifest>();
         builder.Services.AddSingleton<IPluginManifest, GoogleTranslatePluginManifest>();
         builder.Services.AddSingleton<IPluginManifest, BingTranslatePluginManifest>();
         builder.Services.AddSingleton<IPluginManifest, MicrosoftTranslatePluginManifest>();

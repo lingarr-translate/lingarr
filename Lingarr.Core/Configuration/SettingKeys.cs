@@ -82,6 +82,15 @@ public static class SettingKeys
             public const string ApiKey = "libretranslate_api_key";
         }
 
+        public static class Ray
+        {
+            public const string Endpoint = "ray_endpoint";
+            public const string ApiKey = "ray_api_key";
+            public const string Target = "ray_target";
+            public const string BatchSize = "ray_batch_size";
+            public const string JobTimeoutMinutes = "ray_job_timeout_minutes";
+        }
+
         public const string SourceLanguages = "source_languages";
         public const string TargetLanguages = "target_languages";
         public const string AiPrompt = "ai_prompt";

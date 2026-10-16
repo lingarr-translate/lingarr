@@ -102,6 +102,16 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 | `LIBRE_TRANSLATE_URL`        | The base URL for the LibreTranslate API. Example: `https://libretranslate.com`. |
 | `LIBRE_TRANSLATE_API_KEY`    | The API key to use for the LibreTranslate API. This is optional, and only needed if using an instance that requires one. |
 
+#### **Ray**
+
+| **Environment Variable**       | **Description**                                                                 |
+|--------------------------------|---------------------------------------------------------------------------------|
+| `RAY_ENDPOINT`                 | Base URL of the Ray Headless API. Example: `http://127.0.0.1:8787`.             |
+| `RAY_API_KEY`                  | Ray server API key (stored encrypted when set via the UI).                      |
+| `RAY_TARGET`                   | Processing target: `local` (default) or `cloud`.                                |
+| `RAY_BATCH_SIZE`               | Subtitle cues per Ray job (1-500). Default: `200`.                              |
+| `RAY_JOB_TIMEOUT_MINUTES`      | Maximum wait for each Ray job in minutes. Default: `180`.                       |
+
 #### **OpenAI**
 
 | **Environment Variable** | **Description**                                                                 |
@@ -202,6 +212,7 @@ The supported values are:
 | **Value**       | **Description**                                                                 |
 |-----------------|---------------------------------------------------------------------------------|
 | `libretranslate`| Use the LibreTranslate service for translations.                                |
+| `ray`           | Use a Ray Headless server (Sunlight) for batch subtitle translations.           |
 | `openai`        | Use OpenAI's models (e.g., GPT-4, GPT-3.5) for translations.                    |
 | `anthropic`     | Use Anthropic's models (e.g., Claude-2) for translations.                       |
 | `gemini`        | Use Google's Gemini models for translations.                                    |
