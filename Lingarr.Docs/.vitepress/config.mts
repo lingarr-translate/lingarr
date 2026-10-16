@@ -30,7 +30,8 @@ export default defineConfig({
                 items: [
                     { text: 'Overview', link: '/translation-services/' },
                     { text: 'AI Services', link: '/translation-services/ai-services' },
-                    { text: 'Machine Translation', link: '/translation-services/machine-translation' }
+                    { text: 'Machine Translation', link: '/translation-services/machine-translation' },
+                    { text: 'Community Plugins', link: '/translation-services/community-plugins' }
                 ]
             },
             {

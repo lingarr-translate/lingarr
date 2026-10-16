@@ -94,3 +94,6 @@ Check the `samples/CloudflarePlugin/` folder for a complete working example. It 
 - Settings handling
 - HTTP calls
 - Error handling
+
+## Listing your plugin
+To list your plugin for users, see [Community plugins](/translation-services/community-plugins#adding-your-plugin).
