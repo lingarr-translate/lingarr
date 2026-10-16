@@ -262,7 +262,7 @@ public class SubtitleService : ISubtitleService
             }
 
             var expectedPosition = 1;
-            SubtitleItem previousItem = null;
+            SubtitleItem? previousItem = null;
 
             foreach (var item in subtitles)
             {
@@ -444,7 +444,10 @@ public class SubtitleService : ISubtitleService
         var sourceSubtitle = ignoreCaptions == "true"
             ? matchingSubtitles.FirstOrDefault(s => string.Equals(s.Language, sourceLanguage, StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(s.Caption))
                 ?? matchingSubtitles.FirstOrDefault(s => string.Equals(s.Language, sourceLanguage, StringComparison.OrdinalIgnoreCase))
-            : matchingSubtitles.FirstOrDefault(s => string.Equals(s.Language, sourceLanguage, StringComparison.OrdinalIgnoreCase));
+            : matchingSubtitles
+                .Where(s => s.Language.Equals(sourceLanguage, StringComparison.OrdinalIgnoreCase))
+                .OrderBy(s => string.IsNullOrEmpty(s.Caption) ? 0 : 1)
+                .FirstOrDefault();
 
         if (sourceSubtitle == null)
         {

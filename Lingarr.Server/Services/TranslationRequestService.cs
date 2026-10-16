@@ -287,9 +287,14 @@ public class TranslationRequestService : ITranslationRequestService
             return;
         }
 
-        if (selected.AvailableLanguages.Contains(targetLanguage, StringComparer.OrdinalIgnoreCase))
+        var targetExists = subtitles.Any(s =>
+            s.Language.Equals(targetLanguage, StringComparison.OrdinalIgnoreCase) &&
+            (ignoreCaptions == "true" ||
+             string.Equals(s.Caption, selected.Subtitle.Caption, StringComparison.OrdinalIgnoreCase)));
+
+        if (targetExists)
         {
-            _logger.LogDebug("Bulk: skipping mediaId {MediaId} — target language {Target} already exists",
+            _logger.LogDebug("Bulk: skipping mediaId {MediaId} — matching target subtitle {Target} already exists",
                 mediaId, targetLanguage);
             return;
         }
@@ -521,7 +526,9 @@ public class TranslationRequestService : ITranslationRequestService
     {
         var translationRequest = await _dbContext.TranslationRequests.FirstOrDefaultAsync(
             candidate => candidate.Id == applyRequest.Id);
-        if (translationRequest == null || string.IsNullOrEmpty(translationRequest.TranslatedSubtitle))
+        if (translationRequest == null ||
+            string.IsNullOrEmpty(translationRequest.TranslatedSubtitle) ||
+            string.IsNullOrEmpty(translationRequest.SubtitleToTranslate))
         {
             return null;
         }
