@@ -426,8 +426,7 @@ public class SubtitleService : ISubtitleService
     /// <inheritdoc />
     public SelectedSourceSubtitle? SelectSourceSubtitle(
         List<Subtitles> matchingSubtitles,
-        HashSet<string> sourceCodes,
-        string ignoreCaptions)
+        HashSet<string> sourceCodes)
     {
         var availableLanguages = matchingSubtitles
             .Select(s => s.Language.ToLowerInvariant())
