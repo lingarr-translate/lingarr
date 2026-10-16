@@ -194,7 +194,7 @@ public class TranslationRequestService : ITranslationRequestService
         var sourceLanguages = await _settingService.GetSettingAsJson<SourceLanguage>(
             SettingKeys.Translation.SourceLanguages
             );
-        var sourceCodes = sourceLanguages.Select(sourceLanguage => sourceLanguage.Code).ToHashSet();
+        var sourceCodes = sourceLanguages.Select(sourceLanguage => sourceLanguage.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var ignoreCaptions = await _settingService.GetSetting(SettingKeys.Translation.IgnoreCaptions) ?? "false";
 
         switch (request.MediaType)
@@ -287,7 +287,7 @@ public class TranslationRequestService : ITranslationRequestService
             return;
         }
 
-        if (selected.AvailableLanguages.Contains(targetLanguage.ToLowerInvariant()))
+        if (selected.AvailableLanguages.Contains(targetLanguage, StringComparer.OrdinalIgnoreCase))
         {
             _logger.LogDebug("Bulk: skipping mediaId {MediaId} — target language {Target} already exists",
                 mediaId, targetLanguage);

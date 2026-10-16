@@ -112,7 +112,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             return false;
         }
 
-        var languagesToTranslate = targetLanguages.Except(selected.AvailableLanguages).ToList();
+        var languagesToTranslate = targetLanguages.Except(selected.AvailableLanguages, StringComparer.OrdinalIgnoreCase).ToList();
         if (ignoreCaptions == "true")
         {
             var targetLanguagesWithCaptions = subtitles

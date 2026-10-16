@@ -433,8 +433,8 @@ public class SubtitleService : ISubtitleService
             .Select(s => s.Language.ToLowerInvariant())
             .ToHashSet();
 
-        var sourceLanguage = sourceCodes.FirstOrDefault(code =>
-            availableLanguages.Contains(code.ToLowerInvariant()));
+        var sourceLanguage = availableLanguages.FirstOrDefault(language =>
+            sourceCodes.Contains(language, StringComparer.OrdinalIgnoreCase));
 
         if (sourceLanguage == null)
         {
@@ -442,9 +442,9 @@ public class SubtitleService : ISubtitleService
         }
 
         var sourceSubtitle = ignoreCaptions == "true"
-            ? matchingSubtitles.FirstOrDefault(s => s.Language == sourceLanguage && string.IsNullOrEmpty(s.Caption))
-                ?? matchingSubtitles.FirstOrDefault(s => s.Language == sourceLanguage)
-            : matchingSubtitles.FirstOrDefault(s => s.Language == sourceLanguage);
+            ? matchingSubtitles.FirstOrDefault(s => string.Equals(s.Language, sourceLanguage, StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(s.Caption))
+                ?? matchingSubtitles.FirstOrDefault(s => string.Equals(s.Language, sourceLanguage, StringComparison.OrdinalIgnoreCase))
+            : matchingSubtitles.FirstOrDefault(s => string.Equals(s.Language, sourceLanguage, StringComparison.OrdinalIgnoreCase));
 
         if (sourceSubtitle == null)
         {
