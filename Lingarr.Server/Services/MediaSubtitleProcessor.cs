@@ -95,7 +95,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             return false;
         }
 
-        var selected = _subtitleService.SelectSourceSubtitle(subtitles, sourceLanguages, ignoreCaptions);
+        var selected = _subtitleService.SelectSourceSubtitle(subtitles, sourceLanguages);
         if (selected == null || !targetLanguages.Any())
         {
             _logger.LogWarning(
@@ -112,7 +112,13 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             return false;
         }
 
-        var languagesToTranslate = targetLanguages.Except(selected.AvailableLanguages).ToList();
+        var sourceSubtitle = selected.Subtitle;
+        var languagesToTranslate = targetLanguages
+            .Where(targetLanguage => !subtitles.Any(s =>
+                s.Language.Equals(targetLanguage, StringComparison.OrdinalIgnoreCase)
+                && (ignoreCaptions == "true" ||
+                    string.Equals(s.Caption, sourceSubtitle.Caption, StringComparison.OrdinalIgnoreCase))))
+            .ToList();
         if (ignoreCaptions == "true")
         {
             var targetLanguagesWithCaptions = subtitles

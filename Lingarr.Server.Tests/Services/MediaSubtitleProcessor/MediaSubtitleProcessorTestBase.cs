@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Lingarr.Contracts.Models;
 using Lingarr.Core.Configuration;
@@ -9,6 +8,7 @@ using Lingarr.Core.Entities;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.FileSystem;
+using Lingarr.Server.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -39,34 +39,15 @@ public abstract class MediaSubtitleProcessorTestBase : IDisposable
             .Options;
         DbContext = new LingarrDbContext(options);
 
+        var subtitleService = new SubtitleService(
+            new Mock<ILogger<SubtitleService>>().Object,
+            new LanguageCodeService());
         SubtitleServiceMock
             .Setup(s => s.SelectSourceSubtitle(
                 It.IsAny<List<Subtitles>>(),
-                It.IsAny<HashSet<string>>(),
-                It.IsAny<string>()))
-            .Returns((List<Subtitles> subs, HashSet<string> sources, string ignoreCaptions) =>
-            {
-                var candidates = subs.Where(s => sources.Contains(s.Language)).ToList();
-                if (!candidates.Any()) return null;
-
-                Subtitles selected;
-                if (ignoreCaptions == "true")
-                {
-                    selected = candidates.FirstOrDefault(s => string.IsNullOrEmpty(s.Caption))
-                               ?? candidates.First();
-                }
-                else
-                {
-                    selected = candidates.First();
-                }
-
-                return new SelectedSourceSubtitle
-                {
-                    Subtitle = selected,
-                    SourceLanguage = selected.Language,
-                    AvailableLanguages = subs.Select(s => s.Language).ToHashSet()
-                };
-            });
+                It.IsAny<HashSet<string>>()))
+            .Returns((List<Subtitles> subs, HashSet<string> sources) =>
+                subtitleService.SelectSourceSubtitle(subs, sources));
 
         Processor = new Lingarr.Server.Services.MediaSubtitleProcessor(
             TranslationRequestServiceMock.Object,
