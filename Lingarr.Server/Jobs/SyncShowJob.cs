@@ -66,7 +66,7 @@ public class SyncShowJob
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
             await _showSyncService.SyncShows(showsToSync, defaultInclude, excludeUnmonitoredEpisodes);
-            await _showSyncService.RemoveNonExistentShows(shows.Select(s => s.Id).ToHashSet());
+            await _showSyncService.RemoveNonExistentShows(showsToSync.Select(s => s.Id).ToHashSet());
 
             await transaction.CommitAsync();
             await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());

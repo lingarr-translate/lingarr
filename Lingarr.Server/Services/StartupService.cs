@@ -31,7 +31,6 @@ public class StartupService : IHostedService
 
         await NormaliseServiceType(dbContext);
         await ApplySettingsFromEnvironment(dbContext);
-        await EnsureUnmonitoredSettings(dbContext);
 
         var pluginRegistry = scope.ServiceProvider.GetService<IPluginRegistry>();
         var pluginLoader = scope.ServiceProvider.GetService<PluginLoader>();
@@ -49,31 +48,6 @@ public class StartupService : IHostedService
             SettingKeys.Integration.SonarrUrl,
             SettingKeys.Integration.SonarrApiKey
         ]);
-    }
-
-    private static async Task EnsureUnmonitoredSettings(LingarrDbContext dbContext)
-    {
-        var radarrKey = SettingKeys.Integration.RadarrExcludeUnmonitored;
-        var seriesKey = SettingKeys.Integration.SonarrExcludeUnmonitoredSeries;
-        var episodesKey = SettingKeys.Integration.SonarrExcludeUnmonitoredEpisodes;
-
-        var settings = await dbContext.Settings
-            .Where(setting => setting.Key == radarrKey
-                || setting.Key == seriesKey
-                || setting.Key == episodesKey)
-            .Select(setting => setting.Key)
-            .ToListAsync();
-
-        if (!settings.Contains(radarrKey))
-            dbContext.Settings.Add(new Setting { Key = radarrKey, Value = "false" });
-
-        if (!settings.Contains(seriesKey))
-            dbContext.Settings.Add(new Setting { Key = seriesKey, Value = "false" });
-
-        if (!settings.Contains(episodesKey))
-            dbContext.Settings.Add(new Setting { Key = episodesKey, Value = "false" });
-
-        await dbContext.SaveChangesAsync();
     }
 
     /// <summary>

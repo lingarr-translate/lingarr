@@ -161,9 +161,6 @@ const sonarrExcludeUnmonitoredSeries = computed({
     get: (): string => (settingsStore.getSetting(SETTINGS.SONARR_EXCLUDE_UNMONITORED_SERIES) as string) ?? 'false',
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.SONARR_EXCLUDE_UNMONITORED_SERIES, newValue, true)
-        if (newValue === 'true') {
-            settingsStore.updateSetting(SETTINGS.SONARR_EXCLUDE_UNMONITORED_EPISODES, 'false', true)
-        }
         saveNotification.value?.show()
     }
 })
@@ -171,9 +168,6 @@ const sonarrExcludeUnmonitoredEpisodes = computed({
     get: (): string => (settingsStore.getSetting(SETTINGS.SONARR_EXCLUDE_UNMONITORED_EPISODES) as string) ?? 'false',
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.SONARR_EXCLUDE_UNMONITORED_EPISODES, newValue, true)
-        if (newValue === 'true') {
-            settingsStore.updateSetting(SETTINGS.SONARR_EXCLUDE_UNMONITORED_SERIES, 'false', true)
-        }
         saveNotification.value?.show()
     }
 })

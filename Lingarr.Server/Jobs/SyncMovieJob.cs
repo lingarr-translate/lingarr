@@ -54,7 +54,6 @@ public class SyncMovieJob
 
             var defaultInclude = await _settingService.GetSetting(SettingKeys.Integration.RadarrDefaultInclude) == "true";
             var excludeUnmonitored = await _settingService.GetSetting(SettingKeys.Integration.RadarrExcludeUnmonitored) == "true";
-            var allMovieIds = movies.Select(m => m.Id).ToList();
             var moviesToSync = excludeUnmonitored
                 ? movies.Where(movie => movie.Monitored).ToList()
                 : movies;
@@ -66,7 +65,7 @@ public class SyncMovieJob
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
             await _movieSyncService.SyncMovies(moviesToSync, defaultInclude);
-            await _movieSyncService.RemoveNonExistentMovies(allMovieIds);
+            await _movieSyncService.RemoveNonExistentMovies(moviesToSync.Select(m => m.Id));
 
             await transaction.CommitAsync();
             await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());
