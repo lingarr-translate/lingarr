@@ -1,11 +1,9 @@
 import {
-    DirectoryItem,
     ILanguage,
     ISettings,
     ISubtitle,
     ITranslationRequest,
     MediaType,
-    IPathMapping,
     IOnboardingRequest,
     ISignupRequest,
     ILoginRequest,
@@ -30,8 +28,6 @@ export interface Services {
     version: IVersionService
     media: IMediaService
     schedule: IScheduleService
-    mapping: IMappingService
-    directory: IDirectoryService
     statistics: IStatisticsService
     logs: ILogsService
     telemetry: ITelemetryService
@@ -136,15 +132,6 @@ export interface IScheduleService {
     remove<T>(jobId: string): Promise<T>
     indexShows<T>(): Promise<T>
     indexMovies<T>(): Promise<T>
-}
-
-export interface IMappingService {
-    getMappings(): Promise<IPathMapping[]>
-    setMappings(mappings: IPathMapping[]): Promise<void>
-}
-
-export interface IDirectoryService {
-    get(path: string): Promise<DirectoryItem[]>
 }
 
 export interface IStatisticsService {
