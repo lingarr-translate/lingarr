@@ -95,7 +95,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             return false;
         }
 
-        var selected = _subtitleService.SelectSourceSubtitle(subtitles, sourceLanguages, ignoreCaptions);
+        var selected = _subtitleService.SelectSourceSubtitle(subtitles, sourceLanguages);
         if (selected == null || !targetLanguages.Any())
         {
             _logger.LogWarning(

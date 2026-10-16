@@ -426,8 +426,7 @@ public class SubtitleService : ISubtitleService
     /// <inheritdoc />
     public SelectedSourceSubtitle? SelectSourceSubtitle(
         List<Subtitles> matchingSubtitles,
-        HashSet<string> sourceCodes,
-        string ignoreCaptions)
+        HashSet<string> sourceCodes)
     {
         var availableLanguages = matchingSubtitles
             .Select(s => s.Language.ToLowerInvariant())
@@ -441,13 +440,10 @@ public class SubtitleService : ISubtitleService
             return null;
         }
 
-        var sourceSubtitle = ignoreCaptions == "true"
-            ? matchingSubtitles.FirstOrDefault(s => string.Equals(s.Language, sourceLanguage, StringComparison.OrdinalIgnoreCase) && string.IsNullOrEmpty(s.Caption))
-                ?? matchingSubtitles.FirstOrDefault(s => string.Equals(s.Language, sourceLanguage, StringComparison.OrdinalIgnoreCase))
-            : matchingSubtitles
-                .Where(s => s.Language.Equals(sourceLanguage, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(s => string.IsNullOrEmpty(s.Caption) ? 0 : 1)
-                .FirstOrDefault();
+        var sourceSubtitle = matchingSubtitles
+            .Where(s => s.Language.Equals(sourceLanguage, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(s => string.IsNullOrEmpty(s.Caption) ? 0 : 1)
+            .FirstOrDefault();
 
         if (sourceSubtitle == null)
         {

@@ -74,11 +74,10 @@ public interface ISubtitleService
 
     /// <summary>
     /// Selects the source subtitle from matching subtitles by finding the first available source language
-    /// and selecting the appropriate subtitle file, respecting the ignoreCaptions setting.
+    /// and selecting the appropriate subtitle file.
     /// </summary>
     /// <param name="subtitles">The list of subtitle files to search.</param>
     /// <param name="sourceCodes">The set of acceptable source language codes.</param>
-    /// <param name="ignoreCaptions">The ignoreCaptions setting value.</param>
     /// <returns>A <see cref="SelectedSourceSubtitle"/> if a source subtitle was found, null otherwise.</returns>
-    SelectedSourceSubtitle? SelectSourceSubtitle(List<Subtitles> subtitles, HashSet<string> sourceCodes, string ignoreCaptions);
+    SelectedSourceSubtitle? SelectSourceSubtitle(List<Subtitles> subtitles, HashSet<string> sourceCodes);
 }

@@ -278,7 +278,7 @@ public class TranslationRequestService : ITranslationRequestService
         }
 
         var subtitles = await _subtitleService.GetSubtitles(path, fileName);
-        var selected = _subtitleService.SelectSourceSubtitle(subtitles, sourceCodes, ignoreCaptions);
+        var selected = _subtitleService.SelectSourceSubtitle(subtitles, sourceCodes);
         if (selected == null)
         {
             _logger.LogDebug("Bulk: skipping mediaId {MediaId} — no source subtitle found (sourceCodes: {SourceCodes}, available: {Available})",
