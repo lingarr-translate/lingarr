@@ -7,9 +7,13 @@ public class M0022_SeedUnmonitoredSettings : Migration
 {
     public override void Up()
     {
-        Execute.Sql("INSERT INTO settings (key, value) SELECT 'radarr_exclude_unmonitored', 'false' WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key = 'radarr_exclude_unmonitored')");
-        Execute.Sql("INSERT INTO settings (key, value) SELECT 'sonarr_exclude_unmonitored_series', 'false' WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key = 'sonarr_exclude_unmonitored_series')");
-        Execute.Sql("INSERT INTO settings (key, value) SELECT 'sonarr_exclude_unmonitored_episodes', 'false' WHERE NOT EXISTS (SELECT 1 FROM settings WHERE key = 'sonarr_exclude_unmonitored_episodes')");
+        IfDatabase("sqlite").Execute.Sql("INSERT OR IGNORE INTO settings (key, value) VALUES ('radarr_exclude_unmonitored', 'false')");
+        IfDatabase("sqlite").Execute.Sql("INSERT OR IGNORE INTO settings (key, value) VALUES ('sonarr_exclude_unmonitored_series', 'false')");
+        IfDatabase("sqlite").Execute.Sql("INSERT OR IGNORE INTO settings (key, value) VALUES ('sonarr_exclude_unmonitored_episodes', 'false')");
+
+        IfDatabase("mysql").Execute.Sql("INSERT IGNORE INTO settings (`key`, `value`) VALUES ('radarr_exclude_unmonitored', 'false'), ('sonarr_exclude_unmonitored_series', 'false'), ('sonarr_exclude_unmonitored_episodes', 'false')");
+
+        IfDatabase("postgresql").Execute.Sql("INSERT INTO settings (key, value) VALUES ('radarr_exclude_unmonitored', 'false'), ('sonarr_exclude_unmonitored_series', 'false'), ('sonarr_exclude_unmonitored_episodes', 'false') ON CONFLICT (key) DO NOTHING");
     }
 
     public override void Down()
