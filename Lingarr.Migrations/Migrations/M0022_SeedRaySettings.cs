@@ -7,11 +7,35 @@ public class M0022_SeedRaySettings : Migration
 {
     public override void Up()
     {
-        Insert.IntoTable("settings").Row(new { key = "ray_endpoint", value = "http://127.0.0.1:8787" });
-        Insert.IntoTable("settings").Row(new { key = "ray_api_key", value = "" });
-        Insert.IntoTable("settings").Row(new { key = "ray_target", value = "local" });
-        Insert.IntoTable("settings").Row(new { key = "ray_batch_size", value = "200" });
-        Insert.IntoTable("settings").Row(new { key = "ray_job_timeout_minutes", value = "180" });
+        // Idempotent: Ray keys may already exist when upgrading from the old
+        // Lingarr.Plugin.Ray DLL (same setting names).
+        IfDatabase("mysql").Execute.Sql("""
+            INSERT IGNORE INTO settings (`key`, `value`) VALUES
+                ('ray_endpoint', 'http://127.0.0.1:8787'),
+                ('ray_api_key', ''),
+                ('ray_target', 'local'),
+                ('ray_batch_size', '200'),
+                ('ray_job_timeout_minutes', '180')
+            """);
+
+        IfDatabase("sqlite").Execute.Sql("""
+            INSERT OR IGNORE INTO settings ("key", "value") VALUES
+                ('ray_endpoint', 'http://127.0.0.1:8787'),
+                ('ray_api_key', ''),
+                ('ray_target', 'local'),
+                ('ray_batch_size', '200'),
+                ('ray_job_timeout_minutes', '180')
+            """);
+
+        IfDatabase("postgresql").Execute.Sql("""
+            INSERT INTO settings ("key", "value") VALUES
+                ('ray_endpoint', 'http://127.0.0.1:8787'),
+                ('ray_api_key', ''),
+                ('ray_target', 'local'),
+                ('ray_batch_size', '200'),
+                ('ray_job_timeout_minutes', '180')
+            ON CONFLICT ("key") DO NOTHING
+            """);
     }
 
     public override void Down()
