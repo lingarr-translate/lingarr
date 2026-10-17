@@ -61,15 +61,16 @@
                 v-for="item in translationRequests.items"
                 :key="item.id"
                 class="border-accent hover:bg-accent/5 flex flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 transition-colors md:grid md:grid-cols-12 md:gap-0 md:py-0">
-                <div class="flex w-full items-center gap-2 md:col-span-4 md:w-auto md:px-4 md:py-2">
+                <div
+                    class="flex w-full min-w-0 items-center gap-2 md:col-span-4 md:w-auto md:px-4 md:py-2">
                     <span
                         v-if="item.mediaType === MEDIA_TYPE.EPISODE"
                         v-show-title
-                        class="block min-w-0 flex-1 cursor-help md:flex-none"
+                        class="block min-w-0 flex-1 cursor-help"
                         :title="item.title">
                         {{ item.title }}
                     </span>
-                    <span v-else class="min-w-0 flex-1 md:flex-none">
+                    <span v-else class="min-w-0 flex-1 truncate" :title="item.title">
                         {{ item.title }}
                     </span>
                     <span class="ml-auto flex flex-none items-center gap-2 md:hidden">
