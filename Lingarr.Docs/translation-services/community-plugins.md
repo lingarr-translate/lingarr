@@ -31,6 +31,7 @@ A plugin that fails to load or is built for another plugin API version is skippe
 | Plugin | Provider id | Description | Author |
 |--------|-------------|-------------|--------|
 | [Cloudflare Workers AI](https://github.com/lingarr-translate/lingarr/tree/main/samples/CloudflarePlugin) | `cloudflare` | Translates with Cloudflare Workers AI models. The reference plugin, build it from source. | Lingarr |
+| [Ray Local](https://github.com/b0ril/lingarr-plugin-ray) | `ray` | Translates subtitle batches with Ray Headless (Sunlight). Requires a Ray server/license. | [b0ril](https://github.com/b0ril) |
 
 ## Adding your plugin
 
