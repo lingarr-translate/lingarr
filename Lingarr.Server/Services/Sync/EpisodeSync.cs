@@ -20,12 +20,17 @@ public class EpisodeSync : IEpisodeSync
     }
 
     /// <inheritdoc />
-    public async Task SyncEpisodes(SonarrShow show, Season season, bool defaultInclude = true)
+    public async Task SyncEpisodes(SonarrShow show, Season season, bool defaultInclude = true, bool excludeUnmonitoredEpisodes = false)
     {
         var episodes = await _sonarrService.GetEpisodes(show.Id, season.SeasonNumber);
         if (episodes == null) return;
 
-        foreach (var episode in episodes.Where(e => e.HasFile))
+        var monitoredEpisodes = excludeUnmonitoredEpisodes
+            ? episodes.Where(e => e.Monitored).ToList()
+            : episodes;
+        var episodesToSync = monitoredEpisodes.Where(e => e.HasFile).ToList();
+
+        foreach (var episode in episodesToSync)
         {
             var episodePathResult = await _sonarrService.GetEpisodePath(episode.Id);
             var episodePath = _pathConversionService.ConvertAndMapPath(
@@ -36,7 +41,7 @@ public class EpisodeSync : IEpisodeSync
             SyncEpisode(episode, episodePath, season, episodePathResult?.EpisodeFile.DateAdded, defaultInclude);
         }
 
-        RemoveNonExistentEpisodes(season, episodes);
+        RemoveNonExistentEpisodes(season, monitoredEpisodes);
     }
 
     /// <summary>

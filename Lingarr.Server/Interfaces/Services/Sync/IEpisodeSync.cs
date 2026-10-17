@@ -11,6 +11,7 @@ public interface IEpisodeSync
     /// <param name="show">The Sonarr show containing the episodes</param>
     /// <param name="season">The season to sync episodes for</param>
     /// <param name="defaultInclude">Whether newly imported episodes should be included in translation by default</param>
+    /// <param name="excludeUnmonitoredEpisodes">Whether unmonitored episodes should be excluded from synchronization</param>
     /// <returns>A task representing the asynchronous operation</returns>
-    Task SyncEpisodes(SonarrShow show, Season season, bool defaultInclude = true);
+    Task SyncEpisodes(SonarrShow show, Season season, bool defaultInclude = true, bool excludeUnmonitoredEpisodes = false);
 }
