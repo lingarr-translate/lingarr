@@ -39,10 +39,10 @@
 
         <div
             class="grid grid-cols-12 border-b-2 border-secondary bg-primary font-bold text-secondary-content">
-            <div class="col-span-1 px-4 py-2">Time</div>
-            <div class="col-span-1 px-4 py-2">Level</div>
-            <div class="col-span-3 px-4 py-2">Source</div>
-            <div class="col-span-5 px-4 py-2 md:col-span-7">Message</div>
+            <div class="col-span-2 min-w-0 whitespace-nowrap px-4 py-2">Time</div>
+            <div class="col-span-2 min-w-0 px-4 py-2">Level</div>
+            <div class="col-span-3 min-w-0 break-words px-4 py-2">Source</div>
+            <div class="col-span-5 min-w-0 break-words px-4 py-2">Message</div>
         </div>
 
         <div
@@ -59,21 +59,21 @@
             <div v-for="(log, index) in filteredLogs" :key="index" class="log-entry">
                 <div
                     class="hover:bg-secondary/20 border-secondary/30 grid grid-cols-12 border-b py-2 transition-colors">
-                    <div class="col-span-1 px-4 text-gray-400">
+                    <div class="col-span-2 min-w-0 whitespace-nowrap px-4 text-gray-400">
                         {{ formatTime(log.timestamp) }}
                     </div>
-                    <div class="col-span-1 px-4">
+                    <div class="col-span-2 min-w-0 px-4">
                         <span
                             :class="getLogLevelBadgeClass(log.logLevel)"
                             class="rounded px-2 py-1 text-xs font-medium">
                             {{ log.logLevel.toUpperCase() }}
                         </span>
                     </div>
-                    <div class="col-span-3 px-4 text-blue-300">
+                    <div class="col-span-3 min-w-0 break-words px-4 text-blue-300">
                         {{ log.formattedSource }}
                     </div>
                     <div
-                        class="col-span-5 px-4 md:col-span-7"
+                        class="col-span-5 min-w-0 break-words px-4"
                         v-html="formatLogMessage(log.message)"></div>
                 </div>
 
