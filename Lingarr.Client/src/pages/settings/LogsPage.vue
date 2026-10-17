@@ -126,8 +126,14 @@ const filteredLogs = computed(() => {
 })
 
 const formatLogMessage = (message: string): string => {
+    // Escape HTML text before inserting the trusted highlighting markup.
+    const escapedMessage = message
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+
     // Replace color tags
-    let formattedMessage = message
+    let formattedMessage = escapedMessage
         .replace(/\|Green\|([^|]+)\|\/Green\|/g, '<span class="text-green-500">$1</span>')
         .replace(/\|Red\|([^|]+)\|\/Red\|/g, '<span class="text-red-500">$1</span>')
         .replace(/\|Orange\|([^|]+)\|\/Orange\|/g, '<span class="text-orange-500">$1</span>')
