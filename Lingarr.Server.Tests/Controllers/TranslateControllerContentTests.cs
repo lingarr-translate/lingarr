@@ -20,12 +20,14 @@ using Lingarr.Server.Models;
 using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
+using Moq.Language.Flow;
 using Xunit;
 
 namespace Lingarr.Server.Tests.Controllers;
@@ -45,6 +47,8 @@ public class TranslateControllerContentTests : IDisposable
     private readonly Dictionary<string, string> _settings;
     private readonly TranslationRequestService _translationRequestService;
     private readonly TranslateController _controller;
+    private readonly Func<IProgressService, TranslationRequestService> _createTranslationRequestService;
+    private readonly ProgressService _progressService;
     private int _movieId;
 
     public TranslateControllerContentTests()
@@ -183,12 +187,13 @@ public class TranslateControllerContentTests : IDisposable
             .Setup(hubContext => hubContext.Clients)
             .Returns(hubClientsMock.Object);
 
-        _translationRequestService = new TranslationRequestService(
+        _progressService = new ProgressService(hubContextMock.Object, _context);
+        _createTranslationRequestService = progressService => new TranslationRequestService(
             _context,
             new Mock<IBackgroundJobClient>().Object,
             hubContextMock.Object,
             _translationServiceFactoryMock.Object,
-            _progressServiceMock.Object,
+            progressService,
             _statisticsServiceMock.Object,
             mediaServiceMock.Object,
             _settingServiceMock.Object,
@@ -196,6 +201,7 @@ public class TranslateControllerContentTests : IDisposable
             new Mock<ITranslationRequestEventService>().Object,
             NullLogger<TranslationRequestService>.Instance);
 
+        _translationRequestService = _createTranslationRequestService(_progressServiceMock.Object);
         _controller = new TranslateController(
             _translationServiceFactoryMock.Object,
             _translationRequestService,
@@ -227,6 +233,42 @@ public class TranslateControllerContentTests : IDisposable
         return Assert.IsType<BatchTranslatedLine[]>(okResult.Value);
     }
 
+    private TranslationRequest SeedRequest(TranslationStatus status, string target = "stored")
+    {
+        var request = new TranslationRequest
+        {
+            MediaId = _movieId,
+            MediaType = MediaType.Movie,
+            Title = "Canonical Movie",
+            SourceLanguage = "en",
+            TargetLanguage = "es",
+            Status = status,
+            JobType = TranslationJobType.Translation
+        };
+        _context.TranslationRequests.Add(request);
+        _context.TranslationRequestLines.AddRange(NewContent("First line", "Second line").Lines
+            .Select(line => new TranslationRequestLine
+            {
+                TranslationRequest = request,
+                Position = line.Position,
+                Source = line.Line,
+                Target = $"{target} {line.Position}"
+            }));
+        _context.SaveChanges();
+        return request;
+    }
+
+    private ISetup<ITranslationService, Task<string>> SetupLineTranslation() => _translationServiceMock
+        .Setup(service => service.TranslateAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<List<string>?>(), It.IsAny<List<string>?>(), It.IsAny<CancellationToken>()));
+
+    private void VerifyNoLineCall() => _translationServiceMock.Verify(
+        service => service.TranslateAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<List<string>?>(), It.IsAny<List<string>?>(), It.IsAny<CancellationToken>()),
+        Times.Never);
+
     private void VerifyNoBatchCall() => _batchTranslationServiceMock.Verify(
         batchService => batchService.TranslateBatchAsync(
             It.IsAny<List<BatchSubtitleItem>>(),
@@ -239,8 +281,7 @@ public class TranslateControllerContentTests : IDisposable
     public async Task TranslateContent_BatchEnabled_TranslatesEveryLineInOneCall()
     {
         var response = await _controller.TranslateContent(
-            NewContent("First line", "Second line", "Third line"),
-            CancellationToken.None);
+            NewContent("First line", "Second line", "Third line"));
 
         var results = AssertOk(response);
         Assert.Equal(
@@ -256,7 +297,7 @@ public class TranslateControllerContentTests : IDisposable
     [Fact]
     public async Task TranslateContent_BatchEnabled_MarksRequestCompleted()
     {
-        await _controller.TranslateContent(NewContent("First line", "Second line"), CancellationToken.None);
+        await _controller.TranslateContent(NewContent("First line", "Second line"));
 
         var translationRequest = await _context.TranslationRequests.SingleAsync();
         Assert.Equal(TranslationStatus.Completed, translationRequest.Status);
@@ -279,8 +320,7 @@ public class TranslateControllerContentTests : IDisposable
         _settings[SettingKeys.Translation.MaxBatchSize] = "2";
 
         var response = await _controller.TranslateContent(
-            NewContent("One", "Two", "Three", "Four", "Five"),
-            CancellationToken.None);
+            NewContent("One", "Two", "Three", "Four", "Five"));
 
         var results = AssertOk(response);
         Assert.Equal(5, results.Length);
@@ -300,8 +340,7 @@ public class TranslateControllerContentTests : IDisposable
         _settings[SettingKeys.Translation.MaxBatchSize] = "not a number";
 
         var response = await _controller.TranslateContent(
-            NewContent("One", "Two", "Three"),
-            CancellationToken.None);
+            NewContent("One", "Two", "Three"));
 
         Assert.Equal(3, AssertOk(response).Length);
         _batchTranslationServiceMock.Verify(batchService => batchService.TranslateBatchAsync(
@@ -316,7 +355,7 @@ public class TranslateControllerContentTests : IDisposable
     {
         _settings[SettingKeys.Translation.ServiceType] = "[\"openai\"";
 
-        await _controller.TranslateContent(NewContent("First line", "Second line"), CancellationToken.None);
+        await _controller.TranslateContent(NewContent("First line", "Second line"));
 
         _translationServiceFactoryMock.Verify(
             factory => factory.CreateTranslationServices(It.Is<IReadOnlyList<string>>(serviceTypes =>
@@ -330,8 +369,7 @@ public class TranslateControllerContentTests : IDisposable
         _settings[SettingKeys.Translation.StripSubtitleFormatting] = "true";
 
         var response = await _controller.TranslateContent(
-            NewContent("<i>First line</i>", "{\\an8}Second line"),
-            CancellationToken.None);
+            NewContent("<i>First line</i>", "{\\an8}Second line"));
 
         var results = AssertOk(response);
         Assert.Equal(
@@ -348,8 +386,7 @@ public class TranslateControllerContentTests : IDisposable
     public async Task TranslateContent_StripFormattingOff_KeepsMarkupInTranslatedLine()
     {
         var response = await _controller.TranslateContent(
-            NewContent("<i>First line</i>", "Second line"),
-            CancellationToken.None);
+            NewContent("<i>First line</i>", "Second line"));
 
         var results = AssertOk(response);
         Assert.Equal("batch:<i>First line</i>", results.Single(result => result.Position == 0).Line);
@@ -362,8 +399,7 @@ public class TranslateControllerContentTests : IDisposable
         _settings[SettingKeys.Translation.StripSubtitleFormatting] = "true";
 
         var response = await _controller.TranslateContent(
-            NewContent("<i>First line</i>", "{\\an8}Second line"),
-            CancellationToken.None);
+            NewContent("<i>First line</i>", "{\\an8}Second line"));
 
         var results = AssertOk(response);
         Assert.Equal(
@@ -384,8 +420,7 @@ public class TranslateControllerContentTests : IDisposable
         _settings[SettingKeys.Translation.UseBatchTranslation] = "false";
 
         var response = await _controller.TranslateContent(
-            NewContent("<i>First line</i>", "Second line"),
-            CancellationToken.None);
+            NewContent("<i>First line</i>", "Second line"));
 
         var results = AssertOk(response);
         Assert.Equal("line:<i>First line</i>", results.Single(result => result.Position == 0).Line);
@@ -405,8 +440,7 @@ public class TranslateControllerContentTests : IDisposable
                 items.ToDictionary(item => item.Position, item => $"batch:{item.Line}"));
 
         var response = await _controller.TranslateContent(
-            NewContent("First\nline", "Second line"),
-            CancellationToken.None);
+            NewContent("First\nline", "Second line"));
 
         var results = AssertOk(response);
         Assert.Equal("batch:First\nline", results.Single(result => result.Position == 0).Line);
@@ -445,8 +479,7 @@ public class TranslateControllerContentTests : IDisposable
             });
 
         var response = await _controller.TranslateContent(
-            NewContent("First line", "Second line"),
-            CancellationToken.None);
+            NewContent("First line", "Second line"));
 
         var results = AssertOk(response);
         Assert.Equal(
@@ -467,8 +500,7 @@ public class TranslateControllerContentTests : IDisposable
         _settings[SettingKeys.Translation.UseBatchTranslation] = "false";
 
         var response = await _controller.TranslateContent(
-            NewContent("First line", "Second line"),
-            CancellationToken.None);
+            NewContent("First line", "Second line"));
 
         var results = AssertOk(response);
         Assert.Equal(
@@ -480,7 +512,7 @@ public class TranslateControllerContentTests : IDisposable
     [Fact]
     public async Task TranslateContent_SingleLine_FallsBackToLineByLine()
     {
-        var response = await _controller.TranslateContent(NewContent("Only line"), CancellationToken.None);
+        var response = await _controller.TranslateContent(NewContent("Only line"));
 
         var results = AssertOk(response);
         Assert.Equal("line:Only line", Assert.Single(results).Line);
@@ -515,8 +547,7 @@ public class TranslateControllerContentTests : IDisposable
                 .ToList());
 
         var response = await _controller.TranslateContent(
-            NewContent("First line", "Second line"),
-            CancellationToken.None);
+            NewContent("First line", "Second line"));
 
         var results = AssertOk(response);
         Assert.Equal(
@@ -531,8 +562,7 @@ public class TranslateControllerContentTests : IDisposable
         _settings[SettingKeys.Translation.UseBatchTranslation] = "false";
 
         var response = await _controller.TranslateContent(
-            NewContent("First line", "   "),
-            CancellationToken.None);
+            NewContent("First line", "   "));
 
         var results = AssertOk(response);
         Assert.Equal("   ", results.Single(result => result.Position == 1).Line);
@@ -551,14 +581,14 @@ public class TranslateControllerContentTests : IDisposable
         var content = NewContent("First line", "Second line");
         content.Title = "  Client Title  ";
 
-        await _controller.TranslateContent(content, CancellationToken.None);
+        await _controller.TranslateContent(content);
 
         var translationRequest = await _context.TranslationRequests.SingleAsync();
         Assert.Equal("Client Title", translationRequest.Title);
     }
 
     [Fact]
-    public async Task TranslateContent_DuplicateActiveRequest_ReturnsEmptyWithoutTranslating()
+    public async Task TranslateContent_DuplicateActiveRequest_ReturnsConflictWithoutTranslating()
     {
         _context.TranslationRequests.Add(new TranslationRequest
         {
@@ -573,12 +603,226 @@ public class TranslateControllerContentTests : IDisposable
         await _context.SaveChangesAsync();
 
         var response = await _controller.TranslateContent(
-            NewContent("First line", "Second line"),
-            CancellationToken.None);
+            NewContent("First line", "Second line"));
 
-        Assert.Empty(AssertOk(response));
+        Assert.Equal(StatusCodes.Status409Conflict, Assert.IsType<ConflictObjectResult>(response.Result).StatusCode);
+        VerifyNoLineCall();
         VerifyNoBatchCall();
         Assert.Equal(1, await _context.TranslationRequests.CountAsync());
+    }
+
+    [Fact]
+    public async Task TranslateContent_CompletedMatchingLines_ReturnsNewestStoredLinesInIncomingOrder()
+    {
+        SeedRequest(TranslationStatus.Completed, "older");
+        SeedRequest(TranslationStatus.Completed);
+        var content = NewContent("First line", "Second line");
+        content.Lines.Reverse();
+
+        var results = AssertOk(await _controller.TranslateContent(content));
+
+        Assert.Equal(new[] { 1, 0 }, results.Select(line => line.Position));
+        Assert.Equal(new[] { "stored 1", "stored 0" }, results.Select(line => line.Line));
+        Assert.Equal(2, await _context.TranslationRequests.CountAsync());
+        VerifyNoLineCall();
+        VerifyNoBatchCall();
+    }
+
+    [Fact]
+    public async Task TranslateContent_CompletedMatchingMarkup_StripsFormatting()
+    {
+        _settings[SettingKeys.Translation.StripSubtitleFormatting] = "true";
+        SeedRequest(TranslationStatus.Completed, "<i>stored</i>");
+
+        var results = AssertOk(await _controller.TranslateContent(NewContent("First line", "Second line")));
+
+        Assert.Equal(new[] { "stored 0", "stored 1" }, results.Select(line => line.Line));
+        VerifyNoLineCall();
+        VerifyNoBatchCall();
+    }
+
+    public static TheoryData<List<BatchSubtitleLine>> MismatchedLines => new()
+    {
+        new List<BatchSubtitleLine>
+        {
+            new() { Position = 0, Line = "changed" },
+            new() { Position = 1, Line = "Second line" }
+        },
+        new List<BatchSubtitleLine> { new() { Position = 0, Line = "First line" } },
+        new List<BatchSubtitleLine>
+        {
+            new() { Position = 2, Line = "First line" },
+            new() { Position = 1, Line = "Second line" }
+        },
+        new List<BatchSubtitleLine>
+        {
+            new() { Position = 0, Line = "First line" },
+            new() { Position = 0, Line = "First line" }
+        }
+    };
+
+    [Theory]
+    [MemberData(nameof(MismatchedLines))]
+    public async Task TranslateContent_CompletedMismatchedLines_TranslatesFresh(List<BatchSubtitleLine> lines)
+    {
+        _settings[SettingKeys.Translation.UseBatchTranslation] = "false";
+        SeedRequest(TranslationStatus.Completed);
+        var content = NewContent();
+        content.Lines = lines;
+
+        var results = AssertOk(await _controller.TranslateContent(content));
+
+        Assert.Equal(lines.Count, results.Length);
+        Assert.All(results, line => Assert.StartsWith("line:", line.Line));
+        Assert.Equal(2, await _context.TranslationRequests.CountAsync());
+        Assert.Equal(TranslationStatus.Completed,
+            (await _context.TranslationRequests.OrderByDescending(request => request.Id).FirstAsync()).Status);
+    }
+
+    [Theory]
+    [InlineData(TranslationStatus.Pending)]
+    [InlineData(TranslationStatus.InProgress)]
+    public async Task TranslateContent_ActiveDuplicateWithCompletedRequest_ReturnsConflict(TranslationStatus status)
+    {
+        SeedRequest(TranslationStatus.Completed);
+        SeedRequest(status);
+
+        var response = await _controller.TranslateContent(NewContent("First line", "Second line"));
+
+        Assert.Equal(StatusCodes.Status409Conflict, Assert.IsType<ConflictObjectResult>(response.Result).StatusCode);
+        Assert.Equal(2, await _context.TranslationRequests.CountAsync());
+        VerifyNoLineCall();
+        VerifyNoBatchCall();
+    }
+
+    [Theory]
+    [InlineData(TranslationStatus.Failed)]
+    [InlineData(TranslationStatus.Interrupted)]
+    [InlineData(TranslationStatus.Cancelled)]
+    public async Task TranslateContent_NewestRequestNotCompleted_TranslatesFresh(TranslationStatus status)
+    {
+        _settings[SettingKeys.Translation.UseBatchTranslation] = "false";
+        SeedRequest(TranslationStatus.Completed);
+        SeedRequest(status);
+
+        var results = AssertOk(await _controller.TranslateContent(NewContent("First line", "Second line")));
+
+        Assert.Equal(new[] { "line:First line", "line:Second line" }, results.Select(line => line.Line));
+        Assert.Equal(3, await _context.TranslationRequests.CountAsync());
+    }
+
+    [Fact]
+    public async Task TranslateContent_ClientDisconnectsDuringLineTranslation_Completes()
+    {
+        _settings[SettingKeys.Translation.UseBatchTranslation] = "false";
+        using var parent = new CancellationTokenSource();
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { RequestAborted = parent.Token }
+        };
+        SetupLineTranslation()
+            .ReturnsAsync((string text, string _, string _, List<string>? _, List<string>? _, CancellationToken token) =>
+            {
+                parent.Cancel();
+                Assert.Equal(TranslationStatus.InProgress, _context.TranslationRequests.Single().Status);
+                token.ThrowIfCancellationRequested();
+                return $"line:{text}";
+            });
+
+        var results = AssertOk(await _controller.TranslateContent(NewContent("First line", "Second line")));
+
+        Assert.Equal(new[] { "line:First line", "line:Second line" }, results.Select(line => line.Line));
+        var request = await _context.TranslationRequests.SingleAsync();
+        Assert.Equal(TranslationStatus.Completed, request.Status);
+        Assert.Null(request.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task TranslateContent_ApiCancelDuringTranslation_Cancels()
+    {
+        _settings[SettingKeys.Translation.UseBatchTranslation] = "false";
+        SetupLineTranslation()
+            .Returns(async (string text, string _, string _, List<string>? _, List<string>? _, CancellationToken token) =>
+            {
+                var request = await _context.TranslationRequests.SingleAsync();
+                await _translationRequestService.CancelTranslationRequest(request);
+                token.ThrowIfCancellationRequested();
+                return text;
+            });
+
+        var response = await _controller.TranslateContent(NewContent("First line", "Second line"));
+
+        Assert.Equal(500, Assert.IsType<ObjectResult>(response.Result).StatusCode);
+        Assert.Equal(TranslationStatus.Cancelled, (await _context.TranslationRequests.SingleAsync()).Status);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task TranslateContent_CompletedTranslation_WithRealProgress_ReusesStrippedResult(bool useBatch)
+    {
+        _settings[SettingKeys.Translation.UseBatchTranslation] = useBatch ? "true" : "false";
+        _settings[SettingKeys.Translation.StripSubtitleFormatting] = "true";
+        SetupLineTranslation()
+            .ReturnsAsync((string text, string _, string _, List<string>? _, List<string>? _, CancellationToken _) =>
+                $"<i>line:{text}</i>");
+        _batchTranslationServiceMock
+            .Setup(service => service.TranslateBatchAsync(
+                It.IsAny<List<BatchSubtitleItem>>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((List<BatchSubtitleItem> items, string _, string _, CancellationToken _) =>
+                items.ToDictionary(item => item.Position, item => $"<i>line:{item.Line}</i>"));
+        var controller = new TranslateController(
+            _translationServiceFactoryMock.Object,
+            _createTranslationRequestService(_progressService),
+            _settingServiceMock.Object,
+            new LanguageCodeService(),
+            NullLogger<TranslateController>.Instance);
+        var content = NewContent("First line", "Second line");
+        content.Lines.Reverse();
+
+        var first = AssertOk(await controller.TranslateContent(content));
+        Assert.Equal(TranslationStatus.Completed, (await _context.TranslationRequests.SingleAsync()).Status);
+        Assert.All(await _context.TranslationRequestLines.ToListAsync(), line =>
+            Assert.Equal(useBatch ? $"line:{line.Source}" : $"<i>line:{line.Source}</i>", line.Target));
+        _translationServiceMock.Invocations.Clear();
+        var second = AssertOk(await controller.TranslateContent(content));
+
+        Assert.Equal(new[] { "line:Second line", "line:First line" }, first.Select(line => line.Line));
+        Assert.Equal(first.Select(line => (line.Position, line.Line)), second.Select(line => (line.Position, line.Line)));
+        Assert.Equal(1, await _context.TranslationRequests.CountAsync());
+        VerifyNoLineCall();
+        VerifyNoBatchCall();
+    }
+
+    [Fact]
+    public async Task TranslateContent_CompletedDuplicatePositions_WithRealProgress_TranslatesFresh()
+    {
+        _settings[SettingKeys.Translation.UseBatchTranslation] = "false";
+        var controller = new TranslateController(
+            _translationServiceFactoryMock.Object,
+            _createTranslationRequestService(_progressService),
+            _settingServiceMock.Object,
+            new LanguageCodeService(),
+            NullLogger<TranslateController>.Instance);
+        var content = NewContent("First line", "First line");
+        content.Lines[1].Position = 0;
+
+        var first = AssertOk(await controller.TranslateContent(content));
+        Assert.Equal(TranslationStatus.Completed, (await _context.TranslationRequests.SingleAsync()).Status);
+        Assert.Equal(2, await _context.TranslationRequestLines.CountAsync());
+        _translationServiceMock.Invocations.Clear();
+        var second = AssertOk(await controller.TranslateContent(content));
+
+        Assert.Equal(new[] { "line:First line", "line:First line" }, first.Select(line => line.Line));
+        Assert.Equal(first.Select(line => (line.Position, line.Line)), second.Select(line => (line.Position, line.Line)));
+        Assert.Equal(2, await _context.TranslationRequests.CountAsync());
+        Assert.All(await _context.TranslationRequests.ToListAsync(), request =>
+            Assert.Equal(TranslationStatus.Completed, request.Status));
+        _translationServiceMock.Verify(service => service.TranslateAsync(
+            It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>(),
+            It.IsAny<List<string>?>(), It.IsAny<List<string>?>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+        VerifyNoBatchCall();
     }
 
     [Fact]
@@ -589,8 +833,7 @@ public class TranslateControllerContentTests : IDisposable
             .Returns(new List<TranslationServiceEntry>());
 
         var response = await _controller.TranslateContent(
-            NewContent("First line", "Second line"),
-            CancellationToken.None);
+            NewContent("First line", "Second line"));
 
         var errorResult = Assert.IsType<ObjectResult>(response.Result);
         Assert.Equal(500, errorResult.StatusCode);
@@ -609,8 +852,7 @@ public class TranslateControllerContentTests : IDisposable
             .ThrowsAsync(new InvalidOperationException("provider is down"));
 
         var response = await _controller.TranslateContent(
-            NewContent("First line", "Second line"),
-            CancellationToken.None);
+            NewContent("First line", "Second line"));
 
         var errorResult = Assert.IsType<ObjectResult>(response.Result);
         Assert.Equal(500, errorResult.StatusCode);
@@ -622,31 +864,34 @@ public class TranslateControllerContentTests : IDisposable
     }
 
     [Fact]
-    public async Task TranslateContent_CancelledToken_ReturnsServerErrorAndMarksRequestCancelled()
+    public async Task TranslateContent_ClientDisconnectsDuringBatchTranslation_ReturnsResultsAndCompletes()
     {
         using var cancellationTokenSource = new CancellationTokenSource();
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { RequestAborted = cancellationTokenSource.Token }
+        };
         _batchTranslationServiceMock
             .Setup(batchService => batchService.TranslateBatchAsync(
                 It.IsAny<List<BatchSubtitleItem>>(),
                 It.IsAny<string>(),
                 It.IsAny<string>(),
                 It.IsAny<CancellationToken>()))
-            .Returns(async () =>
+            .Returns(async (List<BatchSubtitleItem> items, string _, string _, CancellationToken token) =>
             {
                 await cancellationTokenSource.CancelAsync();
-                cancellationTokenSource.Token.ThrowIfCancellationRequested();
-                return new Dictionary<int, string>();
+                Assert.Equal(TranslationStatus.InProgress, _context.TranslationRequests.Single().Status);
+                token.ThrowIfCancellationRequested();
+                return items.ToDictionary(item => item.Position, item => $"batch:{item.Line}");
             });
 
         var response = await _controller.TranslateContent(
-            NewContent("First line", "Second line"),
-            cancellationTokenSource.Token);
+            NewContent("First line", "Second line"));
 
-        var errorResult = Assert.IsType<ObjectResult>(response.Result);
-        Assert.Equal(500, errorResult.StatusCode);
+        Assert.Equal(new[] { "batch:First line", "batch:Second line" }, AssertOk(response).Select(line => line.Line));
 
         var translationRequest = await _context.TranslationRequests.SingleAsync();
-        Assert.Equal(TranslationStatus.Cancelled, translationRequest.Status);
+        Assert.Equal(TranslationStatus.Completed, translationRequest.Status);
         Assert.NotNull(translationRequest.CompletedAt);
     }
 
@@ -661,8 +906,7 @@ public class TranslateControllerContentTests : IDisposable
             .ReturnsAsync((LanguagePair?)null);
 
         var response = await _controller.TranslateContent(
-            NewContent("First line", "Second line"),
-            CancellationToken.None);
+            NewContent("First line", "Second line"));
 
         var errorResult = Assert.IsType<ObjectResult>(response.Result);
         Assert.Equal(500, errorResult.StatusCode);

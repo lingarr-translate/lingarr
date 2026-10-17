@@ -103,16 +103,18 @@ public class TranslateController : ControllerBase
     /// Translates subtitle content, supporting both single line and batch translation.
     /// </summary>
     /// <param name="translateAbleSubtitleContent">The translation request containing one or more subtitle items</param>
-    /// <param name="cancellationToken">Token to cancel the translation operation</param>
-    /// <returns>Translated subtitle content</returns>
+    /// <returns>Translated subtitle content, or 409 for an active duplicate.</returns>
     [HttpPost("content")]
     public async Task<ActionResult<BatchTranslatedLine[]>> TranslateContent(
-        [FromBody] TranslateAbleSubtitleContent translateAbleSubtitleContent,
-        CancellationToken cancellationToken)
+        [FromBody] TranslateAbleSubtitleContent translateAbleSubtitleContent)
     {
         try
         {
-            var results = await _translationRequestService.TranslateContentAsync(translateAbleSubtitleContent, cancellationToken);
+            var results = await _translationRequestService.TranslateContentAsync(translateAbleSubtitleContent);
+            if (results == null)
+            {
+                return Conflict(new { message = "A translation request for this content is already active" });
+            }
             return Ok(results);
         }
         catch (Exception ex)
