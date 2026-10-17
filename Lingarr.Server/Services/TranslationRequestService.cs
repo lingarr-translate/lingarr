@@ -194,7 +194,7 @@ public class TranslationRequestService : ITranslationRequestService
         var sourceLanguages = await _settingService.GetSettingAsJson<SourceLanguage>(
             SettingKeys.Translation.SourceLanguages
             );
-        var sourceCodes = sourceLanguages.Select(sourceLanguage => sourceLanguage.Code).ToHashSet();
+        var sourceCodes = sourceLanguages.Select(sourceLanguage => sourceLanguage.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var ignoreCaptions = await _settingService.GetSetting(SettingKeys.Translation.IgnoreCaptions) ?? "false";
 
         switch (request.MediaType)

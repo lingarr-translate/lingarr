@@ -432,7 +432,9 @@ public class SubtitleService : ISubtitleService
             .Select(s => s.Language.ToLowerInvariant())
             .ToHashSet();
 
-        var sourceLanguage = availableLanguages.FirstOrDefault(lang => sourceCodes.Contains(lang));
+        var sourceLanguage = availableLanguages.FirstOrDefault(language =>
+            sourceCodes.Contains(language, StringComparer.OrdinalIgnoreCase));
+
         if (sourceLanguage == null)
         {
             return null;

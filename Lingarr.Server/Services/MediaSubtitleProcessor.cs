@@ -122,7 +122,9 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         if (ignoreCaptions == "true")
         {
             var targetLanguagesWithCaptions = subtitles
-                .Where(s => targetLanguages.Contains(s.Language) && !string.IsNullOrEmpty(s.Caption))
+                .Where(s => targetLanguages.Any(targetLanguage =>
+                    targetLanguage.Equals(s.Language, StringComparison.OrdinalIgnoreCase))
+                    && !string.IsNullOrEmpty(s.Caption))
                 .Select(s => s.Language)
                 .Distinct()
                 .ToList();
@@ -151,7 +153,9 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             .Distinct()
             .ToListAsync();
 
-        languagesToTranslate = languagesToTranslate.Except(existingTranslationRequests).ToList();
+        languagesToTranslate = languagesToTranslate
+            .Except(existingTranslationRequests, StringComparer.OrdinalIgnoreCase)
+            .ToList();
         if (!languagesToTranslate.Any())
         {
             await UpdateHash();
@@ -218,7 +222,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         var languages = await _settingService.GetSettingAsJson<T>(settingName);
         return languages
             .Select(lang => lang.Code)
-            .ToHashSet();
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
     }
 
     /// <summary>
