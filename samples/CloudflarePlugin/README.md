@@ -21,12 +21,16 @@ Contains the required version declaration so Lingarr can load the plugin.
 
 > **Note**: The free tier gives you 10,000 so called "neurons" per day, enough for light subtitle translation. Check the [pricing page](https://developers.cloudflare.com/workers-ai/platform/pricing/) for current limits.
 
+## Download
+
+Every [Lingarr release](https://github.com/lingarr-translate/lingarr/releases) has `Lingarr.Plugin.Cloudflare.dll` attached as an asset.
+
 ## How to Build
 
 ```bash
 dotnet build samples/CloudflarePlugin/CloudflarePlugin.csproj -c Release
 ```
-This creates `Lingarr.Plugin.Cloudflare.dll`. You must also copy `Lingarr.Contracts.dll`, both files are needed.
+This creates `Lingarr.Plugin.Cloudflare.dll`. Lingarr already ships `Lingarr.Contracts.dll`, so you only need the plugin DLL.
 
 ## Deploy
 
@@ -43,7 +47,7 @@ services:
     volumes:
       - ./plugins:/app/plugins
 ```
-1. Copy both DLL files into your `./plugins` folder.
+1. Copy `Lingarr.Plugin.Cloudflare.dll` into your `./plugins` folder.
 2. Restart Lingarr.
 3. Look for a log message like:
 `Loaded plugin /app/plugins/Lingarr.Plugin.Cloudflare.dll (1 manifest(s))`
@@ -72,7 +76,7 @@ The plugin accepts standard language codes (`en`, `nl`, `ja`, etc.). If a langua
 3. Implement `ITranslationService` on a class marked with `[PluginProvider("your_identifier")]`.
 4. Create one `IPluginManifest` 
 5. Add `[assembly: LingarrPluginApiVersion(1, 0)]` to the assembly.
-6. Build and place the DLLs in the plugins folder.
+6. Build and place the DLL in the plugins folder. To build it with GitHub Actions, see [Build with GitHub Actions](../../Lingarr.Docs/developers/plugins.md#build-with-github-actions).
 
 ## Reserved provider identifiers
 
