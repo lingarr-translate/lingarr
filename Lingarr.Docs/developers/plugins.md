@@ -95,5 +95,74 @@ Check the `samples/CloudflarePlugin/` folder for a complete working example. It 
 - HTTP calls
 - Error handling
 
+## Build with GitHub Actions
+
+GitHub Actions can build your plugin DLL for you. Users then download it from your releases page and do not need the .NET SDK.
+
+Lingarr already loads `Lingarr.Contracts.dll`, so ship only your plugin DLL. Reference `Lingarr.Contracts.dll` from a path in your `.csproj`, and set `Private` to `false` so the build does not copy it to the output:
+
+```xml
+<ItemGroup>
+    <Reference Include="Lingarr.Contracts">
+        <HintPath>$(LingarrContractsPath)</HintPath>
+        <Private>false</Private>
+    </Reference>
+</ItemGroup>
+```
+
+Add this file to your repository as `.github/workflows/build.yml`. Replace `MyPlugin.csproj` and `Lingarr.Plugin.MyPlugin.dll` with your own names, and set `ref` to the Lingarr release you build against:
+
+```yaml
+name: Build plugin
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        path: plugin
+
+    - name: Check out Lingarr
+      uses: actions/checkout@v6
+      with:
+        repository: lingarr-translate/lingarr
+        ref: 1.4.0
+        path: lingarr
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Build Lingarr.Contracts
+      run: dotnet build lingarr/Lingarr.Contracts/Lingarr.Contracts.csproj --configuration Release --output contracts
+
+    - name: Build plugin
+      run: dotnet build plugin/MyPlugin.csproj --configuration Release --output out -p:LingarrContractsPath=${{ github.workspace }}/contracts/Lingarr.Contracts.dll
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: plugin
+        path: out/Lingarr.Plugin.MyPlugin.dll
+
+    - name: Create release
+      if: startsWith(github.ref, 'refs/tags/')
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh release create "$GITHUB_REF_NAME" out/Lingarr.Plugin.MyPlugin.dll --repo "$GITHUB_REPOSITORY" --generate-notes
+```
+
+Push a tag such as `v1.0.0` to build the DLL and attach it to a new release. To build without a release, start the workflow from the **Actions** tab and download the DLL from the run's artifacts.
+
 ## Listing your plugin
 To list your plugin for users, see [Community plugins](/translation-services/community-plugins#adding-your-plugin).

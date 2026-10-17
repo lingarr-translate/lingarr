@@ -1,0 +1,36 @@
+name: Cloudflare Plugin
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+jobs:
+  build-plugin:
+    name: Build Cloudflare Plugin
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Build
+      run: dotnet build samples/CloudflarePlugin/CloudflarePlugin.csproj --configuration Release --output out
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Lingarr.Plugin.Cloudflare
+        path: out/Lingarr.Plugin.Cloudflare.dll
+
+    - name: Attach to release
+      if: github.event_name == 'release'
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: gh release upload "${{ github.event.release.tag_name }}" out/Lingarr.Plugin.Cloudflare.dll --clobber
