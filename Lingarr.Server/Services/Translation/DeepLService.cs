@@ -116,7 +116,6 @@ public class DeepLService : BaseTranslationService
         {
             throw new InvalidOperationException("Failed to retrieve source languages from DeepL");
         }
-
         
         var targetLanguagesList = targetLanguages
             .Where(lang => lang.Code != FilteredLanguageCode)
@@ -124,6 +123,7 @@ public class DeepLService : BaseTranslationService
             .ToList();
         
         return sourceLanguages
+            .Where(lang => lang.Code != FilteredLanguageCode)
             .Select(lang => new SourceLanguage
         {
             Code = lang.Code,

@@ -169,23 +169,9 @@ public class LanguageCodeService
             return null;
         }
 
-        // Prefer script/region-specific matches over a base-language fallback.
-        if (ancestor.Name.Contains('-'))
-        {
-            return MatchTier.ScriptEquivalent;
-        }
-
-        // Allow a regional source language (for example pt-BR) to match
-        // a service that only offers its base language (pt).
-        if (string.Equals(
-                requested.Parent.Name,
-                candidate.Name,
-                StringComparison.OrdinalIgnoreCase))
-        {
-            return MatchTier.NeutralEquivalent;
-        }
-
-        return MatchTier.NeutralEquivalent;
+        // A dash in the ancestor's name means it still carries a script or region subtag (zh-Hant),
+        // which is a closer match than collapsing to the bare language root (zh).
+        return ancestor.Name.Contains('-') ? MatchTier.ScriptEquivalent : MatchTier.NeutralEquivalent;
     }
 
     private static bool IsAncestorOf(CultureInfo ancestor, CultureInfo descendant)
