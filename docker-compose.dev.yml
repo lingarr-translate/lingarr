@@ -6,6 +6,10 @@ networks:
   lingarr:
     external: true
 
+volumes:
+  client_node_modules:
+  docs_node_modules:
+
 services:
   Lingarr.Server:
     extra_hosts: # added for ollama 
@@ -94,23 +98,23 @@ services:
       - "9876:9876"
     volumes:
       - ./Lingarr.Client:/app:rw
-      - ./Lingarr.Client/node_modules:/app/node_modules
+      - client_node_modules:/app/node_modules
     tty: true
-    command: /bin/sh -c "npm install && npm run dev"
+    command: /bin/sh -c "npm install --no-save && npm run dev"
     networks:
       - lingarr
 
   Lingarr.Docs:
-    image: node:alpine
+    image: node:24-alpine
     container_name: Lingarr.Docs
     working_dir: /app
     ports:
       - "9879:5173"
     volumes:
       - ./Lingarr.Docs:/app:rw
-      - ./Lingarr.Docs/node_modules:/app/node_modules
+      - docs_node_modules:/app/node_modules
     tty: true
-    command: /bin/sh -c "npm install && npm run dev -- --host"
+    command: /bin/sh -c "npm install --no-save && npm run dev -- --host"
     networks:
       - lingarr
 
