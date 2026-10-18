@@ -20,6 +20,7 @@ export const SETTINGS = {
     ANTHROPIC_VERSION: 'anthropic_version',
     LOCAL_AI_ENDPOINT: 'local_ai_endpoint',
     LOCAL_AI_MODEL: 'local_ai_model',
+    LOCAL_AI_STRUCTURED_OUTPUT: 'local_ai_structured_output',
     GEMINI_MODEL: 'gemini_model',
     DEEPSEEK_MODEL: 'deepseek_model',
     MISTRAL_MODEL: 'mistral_model',
@@ -91,6 +92,7 @@ export interface ISettings {
     anthropic_version: string
     local_ai_endpoint: string
     local_ai_model: string
+    local_ai_structured_output: string
     gemini_model: string
     deepseek_model: string
     mistral_model: string

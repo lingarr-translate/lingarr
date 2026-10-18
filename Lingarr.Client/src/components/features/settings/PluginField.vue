@@ -15,6 +15,16 @@
                 @update:selected="(value: string) => (fieldValue = value)"
                 @fetch-options="loadRemoteOptions" />
         </template>
+        <template v-else-if="field.type === PLUGIN_SETTING_TYPE.TOGGLE">
+            <label class="mb-1 block text-sm font-semibold">
+                {{ field.label }}
+            </label>
+            <ToggleButton v-model="fieldValue">
+                <span class="text-sm font-medium text-primary-content">
+                    {{ fieldValue === 'true' ? 'Enabled' : 'Disabled' }}
+                </span>
+            </ToggleButton>
+        </template>
         <InputComponent
             v-else
             :id="field.key"
@@ -49,6 +59,7 @@ import services from '@/services'
 import { useSettingStore } from '@/store/setting'
 import InputComponent from '@/components/common/InputComponent.vue'
 import SelectComponent from '@/components/common/SelectComponent.vue'
+import ToggleButton from '@/components/common/ToggleButton.vue'
 
 const props = defineProps<{
     field: IPluginSettingField

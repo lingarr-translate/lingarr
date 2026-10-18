@@ -135,6 +135,49 @@ public class LocalAiServiceTests
         VerifyRequestsSent(1);
     }
 
+    [Fact]
+    public async Task TranslateBatchAsync_ShouldSendTargetLanguageInSchema_WhenStructuredOutputEnabled()
+    {
+        // Arrange
+        UseSettings(ChatEndpoint);
+        var requestBodies = CaptureRequestBodies(() => ChatResponse("{\"translations\":" + ValidJson + "}"));
+
+        // Act
+        var result = await _service.TranslateBatchAsync(Batch(), "en", "es", CancellationToken.None);
+
+        // Assert
+        Assert.Equal("Mundo", result[2]);
+        var request = Assert.Single(requestBodies);
+        using var body = JsonDocument.Parse(request);
+        var lineSchema = body.RootElement
+            .GetProperty("response_format")
+            .GetProperty("json_schema")
+            .GetProperty("schema")
+            .GetProperty("properties")
+            .GetProperty("translations")
+            .GetProperty("items")
+            .GetProperty("properties")
+            .GetProperty("line");
+        Assert.Equal("Subtitle text translated into Spanish", lineSchema.GetProperty("description").GetString());
+    }
+
+    [Fact]
+    public async Task TranslateBatchAsync_ShouldSkipStructuredOutput_WhenStructuredOutputDisabled()
+    {
+        // Arrange
+        UseSettings(ChatEndpoint, structuredOutput: "false");
+        var requestBodies = CaptureRequestBodies(() => ChatResponse(ValidJson));
+
+        // Act
+        var result = await _service.TranslateBatchAsync(Batch(), "en", "es", CancellationToken.None);
+
+        // Assert
+        Assert.Equal("Mundo", result[2]);
+        var request = Assert.Single(requestBodies);
+        using var body = JsonDocument.Parse(request);
+        Assert.False(body.RootElement.TryGetProperty("response_format", out _));
+    }
+
     private static List<BatchSubtitleItem> Batch() =>
     [
         new() { Position = 1, Line = "Hello" },
@@ -153,7 +196,7 @@ public class LocalAiServiceTests
         Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json")
     };
 
-    private void UseSettings(string endpoint)
+    private void UseSettings(string endpoint, string structuredOutput = "true")
     {
         var settings = new Dictionary<string, string>
         {
@@ -161,6 +204,7 @@ public class LocalAiServiceTests
             { SettingKeys.Translation.LocalAi.Endpoint, endpoint },
             { SettingKeys.Translation.LocalAi.ChatRequestTemplate, "" },
             { SettingKeys.Translation.LocalAi.GenerateRequestTemplate, "" },
+            { SettingKeys.Translation.LocalAi.StructuredOutput, structuredOutput },
             { SettingKeys.Translation.AiPrompt, "Translate from {sourceLanguage} to {targetLanguage}" },
             { SettingKeys.Translation.AiUserPrompt, "{lineToTranslate}" },
             { SettingKeys.Translation.RequestTimeout, "5" },
@@ -186,6 +230,20 @@ public class LocalAiServiceTests
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>())
             .Returns(() => Task.FromResult(responseFactory()));
+    }
+
+    private List<string> CaptureRequestBodies(Func<HttpResponseMessage> responseFactory)
+    {
+        var requestBodies = new List<string>();
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((request, _) =>
+                requestBodies.Add(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult()))
+            .Returns(() => Task.FromResult(responseFactory()));
+        return requestBodies;
     }
 
     private void SetupResponseSequence(params HttpResponseMessage[] responses)

@@ -22,6 +22,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
     private string? _chatRequestTemplate;
     private string? _generateRequestTemplate;
     private bool _isChatEndpoint;
+    private bool _structuredOutput;
     private bool _initialized;
     private readonly SemaphoreSlim _initLock = new(1, 1);
 
@@ -67,6 +68,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                 SettingKeys.Translation.LocalAi.Endpoint,
                 SettingKeys.Translation.LocalAi.ChatRequestTemplate,
                 SettingKeys.Translation.LocalAi.GenerateRequestTemplate,
+                SettingKeys.Translation.LocalAi.StructuredOutput,
                 SettingKeys.Translation.AiPrompt,
                 SettingKeys.Translation.AiUserPrompt,
                 SettingKeys.Translation.ProofreadPrompt,
@@ -97,6 +99,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             _proofreadPrompt = settings.GetValueOrDefault(SettingKeys.Translation.ProofreadPrompt);
             _proofreadUserPrompt = settings.GetValueOrDefault(SettingKeys.Translation.ProofreadUserPrompt);
             _isChatEndpoint = _endpoint.TrimEnd('/').EndsWith("completions", StringComparison.OrdinalIgnoreCase);
+            _structuredOutput = settings.GetValueOrDefault(SettingKeys.Translation.LocalAi.StructuredOutput) != "false";
 
             var requestTimeout = int.TryParse(settings[SettingKeys.Translation.RequestTimeout],
                 out var timeOut)
@@ -323,6 +326,11 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             return await TranslateBatchWithGenerateApi(subtitleBatch, cancellationToken);
         }
 
+        if (!_structuredOutput)
+        {
+            return await TranslateBatchWithJsonParsing(subtitleBatch, cancellationToken);
+        }
+
         // Try structured output first (OpenAI-compatible format)
         try
         {
@@ -367,7 +375,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
                                     line = new
                                     {
                                         type = "string",
-                                        description = "Translated subtitle text"
+                                        description = $"Subtitle text translated into {_replacements["targetLanguage"]}"
                                     }
                                 },
                                 required = new[] { "position", "line" },

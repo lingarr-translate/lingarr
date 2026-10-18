@@ -4,7 +4,8 @@ export const PLUGIN_SETTING_TYPE = {
     TEXT: 'Text',
     URL: 'Url',
     SECRET: 'Secret',
-    REMOTE_DROPDOWN: 'RemoteDropdown'
+    REMOTE_DROPDOWN: 'RemoteDropdown',
+    TOGGLE: 'Toggle'
 } as const
 
 export type PluginSettingType = (typeof PLUGIN_SETTING_TYPE)[keyof typeof PLUGIN_SETTING_TYPE]

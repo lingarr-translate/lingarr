@@ -67,6 +67,7 @@ Do not use these plugin identifiers (they are used by built-in providers):
 - Use snake_case keys with a namespace (example: `myprovider_api_key`).
 - Settings defined in your manifest are automatically added when the plugin loads.
 - PluginSettingType.Secret fields are encrypted.
+- PluginSettingType.Toggle fields show an on/off switch and store `true` or `false`.
 - To read settings, inject `Lingarr.Contracts.Settings.ISettingsAccess` in your constructor.
 - Plugins can only read settings, they cannot write them.
 
