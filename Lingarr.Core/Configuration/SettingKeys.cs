@@ -41,6 +41,7 @@ public static class SettingKeys
             public const string ApiKey = "local_ai_api_key";
             public const string ChatRequestTemplate = "local_ai_chat_request_template";
             public const string GenerateRequestTemplate = "local_ai_generate_request_template";
+            public const string StructuredOutput = "local_ai_structured_output";
         }
 
         public static class DeepL

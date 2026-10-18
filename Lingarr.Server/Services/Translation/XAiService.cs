@@ -344,7 +344,8 @@ public class XAiService : BaseLanguageService, ITranslationService, IBatchTransl
                                     },
                                     line = new
                                     {
-                                        type = "string"
+                                        type = "string",
+                                        description = $"Subtitle text translated into {_replacements["targetLanguage"]}"
                                     }
                                 },
                                 required = new[] { "position", "line" },

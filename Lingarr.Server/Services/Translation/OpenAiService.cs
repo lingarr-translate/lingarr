@@ -343,7 +343,8 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                                     },
                                     line = new
                                     {
-                                        type = "string"
+                                        type = "string",
+                                        description = $"Subtitle text translated into {_replacements["targetLanguage"]}"
                                     }
                                 },
                                 required = new[] { "position", "line" },

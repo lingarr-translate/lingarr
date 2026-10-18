@@ -42,6 +42,15 @@ public sealed class LocalAiPluginManifest : IPluginManifest
             Type = PluginSettingType.Secret,
             Required = false,
             Description = "Bearer token if the deployment requires authentication. Stored encrypted."
+        },
+        new()
+        {
+            Key = SettingKeys.Translation.LocalAi.StructuredOutput,
+            Label = "Structured output",
+            Type = PluginSettingType.Toggle,
+            Required = false,
+            Default = "true",
+            Description = "Sends a JSON schema with batch requests to the chat/completions endpoint. Disable it for endpoints that accept the schema but do not support it, such as DeepSeek models."
         }
     ];
 }

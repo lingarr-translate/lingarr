@@ -158,5 +158,8 @@ LocalAI works with Ollama or any other OpenAI-compatible model or router.
 | `LOCAL_AI_MODEL` | The model to use for LocalAI translations.                                                                                |
 | `LOCAL_AI_API_KEY` | The API key for authenticating with LocalAI. This is optional, and only needed if the deployment requires authentication. |
 | `LOCAL_AI_ENDPOINT` | The full URL of the completion endpoint. Example: `http://ollama:11434/v1/chat/completions`.                              |
+| `LOCAL_AI_STRUCTURED_OUTPUT` | Send a JSON schema with batch requests to a chat/completions endpoint. Default: `true`.                     |
 | `AI_PROMPT` | The system prompt template.                                                                                               |
 | `AI_USER_PROMPT` | The user message template.                                                                                                |
+
+Some OpenAI-compatible routers accept a JSON schema for a model that does not support it, for example DeepSeek models behind a router. The request does not fail, but batch translation can return lines in the wrong language. Disable **Structured output** for these endpoints. Lingarr then asks for plain JSON and parses the response itself.
