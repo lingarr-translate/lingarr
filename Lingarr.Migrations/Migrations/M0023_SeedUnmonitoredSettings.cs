@@ -2,7 +2,7 @@ using FluentMigrator;
 
 namespace Lingarr.Migrations.Migrations;
 
-[Migration(22)]
+[Migration(23)]
 public class M0022_SeedUnmonitoredSettings : Migration
 {
     public override void Up()
