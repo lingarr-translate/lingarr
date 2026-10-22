@@ -162,6 +162,10 @@ These variables can be used
 
 Additional [settings](Settings.MD) can be found here that can be set as environment variables to persist settings for each reinstall
 
+## One-Click Deploy
+
+[![Deploy on RepoCloud](https://d16t0pc4846x52.cloudfront.net/deploylobe.svg)](https://repocloud.io/details/Lingarr/)
+
 ## Setting up LibreTranslate
 This step is optional if you are using a translation service other than LibreTranslate.
 
