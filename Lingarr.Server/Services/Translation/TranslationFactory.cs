@@ -32,7 +32,7 @@ public class TranslationFactory : ITranslationServiceFactory
             "google" => new GTranslatorService<GoogleTranslator>(
                 _serviceProvider,
                 _serviceProvider.GetRequiredService<IHttpClientFactory>(),
-                "/app/Statics/google_languages.json",
+                Path.Combine(AppContext.BaseDirectory, "Statics", "google_languages.json"),
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<ILogger<GoogleTranslator>>(),
                 languageCodeService
@@ -41,7 +41,7 @@ public class TranslationFactory : ITranslationServiceFactory
             "bing" => new GTranslatorService<BingTranslator>(
                 _serviceProvider,
                 _serviceProvider.GetRequiredService<IHttpClientFactory>(),
-                "/app/Statics/bing_languages.json",
+                Path.Combine(AppContext.BaseDirectory, "Statics", "bing_languages.json"),
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<ILogger<BingTranslator>>(),
                 languageCodeService
@@ -50,7 +50,7 @@ public class TranslationFactory : ITranslationServiceFactory
             "microsoft" => new GTranslatorService<MicrosoftTranslator>(
                 _serviceProvider,
                 _serviceProvider.GetRequiredService<IHttpClientFactory>(),
-                "/app/Statics/microsoft_languages.json",
+                Path.Combine(AppContext.BaseDirectory, "Statics", "microsoft_languages.json"),
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<ILogger<MicrosoftTranslator>>(),
                 languageCodeService
@@ -59,7 +59,7 @@ public class TranslationFactory : ITranslationServiceFactory
             "yandex" => new GTranslatorService<YandexTranslator>(
                 _serviceProvider,
                 _serviceProvider.GetRequiredService<IHttpClientFactory>(),
-                "/app/Statics/yandex_languages.json",
+                Path.Combine(AppContext.BaseDirectory, "Statics", "yandex_languages.json"),
                 _serviceProvider.GetRequiredService<ISettingService>(),
                 _serviceProvider.GetRequiredService<ILogger<YandexTranslator>>(),
                 languageCodeService
