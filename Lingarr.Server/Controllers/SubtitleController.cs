@@ -1,3 +1,4 @@
+using Lingarr.Core.Data;
 using Lingarr.Server.Attributes;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
@@ -12,22 +13,35 @@ namespace Lingarr.Server.Controllers;
 public class SubtitleController : ControllerBase
 {
     private readonly ISubtitleService _subtitleService;
+    private readonly LingarrDbContext _dbContext;
 
-    public SubtitleController(ISubtitleService subtitleService)
+    public SubtitleController(ISubtitleService subtitleService, LingarrDbContext dbContext)
     {
         _subtitleService = subtitleService;
+        _dbContext = dbContext;
     }
-    
+
     /// <summary>
-    /// Retrieves a list of subtitle files located at the specified path.
+    /// Retrieves a list of subtitle files located in the folder of the specified season.
     /// </summary>
-    /// <param name="subtitlePath">The directory path to search for subtitle files.This path is relative to the media folder
-    /// and should not start with a forward slash.</param>
-    /// <returns>Returns an HTTP 200 OK response with a list of <see cref="Subtitles"/> objects found at the specified path.</returns>
-    [HttpPost("all")]
-    public async Task<ActionResult<List<Subtitles>>> GetAllSubtitles([FromBody] SubtitlePath subtitlePath)
+    /// <param name="request">The id of the season to search for subtitle files.</param>
+    /// <returns>Returns an HTTP 200 OK response with a list of <see cref="Subtitles"/> objects found in the season folder,
+    /// or an HTTP 404 Not Found response when the season does not exist.</returns>
+    [HttpPost("season")]
+    public async Task<ActionResult<List<Subtitles>>> GetSeasonSubtitles([FromBody] SeasonSubtitlesRequest request)
     {
-        var value = await _subtitleService.GetAllSubtitles(subtitlePath.Path);
+        var season = await _dbContext.Seasons.FindAsync(request.SeasonId);
+        if (season == null)
+        {
+            return NotFound();
+        }
+
+        if (string.IsNullOrEmpty(season.Path))
+        {
+            return Ok(new List<Subtitles>());
+        }
+
+        var value = await _subtitleService.GetAllSubtitles(season.Path);
         return Ok(value);
     }
 }
