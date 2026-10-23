@@ -70,11 +70,17 @@ export const SETTINGS = {
     XAI_REQUEST_TEMPLATE: 'xai_request_template',
     LANGUAGE_CODE_FORMAT: 'language_code_format',
     RADARR_DEFAULT_INCLUDE: 'radarr_default_include',
-    SONARR_DEFAULT_INCLUDE: 'sonarr_default_include'
+    SONARR_DEFAULT_INCLUDE: 'sonarr_default_include',
+    RADARR_EXCLUDE_UNMONITORED: 'radarr_exclude_unmonitored',
+    SONARR_EXCLUDE_UNMONITORED_SERIES: 'sonarr_exclude_unmonitored_series',
+    SONARR_EXCLUDE_UNMONITORED_EPISODES: 'sonarr_exclude_unmonitored_episodes'
 } as const
 
 export interface ISettings {
     radarr_url: string
+    radarr_exclude_unmonitored: string
+    sonarr_exclude_unmonitored_series: string
+    sonarr_exclude_unmonitored_episodes: string
     sonarr_url: string
     service_type: string
     libretranslate_url: string

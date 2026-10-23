@@ -14,6 +14,8 @@ public class RadarrMovie
     public required string RootFolderPath { get; set; }
     [JsonPropertyName("added")]
     public required string Added { get; set; }
+    [JsonPropertyName("monitored")]
+    public bool Monitored { get; set; } = true;
     [JsonPropertyName("hasFile")]
     public required bool HasFile { get; set; }
     [JsonPropertyName("movieFile")]

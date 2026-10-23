@@ -53,10 +53,20 @@ public class SyncShowJob
             _logger.LogInformation("Fetched {ShowCount} shows from Sonarr", shows.Count);
 
             var defaultInclude = await _settingService.GetSetting(SettingKeys.Integration.SonarrDefaultInclude) == "true";
+            var excludeUnmonitoredSeries = await _settingService.GetSetting(SettingKeys.Integration.SonarrExcludeUnmonitoredSeries) == "true";
+            var excludeUnmonitoredEpisodes = await _settingService.GetSetting(SettingKeys.Integration.SonarrExcludeUnmonitoredEpisodes) == "true";
+            var showsToSync = excludeUnmonitoredSeries
+                ? shows.Where(show => show.Monitored).ToList()
+                : shows;
+
+            _logger.LogInformation(
+                "Sonarr scan settings: exclude unmonitored series={ExcludeSeries}, exclude unmonitored episodes={ExcludeEpisodes}, total={Total}, selected={Selected}, skipped={Skipped}",
+                excludeUnmonitoredSeries, excludeUnmonitoredEpisodes, shows.Count, showsToSync.Count, shows.Count - showsToSync.Count);
+
             await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-            await _showSyncService.SyncShows(shows, defaultInclude);
-            await _showSyncService.RemoveNonExistentShows(shows.Select(s => s.Id).ToHashSet());
+            await _showSyncService.SyncShows(showsToSync, defaultInclude, excludeUnmonitoredEpisodes);
+            await _showSyncService.RemoveNonExistentShows(showsToSync.Select(s => s.Id).ToHashSet());
 
             await transaction.CommitAsync();
             await _scheduleService.UpdateJobState(jobName, JobStatus.Succeeded.GetDisplayName());

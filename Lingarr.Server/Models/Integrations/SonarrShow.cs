@@ -6,6 +6,8 @@ public class SonarrShow
 {
     [JsonPropertyName("id")]
     public required int Id { get; set; }
+    [JsonPropertyName("monitored")]
+    public bool Monitored { get; set; } = true;
     [JsonPropertyName("title")]
     public required string Title { get; set; }
     [JsonPropertyName("path")]
