@@ -3,7 +3,7 @@
         <div class="flex flex-wrap items-center justify-between gap-2 bg-tertiary p-4">
             <SearchComponent v-model="filter" />
             <div
-                class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:items-center md:justify-between md:space-x-2">
+                class="flex w-full flex-col gap-2 lg:w-fit lg:flex-row lg:flex-wrap lg:items-center lg:justify-between">
                 <ToggleButton
                     v-model="navigateToDetails"
                     size="small"
