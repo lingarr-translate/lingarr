@@ -116,7 +116,7 @@ public abstract class BaseLanguageService : BaseTranslationService
         }
         catch (Exception exception)
         {
-            _logger.LogDebug(exception, "Could not retrieve supported languages, treating as unsupported pair.");
+            _logger.LogWarning(exception, "Could not retrieve supported languages, treating as unsupported pair.");
             return null;
         }
 
