@@ -11,14 +11,25 @@ export default {
         }
         const [showName, episodeNumber, episodeTitle] = parts
 
-        el.innerHTML = `
-            <div class="${originalClasses} inline-flex items-center gap-1.5 overflow-hidden min-w-0 w-full " >
-                <span class="shrink-0">${showName}</span>
-                <span>-</span>
-                <span>${episodeNumber}</span>
-                <span>-</span>
-                <span class="text-primary-content/50 truncate block">${episodeTitle}</span>
-            </div>
-        `
+        const container = document.createElement('div')
+        container.className = `${originalClasses} inline-flex items-center gap-1.5 overflow-hidden min-w-0 w-full`
+        container.append(
+            createSpan(showName, 'shrink-0'),
+            createSpan('-'),
+            createSpan(episodeNumber),
+            createSpan('-'),
+            createSpan(episodeTitle, 'text-primary-content/50 truncate block')
+        )
+
+        el.replaceChildren(container)
     }
+}
+
+function createSpan(text: string, className?: string) {
+    const span = document.createElement('span')
+    span.textContent = text
+    if (className) {
+        span.className = className
+    }
+    return span
 }
