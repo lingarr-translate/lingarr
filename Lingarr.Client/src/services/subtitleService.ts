@@ -2,12 +2,12 @@ import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
 import { ISubtitleService } from '@/ts'
 
 const service = (http: AxiosStatic, resource = '/api/subtitle'): ISubtitleService => ({
-    collect<T>(path: string): Promise<T> {
+    getSeasonSubtitles<T>(seasonId: number): Promise<T> {
         return new Promise((resolve, reject) => {
             http.post(
-                `${resource}/all`,
+                `${resource}/season`,
                 {
-                    path: path
+                    seasonId: seasonId
                 },
                 {
                     headers: {
