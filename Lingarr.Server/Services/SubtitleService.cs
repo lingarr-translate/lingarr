@@ -3,6 +3,7 @@ using System.Text;
 using Lingarr.Contracts.Translation;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Subtitle;
+using Lingarr.Server.Models;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Services.Subtitle;
 using SubtitleValidationOptions = Lingarr.Server.Models.SubtitleValidationOptions;
@@ -432,13 +433,22 @@ public class SubtitleService : ISubtitleService
             .Select(s => s.Language.ToLowerInvariant())
             .ToHashSet();
 
-        var sourceLanguage = availableLanguages.FirstOrDefault(language =>
-            sourceCodes.Contains(language, StringComparer.OrdinalIgnoreCase));
+        LanguageMatch? bestMatch = null;
+        foreach (var sourceCode in sourceCodes)
+        {
+            var match = _languageCodeService.GetBestMatch(sourceCode, availableLanguages);
+            if (match != null && (bestMatch == null || match.Tier < bestMatch.Tier))
+            {
+                bestMatch = match;
+            }
+        }
 
-        if (sourceLanguage == null)
+        if (bestMatch == null)
         {
             return null;
         }
+
+        var sourceLanguage = bestMatch.Code;
 
         var sourceSubtitle = matchingSubtitles
             .Where(s => s.Language.Equals(sourceLanguage, StringComparison.OrdinalIgnoreCase))
