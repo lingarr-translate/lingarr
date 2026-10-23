@@ -151,21 +151,21 @@ const sonarrDefaultInclude = computed({
     }
 })
 const radarrExcludeUnmonitored = computed({
-    get: (): string => (settingsStore.getSetting(SETTINGS.RADARR_EXCLUDE_UNMONITORED) as string) ?? 'false',
+    get: (): string => (settingsStore.getSetting(SETTINGS.RADARR_EXCLUDE_UNMONITORED) as string),
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.RADARR_EXCLUDE_UNMONITORED, newValue, true)
         saveNotification.value?.show()
     }
 })
 const sonarrExcludeUnmonitoredSeries = computed({
-    get: (): string => (settingsStore.getSetting(SETTINGS.SONARR_EXCLUDE_UNMONITORED_SERIES) as string) ?? 'false',
+    get: (): string => (settingsStore.getSetting(SETTINGS.SONARR_EXCLUDE_UNMONITORED_SERIES) as string),
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.SONARR_EXCLUDE_UNMONITORED_SERIES, newValue, true)
         saveNotification.value?.show()
     }
 })
 const sonarrExcludeUnmonitoredEpisodes = computed({
-    get: (): string => (settingsStore.getSetting(SETTINGS.SONARR_EXCLUDE_UNMONITORED_EPISODES) as string) ?? 'false',
+    get: (): string => (settingsStore.getSetting(SETTINGS.SONARR_EXCLUDE_UNMONITORED_EPISODES) as string),
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.SONARR_EXCLUDE_UNMONITORED_EPISODES, newValue, true)
         saveNotification.value?.show()
