@@ -73,7 +73,7 @@ public interface ISubtitleService
     Task<List<Subtitles>> GetSubtitles(string path, string fileName);
 
     /// <summary>
-    /// Selects the source subtitle from matching subtitles by finding the first available source language
+    /// Selects the source subtitle from matching subtitles by finding the closest available source language
     /// and selecting the appropriate subtitle file.
     /// </summary>
     /// <param name="subtitles">The list of subtitle files to search.</param>
