@@ -174,7 +174,7 @@ services:
       retries: 5
       
   Lingarr.PHPMyAdmin:
-    image: phpmyadmin/phpmyadmin:5.0.1
+    image: phpmyadmin:5.2.3
     container_name: Lingarr.PHPMyAdmin
     environment:
       PMA_HOST: Lingarr.Mysql
