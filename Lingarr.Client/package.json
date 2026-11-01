@@ -12,8 +12,8 @@
     },
     "dependencies": {
         "@microsoft/signalr": "^10.0.11",
-        "axios": "^1.20.0",
-        "chart.js": "^4.5.1",
+        "axios": "^1.21.0",
+        "chart.js": "^4.6.1",
         "cron-validator": "^1.4.0",
         "pinia": "^4.1.0",
         "vue": "^3.5.44",
@@ -23,17 +23,17 @@
     "devDependencies": {
         "@tailwindcss/postcss": "^4.3.3",
         "@tailwindcss/vite": "^4.3.3",
-        "@types/node": "^26.6.5",
+        "@types/node": "^26.6.6",
         "@vitejs/plugin-vue": "^6.0.10",
-        "oxfmt": "^0.74.0",
-        "oxlint": "^1.89.0",
+        "oxfmt": "^0.75.0",
+        "oxlint": "^1.90.0",
         "tailwindcss": "^4.3.3",
         "typescript": "^6.0.3",
         "vite": "^8.3.5",
-        "vue-tsc": "3.3.11"
+        "vue-tsc": "3.3.14"
     },
     "optionalDependencies": {
-        "@oxfmt/binding-win32-x64-msvc": "^0.74.0",
-        "@oxfmt/binding-linux-x64-gnu": "^0.74.0"
+        "@oxfmt/binding-win32-x64-msvc": "^0.75.0",
+        "@oxfmt/binding-linux-x64-gnu": "^0.75.0"
     }
 }
