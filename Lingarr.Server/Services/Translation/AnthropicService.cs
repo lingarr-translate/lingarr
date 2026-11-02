@@ -1,5 +1,4 @@
-﻿using System.Collections.Concurrent;
-using System.Net;
+﻿using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -15,6 +14,7 @@ namespace Lingarr.Server.Services.Translation;
 
 public class AnthropicService : BaseLanguageService, ITranslationService, IBatchTranslationService, IProofreadService
 {
+    private const int BatchMaxTokens = 16000;
     private readonly string? _endpoint = "https://api.anthropic.com/v1";
     private readonly HttpClient _httpClient;
     private readonly IRequestTemplateService _requestTemplateService;
@@ -343,104 +343,65 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         throw new TranslationException("Batch translation failed after maximum retry attempts.");
     }
 
-    // Models that reject forced tool use (tool_choice "tool" or "any"), such as the Claude 5.5 models.
-    // Learned at runtime from the API's 400 response, so no list of model names has to be maintained.
-    private static readonly ConcurrentDictionary<string, bool> ForcedToolChoiceUnsupported = new();
-
-    // Models that answered the forced tool call with the translations in another form than an array (Claude Haiku 5.5
-    // returns them as a JSON-encoded string, sometimes with invalid escapes). For these models the tool is sent with
-    // strict: true, so the input always matches the schema. Also learned at runtime.
-    private static readonly ConcurrentDictionary<string, bool> StrictToolRequired = new();
-    private const string BatchToolName = "record_translation_batch";
-    private const int MinimumAutoToolMaxTokens = 16000;
-    private const int MaxTokensAfterTruncation = 64000;
-
-    private string BuildBatchRequestBody(List<BatchSubtitleItem> subtitleBatch, bool useAutoToolChoice, bool useStrictTool,
-        int maxTokensOverride = 0)
-    {
-        var replacements = GetBatchReplacements(_model!, JsonSerializer.Serialize(subtitleBatch));
-        if (useAutoToolChoice)
-        {
-            // Without forced tool use the model needs to be told to call the tool.
-            replacements["userMessage"] =
-                $"Translate every subtitle item below and record the complete result by calling the {BatchToolName} tool, " +
-                "with exactly one entry per position.\n\n" + replacements["userMessage"];
-        }
-
-        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
-
-        var tool = new Dictionary<string, object?>
-        {
-            ["name"] = BatchToolName,
-            ["description"] = "Record batch translation results using well-structured JSON.",
-            ["input_schema"] = new Dictionary<string, object?>
-            {
-                ["type"] = "object",
-                ["properties"] = new Dictionary<string, object?>
-                {
-                    ["translations"] = new Dictionary<string, object?>
-                    {
-                        ["type"] = "array",
-                        ["items"] = new Dictionary<string, object?>
-                        {
-                            ["type"] = "object",
-                            ["properties"] = new Dictionary<string, object?>
-                            {
-                                ["position"] = new { type = "integer", description = "Position/index of the subtitle item" },
-                                ["line"] = new { type = "string", description = "Translated subtitle text" }
-                            },
-                            ["required"] = new[] { "position", "line" },
-                            ["additionalProperties"] = false
-                        },
-                        ["description"] = "Array of translated subtitle items with their positions"
-                    }
-                },
-                ["required"] = new[] { "translations" },
-                ["additionalProperties"] = false
-            }
-        };
-        if (useStrictTool)
-        {
-            // Strict tool use keeps the tool input valid against the schema.
-            tool["strict"] = true;
-        }
-
-        var fields = new Dictionary<string, object?>
-        {
-            ["tools"] = new[] { tool },
-            ["tool_choice"] = useAutoToolChoice
-                ? new Dictionary<string, object?> { ["type"] = "auto" }
-                : new Dictionary<string, object?> { ["type"] = "tool", ["name"] = BatchToolName }
-        };
-
-        if (useAutoToolChoice && JsonNode.Parse(bodyJson) is JsonObject body)
-        {
-            // Models without forced tool use think adaptively before answering; leave room for that and the tool call.
-            var maxTokens = body["max_tokens"] is JsonValue value && value.TryGetValue<int>(out var configured) ? configured : 0;
-            if (maxTokens < MinimumAutoToolMaxTokens)
-            {
-                fields["max_tokens"] = MinimumAutoToolMaxTokens;
-            }
-        }
-
-        if (maxTokensOverride > 0)
-        {
-            // Retry after a truncated answer: give the model more room for thinking and the tool call.
-            fields["max_tokens"] = maxTokensOverride;
-        }
-
-        return _requestTemplateService.SetRequestFields(bodyJson, fields);
-    }
-
     private async Task<Dictionary<int, string>> TranslateBatchWithAnthropicApi(
         List<BatchSubtitleItem> subtitleBatch,
-        CancellationToken cancellationToken,
-        int maxTokensOverride = 0,
-        bool retriedUnusableAnswer = false)
+        CancellationToken cancellationToken)
     {
-        var useAutoToolChoice = ForcedToolChoiceUnsupported.ContainsKey(_model!);
-        var useStrictTool = useAutoToolChoice || StrictToolRequired.ContainsKey(_model!);
-        var bodyJson = BuildBatchRequestBody(subtitleBatch, useAutoToolChoice, useStrictTool, maxTokensOverride);
+        // Structured outputs instead of a forced tool: newer Claude models reject tool_choice of type 'tool'.
+        var outputFormat = new
+        {
+            type = "json_schema",
+            schema = new
+            {
+                type = "object",
+                properties = new
+                {
+                    translations = new
+                    {
+                        type = "array",
+                        items = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                position = new
+                                {
+                                    type = "integer"
+                                },
+                                line = new
+                                {
+                                    type = "string",
+                                    description = $"Subtitle text translated into {_replacements["targetLanguage"]}"
+                                }
+                            },
+                            required = new[] { "position", "line" },
+                            additionalProperties = false
+                        }
+                    }
+                },
+                required = new[] { "translations" },
+                additionalProperties = false
+            }
+        };
+
+        var replacements = GetBatchReplacements(_model!, JsonSerializer.Serialize(subtitleBatch));
+        var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
+        var fields = new Dictionary<string, object?>
+        {
+            ["output_config"] = new { format = outputFormat }
+        };
+
+        // A whole batch needs more room than a single line; a higher value from the request template is kept.
+        var templateMaxTokens = JsonNode.Parse(bodyJson)?["max_tokens"] is JsonValue maxTokensValue &&
+                                maxTokensValue.TryGetValue<int>(out var configuredMaxTokens)
+            ? configuredMaxTokens
+            : 0;
+        if (templateMaxTokens < BatchMaxTokens)
+        {
+            fields["max_tokens"] = BatchMaxTokens;
+        }
+
+        bodyJson = _requestTemplateService.SetRequestFields(bodyJson, fields);
 
         var content = new StringContent(
             bodyJson,
@@ -458,18 +419,6 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             }
 
             var responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            if (!useAutoToolChoice &&
-                response.StatusCode == HttpStatusCode.BadRequest &&
-                responseContent.Contains("tool_choice", StringComparison.OrdinalIgnoreCase) &&
-                responseContent.Contains("not supported", StringComparison.OrdinalIgnoreCase))
-            {
-                ForcedToolChoiceUnsupported[_model!] = true;
-                _logger.LogInformation(
-                    "Model {Model} does not support forced tool use; retrying the batch with tool_choice auto and a strict tool schema.",
-                    _model);
-                return await TranslateBatchWithAnthropicApi(subtitleBatch, cancellationToken, maxTokensOverride, retriedUnusableAnswer);
-            }
-
             _logger.LogError(
                 "Anthropic batch API request failed with status {StatusCode}: {ResponseContent}",
                 response.StatusCode, 
@@ -485,9 +434,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             ? stopReasonProperty.GetString()
             : null;
 
-        LogBatchUsage(jsonResponse, subtitleBatch.Count, stopReason);
-
-        // Extract tool use result from Anthropic response
+        // The structured output is in the text block of the response (thinking blocks come before it)
         if (!jsonResponse.TryGetProperty("content", out var contentArray) ||
             contentArray.GetArrayLength() == 0)
         {
@@ -495,79 +442,28 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 $"Anthropic returned no content (stop_reason: {stopReason ?? "unknown"}).");
         }
 
-        JsonElement? toolUseContent = null;
         JsonElement? textContent = null;
         foreach (var contentItem in contentArray.EnumerateArray())
         {
-            if (!contentItem.TryGetProperty("type", out var typeProperty))
-            {
-                continue;
-            }
-
-            var type = typeProperty.GetString();
-            if (type == "tool_use" && !toolUseContent.HasValue)
-            {
-                toolUseContent = contentItem;
-            }
-            else if (type == "text" && !textContent.HasValue)
+            if (contentItem.TryGetProperty("type", out var typeProperty) &&
+                typeProperty.GetString() == "text")
             {
                 textContent = contentItem;
+                break;
             }
         }
 
-        JsonElement translationsProperty;
-        JsonElement toolTranslations = default;
-        // A truncated answer can hold a partly filled tool call; never accept it, so no lines go missing silently.
-        var truncated = stopReason == "max_tokens";
-        var hasToolTranslations = toolUseContent.HasValue &&
-            toolUseContent.Value.TryGetProperty("input", out var inputProperty) &&
-            inputProperty.TryGetProperty("translations", out toolTranslations);
-
-        if (!truncated && hasToolTranslations && toolTranslations.ValueKind == JsonValueKind.Array)
-        {
-            translationsProperty = toolTranslations;
-        }
-        else if (!truncated && hasToolTranslations && !useStrictTool)
-        {
-            StrictToolRequired[_model!] = true;
-            _logger.LogInformation(
-                "Model {Model} returned the batch translations as {Kind} instead of an array; retrying the batch with a strict tool schema.",
-                _model, toolTranslations.ValueKind);
-            return await TranslateBatchWithAnthropicApi(subtitleBatch, cancellationToken, maxTokensOverride, retriedUnusableAnswer);
-        }
-        else if (!truncated && hasToolTranslations && TryGetTranslationsArray(toolTranslations, out var unwrapped))
-        {
-            translationsProperty = unwrapped;
-        }
-        else if (!truncated &&
-                 useAutoToolChoice &&
-                 textContent.HasValue &&
-                 TryReadTranslationsFromText(textContent.Value, out var textTranslations))
-        {
-            // With tool_choice auto the model may answer in text instead of calling the tool.
-            _logger.LogWarning(
-                "Model {Model} answered the batch as text instead of calling the tool; using the translations from the text.",
-                _model);
-            translationsProperty = textTranslations;
-        }
-        else if (!retriedUnusableAnswer && stopReason is "end_turn" or "max_tokens")
-        {
-            // The model ended without calling the tool, or ran out of room. Both are occasional; ask once more
-            // (with more room after a truncated answer) before the batch falls back to the next service.
-            _logger.LogWarning(
-                "Model {Model} returned no usable batch translations (stop_reason: {StopReason}); asking once more.",
-                _model, stopReason);
-            return await TranslateBatchWithAnthropicApi(subtitleBatch, cancellationToken,
-                stopReason == "max_tokens" ? MaxTokensAfterTruncation : maxTokensOverride, true);
-        }
-        else
+        if (!textContent.HasValue ||
+            !textContent.Value.TryGetProperty("text", out var textProperty))
         {
             throw new TranslationException(
-                $"Anthropic response contained no usable tool_use block (stop_reason: {stopReason ?? "unknown"}).");
+                $"Anthropic response contained no text block (stop_reason: {stopReason ?? "unknown"}).");
         }
 
         try
         {
+            var translationsProperty = JsonSerializer.Deserialize<JsonElement>(textProperty.GetString() ?? string.Empty)
+                .GetProperty("translations");
             var translatedItems = translationsProperty.EnumerateArray()
                 .Select(t => new StructuredBatchResponse
                 {
@@ -580,127 +476,9 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to parse translated results from tool use");
+            _logger.LogError(ex, "Failed to parse translated results (stop_reason: {StopReason})", stopReason ?? "unknown");
             throw new TranslationException("Failed to parse translated subtitles", ex);
         }
-    }
-
-    /// <summary>
-    /// Logs the token usage of one batch request (input, output and the thinking part of the output), so the cost of
-    /// translations can be followed from the log.
-    /// </summary>
-    private void LogBatchUsage(JsonElement response, int lineCount, string? stopReason)
-    {
-        if (!response.TryGetProperty("usage", out var usage))
-        {
-            return;
-        }
-
-        var input = usage.TryGetProperty("input_tokens", out var inputProperty) && inputProperty.TryGetInt32(out var inputTokens)
-            ? inputTokens : 0;
-        var output = usage.TryGetProperty("output_tokens", out var outputProperty) && outputProperty.TryGetInt32(out var outputTokens)
-            ? outputTokens : 0;
-        var thinking = usage.TryGetProperty("output_tokens_details", out var details) &&
-                       details.TryGetProperty("thinking_tokens", out var thinkingProperty) &&
-                       thinkingProperty.TryGetInt32(out var thinkingTokens)
-            ? thinkingTokens : 0;
-        _logger.LogInformation(
-            "Anthropic batch usage: model {Model}, {Lines} lines, input {Input}, output {Output}, thinking {Thinking}, stop {StopReason}",
-            _model, lineCount, input, output, thinking, stopReason ?? "unknown");
-    }
-
-    /// <summary>
-    /// Last resort when a strict tool call still returns the translations as a JSON string: accepts the string
-    /// when it contains a valid array (or an object with a translations array).
-    /// </summary>
-    private bool TryGetTranslationsArray(JsonElement element, out JsonElement translations)
-    {
-        translations = default;
-        if (element.ValueKind == JsonValueKind.Array)
-        {
-            translations = element;
-            return true;
-        }
-
-        if (element.ValueKind != JsonValueKind.String)
-        {
-            return false;
-        }
-
-        var text = element.GetString();
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return false;
-        }
-
-        try
-        {
-            var parsed = JsonSerializer.Deserialize<JsonElement>(text);
-            if (parsed.ValueKind == JsonValueKind.Object &&
-                parsed.TryGetProperty("translations", out var inner))
-            {
-                parsed = inner;
-            }
-
-            if (parsed.ValueKind == JsonValueKind.Array)
-            {
-                _logger.LogWarning(
-                    "Model {Model} returned the batch translations as a JSON string inside the tool input; parsed it.",
-                    _model);
-                translations = parsed;
-                return true;
-            }
-        }
-        catch (JsonException)
-        {
-        }
-
-        return false;
-    }
-
-    private static bool TryReadTranslationsFromText(JsonElement textBlock, out JsonElement translations)
-    {
-        translations = default;
-        if (!textBlock.TryGetProperty("text", out var textProperty))
-        {
-            return false;
-        }
-
-        var text = textProperty.GetString();
-        if (string.IsNullOrWhiteSpace(text))
-        {
-            return false;
-        }
-
-        var start = text.IndexOfAny(['{', '[']);
-        var end = Math.Max(text.LastIndexOf('}'), text.LastIndexOf(']'));
-        if (start < 0 || end <= start)
-        {
-            return false;
-        }
-
-        try
-        {
-            var parsed = JsonSerializer.Deserialize<JsonElement>(text.Substring(start, end - start + 1));
-            if (parsed.ValueKind == JsonValueKind.Object &&
-                parsed.TryGetProperty("translations", out var inner) &&
-                inner.ValueKind == JsonValueKind.Array)
-            {
-                translations = inner;
-                return true;
-            }
-
-            if (parsed.ValueKind == JsonValueKind.Array)
-            {
-                translations = parsed;
-                return true;
-            }
-        }
-        catch (JsonException)
-        {
-        }
-
-        return false;
     }
 
     /// <inheritdoc />
