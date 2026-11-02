@@ -9,10 +9,10 @@
                     size="small"
                     label="Open details on request" />
                 <ContextMenu
-                    v-if="isSelectMode && showStore.selectedShows.length > 0"
+                    v-if="isSelectMode && showStore.selectionCount > 0"
                     @select="handleTranslate">
                     <ButtonComponent size="sm" variant="accent">
-                        Translate ({{ showStore.selectedShows.length }})
+                        Translate ({{ showStore.selectionCount }})
                     </ButtonComponent>
                 </ContextMenu>
                 <ButtonComponent size="sm" variant="accent" @click="toggleSelectMode">
@@ -64,10 +64,20 @@
                     v-if="isSelectMode"
                     class="col-span-1 flex items-center justify-center px-4 py-2">
                     <CheckboxComponent
-                        :model-value="showStore.selectAll"
+                        :model-value="showStore.isPageSelected"
                         @change="showStore.toggleSelectAll()" />
                 </div>
             </div>
+            <SelectAllNotice
+                v-if="isSelectMode"
+                :mode="showStore.selectionMode"
+                :page-count="shows.items.length"
+                :total-count="shows.totalCount"
+                :count="showStore.selectionCount"
+                singular="show"
+                plural="shows"
+                :page-selected="showStore.isPageSelected"
+                @select-all="showStore.selectAllMatching()" />
             <div v-for="item in shows.items" :key="item.id">
                 <div
                     class="border-accent flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 md:grid md:grid-cols-12 md:gap-0 md:py-0"
@@ -80,7 +90,7 @@
                         <ActiveTranslationBadge :show="item" />
                         <span v-if="isSelectMode" class="ml-auto md:hidden" @click.stop>
                             <CheckboxComponent
-                                :model-value="showStore.selectedShows.some((s) => s.id === item.id)"
+                                :model-value="showStore.isSelected(item.id)"
                                 @change="showStore.toggleSelect(item)" />
                         </span>
                     </div>
@@ -125,7 +135,7 @@
                         class="hidden items-center justify-center px-4 py-2 md:col-span-1 md:flex"
                         @click.stop>
                         <CheckboxComponent
-                            :model-value="showStore.selectedShows.some((s) => s.id === item.id)"
+                            :model-value="showStore.isSelected(item.id)"
                             @change="showStore.toggleSelect(item)" />
                     </div>
                 </div>
@@ -163,6 +173,7 @@ import CheckboxComponent from '@/components/common/CheckboxComponent.vue'
 import ContextMenu from '@/components/layout/ContextMenu.vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import ActiveTranslationBadge from '@/components/common/ActiveTranslationBadge.vue'
+import SelectAllNotice from '@/components/common/SelectAllNotice.vue'
 
 const instanceStore = useInstanceStore()
 const showStore = useShowStore()
@@ -208,11 +219,25 @@ const toggleSelectMode = () => {
 }
 
 const handleTranslate = async (language: ILanguage) => {
-    await translateStore.bulkTranslate(
-        showStore.selectedShows.map((s) => s.id),
-        language.code,
-        MEDIA_TYPE.SHOW
-    )
+    if (showStore.selectionMode === 'query') {
+        const count = showStore.selectionCount
+        if (!confirm(`Translate all ${count} matching shows?`)) {
+            return
+        }
+        await translateStore.bulkTranslate({
+            targetLanguage: language.code,
+            mediaType: MEDIA_TYPE.SHOW,
+            allMatching: true,
+            searchQuery: showStore.filter.searchQuery,
+            excludeIds: showStore.excludeIds
+        })
+    } else {
+        await translateStore.bulkTranslate({
+            mediaIds: showStore.selectedShows.map((show) => show.id),
+            targetLanguage: language.code,
+            mediaType: MEDIA_TYPE.SHOW
+        })
+    }
     showStore.clearSelection()
     isSelectMode.value = false
 }

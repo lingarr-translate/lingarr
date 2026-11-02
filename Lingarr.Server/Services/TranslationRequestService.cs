@@ -191,6 +191,28 @@ public class TranslationRequestService : ITranslationRequestService
     /// <inheritdoc />
     public async Task CreateBulkRequest(BulkTranslateRequest request)
     {
+        request.MediaIds ??= [];
+        request.ExcludeIds ??= [];
+
+        if (request.AllMatching)
+        {
+            request.MediaIds = request.MediaType switch
+            {
+                MediaType.Movie => await _mediaService.GetMatchingMovieIds(
+                    request.SearchQuery,
+                    request.ExcludeIds),
+                MediaType.Show => await _mediaService.GetMatchingShowIds(
+                    request.SearchQuery,
+                    request.ExcludeIds),
+                _ => []
+            };
+        }
+
+        if (request.MediaIds.Count == 0)
+        {
+            return;
+        }
+
         var sourceLanguages = await _settingService.GetSettingAsJson<SourceLanguage>(
             SettingKeys.Translation.SourceLanguages
             );
@@ -394,6 +416,45 @@ public class TranslationRequestService : ITranslationRequestService
         await _dbContext.SaveChangesAsync();
         
         return $"Translation request with id {cancelRequest.Id} has been removed";
+    }
+
+    /// <inheritdoc />
+    public async Task<int> RemoveTranslationRequests(BulkRemoveRequest request)
+    {
+        request.Ids ??= [];
+        request.Statuses ??= [];
+        request.ExcludeIds ??= [];
+
+        var query = _dbContext.TranslationRequests.AsQueryable();
+        if (request.AllMatching)
+        {
+            query = TitleSearch.Apply(query, request.SearchQuery);
+            if (request.Statuses.Count > 0)
+            {
+                query = query.Where(translationRequest => request.Statuses.Contains(translationRequest.Status));
+            }
+
+            query = TitleSearch.Exclude(query, request.ExcludeIds);
+        }
+        else
+        {
+            if (request.Ids.Count == 0)
+            {
+                return 0;
+            }
+
+            query = query.Where(translationRequest => request.Ids.Contains(translationRequest.Id));
+        }
+
+        var matches = await query.ToListAsync();
+        if (matches.Count == 0)
+        {
+            return 0;
+        }
+
+        _dbContext.TranslationRequests.RemoveRange(matches);
+        await _dbContext.SaveChangesAsync();
+        return matches.Count;
     }
 
     /// <inheritdoc />
@@ -671,15 +732,18 @@ public class TranslationRequestService : ITranslationRequestService
         string? orderBy,
         bool ascending,
         int pageNumber,
-        int pageSize)
+        int pageSize,
+        IReadOnlyCollection<TranslationStatus>? statuses = null)
     {
         var query = _dbContext.TranslationRequests
             .AsSplitQuery()
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(searchQuery))
+        query = TitleSearch.Apply(query, searchQuery);
+        if (statuses is { Count: > 0 })
         {
-            query = query.Where(translationRequest => translationRequest.Title.ToLower().Contains(searchQuery.ToLower()));
+            var selectedStatuses = statuses.ToList();
+            query = query.Where(translationRequest => selectedStatuses.Contains(translationRequest.Status));
         }
     
         query = orderBy switch

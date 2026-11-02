@@ -1,8 +1,10 @@
 ﻿using Lingarr.Core.Entities;
+using Lingarr.Core.Enum;
 using Lingarr.Server.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
+using Lingarr.Server.Models.Api;
 using Lingarr.Server.Models.TranslationRequests;
 
 namespace Lingarr.Server.Controllers;
@@ -61,6 +63,7 @@ public class TranslationRequestController : ControllerBase
     /// <param name="ascending">Sort direction; true for ascending, false for descending</param>
     /// <param name="pageSize">Number of items per page</param>
     /// <param name="pageNumber">Page number to retrieve</param>
+    /// <param name="statuses">Optional statuses to include. Omit to return every status.</param>
     /// <response code="200">Returns the paginated list of translation requests</response>
     /// <response code="500">If there was an error checking for updates</response>
     /// <returns>ActionResult containing the paginated list of translation requests</returns>
@@ -70,14 +73,16 @@ public class TranslationRequestController : ControllerBase
         string? orderBy,
         bool ascending = true,
         int pageSize = 20,
-        int pageNumber = 1)
+        int pageNumber = 1,
+        [FromQuery] List<TranslationStatus>? statuses = null)
     {
         var value = await _translationRequestService.GetTranslationRequests(
             searchQuery,
             orderBy,
             ascending,
             pageNumber,
-            pageSize);
+            pageSize,
+            statuses);
 
         return Ok(value);
     }
@@ -120,6 +125,26 @@ public class TranslationRequestController : ControllerBase
         }
 
         return NotFound(translationRequest);
+    }
+
+    /// <summary>
+    /// Removes translation requests by id, or every request matching the current search and statuses.
+    /// </summary>
+    /// <param name="request">Ids, or a filter with optional exclusions</param>
+    /// <response code="200">Returns the number of removed translation requests</response>
+    /// <response code="400">If neither ids nor allMatching was provided</response>
+    [HttpPost("remove/bulk")]
+    public async Task<ActionResult<int>> RemoveTranslationRequests([FromBody] BulkRemoveRequest request)
+    {
+        request.Ids ??= [];
+
+        if (!request.AllMatching && request.Ids.Count == 0)
+        {
+            return BadRequest(new { Error = "Provide ids or set allMatching." });
+        }
+
+        var removed = await _translationRequestService.RemoveTranslationRequests(request);
+        return Ok(removed);
     }
 
     /// <summary>
