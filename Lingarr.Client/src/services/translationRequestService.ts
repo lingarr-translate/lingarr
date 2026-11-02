@@ -1,5 +1,11 @@
 import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
-import { IProofreadLineApplyRequest, ITranslationRequest, ITranslationRequestService } from '@/ts'
+import {
+    IBulkRemoveRequest,
+    IProofreadLineApplyRequest,
+    ITranslationRequest,
+    ITranslationRequestService,
+    TranslationStatus
+} from '@/ts'
 
 const service = (
     http: AxiosStatic,
@@ -31,7 +37,8 @@ const service = (
         pageNumber: number,
         searchQuery: string,
         orderBy: string,
-        ascending: boolean
+        ascending: boolean,
+        statuses?: TranslationStatus[]
     ): Promise<T> {
         return new Promise((resolve, reject) => {
             http.get(
@@ -39,7 +46,8 @@ const service = (
                     pageNumber: pageNumber,
                     searchQuery: searchQuery,
                     orderBy: orderBy,
-                    ascending: ascending
+                    ascending: ascending,
+                    ...(statuses && statuses.length > 0 ? { statuses } : {})
                 })
             )
                 .then((response: AxiosResponse<T>) => {
@@ -64,6 +72,23 @@ const service = (
     remove<T>(translationRequest: ITranslationRequest): Promise<T> {
         return new Promise((resolve, reject) => {
             http.post(`${resource}/remove`, translationRequest)
+                .then((response: AxiosResponse<T>) => {
+                    resolve(response.data)
+                })
+                .catch((error: AxiosError) => {
+                    reject(error.response)
+                })
+        })
+    },
+    removeBulk<T>(request: IBulkRemoveRequest): Promise<T> {
+        return new Promise((resolve, reject) => {
+            http.post(`${resource}/remove/bulk`, {
+                ids: request.ids ?? [],
+                allMatching: request.allMatching ?? false,
+                searchQuery: request.searchQuery,
+                statuses: request.statuses ?? [],
+                excludeIds: request.excludeIds ?? []
+            })
                 .then((response: AxiosResponse<T>) => {
                     resolve(response.data)
                 })

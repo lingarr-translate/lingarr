@@ -9,10 +9,10 @@
                     size="small"
                     label="Open details on request" />
                 <ContextMenu
-                    v-if="isSelectMode && movieStore.selectedMovies.length > 0"
+                    v-if="isSelectMode && movieStore.selectionCount > 0"
                     @select="handleTranslate">
                     <ButtonComponent size="sm" variant="accent">
-                        Translate ({{ movieStore.selectedMovies.length }})
+                        Translate ({{ movieStore.selectionCount }})
                     </ButtonComponent>
                 </ContextMenu>
                 <ButtonComponent size="sm" variant="accent" @click="toggleSelectMode">
@@ -64,10 +64,20 @@
                     v-if="isSelectMode"
                     class="col-span-1 flex items-center justify-center px-4 py-2">
                     <CheckboxComponent
-                        :model-value="movieStore.selectAll"
+                        :model-value="movieStore.isPageSelected"
                         @change="movieStore.toggleSelectAll()" />
                 </div>
             </div>
+            <SelectAllNotice
+                v-if="isSelectMode"
+                :mode="movieStore.selectionMode"
+                :page-count="movies.items.length"
+                :total-count="movies.totalCount"
+                :count="movieStore.selectionCount"
+                singular="movie"
+                plural="movies"
+                :page-selected="movieStore.isPageSelected"
+                @select-all="movieStore.selectAllMatching()" />
             <div v-for="item in movies.items" :key="item.id">
                 <div
                     class="border-accent hover:bg-accent/5 flex flex-wrap items-center gap-x-3 gap-y-2 border-b py-3 transition-colors md:grid md:grid-cols-12 md:gap-0 md:py-0">
@@ -81,7 +91,7 @@
                         <span v-if="isSelectMode" class="ml-auto md:hidden">
                             <CheckboxComponent
                                 :model-value="
-                                    movieStore.selectedMovies.some((m) => m.id === item.id)
+                                    movieStore.isSelected(item.id)
                                 "
                                 @change="movieStore.toggleSelect(item)" />
                         </span>
@@ -144,7 +154,7 @@
                         v-if="isSelectMode"
                         class="hidden items-center justify-center px-4 py-2 md:col-span-1 md:flex">
                         <CheckboxComponent
-                            :model-value="movieStore.selectedMovies.some((m) => m.id === item.id)"
+                            :model-value="movieStore.isSelected(item.id)"
                             @change="movieStore.toggleSelect(item)" />
                     </div>
                 </div>
@@ -180,6 +190,7 @@ import InputComponent from '@/components/common/InputComponent.vue'
 import CheckboxComponent from '@/components/common/CheckboxComponent.vue'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
 import ActiveTranslationBadge from '@/components/common/ActiveTranslationBadge.vue'
+import SelectAllNotice from '@/components/common/SelectAllNotice.vue'
 
 const movieStore = useMovieStore()
 const settingStore = useSettingStore()
@@ -219,11 +230,25 @@ const toggleSelectMode = () => {
 }
 
 const handleTranslate = async (language: ILanguage) => {
-    await translateStore.bulkTranslate(
-        movieStore.selectedMovies.map((movie) => movie.id),
-        language.code,
-        MEDIA_TYPE.MOVIE
-    )
+    if (movieStore.selectionMode === 'query') {
+        const count = movieStore.selectionCount
+        if (!confirm(`Translate all ${count} matching movies?`)) {
+            return
+        }
+        await translateStore.bulkTranslate({
+            targetLanguage: language.code,
+            mediaType: MEDIA_TYPE.MOVIE,
+            allMatching: true,
+            searchQuery: movieStore.filter.searchQuery,
+            excludeIds: movieStore.excludeIds
+        })
+    } else {
+        await translateStore.bulkTranslate({
+            mediaIds: movieStore.selectedMovies.map((movie) => movie.id),
+            targetLanguage: language.code,
+            mediaType: MEDIA_TYPE.MOVIE
+        })
+    }
     movieStore.clearSelection()
     isSelectMode.value = false
 }

@@ -31,6 +31,7 @@ public class TranslationRequestServiceBulkTests : IDisposable
     private readonly LingarrDbContext _dbContext;
     private readonly Mock<ISettingService> _settingServiceMock;
     private readonly Mock<ISubtitleService> _subtitleServiceMock;
+    private readonly Mock<IMediaService> _mediaServiceMock;
     private readonly TranslationRequestService _translationRequestService;
 
     public TranslationRequestServiceBulkTests()
@@ -48,6 +49,7 @@ public class TranslationRequestServiceBulkTests : IDisposable
         var subtitleService = new SubtitleService(
             new Mock<ILogger<SubtitleService>>().Object,
             new LanguageCodeService());
+        _mediaServiceMock = new Mock<IMediaService>();
         _subtitleServiceMock = new Mock<ISubtitleService>();
         _subtitleServiceMock
             .Setup(s => s.SelectSourceSubtitle(
@@ -63,7 +65,7 @@ public class TranslationRequestServiceBulkTests : IDisposable
             new Mock<ITranslationServiceFactory>().Object,
             new Mock<IProgressService>().Object,
             new Mock<IStatisticsService>().Object,
-            new Mock<IMediaService>().Object,
+            _mediaServiceMock.Object,
             _settingServiceMock.Object,
             _subtitleServiceMock.Object,
             new Mock<ITranslationRequestEventService>().Object,
@@ -110,6 +112,112 @@ public class TranslationRequestServiceBulkTests : IDisposable
         var translationRequest = Assert.Single(_dbContext.TranslationRequests);
         Assert.Equal("/movies/test/test.movie.en.srt", translationRequest.SubtitleToTranslate);
         Assert.Equal("ro", translationRequest.TargetLanguage);
+    }
+
+    [Fact]
+    public async Task CreateBulkRequest_AllMatching_TranslatesIdsResolvedByTheMediaFilter()
+    {
+        var included = await CreateTestMovie();
+        var excluded = new Movie
+        {
+            RadarrId = 2,
+            Title = "Other Movie",
+            Path = "/movies/other",
+            FileName = "other.movie",
+            DateAdded = DateTime.UtcNow
+        };
+        await _dbContext.Movies.AddAsync(excluded);
+        await _dbContext.SaveChangesAsync();
+        SetupSubtitles();
+        SetupIgnoreCaptions("false");
+        _mediaServiceMock
+            .Setup(service => service.GetMatchingMovieIds("test", It.Is<IReadOnlyCollection<int>>(ids => ids.Contains(excluded.Id))))
+            .ReturnsAsync([included.Id]);
+
+        await _translationRequestService.CreateBulkRequest(new BulkTranslateRequest
+        {
+            TargetLanguage = "ro",
+            MediaType = MediaType.Movie,
+            AllMatching = true,
+            SearchQuery = "test",
+            ExcludeIds = [excluded.Id]
+        });
+
+        var translationRequest = Assert.Single(_dbContext.TranslationRequests);
+        Assert.Equal(included.Id, translationRequest.MediaId);
+    }
+
+    [Fact]
+    public async Task RemoveTranslationRequests_AllMatching_DeletesOnlyTheFilteredRows()
+    {
+        var failedMatch = await CreateRequest("Alpha Failed", TranslationStatus.Failed);
+        var failedOther = await CreateRequest("Beta Failed", TranslationStatus.Failed);
+        var completedMatch = await CreateRequest("Alpha Done", TranslationStatus.Completed);
+
+        var removed = await _translationRequestService.RemoveTranslationRequests(new BulkRemoveRequest
+        {
+            AllMatching = true,
+            SearchQuery = "alpha",
+            Statuses = [TranslationStatus.Failed],
+            ExcludeIds = []
+        });
+
+        Assert.Equal(1, removed);
+        Assert.Null(await _dbContext.TranslationRequests.FindAsync(failedMatch.Id));
+        Assert.NotNull(await _dbContext.TranslationRequests.FindAsync(failedOther.Id));
+        Assert.NotNull(await _dbContext.TranslationRequests.FindAsync(completedMatch.Id));
+    }
+
+    [Fact]
+    public async Task RemoveTranslationRequests_ByIds_LeavesOtherRows()
+    {
+        var first = await CreateRequest("One", TranslationStatus.Pending);
+        var second = await CreateRequest("Two", TranslationStatus.Pending);
+        var third = await CreateRequest("Three", TranslationStatus.Completed);
+
+        var removed = await _translationRequestService.RemoveTranslationRequests(new BulkRemoveRequest
+        {
+            Ids = [first.Id, third.Id]
+        });
+
+        Assert.Equal(2, removed);
+        Assert.Null(await _dbContext.TranslationRequests.FindAsync(first.Id));
+        Assert.NotNull(await _dbContext.TranslationRequests.FindAsync(second.Id));
+        Assert.Null(await _dbContext.TranslationRequests.FindAsync(third.Id));
+    }
+
+    [Fact]
+    public async Task GetTranslationRequests_Statuses_ReturnsOnlyThoseStatuses()
+    {
+        await CreateRequest("Pending one", TranslationStatus.Pending);
+        await CreateRequest("Failed one", TranslationStatus.Failed);
+
+        var page = await _translationRequestService.GetTranslationRequests(
+            null,
+            "CreatedAt",
+            true,
+            1,
+            20,
+            [TranslationStatus.Failed]);
+
+        var item = Assert.Single(page.Items);
+        Assert.Equal(TranslationStatus.Failed, item.Status);
+        Assert.Equal(1, page.TotalCount);
+    }
+
+    private async Task<TranslationRequest> CreateRequest(string title, TranslationStatus status)
+    {
+        var translationRequest = new TranslationRequest
+        {
+            Title = title,
+            SourceLanguage = "en",
+            TargetLanguage = "es",
+            MediaType = MediaType.Movie,
+            Status = status
+        };
+        await _dbContext.TranslationRequests.AddAsync(translationRequest);
+        await _dbContext.SaveChangesAsync();
+        return translationRequest;
     }
 
     private async Task<Movie> CreateTestMovie()

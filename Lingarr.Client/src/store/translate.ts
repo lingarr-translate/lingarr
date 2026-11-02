@@ -1,5 +1,5 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { ILanguage, ISubtitle, IUseTranslateStore, MediaType } from '@/ts'
+import { IBulkTranslateRequest, ILanguage, ISubtitle, IUseTranslateStore, MediaType } from '@/ts'
 import services from '@/services'
 import useTranslationRequestStore from '@/store/translationRequest'
 
@@ -32,16 +32,8 @@ export const useTranslateStore = defineStore('translate', {
             await useTranslationRequestStore().fetchActiveTranslations()
             return result.jobId
         },
-        async bulkTranslate(
-            mediaIds: number[],
-            targetLanguage: string,
-            mediaType: MediaType
-        ): Promise<void> {
-            await services.translate.bulkTranslate<number[]>(
-                mediaIds,
-                targetLanguage,
-                mediaType
-            )
+        async bulkTranslate(request: IBulkTranslateRequest): Promise<void> {
+            await services.translate.bulkTranslate<number[]>(request)
             await useTranslationRequestStore().fetchActiveTranslations()
         },
         async setLanguages(): Promise<void> {

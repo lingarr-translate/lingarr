@@ -12,6 +12,30 @@ import {
     TranslationStatus
 } from '@/ts'
 import services from '@/services'
+import {
+    emptySelection,
+    isItemSelected,
+    isPageSelected as pageIsSelected,
+    selectionCount as countSelection,
+    selectAllMatching as matchingSelection,
+    SelectionState,
+    toggleItem,
+    togglePage
+} from '@/utils/selection'
+
+function currentSelection(state: IUseTranslationRequestStore): SelectionState<ITranslationRequest> {
+    return {
+        mode: state.selectionMode,
+        selected: state.selectedRequests,
+        excludeIds: state.excludeIds
+    }
+}
+
+function sameStatuses(left?: TranslationStatus[], right?: TranslationStatus[]) {
+    const current = left ?? []
+    const next = right ?? []
+    return current.length === next.length && current.every((status, index) => status === next[index])
+}
 
 export const useTranslationRequestStore = defineStore('translateRequest', {
     state: (): IUseTranslationRequestStore => ({
@@ -29,7 +53,8 @@ export const useTranslationRequestStore = defineStore('translateRequest', {
             pageNumber: 1
         },
         selectedRequests: [] as ITranslationRequest[],
-        selectAll: false,
+        selectionMode: 'ids',
+        excludeIds: [],
         proofreadSupported: false
     }),
     getters: {
@@ -40,11 +65,25 @@ export const useTranslationRequestStore = defineStore('translateRequest', {
         },
         getFilter: (state: IUseTranslationRequestStore): IFilter => state.filter,
         getSelectedRequests: (state: IUseTranslationRequestStore): ITranslationRequest[] =>
-            state.selectedRequests
+            state.selectedRequests,
+        isPageSelected(): boolean {
+            return pageIsSelected(currentSelection(this), this.translationRequests.items)
+        },
+        selectionCount(): number {
+            return countSelection(currentSelection(this), this.translationRequests.totalCount)
+        },
+        isSelected() {
+            return (id: number) => isItemSelected(currentSelection(this), id)
+        }
     },
     actions: {
         async setFilter(filterVal: IFilter) {
-            this.filter = filterVal.searchQuery ? { ...filterVal, pageNumber: 1 } : filterVal
+            const statusesChanged = !sameStatuses(this.filter.statuses, filterVal.statuses)
+            if (filterVal.searchQuery !== this.filter.searchQuery || statusesChanged) {
+                this.clearSelection()
+            }
+            const next = statusesChanged ? { ...filterVal, pageNumber: 1 } : filterVal
+            this.filter = next.searchQuery ? { ...next, pageNumber: 1 } : next
             await this.fetch()
         },
         async fetch() {
@@ -54,7 +93,8 @@ export const useTranslationRequestStore = defineStore('translateRequest', {
                 this.filter.pageNumber,
                 this.filter.searchQuery,
                 this.filter.sortBy,
-                this.filter.isAscending
+                this.filter.isAscending,
+                this.filter.statuses
             )
         },
         setActiveTranslations(activeTranslations: IActiveTranslation[]) {
@@ -123,27 +163,38 @@ export const useTranslationRequestStore = defineStore('translateRequest', {
                 }
             )
         },
+        async removeSelected() {
+            if (this.selectionMode === 'query') {
+                await services.translationRequest.removeBulk<number>({
+                    allMatching: true,
+                    searchQuery: this.filter.searchQuery,
+                    statuses: this.filter.statuses,
+                    excludeIds: this.excludeIds
+                })
+            } else {
+                await services.translationRequest.removeBulk<number>({
+                    ids: this.selectedRequests.map((request) => request.id)
+                })
+            }
+            this.clearSelection()
+            await this.fetch()
+        },
+        applySelection(next: SelectionState<ITranslationRequest>) {
+            this.selectionMode = next.mode
+            this.selectedRequests = next.selected
+            this.excludeIds = next.excludeIds
+        },
         clearSelection() {
-            this.selectedRequests = []
-            this.selectAll = false
+            this.applySelection(emptySelection())
         },
         toggleSelectAll() {
-            this.selectAll = !this.selectAll
-            if (this.selectAll) {
-                this.selectedRequests = [...this.translationRequests.items]
-            } else {
-                this.selectedRequests = []
-            }
+            this.applySelection(togglePage(currentSelection(this), this.translationRequests.items))
         },
-
+        selectAllMatching() {
+            this.applySelection(matchingSelection())
+        },
         toggleSelect(request: ITranslationRequest) {
-            const index = this.selectedRequests.findIndex((r) => r.id === request.id)
-            if (index === -1) {
-                this.selectedRequests.push(request)
-            } else {
-                this.selectedRequests.splice(index, 1)
-            }
-            this.selectAll = this.selectedRequests.length === this.translationRequests.items.length
+            this.applySelection(toggleItem(currentSelection(this), request))
         }
     }
 })

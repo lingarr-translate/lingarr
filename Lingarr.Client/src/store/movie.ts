@@ -1,6 +1,24 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { IFilter, IMovie, IPagedResult, IUseMovieStore, MediaType } from '@/ts'
 import services from '@/services'
+import {
+    emptySelection,
+    isItemSelected,
+    isPageSelected as pageIsSelected,
+    selectionCount as countSelection,
+    selectAllMatching as matchingSelection,
+    SelectionState,
+    toggleItem,
+    togglePage
+} from '@/utils/selection'
+
+function currentSelection(state: IUseMovieStore): SelectionState<IMovie> {
+    return {
+        mode: state.selectionMode,
+        selected: state.selectedMovies,
+        excludeIds: state.excludeIds
+    }
+}
 
 export const useMovieStore = defineStore('movie', {
     state: (): IUseMovieStore => ({
@@ -17,11 +35,21 @@ export const useMovieStore = defineStore('movie', {
             pageNumber: 1
         },
         selectedMovies: [],
-        selectAll: false,
+        selectionMode: 'ids',
+        excludeIds: [],
         includeSummary: { included: 0, total: 0 }
     }),
     getters: {
         getFilter: (state: IUseMovieStore): IFilter => state.filter,
+        isPageSelected(): boolean {
+            return pageIsSelected(currentSelection(this), this.movies.items)
+        },
+        selectionCount(): number {
+            return countSelection(currentSelection(this), this.movies.totalCount)
+        },
+        isSelected() {
+            return (id: number) => isItemSelected(currentSelection(this), id)
+        },
         get(): IPagedResult<IMovie> {
             this.movies.items = this.movies.items?.map((item) => {
                 return {
@@ -36,6 +64,9 @@ export const useMovieStore = defineStore('movie', {
     },
     actions: {
         async setFilter(filterVal: IFilter) {
+            if (filterVal.searchQuery !== this.filter.searchQuery) {
+                this.clearSelection()
+            }
             this.filter = filterVal.searchQuery ? { ...filterVal, pageNumber: 1 } : filterVal
             await this.fetch()
         },
@@ -62,27 +93,22 @@ export const useMovieStore = defineStore('movie', {
         async updateThreshold(type: MediaType, id: number, hours: string) {
             await services.media.threshold(type, id, hours)
         },
+        applySelection(next: SelectionState<IMovie>) {
+            this.selectionMode = next.mode
+            this.selectedMovies = next.selected
+            this.excludeIds = next.excludeIds
+        },
         clearSelection() {
-            this.selectedMovies = []
-            this.selectAll = false
+            this.applySelection(emptySelection())
         },
         toggleSelectAll() {
-            if (this.selectAll) {
-                this.selectedMovies = []
-                this.selectAll = false
-            } else {
-                this.selectedMovies = [...this.movies.items]
-                this.selectAll = true
-            }
+            this.applySelection(togglePage(currentSelection(this), this.movies.items))
+        },
+        selectAllMatching() {
+            this.applySelection(matchingSelection())
         },
         toggleSelect(movie: IMovie) {
-            const index = this.selectedMovies.findIndex((m) => m.id === movie.id)
-            if (index === -1) {
-                this.selectedMovies.push(movie)
-            } else {
-                this.selectedMovies.splice(index, 1)
-            }
-            this.selectAll = this.selectedMovies.length === this.movies.items.length
+            this.applySelection(toggleItem(currentSelection(this), movie))
         }
     }
 })

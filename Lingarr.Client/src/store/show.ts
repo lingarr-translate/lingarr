@@ -1,6 +1,24 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import services from '@/services'
 import { IFilter, IUseShowStore, IPagedResult, IShow, MEDIA_TYPE, MediaType } from '@/ts'
+import {
+    emptySelection,
+    isItemSelected,
+    isPageSelected as pageIsSelected,
+    selectionCount as countSelection,
+    selectAllMatching as matchingSelection,
+    SelectionState,
+    toggleItem,
+    togglePage
+} from '@/utils/selection'
+
+function currentSelection(state: IUseShowStore): SelectionState<IShow> {
+    return {
+        mode: state.selectionMode,
+        selected: state.selectedShows,
+        excludeIds: state.excludeIds
+    }
+}
 
 export const useShowStore = defineStore('show', {
     state: (): IUseShowStore => ({
@@ -17,15 +35,28 @@ export const useShowStore = defineStore('show', {
             pageNumber: 1
         },
         selectedShows: [],
-        selectAll: false,
+        selectionMode: 'ids',
+        excludeIds: [],
         includeSummary: { included: 0, total: 0 }
     }),
     getters: {
         getFilter: (state: IUseShowStore): IFilter => state.filter,
+        isPageSelected(): boolean {
+            return pageIsSelected(currentSelection(this), this.shows.items)
+        },
+        selectionCount(): number {
+            return countSelection(currentSelection(this), this.shows.totalCount)
+        },
+        isSelected() {
+            return (id: number) => isItemSelected(currentSelection(this), id)
+        },
         get: (state: IUseShowStore): IPagedResult<IShow> => state.shows
     },
     actions: {
         async setFilter(filterVal: IFilter) {
+            if (filterVal.searchQuery !== this.filter.searchQuery) {
+                this.clearSelection()
+            }
             this.filter = filterVal.searchQuery ? { ...filterVal, pageNumber: 1 } : filterVal
             await this.fetch()
         },
@@ -75,27 +106,22 @@ export const useShowStore = defineStore('show', {
         async updateThreshold(type: MediaType, id: number, hours: string) {
             await services.media.threshold(type, id, hours)
         },
+        applySelection(next: SelectionState<IShow>) {
+            this.selectionMode = next.mode
+            this.selectedShows = next.selected
+            this.excludeIds = next.excludeIds
+        },
         clearSelection() {
-            this.selectedShows = []
-            this.selectAll = false
+            this.applySelection(emptySelection())
         },
         toggleSelectAll() {
-            if (this.selectAll) {
-                this.selectedShows = []
-                this.selectAll = false
-            } else {
-                this.selectedShows = [...this.shows.items]
-                this.selectAll = true
-            }
+            this.applySelection(togglePage(currentSelection(this), this.shows.items))
+        },
+        selectAllMatching() {
+            this.applySelection(matchingSelection())
         },
         toggleSelect(show: IShow) {
-            const index = this.selectedShows.findIndex((s) => s.id === show.id)
-            if (index === -1) {
-                this.selectedShows.push(show)
-            } else {
-                this.selectedShows.splice(index, 1)
-            }
-            this.selectAll = this.selectedShows.length === this.shows.items.length
+            this.applySelection(toggleItem(currentSelection(this), show))
         }
     }
 })

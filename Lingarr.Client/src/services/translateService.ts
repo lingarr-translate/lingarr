@@ -1,5 +1,5 @@
 import { AxiosError, AxiosResponse, AxiosStatic } from 'axios'
-import { ILanguage, IProofreadLineRequest, ISubtitle, ITranslateService, MediaType } from '@/ts'
+import { IBulkTranslateRequest, ILanguage, IProofreadLineRequest, ISubtitle, ITranslateService, MediaType } from '@/ts'
 
 const service = (http: AxiosStatic, resource = '/api/translate'): ITranslateService => ({
     translateSubtitle<T>(
@@ -27,16 +27,15 @@ const service = (http: AxiosStatic, resource = '/api/translate'): ITranslateServ
                 })
         })
     },
-    bulkTranslate<T>(
-        mediaIds: number[],
-        targetLanguage: string,
-        mediaType: MediaType
-    ): Promise<T> {
+    bulkTranslate<T>(request: IBulkTranslateRequest): Promise<T> {
         return new Promise((resolve, reject) => {
             http.post(`${resource}/bulk`, {
-                mediaIds,
-                targetLanguage,
-                mediaType
+                mediaIds: request.mediaIds ?? [],
+                targetLanguage: request.targetLanguage,
+                mediaType: request.mediaType,
+                allMatching: request.allMatching ?? false,
+                searchQuery: request.searchQuery,
+                excludeIds: request.excludeIds ?? []
             })
             .then((response: AxiosResponse<T>) => {
                 resolve(response.data)

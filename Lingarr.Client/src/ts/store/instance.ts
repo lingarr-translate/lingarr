@@ -1,4 +1,5 @@
 import { IVersion } from '@/ts/version'
+import { type TranslationStatus } from '@/ts/media'
 
 export interface IUseInstanceStore {
     version: IVersion
@@ -39,6 +40,7 @@ export type IFilter = {
     searchQuery: string
     sortBy: string
     isAscending: boolean
+    statuses?: TranslationStatus[]
 }
 export type IOptions = {
     label: string

@@ -54,10 +54,7 @@ public class MediaService : IMediaService
             .AsSplitQuery()
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(searchQuery))
-        {
-            query = query.Where(m => m.Title.ToLower().Contains(searchQuery.ToLower()));
-        }
+        query = TitleSearch.Apply(query, searchQuery);
 
         query = orderBy switch
         {
@@ -242,10 +239,7 @@ public class MediaService : IMediaService
             .AsSplitQuery()
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(searchQuery))
-        {
-            query = query.Where(s => s.Title.ToLower().Contains(searchQuery.ToLower()));
-        }
+        query = TitleSearch.Apply(query, searchQuery);
 
         query = orderBy switch
         {
@@ -268,6 +262,20 @@ public class MediaService : IMediaService
             PageNumber = pageNumber,
             PageSize = pageSize
         };
+    }
+
+    /// <inheritdoc />
+    public Task<List<int>> GetMatchingMovieIds(string? searchQuery, IReadOnlyCollection<int> excludeIds)
+    {
+        var query = TitleSearch.Exclude(TitleSearch.Apply(_dbContext.Movies.AsQueryable(), searchQuery), excludeIds);
+        return query.Select(movie => movie.Id).ToListAsync();
+    }
+
+    /// <inheritdoc />
+    public Task<List<int>> GetMatchingShowIds(string? searchQuery, IReadOnlyCollection<int> excludeIds)
+    {
+        var query = TitleSearch.Exclude(TitleSearch.Apply(_dbContext.Shows.AsQueryable(), searchQuery), excludeIds);
+        return query.Select(show => show.Id).ToListAsync();
     }
     
     /// <inheritdoc />

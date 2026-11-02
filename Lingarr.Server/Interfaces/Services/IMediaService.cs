@@ -50,6 +50,16 @@ public interface IMediaService
         int pageSize);
 
     /// <summary>
+    /// Movie ids matching the same title search as <see cref="GetMovies"/>, minus <paramref name="excludeIds"/>.
+    /// </summary>
+    Task<List<int>> GetMatchingMovieIds(string? searchQuery, IReadOnlyCollection<int> excludeIds);
+
+    /// <summary>
+    /// Show ids matching the same title search as <see cref="GetShows"/>, minus <paramref name="excludeIds"/>.
+    /// </summary>
+    Task<List<int>> GetMatchingShowIds(string? searchQuery, IReadOnlyCollection<int> excludeIds);
+
+    /// <summary>
     /// Retrieves a movie id (lingarr's id) from the database with a Radarr movie id.
     /// If it is not in the database, it will try to sync the Movie with Radarr
     /// If the Movie is not found in Rdarr either, 0 will be returned

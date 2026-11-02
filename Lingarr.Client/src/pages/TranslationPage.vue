@@ -6,10 +6,10 @@
             <div
                 class="flex w-full flex-col gap-2 md:w-fit md:flex-row md:justify-between md:space-x-2">
                 <button
-                    v-if="isSelectMode"
+                    v-if="isSelectMode && translationRequestStore.selectionCount > 0"
                     class="hover:text-primary-content/50 cursor-pointer rounded-md border border-accent px-2 py-1 text-primary-content transition-colors"
                     @click="handleDelete">
-                    Delete ({{ translationRequestStore.selectedRequests.length }})
+                    Delete ({{ translationRequestStore.selectionCount }})
                 </button>
                 <button
                     class="hover:text-primary-content/50 cursor-pointer rounded-md border border-accent px-2 py-1 text-primary-content transition-colors"
@@ -17,6 +17,18 @@
                     {{ isSelectMode ? 'Cancel' : 'Select' }}
                 </button>
                 <div class="flex flex-wrap items-center gap-2">
+                    <select
+                        class="block w-full rounded-md border border-accent bg-primary px-2 py-1 text-sm text-primary-content focus:border-accent focus:ring-2 focus:ring-accent md:w-auto"
+                        :value="statusValue"
+                        @change="onStatusChange">
+                        <option value="">All statuses</option>
+                        <option
+                            v-for="option in statusOptions"
+                            :key="option.value"
+                            :value="option.value">
+                            {{ option.label }}
+                        </option>
+                    </select>
                     <SortControls
                         v-model="filter"
                         :options="[
@@ -53,10 +65,20 @@
                     v-if="isSelectMode"
                     class="col-span-1 flex items-center justify-center px-4 py-2">
                     <CheckboxComponent
-                        :model-value="translationRequestStore.selectAll"
+                        :model-value="translationRequestStore.isPageSelected"
                         @change="translationRequestStore.toggleSelectAll()" />
                 </div>
             </div>
+            <SelectAllNotice
+                v-if="isSelectMode"
+                :mode="translationRequestStore.selectionMode"
+                :page-count="translationRequests.items.length"
+                :total-count="translationRequests.totalCount"
+                :count="translationRequestStore.selectionCount"
+                singular="translation request"
+                plural="translation requests"
+                :page-selected="translationRequestStore.isPageSelected"
+                @select-all="translationRequestStore.selectAllMatching()" />
             <div
                 v-for="item in translationRequests.items"
                 :key="item.id"
@@ -80,9 +102,7 @@
                         <CheckboxComponent
                             v-if="isSelectMode"
                             :model-value="
-                                translationRequestStore.selectedRequests.some(
-                                    (request) => request.id === item.id
-                                )
+                                translationRequestStore.isSelected(item.id)
                             "
                             @change="translationRequestStore.toggleSelect(item)" />
                     </span>
@@ -138,11 +158,7 @@
                     v-if="isSelectMode"
                     class="hidden items-center justify-center py-2 md:col-span-1 md:flex md:px-4">
                     <CheckboxComponent
-                        :model-value="
-                            translationRequestStore.selectedRequests.some(
-                                (request) => request.id === item.id
-                            )
-                        "
+                        :model-value="translationRequestStore.isSelected(item.id)"
                         @change="translationRequestStore.toggleSelect(item)" />
                 </div>
             </div>
@@ -156,7 +172,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, ComputedRef, computed } from 'vue'
+import { ref, onMounted, onUnmounted, ComputedRef, computed, type WritableComputedRef } from 'vue'
 import {
     Hub,
     IFilter,
@@ -164,7 +180,8 @@ import {
     ITranslationRequest,
     MEDIA_TYPE,
     TRANSLATION_ACTIONS,
-    TRANSLATION_STATUS
+    TRANSLATION_STATUS,
+    type TranslationStatus as RequestStatus
 } from '@/ts'
 import useTranslationRequestStore from '@/store/translationRequest'
 import { useSignalR } from '@/composables/useSignalR'
@@ -179,6 +196,7 @@ import TranslationAction from '@/components/common/TranslationAction.vue'
 import TranslationCompletedAt from '@/components/common/TranslationCompletedAt.vue'
 import BadgeComponent from '@/components/common/BadgeComponent.vue'
 import CheckboxComponent from '@/components/common/CheckboxComponent.vue'
+import SelectAllNotice from '@/components/common/SelectAllNotice.vue'
 
 const signalR = useSignalR()
 const hubConnection = ref<Hub>()
@@ -188,12 +206,31 @@ const translationRequests: ComputedRef<IPagedResult<ITranslationRequest>> = comp
     () => translationRequestStore.getTranslationRequests
 )
 
-const filter: ComputedRef<IFilter> = computed({
+const filter: WritableComputedRef<IFilter> = computed({
     get: () => translationRequestStore.filter,
     set: useDebounce((value: IFilter) => {
         translationRequestStore.setFilter(value)
     }, 300)
 })
+
+const statusOptions: { label: string; value: RequestStatus }[] = [
+    { label: 'Pending', value: TRANSLATION_STATUS.PENDING },
+    { label: 'In progress', value: TRANSLATION_STATUS.INPROGRESS },
+    { label: 'Completed', value: TRANSLATION_STATUS.COMPLETED },
+    { label: 'Failed', value: TRANSLATION_STATUS.FAILED },
+    { label: 'Cancelled', value: TRANSLATION_STATUS.CANCELLED },
+    { label: 'Interrupted', value: TRANSLATION_STATUS.INTERRUPTED }
+]
+
+const statusValue = computed(() => filter.value.statuses?.[0] ?? '')
+
+const onStatusChange = (event: Event) => {
+    const value = (event.target as HTMLSelectElement).value
+    filter.value = {
+        ...filter.value,
+        statuses: value ? [value as RequestStatus] : []
+    }
+}
 
 async function handleAction(translationRequest: ITranslationRequest, action: TRANSLATION_ACTIONS) {
     switch (action) {
@@ -238,10 +275,13 @@ const toggleSelectMode = () => {
 }
 
 const handleDelete = async () => {
-    for (const request of translationRequestStore.getSelectedRequests) {
-        await translationRequestStore.remove(request)
+    if (translationRequestStore.selectionMode === 'query') {
+        const count = translationRequestStore.selectionCount
+        if (!confirm(`Delete all ${count} matching translation requests?`)) {
+            return
+        }
     }
-    translationRequestStore.clearSelection()
-    translationRequestStore.fetch()
+    await translationRequestStore.removeSelected()
+    isSelectMode.value = false
 }
 </script>

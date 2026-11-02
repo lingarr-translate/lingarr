@@ -59,6 +59,7 @@ public interface ITranslationRequestService
     /// <param name="ascending">Sort direction</param>
     /// <param name="pageNumber">Page number for pagination (1-based)</param>
     /// <param name="pageSize">Number of items per page</param>
+    /// <param name="statuses">Optional statuses to include. Omit to return every status.</param>
     /// <returns>
     /// A PagedResult containing the requested translation requests and pagination information
     /// </returns>
@@ -67,7 +68,15 @@ public interface ITranslationRequestService
         string? orderBy,
         bool ascending,
         int pageNumber,
-        int pageSize);
+        int pageSize,
+        IReadOnlyCollection<TranslationStatus>? statuses = null);
+
+    /// <summary>
+    /// Removes translation requests by id, or every request matching the search and statuses.
+    /// </summary>
+    /// <param name="request">Ids, or a filter with optional exclusions</param>
+    /// <returns>The number of translation requests removed</returns>
+    Task<int> RemoveTranslationRequests(BulkRemoveRequest request);
 
     /// <summary>
     /// Removes an existing translation request and its associated background job.

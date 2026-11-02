@@ -1,5 +1,6 @@
 ﻿using Lingarr.Contracts.Models;
 using Lingarr.Core.Configuration;
+using Lingarr.Core.Enum;
 using Lingarr.Server.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Lingarr.Server.Models;
@@ -63,6 +64,19 @@ public class TranslateController : ControllerBase
     [HttpPost("bulk")]
     public async Task<ActionResult> BulkTranslate([FromBody] BulkTranslateRequest request)
     {
+        request.MediaIds ??= [];
+        request.ExcludeIds ??= [];
+
+        if (!request.AllMatching && request.MediaIds.Count == 0)
+        {
+            return BadRequest(new { Error = "Provide mediaIds or set allMatching." });
+        }
+
+        if (request.AllMatching && request.MediaType is not (MediaType.Movie or MediaType.Show))
+        {
+            return BadRequest(new { Error = "allMatching supports movies and shows." });
+        }
+
         try
         {
             await _translationRequestService.CreateBulkRequest(request);

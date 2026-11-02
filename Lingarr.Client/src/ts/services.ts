@@ -16,8 +16,26 @@ import {
     IPluginStatus,
     IPluginSummary,
     IProofreadLineApplyRequest,
-    IProofreadLineRequest
+    IProofreadLineRequest,
+    type TranslationStatus
 } from '@/ts'
+
+export interface IBulkTranslateRequest {
+    mediaIds?: number[]
+    targetLanguage: string
+    mediaType: MediaType
+    allMatching?: boolean
+    searchQuery?: string
+    excludeIds?: number[]
+}
+
+export interface IBulkRemoveRequest {
+    ids?: number[]
+    allMatching?: boolean
+    searchQuery?: string
+    statuses?: TranslationStatus[]
+    excludeIds?: number[]
+}
 
 export interface Services {
     auth: IAuthService
@@ -99,11 +117,7 @@ export interface ITranslateService {
         target: ILanguage,
         mediaType: MediaType
     ): Promise<T>
-    bulkTranslate<T>(
-        mediaIds: number[],
-        targetLanguage: string,
-        mediaType: MediaType
-    ): Promise<T>
+    bulkTranslate<T>(request: IBulkTranslateRequest): Promise<T>
     getLanguages<T>(): Promise<T>
     proofreadStatus<T>(): Promise<T>
     proofreadLine<T>(request: IProofreadLineRequest): Promise<T>
@@ -116,10 +130,12 @@ export interface ITranslationRequestService {
         pageNumber: number,
         searchQuery: string,
         sortBy: string,
-        ascending: boolean
+        ascending: boolean,
+        statuses?: TranslationStatus[]
     ): Promise<T>
     cancel<T>(translationRequest: ITranslationRequest): Promise<T>
     remove<T>(translationRequest: ITranslationRequest): Promise<T>
+    removeBulk<T>(request: IBulkRemoveRequest): Promise<T>
     retry<T>(translationRequest: ITranslationRequest): Promise<T>
     resume<T>(translationRequest: ITranslationRequest): Promise<T>
     proofread<T>(translationRequest: ITranslationRequest): Promise<T>
