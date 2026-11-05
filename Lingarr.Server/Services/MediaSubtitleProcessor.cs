@@ -59,6 +59,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         var sourceLanguages = await GetLanguagesSetting<SourceLanguage>(SettingKeys.Translation.SourceLanguages);
         var targetLanguages = await GetLanguagesSetting<TargetLanguage>(SettingKeys.Translation.TargetLanguages);
         var ignoreCaptions = await _settingService.GetSetting(SettingKeys.Translation.IgnoreCaptions) ?? "false";
+        var firstTargetOnly = await _settingService.GetSetting(SettingKeys.Translation.FirstTargetOnly) ?? "false";
 
         _media = media;
         _mediaType = mediaType;
@@ -69,7 +70,7 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         }
         
         _logger.LogInformation("Initiating subtitle processing.");
-        return await ProcessSubtitles(subtitles, sourceLanguages, targetLanguages, ignoreCaptions);
+        return await ProcessSubtitles(subtitles, sourceLanguages, targetLanguages, ignoreCaptions, firstTargetOnly);
     }
 
     /// <summary>
@@ -79,12 +80,14 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     /// <param name="sourceLanguages">The source languages.</param>
     /// <param name="targetLanguages">The target languages.</param>
     /// <param name="ignoreCaptions">The ignore captions setting.</param>
+    /// <param name="firstTargetOnly">The first target only setting.</param>
     /// <returns>True if new translation requests were created, false otherwise.</returns>
     private async Task<bool> ProcessSubtitles(
         List<Subtitles> subtitles,
-        HashSet<string> sourceLanguages,
-        HashSet<string> targetLanguages,
-        string ignoreCaptions)
+        List<string> sourceLanguages,
+        List<string> targetLanguages,
+        string ignoreCaptions,
+        string firstTargetOnly)
     {
         if (sourceLanguages.Count == 0 || targetLanguages.Count == 0)
         {
@@ -114,11 +117,27 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
 
         var sourceSubtitle = selected.Subtitle;
         var languagesToTranslate = targetLanguages
-            .Where(targetLanguage => !subtitles.Any(s =>
-                s.Language.Equals(targetLanguage, StringComparison.OrdinalIgnoreCase)
-                && (ignoreCaptions == "true" ||
-                    string.Equals(s.Caption, sourceSubtitle.Caption, StringComparison.OrdinalIgnoreCase))))
+            .Where(targetLanguage => !_subtitleService.TargetSubtitleExists(
+                subtitles, targetLanguage, sourceSubtitle, ignoreCaptions == "true"))
             .ToList();
+
+        if (firstTargetOnly == "true")
+        {
+            var existingTargetLanguages = targetLanguages
+                .Except(languagesToTranslate, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (existingTargetLanguages.Any())
+            {
+                _logger.LogInformation(
+                    "Translation skipped because a subtitle exists for target languages: |Green|{ExistingLanguages}|/Green| and only the first target language is translated",
+                    string.Join(", ", existingTargetLanguages));
+                await UpdateHash();
+                return false;
+            }
+
+            languagesToTranslate = [targetLanguages[0]];
+        }
+
         if (ignoreCaptions == "true")
         {
             var targetLanguagesWithCaptions = subtitles
@@ -152,6 +171,21 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
             .Select(translationRequest => translationRequest.TargetLanguage)
             .Distinct()
             .ToListAsync();
+
+        if (firstTargetOnly == "true")
+        {
+            var requestedTargetLanguages = targetLanguages
+                .Intersect(existingTranslationRequests, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+            if (requestedTargetLanguages.Any())
+            {
+                _logger.LogInformation(
+                    "Translation skipped because a translation request exists for target languages: |Green|{RequestedLanguages}|/Green| and only the first target language is translated",
+                    string.Join(", ", requestedTargetLanguages));
+                await UpdateHash();
+                return false;
+            }
+        }
 
         languagesToTranslate = languagesToTranslate
             .Except(existingTranslationRequests, StringComparer.OrdinalIgnoreCase)
@@ -194,8 +228,8 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     /// <returns>A Base64 encoded string representing the hash of the current subtitle state.</returns>
     private string CreateHash(
         List<Subtitles> subtitles,
-        HashSet<string> sourceLanguages,
-        HashSet<string> targetLanguages,
+        List<string> sourceLanguages,
+        List<string> targetLanguages,
         string ignoreCaptions)
     {
         using var sha256 = SHA256.Create();
@@ -216,13 +250,14 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     /// </summary>
     /// <typeparam name="T">The type of language setting to retrieve (Source or Target).</typeparam>
     /// <param name="settingName">The name of the setting to retrieve.</param>
-    /// <returns>A HashSet of language codes from the configuration.</returns>
-    private async Task<HashSet<string>> GetLanguagesSetting<T>(string settingName) where T : class, ILanguage
+    /// <returns>A list of language codes in the configured order.</returns>
+    private async Task<List<string>> GetLanguagesSetting<T>(string settingName) where T : class, ILanguage
     {
         var languages = await _settingService.GetSettingAsJson<T>(settingName);
         return languages
             .Select(lang => lang.Code)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     /// <summary>

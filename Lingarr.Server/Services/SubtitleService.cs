@@ -427,7 +427,7 @@ public class SubtitleService : ISubtitleService
     /// <inheritdoc />
     public SelectedSourceSubtitle? SelectSourceSubtitle(
         List<Subtitles> matchingSubtitles,
-        HashSet<string> sourceCodes)
+        IReadOnlyList<string> sourceCodes)
     {
         var availableLanguages = matchingSubtitles
             .Select(s => s.Language.ToLowerInvariant())
@@ -436,10 +436,10 @@ public class SubtitleService : ISubtitleService
         LanguageMatch? bestMatch = null;
         foreach (var sourceCode in sourceCodes)
         {
-            var match = _languageCodeService.GetBestMatch(sourceCode, availableLanguages);
-            if (match != null && (bestMatch == null || match.Tier < bestMatch.Tier))
+            bestMatch = _languageCodeService.GetBestMatch(sourceCode, availableLanguages);
+            if (bestMatch != null)
             {
-                bestMatch = match;
+                break;
             }
         }
 
@@ -466,6 +466,19 @@ public class SubtitleService : ISubtitleService
             SourceLanguage = sourceLanguage,
             AvailableLanguages = availableLanguages
         };
+    }
+
+    /// <inheritdoc />
+    public bool TargetSubtitleExists(
+        List<Subtitles> subtitles,
+        string targetLanguage,
+        Subtitles sourceSubtitle,
+        bool ignoreCaptions)
+    {
+        return subtitles.Any(subtitle =>
+            subtitle.Language.Equals(targetLanguage, StringComparison.OrdinalIgnoreCase)
+            && (ignoreCaptions ||
+                string.Equals(subtitle.Caption, sourceSubtitle.Caption, StringComparison.OrdinalIgnoreCase)));
     }
 
     /// <summary>

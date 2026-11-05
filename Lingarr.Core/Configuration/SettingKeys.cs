@@ -88,6 +88,7 @@ public static class SettingKeys
 
         public const string SourceLanguages = "source_languages";
         public const string TargetLanguages = "target_languages";
+        public const string FirstTargetOnly = "first_target_only";
         public const string AiPrompt = "ai_prompt";
         public const string AiUserPrompt = "ai_user_prompt";
         public const string ProofreadPrompt = "proofread_prompt";

@@ -194,8 +194,19 @@ public class TranslationRequestService : ITranslationRequestService
         var sourceLanguages = await _settingService.GetSettingAsJson<SourceLanguage>(
             SettingKeys.Translation.SourceLanguages
             );
-        var sourceCodes = sourceLanguages.Select(sourceLanguage => sourceLanguage.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var sourceCodes = sourceLanguages
+            .Select(sourceLanguage => sourceLanguage.Code)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var targetLanguages = await _settingService.GetSettingAsJson<TargetLanguage>(
+            SettingKeys.Translation.TargetLanguages
+            );
+        var targetCodes = targetLanguages
+            .Select(targetLanguage => targetLanguage.Code)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
         var ignoreCaptions = await _settingService.GetSetting(SettingKeys.Translation.IgnoreCaptions) ?? "false";
+        var firstTargetOnly = await _settingService.GetSetting(SettingKeys.Translation.FirstTargetOnly) ?? "false";
 
         switch (request.MediaType)
         {
@@ -218,7 +229,9 @@ public class TranslationRequestService : ITranslationRequestService
                         MediaType.Movie,
                         request.TargetLanguage, 
                         sourceCodes, 
-                        ignoreCaptions);
+                        targetCodes,
+                        ignoreCaptions,
+                        firstTargetOnly);
                 }
                 break;
 
@@ -251,7 +264,9 @@ public class TranslationRequestService : ITranslationRequestService
                                 MediaType.Episode,
                                 request.TargetLanguage,
                                 sourceCodes, 
-                                ignoreCaptions);
+                                targetCodes,
+                                ignoreCaptions,
+                                firstTargetOnly);
                         }
                     }
                 }
@@ -268,8 +283,10 @@ public class TranslationRequestService : ITranslationRequestService
         int mediaId, 
         MediaType mediaType,
         string targetLanguage, 
-        HashSet<string> sourceCodes, 
-        string ignoreCaptions)
+        List<string> sourceCodes, 
+        List<string> targetCodes,
+        string ignoreCaptions,
+        string firstTargetOnly)
     {
         if (string.IsNullOrEmpty(fileName))
         {
@@ -287,16 +304,23 @@ public class TranslationRequestService : ITranslationRequestService
             return;
         }
 
-        var targetExists = subtitles.Any(s =>
-            s.Language.Equals(targetLanguage, StringComparison.OrdinalIgnoreCase) &&
-            (ignoreCaptions == "true" ||
-             string.Equals(s.Caption, selected.Subtitle.Caption, StringComparison.OrdinalIgnoreCase)));
-
-        if (targetExists)
+        if (_subtitleService.TargetSubtitleExists(subtitles, targetLanguage, selected.Subtitle, ignoreCaptions == "true"))
         {
             _logger.LogDebug("Bulk: skipping mediaId {MediaId} — matching target subtitle {Target} already exists",
                 mediaId, targetLanguage);
             return;
+        }
+
+        if (firstTargetOnly == "true" && targetCodes.Contains(targetLanguage, StringComparer.OrdinalIgnoreCase))
+        {
+            var existingTargetCode = targetCodes.FirstOrDefault(targetCode =>
+                _subtitleService.TargetSubtitleExists(subtitles, targetCode, selected.Subtitle, ignoreCaptions == "true"));
+            if (existingTargetCode != null)
+            {
+                _logger.LogDebug("Bulk: skipping mediaId {MediaId} because target subtitle {Existing} exists and only the first target language is translated",
+                    mediaId, existingTargetCode);
+                return;
+            }
         }
 
         await CreateRequest(new TranslateAbleSubtitle

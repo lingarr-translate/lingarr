@@ -89,6 +89,8 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 [{"name":"English","code":"en"},{"name":"Dutch","code":"nl"}]
 ```
 
+The order of the array is the priority order, see [Source and target languages](#source-and-target-languages).
+
 `SERVICE_TYPE` example, with OpenAI as the primary service and Anthropic and LibreTranslate as fallbacks:
 
 ```json
@@ -101,3 +103,24 @@ The supported values are:
 - **[Machine translation](/translation-services/machine-translation)**: [`libretranslate`](/translation-services/machine-translation#libretranslate), [`deepl`](/translation-services/machine-translation#deepl), [`google`](/translation-services/machine-translation#google-bing-microsoft-and-yandex), [`bing`](/translation-services/machine-translation#google-bing-microsoft-and-yandex), [`microsoft`](/translation-services/machine-translation#google-bing-microsoft-and-yandex) and [`yandex`](/translation-services/machine-translation#google-bing-microsoft-and-yandex)
 
 Each service has its own configuration variables, such as API keys and model selection, documented on its settings page.
+
+## Source and target languages
+
+Both language lists are ordered. In the web interface, drag a language to change its position.
+With `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` as environment variable, the order of the JSON array is the order.
+
+### Source priority
+
+Lingarr uses the first source language that has a subtitle.
+
+### Target languages
+
+By default, every missing target language is translated.
+
+With **Only translate to the first target language** enabled, an existing subtitle in any target language counts as translated. 
+If none exists, Lingarr translates to the first target language.
+
+For example, with `es-mx` then `es`:
+
+- `Movie.es.srt` or `Movie.es-mx.srt` exists, nothing is translated.
+- Neither exists, `Movie.es-mx.srt` is created.

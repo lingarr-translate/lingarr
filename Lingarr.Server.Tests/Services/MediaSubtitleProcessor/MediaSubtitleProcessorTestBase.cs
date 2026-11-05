@@ -45,9 +45,17 @@ public abstract class MediaSubtitleProcessorTestBase : IDisposable
         SubtitleServiceMock
             .Setup(s => s.SelectSourceSubtitle(
                 It.IsAny<List<Subtitles>>(),
-                It.IsAny<HashSet<string>>()))
-            .Returns((List<Subtitles> subs, HashSet<string> sources) =>
+                It.IsAny<IReadOnlyList<string>>()))
+            .Returns((List<Subtitles> subs, IReadOnlyList<string> sources) =>
                 subtitleService.SelectSourceSubtitle(subs, sources));
+        SubtitleServiceMock
+            .Setup(s => s.TargetSubtitleExists(
+                It.IsAny<List<Subtitles>>(),
+                It.IsAny<string>(),
+                It.IsAny<Subtitles>(),
+                It.IsAny<bool>()))
+            .Returns((List<Subtitles> subs, string target, Subtitles source, bool ignoreCaptions) =>
+                subtitleService.TargetSubtitleExists(subs, target, source, ignoreCaptions));
 
         Processor = new Lingarr.Server.Services.MediaSubtitleProcessor(
             TranslationRequestServiceMock.Object,
