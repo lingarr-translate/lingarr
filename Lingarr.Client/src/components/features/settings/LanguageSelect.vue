@@ -8,10 +8,17 @@
             <div v-else class="flex flex-1 flex-wrap items-center gap-2">
                 <span
                     v-for="(item, index) in selectedItems"
-                    :key="`${item.code}-${index}`"
-                    :data-key="`${item.code}-${index}`"
-                    class="flex cursor-pointer items-center rounded-md bg-accent px-3 py-1 text-sm font-medium text-secondary-content"
-                    @click.stop="removeItem(item)">
+                    :key="item.code"
+                    :data-key="item.code"
+                    draggable="true"
+                    class="flex cursor-grab items-center rounded-md bg-accent px-3 py-1 text-sm font-medium text-secondary-content"
+                    :class="{ 'opacity-50': draggedIndex === index }"
+                    @click.stop="removeItem(item)"
+                    @dragstart="draggedIndex = index"
+                    @dragover.prevent
+                    @drop.prevent.stop="dropItem(index)"
+                    @dragend="draggedIndex = null">
+                    <span class="mr-2 text-accent-content">{{ index + 1 }}.</span>
                     <span class="mr-2 text-accent-content">{{ item.name }}</span>
                     <TimesIcon class="mt-0.5 h-4 w-4" />
                 </span>
@@ -79,6 +86,7 @@ const selectedItems: Ref<ILanguage[]> = ref(selected)
 const clickOutside: Ref<HTMLElement | undefined> = ref()
 const excludeClickOutside: Ref<HTMLElement | undefined> = ref()
 const searchTerm: Ref<string> = ref('')
+const draggedIndex: Ref<number | null> = ref(null)
 
 const filteredLanguages = computed(() => {
     return options
@@ -124,6 +132,19 @@ const removeItem = (item: ILanguage) => {
         selectedItems.value.splice(index, 1)
         emit('update:selected', selectedItems.value)
     }
+}
+
+const dropItem = (targetIndex: number) => {
+    const sourceIndex = draggedIndex.value
+    draggedIndex.value = null
+    if (sourceIndex === null || sourceIndex === targetIndex) {
+        return
+    }
+    const reorderedItems = [...selectedItems.value]
+    const [movedLanguage] = reorderedItems.splice(sourceIndex, 1)
+    reorderedItems.splice(targetIndex, 0, movedLanguage)
+    selectedItems.value = reorderedItems
+    emit('update:selected', reorderedItems)
 }
 
 const isSelected = (item: ILanguage) => {

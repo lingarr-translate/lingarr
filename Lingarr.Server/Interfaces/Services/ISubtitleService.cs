@@ -73,11 +73,25 @@ public interface ISubtitleService
     Task<List<Subtitles>> GetSubtitles(string path, string fileName);
 
     /// <summary>
-    /// Selects the source subtitle from matching subtitles by finding the closest available source language
-    /// and selecting the appropriate subtitle file.
+    /// Selects the source subtitle for the first source language, in priority order, that has a match
+    /// and selects the appropriate subtitle file.
     /// </summary>
     /// <param name="subtitles">The list of subtitle files to search.</param>
-    /// <param name="sourceCodes">The set of acceptable source language codes.</param>
+    /// <param name="sourceCodes">The acceptable source language codes in priority order.</param>
     /// <returns>A <see cref="SelectedSourceSubtitle"/> if a source subtitle was found, null otherwise.</returns>
-    SelectedSourceSubtitle? SelectSourceSubtitle(List<Subtitles> subtitles, HashSet<string> sourceCodes);
+    SelectedSourceSubtitle? SelectSourceSubtitle(List<Subtitles> subtitles, IReadOnlyList<string> sourceCodes);
+
+    /// <summary>
+    /// Checks whether a subtitle exists for the target language with the same caption as the source subtitle.
+    /// </summary>
+    /// <param name="subtitles">The list of subtitle files to search.</param>
+    /// <param name="targetLanguage">The target language code.</param>
+    /// <param name="sourceSubtitle">The selected source subtitle.</param>
+    /// <param name="ignoreCaptions">When true, a subtitle with any caption counts.</param>
+    /// <returns>True if a matching target subtitle exists, false otherwise.</returns>
+    bool TargetSubtitleExists(
+        List<Subtitles> subtitles,
+        string targetLanguage,
+        Subtitles sourceSubtitle,
+        bool ignoreCaptions);
 }

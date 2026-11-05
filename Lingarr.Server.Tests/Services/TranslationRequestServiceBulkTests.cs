@@ -11,6 +11,7 @@ using Lingarr.Core.Enum;
 using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
+using Lingarr.Server.Models;
 using Lingarr.Server.Models.Api;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Services;
@@ -24,7 +25,7 @@ using Xunit;
 namespace Lingarr.Server.Tests.Services;
 
 /// <summary>
-/// Tests for how bulk translation handles the ignoreCaptions setting.
+/// Tests for how bulk translation handles the ignoreCaptions and first target only settings.
 /// </summary>
 public class TranslationRequestServiceBulkTests : IDisposable
 {
@@ -44,6 +45,9 @@ public class TranslationRequestServiceBulkTests : IDisposable
         _settingServiceMock
             .Setup(s => s.GetSettingAsJson<SourceLanguage>(SettingKeys.Translation.SourceLanguages))
             .ReturnsAsync(new List<SourceLanguage> { new() { Code = "en", Name = "English" } });
+        _settingServiceMock
+            .Setup(s => s.GetSettingAsJson<TargetLanguage>(SettingKeys.Translation.TargetLanguages))
+            .ReturnsAsync(new List<TargetLanguage>());
 
         var subtitleService = new SubtitleService(
             new Mock<ILogger<SubtitleService>>().Object,
@@ -52,9 +56,17 @@ public class TranslationRequestServiceBulkTests : IDisposable
         _subtitleServiceMock
             .Setup(s => s.SelectSourceSubtitle(
                 It.IsAny<List<Subtitles>>(),
-                It.IsAny<HashSet<string>>()))
-            .Returns((List<Subtitles> subs, HashSet<string> sources) =>
+                It.IsAny<IReadOnlyList<string>>()))
+            .Returns((List<Subtitles> subs, IReadOnlyList<string> sources) =>
                 subtitleService.SelectSourceSubtitle(subs, sources));
+        _subtitleServiceMock
+            .Setup(s => s.TargetSubtitleExists(
+                It.IsAny<List<Subtitles>>(),
+                It.IsAny<string>(),
+                It.IsAny<Subtitles>(),
+                It.IsAny<bool>()))
+            .Returns((List<Subtitles> subs, string target, Subtitles source, bool ignoreCaptions) =>
+                subtitleService.TargetSubtitleExists(subs, target, source, ignoreCaptions));
 
         _translationRequestService = new TranslationRequestService(
             _dbContext,
@@ -112,6 +124,74 @@ public class TranslationRequestServiceBulkTests : IDisposable
         Assert.Equal("ro", translationRequest.TargetLanguage);
     }
 
+    [Fact]
+    public async Task CreateBulkRequest_WithOtherConfiguredTargetExisting_ShouldSkipWhenFirstTargetOnlyTrue()
+    {
+        // Arrange - ro is requested and nl, another configured target, already exists
+        var movie = await CreateTestMovie();
+        SetupSubtitlesWithExistingTarget("nl");
+        SetupIgnoreCaptions("false");
+        SetupTargetLanguages("ro", "nl");
+        SetupFirstTargetOnly("true");
+
+        // Act
+        await _translationRequestService.CreateBulkRequest(new BulkTranslateRequest
+        {
+            MediaIds = [movie.Id],
+            TargetLanguage = "ro",
+            MediaType = MediaType.Movie
+        });
+
+        // Assert
+        Assert.Empty(_dbContext.TranslationRequests);
+    }
+
+    [Fact]
+    public async Task CreateBulkRequest_WithUnconfiguredTarget_ShouldTranslateWhenFirstTargetOnlyTrue()
+    {
+        // Arrange - de is not a configured target, so the first target only setting does not apply
+        var movie = await CreateTestMovie();
+        SetupSubtitlesWithExistingTarget("nl");
+        SetupIgnoreCaptions("false");
+        SetupTargetLanguages("ro", "nl");
+        SetupFirstTargetOnly("true");
+
+        // Act
+        await _translationRequestService.CreateBulkRequest(new BulkTranslateRequest
+        {
+            MediaIds = [movie.Id],
+            TargetLanguage = "de",
+            MediaType = MediaType.Movie
+        });
+
+        // Assert
+        var translationRequest = Assert.Single(_dbContext.TranslationRequests);
+        Assert.Equal("de", translationRequest.TargetLanguage);
+    }
+
+    [Fact]
+    public async Task CreateBulkRequest_WithOtherConfiguredTargetExisting_ShouldTranslateWhenFirstTargetOnlyFalse()
+    {
+        // Arrange
+        var movie = await CreateTestMovie();
+        SetupSubtitlesWithExistingTarget("nl");
+        SetupIgnoreCaptions("false");
+        SetupTargetLanguages("ro", "nl");
+        SetupFirstTargetOnly("false");
+
+        // Act
+        await _translationRequestService.CreateBulkRequest(new BulkTranslateRequest
+        {
+            MediaIds = [movie.Id],
+            TargetLanguage = "ro",
+            MediaType = MediaType.Movie
+        });
+
+        // Assert
+        var translationRequest = Assert.Single(_dbContext.TranslationRequests);
+        Assert.Equal("ro", translationRequest.TargetLanguage);
+    }
+
     private async Task<Movie> CreateTestMovie()
     {
         var movie = new Movie
@@ -152,6 +232,45 @@ public class TranslationRequestServiceBulkTests : IDisposable
                     Format = ".srt"
                 }
             });
+    }
+
+    private void SetupSubtitlesWithExistingTarget(string targetLanguage)
+    {
+        _subtitleServiceMock
+            .Setup(s => s.GetSubtitles(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(new List<Subtitles>
+            {
+                new()
+                {
+                    Path = "/movies/test/test.movie.en.srt",
+                    FileName = "test.movie.en",
+                    Language = "en",
+                    Caption = "",
+                    Format = ".srt"
+                },
+                new()
+                {
+                    Path = $"/movies/test/test.movie.{targetLanguage}.srt",
+                    FileName = $"test.movie.{targetLanguage}",
+                    Language = targetLanguage,
+                    Caption = "",
+                    Format = ".srt"
+                }
+            });
+    }
+
+    private void SetupTargetLanguages(params string[] targetCodes)
+    {
+        _settingServiceMock
+            .Setup(s => s.GetSettingAsJson<TargetLanguage>(SettingKeys.Translation.TargetLanguages))
+            .ReturnsAsync(targetCodes.Select(code => new TargetLanguage { Code = code, Name = code }).ToList());
+    }
+
+    private void SetupFirstTargetOnly(string firstTargetOnly)
+    {
+        _settingServiceMock
+            .Setup(s => s.GetSetting(SettingKeys.Translation.FirstTargetOnly))
+            .ReturnsAsync(firstTargetOnly);
     }
 
     private void SetupIgnoreCaptions(string ignoreCaptions)
