@@ -6,8 +6,10 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Lingarr.Contracts.Exceptions;
 using Lingarr.Contracts.Models.Batch;
 using Lingarr.Core.Configuration;
+using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Services;
 using Lingarr.Server.Services.Translation;
@@ -89,6 +91,42 @@ public class AnthropicServiceTests
         Assert.Equal("json_schema", outputConfig.GetProperty("format").GetProperty("type").GetString());
     }
 
+    [Theory]
+    [InlineData("not json")]
+    [InlineData("{\"result\":[]}")]
+    [InlineData("{\"translations\":\"[{\\\"position\\\":1,\\\"line\\\":\\\"Hallo\\\"}]\"}")]
+    [InlineData("{\"translations\":[{\"position\":1}]}")]
+    public async Task TranslateBatchAsync_ShouldRetry_WhenResponseCannotBeParsed(string unparsableText)
+    {
+        // Arrange
+        UseSettings(requestTemplate: "", maxRetries: "3");
+        var responses = new Queue<string>([unparsableText, TranslationsJson]);
+        var requestBodies = CaptureRequestBodies(() => MessagesResponse(responses.Dequeue()));
+
+        // Act
+        var result = await _service.TranslateBatchAsync(Batch(), "en", "nl", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal("Wereld", result[2]);
+        Assert.Equal(2, requestBodies.Count);
+    }
+
+    [Fact]
+    public async Task TranslateBatchAsync_ShouldThrowWithParseException_WhenRetriesExhausted()
+    {
+        // Arrange
+        UseSettings(requestTemplate: "", maxRetries: "3");
+        var requestBodies = CaptureRequestBodies(() => MessagesResponse("not json"));
+
+        // Act
+        var exception = await Assert.ThrowsAsync<TranslationException>(
+            () => _service.TranslateBatchAsync(Batch(), "en", "nl", TestContext.Current.CancellationToken));
+
+        // Assert
+        Assert.IsType<TranslationParseException>(exception.InnerException);
+        Assert.Equal(3, requestBodies.Count);
+    }
+
     private static List<BatchSubtitleItem> Batch() =>
     [
         new() { Position = 1, Line = "Hello" },
@@ -112,7 +150,7 @@ public class AnthropicServiceTests
         }), Encoding.UTF8, "application/json")
     };
 
-    private void UseSettings(string requestTemplate)
+    private void UseSettings(string requestTemplate, string maxRetries = "1")
     {
         var settings = new Dictionary<string, string>
         {
@@ -122,7 +160,7 @@ public class AnthropicServiceTests
             { SettingKeys.Translation.AiPrompt, "Translate from {sourceLanguage} to {targetLanguage}" },
             { SettingKeys.Translation.AiUserPrompt, "{lineToTranslate}" },
             { SettingKeys.Translation.RequestTimeout, "5" },
-            { SettingKeys.Translation.MaxRetries, "1" },
+            { SettingKeys.Translation.MaxRetries, maxRetries },
             { SettingKeys.Translation.RetryDelay, "0" },
             { SettingKeys.Translation.RetryDelayMultiplier, "1" },
             { SettingKeys.Translation.LanguageCodeFormat, "false" }
