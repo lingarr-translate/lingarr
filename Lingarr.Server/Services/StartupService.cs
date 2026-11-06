@@ -1,9 +1,11 @@
 ﻿using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
+using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Services.Plugins;
 using Lingarr.Server.Services.Translation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Lingarr.Server.Services;
 
@@ -30,7 +32,10 @@ public class StartupService : IHostedService
         var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
 
         await NormaliseServiceType(dbContext);
-        await ApplySettingsFromEnvironment(dbContext);
+        await ApplySettingsFromEnvironment(
+            dbContext,
+            scope.ServiceProvider.GetRequiredService<IEncryptionService>(),
+            scope.ServiceProvider.GetRequiredService<IMemoryCache>());
 
         var pluginRegistry = scope.ServiceProvider.GetService<IPluginRegistry>();
         var pluginLoader = scope.ServiceProvider.GetService<PluginLoader>();
@@ -216,8 +221,13 @@ public class StartupService : IHostedService
     /// Applies settings from environment variables to the database.
     /// </summary>
     /// <param name="dbContext">The database context used to access and update settings.</param>
+    /// <param name="encryptionService">Encrypts API keys before they are stored.</param>
+    /// <param name="memoryCache">The settings cache to clear for each updated key.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    private async Task ApplySettingsFromEnvironment(LingarrDbContext dbContext)
+    private async Task ApplySettingsFromEnvironment(
+        LingarrDbContext dbContext,
+        IEncryptionService encryptionService,
+        IMemoryCache memoryCache)
     {
         var environmentSettings = new Dictionary<string, string>
         {
@@ -269,7 +279,7 @@ public class StartupService : IHostedService
 
         foreach (var (envVar, settingKey) in environmentSettings)
         {
-            var value = ReadFromFileEnv(envVar + "_FILE") ?? Environment.GetEnvironmentVariable(envVar);
+            var value = Environment.GetEnvironmentVariable(envVar);
             if (string.IsNullOrEmpty(value))
             {
                 continue;
@@ -280,32 +290,20 @@ public class StartupService : IHostedService
                 value = TranslationServices.Normalise(value, _logger);
             }
 
+            if (SettingKeys.EncryptedKeys.Contains(settingKey))
+            {
+                value = encryptionService.Encrypt(value);
+            }
+
             var setting = await dbContext.Settings.FirstOrDefaultAsync(s => s.Key == settingKey);
             if (setting != null)
             {
                 setting.Value = value;
                 await dbContext.SaveChangesAsync();
+                memoryCache.Remove(settingKey);
             }
 
             _logger.LogInformation($"Updated setting '{settingKey}' from environment variable '{envVar}'.");
-        }
-    }
-
-    private static string? ReadFromFileEnv(string fileEnvVar)
-    {
-        var path = Environment.GetEnvironmentVariable(fileEnvVar);
-        if (string.IsNullOrEmpty(path))
-        {
-            return null;
-        }
-
-        try
-        {
-            return File.ReadAllText(path).TrimEnd('\r', '\n');
-        }
-        catch
-        {
-            return null;
         }
     }
 

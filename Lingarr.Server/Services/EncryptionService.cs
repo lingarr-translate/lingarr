@@ -30,4 +30,22 @@ public class EncryptionService : IEncryptionService
             return value;
         }
     }
+
+    public bool IsEncrypted(string value)
+    {
+        if (string.IsNullOrEmpty(value))
+        {
+            return false;
+        }
+
+        try
+        {
+            _protector.Unprotect(value);
+            return true;
+        }
+        catch (System.Security.Cryptography.CryptographicException)
+        {
+            return false;
+        }
+    }
 }
