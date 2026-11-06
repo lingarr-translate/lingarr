@@ -432,7 +432,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
             }
 
             var translatedItems =
-                JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translationsElement.GetRawText());
+                JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translationsElement.GetRawText(), StructuredBatchSerializerOptions);
 
             if (translatedItems == null)
             {
@@ -492,7 +492,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         try
         {
             var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translatedJson,
-                new JsonSerializerOptions
+                new JsonSerializerOptions(StructuredBatchSerializerOptions)
                 {
                     PropertyNameCaseInsensitive = true
                 });
@@ -559,7 +559,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
 
         try
         {
-            var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translatedJson);
+            var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translatedJson, StructuredBatchSerializerOptions);
 
             if (translatedItems == null)
             {

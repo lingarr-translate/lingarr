@@ -7,6 +7,7 @@ using Lingarr.Contracts.Models;
 using Lingarr.Contracts.Models.Batch;
 using Lingarr.Contracts.Translation;
 using Lingarr.Core.Configuration;
+using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 using Lingarr.Server.Services.Translation.Base;
@@ -299,6 +300,21 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
                     "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
                     "OpenAI", ex.StatusCode, delay, attempt, _maxRetries);
             }
+            catch (TranslationParseException ex)
+            {
+                if (attempt == _maxRetries)
+                {
+                    _logger.LogError(ex, "Max retries exhausted for batch translation, the model kept returning an unparsable response");
+                    throw new TranslationException("Retry limit reached after unparsable response.", ex);
+                }
+
+                _logger.LogWarning(
+                    "{ServiceName} returned an unparsable response. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    "OpenAI", delay, attempt, _maxRetries);
+
+                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
+                delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
+            }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
@@ -401,14 +417,14 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
             var responseWrapper = JsonSerializer.Deserialize<JsonElement>(translatedJson);
             if (!responseWrapper.TryGetProperty("translations", out var translationsElement))
             {
-                throw new TranslationException("Response does not contain 'translations' property");
+                throw new TranslationParseException("Response does not contain 'translations' property");
             }
 
             var translatedItems =
-                JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translationsElement.GetRawText());
+                JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translationsElement.GetRawText(), StructuredBatchSerializerOptions);
             if (translatedItems == null)
             {
-                throw new TranslationException("Failed to deserialize translated subtitles");
+                throw new TranslationParseException("Failed to deserialize translated subtitles");
             }
 
             return MergeByPosition(translatedItems);
@@ -416,7 +432,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
         catch (JsonException ex)
         {
             _logger.LogError(ex, "Failed to parse translated JSON: {Json}", translatedJson);
-            throw new TranslationException("Failed to parse translated subtitles", ex);
+            throw new TranslationParseException("Failed to parse translated subtitles", ex);
         }
     }
 

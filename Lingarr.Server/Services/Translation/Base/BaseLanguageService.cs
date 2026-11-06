@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
 using Lingarr.Contracts.Models;
 using Lingarr.Contracts.Models.Batch;
@@ -10,6 +11,14 @@ namespace Lingarr.Server.Services.Translation.Base;
 public abstract class BaseLanguageService : BaseTranslationService
 {
     private static readonly Regex PlaceholderPattern = new(@"\{(\w+)\}", RegexOptions.Compiled);
+
+    private protected static readonly JsonSerializerOptions StructuredBatchSerializerOptions = new()
+    {
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver
+        {
+            Modifiers = { RequireStructuredBatchProperties }
+        }
+    };
 
     private readonly string? _languageFilePath;
     private Task<List<SourceLanguage>>? _cachedLanguages;
@@ -198,6 +207,19 @@ public abstract class BaseLanguageService : BaseTranslationService
             .ToDictionary(
                 group => group.Key,
                 group => string.Join("\n", group.Select(i => i.Line).Where(l => !string.IsNullOrWhiteSpace(l))));
+
+    private static void RequireStructuredBatchProperties(JsonTypeInfo typeInfo)
+    {
+        if (typeInfo.Type != typeof(StructuredBatchResponse))
+        {
+            return;
+        }
+
+        foreach (var property in typeInfo.Properties)
+        {
+            property.IsRequired = true;
+        }
+    }
 
     protected void SetLanguageReplacements(string sourceLanguage, string targetLanguage, string languageCodeFormatSetting)
     {
