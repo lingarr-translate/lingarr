@@ -36,7 +36,10 @@ export const useMovieStore = defineStore('movie', {
     },
     actions: {
         async setFilter(filterVal: IFilter) {
-            this.filter = filterVal.searchQuery ? { ...filterVal, pageNumber: 1 } : filterVal
+            this.filter =
+                filterVal.searchQuery !== this.filter.searchQuery
+                    ? { ...filterVal, pageNumber: 1 }
+                    : filterVal
             await this.fetch()
         },
         async fetch() {
