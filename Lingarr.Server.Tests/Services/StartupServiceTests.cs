@@ -7,8 +7,11 @@ using System.Threading.Tasks;
 using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
+using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
@@ -87,6 +90,7 @@ public class StartupServiceTests : IDisposable
         await File.WriteAllTextAsync(path, "from-file-value");
         Environment.SetEnvironmentVariable(envVar + "_FILE", path);
 
+        EnvironmentFileConfiguration.Apply();
         var serviceProvider = BuildProvider();
         var startupService = new StartupService(serviceProvider, NullLogger<StartupService>.Instance);
 
@@ -105,6 +109,7 @@ public class StartupServiceTests : IDisposable
         await File.WriteAllTextAsync(path, "openai");
         Environment.SetEnvironmentVariable("SERVICE_TYPE_FILE", path);
 
+        EnvironmentFileConfiguration.Apply();
         var serviceProvider = BuildProvider();
         await using (var seedScope = serviceProvider.CreateAsyncScope())
         {
@@ -131,6 +136,7 @@ public class StartupServiceTests : IDisposable
         Environment.SetEnvironmentVariable("OPENAI_API_KEY", "from-env");
         Environment.SetEnvironmentVariable("OPENAI_API_KEY_FILE", path);
 
+        EnvironmentFileConfiguration.Apply();
         var serviceProvider = BuildProvider();
         var startupService = new StartupService(serviceProvider, NullLogger<StartupService>.Instance);
 
@@ -156,6 +162,7 @@ public class StartupServiceTests : IDisposable
         await File.WriteAllTextAsync(path, fileContent);
         Environment.SetEnvironmentVariable("OPENAI_API_KEY_FILE", path);
 
+        EnvironmentFileConfiguration.Apply();
         var serviceProvider = BuildProvider();
         var startupService = new StartupService(serviceProvider, NullLogger<StartupService>.Instance);
 
@@ -174,6 +181,7 @@ public class StartupServiceTests : IDisposable
         Environment.SetEnvironmentVariable("OPENAI_API_KEY_FILE", Path.Combine(_tempDir, "does-not-exist"));
         Environment.SetEnvironmentVariable("OPENAI_API_KEY", "fallback-env-value");
 
+        EnvironmentFileConfiguration.Apply();
         var serviceProvider = BuildProvider();
         var startupService = new StartupService(serviceProvider, NullLogger<StartupService>.Instance);
 
@@ -182,6 +190,54 @@ public class StartupServiceTests : IDisposable
 
         // Assert
         Assert.Equal("fallback-env-value", await GetSettingValue(serviceProvider, settingKey));
+    }
+
+    [Fact]
+    public async Task ApplySettingsFromEnvironment_ApiKey_StoresEncryptedValue()
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable("OPENAI_API_KEY", "secret-key");
+        var serviceProvider = BuildProvider();
+        var startupService = new StartupService(serviceProvider, NullLogger<StartupService>.Instance);
+
+        // Act
+        await startupService.StartAsync(CancellationToken.None);
+
+        // Assert
+        Assert.NotEqual("secret-key", await GetStoredValue(serviceProvider, SettingKeys.Translation.OpenAi.ApiKey));
+        Assert.Equal("secret-key", await GetSettingValue(serviceProvider, SettingKeys.Translation.OpenAi.ApiKey));
+    }
+
+    [Fact]
+    public async Task ApplySettingsFromEnvironment_NonSecretSetting_StoresPlainValue()
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable("OPENAI_MODEL", "gpt-5");
+        var serviceProvider = BuildProvider();
+        var startupService = new StartupService(serviceProvider, NullLogger<StartupService>.Instance);
+
+        // Act
+        await startupService.StartAsync(CancellationToken.None);
+
+        // Assert
+        Assert.Equal("gpt-5", await GetStoredValue(serviceProvider, SettingKeys.Translation.OpenAi.Model));
+    }
+
+    [Fact]
+    public async Task ApplySettingsFromEnvironment_CachedSetting_RemovesCacheEntry()
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable("RADARR_URL", "http://radarr:7878");
+        var serviceProvider = BuildProvider();
+        var memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
+        memoryCache.Set(SettingKeys.Integration.RadarrUrl, "");
+        var startupService = new StartupService(serviceProvider, NullLogger<StartupService>.Instance);
+
+        // Act
+        await startupService.StartAsync(CancellationToken.None);
+
+        // Assert
+        Assert.False(memoryCache.TryGetValue(SettingKeys.Integration.RadarrUrl, out _));
     }
 
     private static void ClearEnv()
@@ -199,6 +255,8 @@ public class StartupServiceTests : IDisposable
         var services = new ServiceCollection();
         services.AddDbContext<LingarrDbContext>(options =>
             options.UseInMemoryDatabase(databaseName));
+        services.AddMemoryCache();
+        services.AddSingleton<IEncryptionService>(new EncryptionService(new EphemeralDataProtectionProvider()));
 
         var serviceProvider = services.BuildServiceProvider();
 
@@ -218,6 +276,19 @@ public class StartupServiceTests : IDisposable
     }
 
     private static async Task<string?> GetSettingValue(IServiceProvider serviceProvider, string key)
+    {
+        await using var scope = serviceProvider.CreateAsyncScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
+        var setting = await dbContext.Settings.FindAsync(key);
+        if (setting == null)
+        {
+            return null;
+        }
+
+        return scope.ServiceProvider.GetRequiredService<IEncryptionService>().Decrypt(setting.Value);
+    }
+
+    private static async Task<string?> GetStoredValue(IServiceProvider serviceProvider, string key)
     {
         await using var scope = serviceProvider.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();

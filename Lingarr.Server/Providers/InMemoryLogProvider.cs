@@ -29,14 +29,18 @@ namespace Lingarr.Server.Providers
         public string FormattedSource => Category?.Split('.').LastOrDefault() ?? Category ?? string.Empty;
     }
 
-    public static class InMemoryLogSink
+    public static class InMemoryLogStore
     {
         private static readonly ConcurrentQueue<LogEntry> Logs = new();
         private static readonly int MaxLogCount = 1000;
+        private static long _totalLogCount;
+
+        public static long TotalLogCount => Interlocked.Read(ref _totalLogCount);
 
         public static void AddLog(LogEntry logEntry)
         {
             Logs.Enqueue(logEntry);
+            Interlocked.Increment(ref _totalLogCount);
 
             // Trim logs if we exceed the maximum count and only keep logs for 24h
             while (Logs.Count > MaxLogCount && Logs.TryDequeue(out _))
@@ -87,7 +91,7 @@ namespace Lingarr.Server.Providers
                 Category = _categoryName
             };
 
-            InMemoryLogSink.AddLog(logEntry);
+            InMemoryLogStore.AddLog(logEntry);
         }
     }
 

@@ -16,6 +16,5 @@ public class M0006_AddTranslationRequestMediaId : Migration
 
     public override void Down()
     {
-        Delete.Column("media_id").FromTable("translation_requests");
     }
 }

@@ -2,6 +2,22 @@
 
 public static class SettingKeys
 {
+    public static readonly string[] EncryptedKeys =
+    [
+        Authentication.ApiKey,
+        Integration.RadarrApiKey,
+        Integration.SonarrApiKey,
+        Translation.OpenAi.ApiKey,
+        Translation.Anthropic.ApiKey,
+        Translation.Gemini.ApiKey,
+        Translation.DeepSeek.ApiKey,
+        Translation.Mistral.ApiKey,
+        Translation.XAi.ApiKey,
+        Translation.DeepL.DeeplApiKey,
+        Translation.LibreTranslate.ApiKey,
+        Translation.LocalAi.ApiKey
+    ];
+
     public static class Integration
     {
         public const string RadarrUrl = "radarr_url";

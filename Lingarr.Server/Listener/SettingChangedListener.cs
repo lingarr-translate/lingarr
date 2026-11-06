@@ -163,7 +163,8 @@ public class SettingChangedListener
                         recurringJobManager.AddOrUpdate<AutomatedTranslationJob>(
                             "AutomatedTranslationJob",
                             job => job.Execute(),
-                            translationSchedule);
+                            translationSchedule,
+                            new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
                     }
                     else
                     {
@@ -181,7 +182,8 @@ public class SettingChangedListener
                         telemetryJobManager.AddOrUpdate<TelemetryJob>(
                             "TelemetryJob",
                             job => job.Execute(),
-                            "0 9 * * 5");
+                            "0 9 * * 5",
+                            new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
                     }
                     else
                     {
@@ -227,11 +229,13 @@ public class SettingChangedListener
                     scheduleJobManager.AddOrUpdate<SyncMovieJob>(
                         "SyncMovieJob",
                         job => job.Execute(),
-                        settings[SettingKeys.Automation.MovieSchedule]);
+                        settings[SettingKeys.Automation.MovieSchedule],
+                        new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
                     scheduleJobManager.AddOrUpdate<SyncShowJob>(
                         "SyncShowJob",
                         job => job.Execute(),
-                        settings[SettingKeys.Automation.ShowSchedule]);
+                        settings[SettingKeys.Automation.ShowSchedule],
+                        new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
                     break;
 
                 case "ServiceType":

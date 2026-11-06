@@ -70,36 +70,16 @@ public static class ApplicationBuilderExtensions
 
     private static async Task MigrateApiKeyEncryption(this WebApplication app)
     {
-        string[] apiKeys =
-        [
-            SettingKeys.Authentication.ApiKey,
-            SettingKeys.Integration.RadarrApiKey,
-            SettingKeys.Integration.SonarrApiKey,
-            SettingKeys.Translation.OpenAi.ApiKey,
-            SettingKeys.Translation.Anthropic.ApiKey,
-            SettingKeys.Translation.Gemini.ApiKey,
-            SettingKeys.Translation.DeepSeek.ApiKey,
-            SettingKeys.Translation.Mistral.ApiKey,
-            SettingKeys.Translation.XAi.ApiKey,
-            SettingKeys.Translation.DeepL.DeeplApiKey,
-            SettingKeys.Translation.LibreTranslate.ApiKey,
-            SettingKeys.Translation.LocalAi.ApiKey,
-        ];
-
         using var scope = app.Services.CreateScope();
         var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
         var encryptionService = scope.ServiceProvider.GetRequiredService<IEncryptionService>();
 
-        foreach (var key in apiKeys)
+        foreach (var key in SettingKeys.EncryptedKeys)
         {
             var value = await settingService.GetSetting(key);
             if (string.IsNullOrEmpty(value)) continue;
 
-            try
-            {
-                encryptionService.Decrypt(value);
-            }
-            catch
+            if (!encryptionService.IsEncrypted(value))
             {
                 await settingService.SetEncryptedSetting(key, value);
                 Console.WriteLine($"Migrated '{key}' to encrypted storage.");
