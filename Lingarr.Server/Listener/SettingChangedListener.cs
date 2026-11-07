@@ -59,6 +59,11 @@ public class SettingChangedListener
                 ])
             },
             {
+                "subtitleExtraction", ("Job", "SubtitleExtraction", [
+                    SettingKeys.SubtitleExtraction.ExtractionEnabled
+                ])
+            },
+            {
                 "clearHash", ("Action", "ClearHash", [
                     SettingKeys.Translation.SourceLanguages,
                     SettingKeys.Translation.TargetLanguages,
@@ -188,6 +193,16 @@ public class SettingChangedListener
                     else
                     {
                         telemetryJobManager.RemoveIfExists("TelemetryJob");
+                    }
+
+                    break;
+                case "SubtitleExtraction":
+                    if (settings[SettingKeys.SubtitleExtraction.ExtractionEnabled] == "true")
+                    {
+                        _logger.LogInformation(
+                            "Subtitle extraction has been |Orange|enabled|/Orange|, installing ffmpeg.");
+                        scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>()
+                            .Enqueue<FfmpegInstallJob>(job => job.Execute(true, CancellationToken.None));
                     }
 
                     break;

@@ -38,6 +38,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="SharpCompress" />
     <PackageReference Include="Microting.EntityFrameworkCore.MySql" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
   </ItemGroup>

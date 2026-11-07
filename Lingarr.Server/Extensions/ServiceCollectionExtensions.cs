@@ -173,6 +173,16 @@ public static class ServiceCollectionExtensions
         builder.Services.AddScoped<ISubtitleParser, SrtParser>();
         builder.Services.AddScoped<ISubtitleWriter, SrtWriter>();
         builder.Services.AddScoped<ISubtitleWriter, SsaWriter>();
+
+        // Register subtitle extraction services
+        builder.Services.AddSingleton<IProcessRunner, ProcessRunner>();
+        builder.Services.AddSingleton<IFfmpegService>(provider => new FfmpegService(
+            provider.GetRequiredService<IHttpClientFactory>(),
+            provider.GetRequiredService<IProcessRunner>(),
+            provider.GetRequiredService<ILogger<FfmpegService>>(),
+            Environment.GetEnvironmentVariable("FFMPEG_PATH") ?? "/app/config/ffmpeg"));
+        builder.Services.AddSingleton<SubtitleStreamLanguageService>();
+        builder.Services.AddScoped<ISubtitleExtractionService, SubtitleExtractionService>();
         
         // Register translate services
         builder.Services.AddScoped<ITranslationServiceFactory, TranslationFactory>();

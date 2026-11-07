@@ -43,6 +43,7 @@ export const SETTINGS = {
     SUBTITLE_VALIDATION_MINSUBTITLELENGTH: 'subtitle_validation_minsubtitlelength',
     SUBTITLE_VALIDATION_MAXSUBTITLELENGTH: 'subtitle_validation_maxsubtitlelength',
     SUBTITLE_VALIDATION_MAXFILESIZEBYTES: 'subtitle_validation_maxfilesizebytes',
+    SUBTITLE_EXTRACTION_ENABLED: 'subtitle_extraction_enabled',
     AI_CONTEXT_BEFORE: 'ai_context_before',
     AI_CONTEXT_AFTER: 'ai_context_after',
     AI_CONTEXT_USE_TRANSLATED: 'ai_context_use_translated',
@@ -117,6 +118,7 @@ export interface ISettings {
     theme: ITheme
     locale: ILocale
     subtitle_validation_enabled: string
+    subtitle_extraction_enabled: string
     subtitle_validation_maxfilesizebytes: string
     subtitle_validation_minsubtitlelength: string
     subtitle_validation_maxsubtitlelength: string

@@ -38,7 +38,8 @@ public class ScheduleService : IScheduleService
             SettingKeys.Automation.MovieSchedule,
             SettingKeys.Automation.ShowSchedule,
             SettingKeys.Automation.AutomationEnabled,
-            SettingKeys.Telemetry.TelemetryEnabled
+            SettingKeys.Telemetry.TelemetryEnabled,
+            SettingKeys.SubtitleExtraction.ExtractionEnabled
         ]);
 
         if (TimeZoneConfiguration.ResolutionWarning != null)
@@ -84,6 +85,12 @@ public class ScheduleService : IScheduleService
                             job => job.Execute(),
                             "0 9 * * 5",
                             new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
+                    }
+                    break;
+                case SettingKeys.SubtitleExtraction.ExtractionEnabled:
+                    if (setting.Value == "true")
+                    {
+                        BackgroundJob.Enqueue<FfmpegInstallJob>(job => job.Execute(false, CancellationToken.None));
                     }
                     break;
             }

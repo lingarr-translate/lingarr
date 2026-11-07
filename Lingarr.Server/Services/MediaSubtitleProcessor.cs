@@ -1,4 +1,5 @@
-﻿using System.Security.Cryptography;
+﻿using System.Collections.Concurrent;
+using System.Security.Cryptography;
 using Lingarr.Contracts.Interfaces;
 using Lingarr.Contracts.Models;
 using Lingarr.Core.Configuration;
@@ -6,6 +7,7 @@ using Lingarr.Core.Data;
 using Lingarr.Core.Enum;
 using Lingarr.Core.Interfaces;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Interfaces.Services.Subtitle;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.FileSystem;
 using Microsoft.EntityFrameworkCore;
@@ -14,10 +16,14 @@ namespace Lingarr.Server.Services;
 
 public class MediaSubtitleProcessor : IMediaSubtitleProcessor
 {
+    private const int MaxExtractionAttempts = 3;
+    private static readonly ConcurrentDictionary<string, int> ExtractionFailures = new();
+
     private readonly ITranslationRequestService _translationRequestService;
     private readonly ILogger<IMediaSubtitleProcessor> _logger;
     private readonly ISubtitleService _subtitleService;
     private readonly ISettingService _settingService;
+    private readonly ISubtitleExtractionService _subtitleExtractionService;
     private readonly LingarrDbContext _dbContext;
     private string _hash = string.Empty;
     private IMedia _media = null!;
@@ -28,11 +34,13 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         ILogger<IMediaSubtitleProcessor> logger,
         ISettingService settingService,
         ISubtitleService subtitleService,
+        ISubtitleExtractionService subtitleExtractionService,
         LingarrDbContext dbContext)
     {
         _translationRequestService = translationRequestService;
         _settingService = settingService;
         _subtitleService = subtitleService;
+        _subtitleExtractionService = subtitleExtractionService;
         _dbContext = dbContext;
         _logger = logger;
     }
@@ -51,7 +59,9 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         }
         
         var subtitles = await _subtitleService.GetSubtitles(media.Path, media.FileName);
-        if (!subtitles.Any())
+        var extractionEnabled = await _settingService.GetSetting(SettingKeys.SubtitleExtraction.ExtractionEnabled) == "true"
+                                && _subtitleExtractionService.IsAvailable();
+        if (!subtitles.Any() && !extractionEnabled)
         {
             return false;
         }
@@ -63,12 +73,54 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
 
         _media = media;
         _mediaType = mediaType;
-        _hash = CreateHash(subtitles, sourceLanguages, targetLanguages, ignoreCaptions);
+        var mediaFileState = extractionEnabled
+            ? _subtitleExtractionService.GetMediaFileState(media.Path, media.FileName)
+            : null;
+        _hash = CreateHash(subtitles, sourceLanguages, targetLanguages, ignoreCaptions, mediaFileState);
         if (!string.IsNullOrEmpty(media.MediaHash) && media.MediaHash == _hash)
         {
             return false;
         }
-        
+
+        if (extractionEnabled)
+        {
+            var failureKey = $"{mediaType}|{media.Id}|{mediaFileState}";
+            try
+            {
+                if (await _subtitleExtractionService.ExtractSubtitles(media.Path, media.FileName, CancellationToken.None))
+                {
+                    subtitles = await _subtitleService.GetSubtitles(media.Path, media.FileName);
+                    _hash = CreateHash(subtitles, sourceLanguages, targetLanguages, ignoreCaptions, mediaFileState);
+                }
+
+                ExtractionFailures.TryRemove(failureKey, out _);
+            }
+            catch (Exception exception)
+            {
+                var attempt = ExtractionFailures.AddOrUpdate(failureKey, 1, (_, count) => count + 1);
+                if (attempt < MaxExtractionAttempts)
+                {
+                    _logger.LogError(exception,
+                        "Subtitle extraction failed for |Red|{FileName}|/Red|, attempt {Attempt} of {MaxAttempts}",
+                        media.FileName, attempt, MaxExtractionAttempts);
+                    _hash = string.Empty;
+                }
+                else
+                {
+                    _logger.LogError(exception,
+                        "Subtitle extraction failed {MaxAttempts} times for |Red|{FileName}|/Red|, skipped until the video file changes",
+                        MaxExtractionAttempts, media.FileName);
+                    ExtractionFailures.TryRemove(failureKey, out _);
+                }
+            }
+
+            if (!subtitles.Any())
+            {
+                await UpdateHash();
+                return false;
+            }
+        }
+
         _logger.LogInformation("Initiating subtitle processing.");
         return await ProcessSubtitles(subtitles, sourceLanguages, targetLanguages, ignoreCaptions, firstTargetOnly);
     }
@@ -225,12 +277,14 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
     /// <param name="sourceLanguages">The source languages.</param>
     /// <param name="targetLanguages">The target languages.</param>
     /// <param name="ignoreCaptions">The ignore captions setting.</param>
+    /// <param name="mediaFileState">The video file state, set only when subtitle extraction is enabled.</param>
     /// <returns>A Base64 encoded string representing the hash of the current subtitle state.</returns>
     private string CreateHash(
         List<Subtitles> subtitles,
         List<string> sourceLanguages,
         List<string> targetLanguages,
-        string ignoreCaptions)
+        string ignoreCaptions,
+        string? mediaFileState)
     {
         using var sha256 = SHA256.Create();
         var subtitlePaths = string.Join("|", subtitles.Select(subtitle => subtitle.Path)
@@ -241,6 +295,11 @@ public class MediaSubtitleProcessor : IMediaSubtitleProcessor
         var targetLangs = string.Join(",", targetLanguages.OrderBy(l => l));
         
         var hashInput = $"{subtitlePaths}|{sourceLangs}|{targetLangs}|{ignoreCaptions}";
+        if (mediaFileState != null)
+        {
+            hashInput += $"|{mediaFileState}";
+        }
+
         var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(hashInput));
         return Convert.ToBase64String(hashBytes);
     }

@@ -10,6 +10,7 @@ Lingarr is primarily configured through its web interface. However, every settin
 | `BASE_PATH` | Optional URL prefix to host Lingarr under a sub-path (e.g., behind a reverse proxy). Example: `/lingarr`. Leave unset to serve from the root. |
 | `MAX_CONCURRENT_JOBS=1` | Sets the amount of jobs that can run concurrently, defaults to 1. |
 | `JOB_TIMEOUT_MINUTES=30` | Minutes of silence before Hangfire retries a job. `sqlite` only, defaults to `30`. |
+| `FFMPEG_PATH=/app/config/ffmpeg` | Folder for `ffmpeg` and `ffprobe`, used by [subtitle extraction](#subtitle-extraction). Defaults to `/app/config/ffmpeg`. |
 | `TZ=Europe/Amsterdam` | The time zone Lingarr runs in, defaults to UTC. It applies to schedules, log timestamps and every date shown in the web interface, so set it to your own zone. A schedule of `0 3 * * *` runs at 3am in this zone. |
 
 ## Database
@@ -64,6 +65,13 @@ The following settings are all **optional** and can be provided via environment 
 |--------------------------|-----------------|
 | `AUTH_ENABLED` | Enables or disables authentication. |
 | `ENCRYPTION_KEYS` | The path for storing encryption keys, stored by default in the config directory. |
+
+## Subtitle extraction
+
+With **Extract embedded subtitles** enabled under Settings, Subtitle, Lingarr downloads ffmpeg into `FFMPEG_PATH`, about 220 MB on disk.
+Automation and webhooks then extract the embedded text subtitles of a video next to it before translating. Streams without a language and image subtitles such as PGS are skipped.
+
+Without internet access, copy `ffmpeg` and `ffprobe` into `FFMPEG_PATH` yourself.
 
 ## Telemetry
 
