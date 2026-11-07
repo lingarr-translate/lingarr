@@ -292,14 +292,7 @@ public class TranslationJob
         catch (Exception ex)
         {
             await _translationRequestService.ClearMediaHash(translationRequest);
-            translationRequest = await _translationRequestService.UpdateTranslationRequest(translationRequest, TranslationStatus.Failed,
-                jobId);
-            
-            translationRequest.ErrorMessage = ex.Message;
-            translationRequest.StackTrace = ex.ToString();
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            
-            await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Failed, ex.Message);
+            translationRequest = await _translationRequestService.FailTranslationRequest(translationRequest, ex, jobId);
             await _scheduleService.UpdateJobState(jobName, JobStatus.Failed.GetDisplayName());
             await _translationRequestService.UpdateActiveCount();
             await _progressService.Emit(translationRequest, 0);

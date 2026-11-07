@@ -19,6 +19,7 @@ using Lingarr.Server.Models.TranslationRequests;
 using Lingarr.Server.Services.Subtitle;
 using Lingarr.Server.Services.Translation;
 using System.Collections.Concurrent;
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -178,10 +179,8 @@ public class TranslationRequestService : ITranslationRequestService
         await _dbContext.SaveChangesAsync();
         await _eventService.LogEvent(translationRequestCopy.Id, TranslationStatus.Pending);
 
-        var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
-            job.Execute(translationRequestCopy, CancellationToken.None)
-        );
-        await UpdateTranslationRequest(translationRequestCopy, TranslationStatus.Pending, jobId);
+        await EnqueueJob<TranslationJob>(translationRequestCopy, job =>
+            job.Execute(translationRequestCopy, CancellationToken.None));
 
         await UpdateActiveCount();
 
@@ -467,9 +466,8 @@ public class TranslationRequestService : ITranslationRequestService
         await _dbContext.SaveChangesAsync();
         await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Pending, "Resumed");
 
-        var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
+        var jobId = await EnqueueJob<TranslationJob>(translationRequest, job =>
             job.Execute(translationRequest, CancellationToken.None));
-        await UpdateTranslationRequest(translationRequest, TranslationStatus.Pending, jobId);
         await UpdateActiveCount();
 
         return $"Translation request with id {resumeRequest.Id} has been resumed, new job id {jobId}";
@@ -537,9 +535,8 @@ public class TranslationRequestService : ITranslationRequestService
         translationRequest.JobType = TranslationJobType.Proofread;
         await _dbContext.SaveChangesAsync();
 
-        var jobId = _backgroundJobClient.Enqueue<ProofreadJob>(job =>
+        var jobId = await EnqueueJob<ProofreadJob>(translationRequest, job =>
             job.Execute(translationRequest, CancellationToken.None));
-        await UpdateTranslationRequest(translationRequest, TranslationStatus.Pending, jobId);
         await UpdateActiveCount();
 
         return $"Translation request with id {proofreadRequest.Id} is being proofread, new job id {jobId}";
@@ -635,7 +632,39 @@ public class TranslationRequestService : ITranslationRequestService
 
         return request;
     }
-    
+
+    /// <inheritdoc />
+    public async Task<TranslationRequest> FailTranslationRequest(TranslationRequest translationRequest,
+        Exception exception, string? jobId = null)
+    {
+        var request = await UpdateTranslationRequest(translationRequest, TranslationStatus.Failed, jobId);
+        request.ErrorMessage = exception.Message;
+        request.StackTrace = exception.ToString();
+        await _dbContext.SaveChangesAsync();
+        await _eventService.LogEvent(request.Id, TranslationStatus.Failed, exception.Message);
+
+        return request;
+    }
+
+    /// <summary>
+    /// Enqueues the job for a request and stores its job id. When Hangfire cannot create the job the
+    /// request is marked Failed with the cause, so it never stays Pending without a job.
+    /// </summary>
+    private async Task<string> EnqueueJob<TJob>(TranslationRequest request, Expression<Func<TJob, Task>> job)
+    {
+        try
+        {
+            var jobId = _backgroundJobClient.Enqueue(job);
+            await UpdateTranslationRequest(request, TranslationStatus.Pending, jobId);
+            return jobId;
+        }
+        catch (BackgroundJobClientException ex)
+        {
+            await FailTranslationRequest(request, ex.GetBaseException());
+            throw;
+        }
+    }
+
     /// <inheritdoc />
     public async Task ResumeTranslationRequests()
     {
@@ -682,10 +711,8 @@ public class TranslationRequestService : ITranslationRequestService
                     queuedJobId, request.Id);
             }
 
-            var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
-                job.Execute(request, CancellationToken.None)
-            );
-            await UpdateTranslationRequest(request, TranslationStatus.Pending, jobId);
+            await EnqueueJob<TranslationJob>(request, job =>
+                job.Execute(request, CancellationToken.None));
         }
     }
     
