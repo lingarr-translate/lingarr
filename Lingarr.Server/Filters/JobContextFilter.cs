@@ -1,25 +1,12 @@
-﻿using Hangfire.Client;
-using Hangfire.Server;
+﻿using Hangfire.Server;
 using Hangfire.States;
 
 namespace Lingarr.Server.Filters;
 
-public class JobContextFilter : IClientFilter, IServerFilter, IElectStateFilter
+public class JobContextFilter : IServerFilter, IElectStateFilter
 {
     private static readonly AsyncLocal<string> JobTypeName = new();
     private static readonly AsyncLocal<string> JobId = new();
-
-    public void OnCreating(CreatingContext context)
-    {
-        JobTypeName.Value = context.Job.Type.Name;
-        JobId.Value = string.Empty;
-    }
-
-    public void OnCreated(CreatedContext context)
-    {
-        JobTypeName.Value = context.BackgroundJob.Job.Type.Name;
-        JobId.Value = context.BackgroundJob.Id;
-    }
 
     public void OnPerforming(PerformingContext context)
     {
