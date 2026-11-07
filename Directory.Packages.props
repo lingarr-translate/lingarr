@@ -41,6 +41,8 @@
         <!-- Translation -->
         <PackageVersion Include="DeepL.net" Version="1.22.1" />
         <PackageVersion Include="GTranslate" Version="2.4.0" />
+        <!-- Subtitle extraction -->
+        <PackageVersion Include="SharpCompress" Version="0.50.8" />
         <!-- Testing -->
         <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
         <PackageVersion Include="xunit.v3" Version="3.2.2" />

@@ -136,6 +136,11 @@ public static class SettingKeys
         public const string ValidateSubtitles = "subtitle_validation_enabled";
     }
 
+    public static class SubtitleExtraction
+    {
+        public const string ExtractionEnabled = "subtitle_extraction_enabled";
+    }
+
     public static class Authentication
     {
         public const string AuthEnabled = "auth_enabled";
