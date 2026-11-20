@@ -283,7 +283,7 @@ public class MistralService : BaseLanguageService, ITranslationService, IBatchTr
         {
             try
             {
-                return await TranslateBatchWithMistralApi(subtitleBatch, linked.Token);
+                return ValidateAllPositions(subtitleBatch, await TranslateBatchWithMistralApi(subtitleBatch, linked.Token));
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {

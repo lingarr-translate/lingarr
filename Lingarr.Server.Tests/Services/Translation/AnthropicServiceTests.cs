@@ -112,6 +112,22 @@ public class AnthropicServiceTests
     }
 
     [Fact]
+    public async Task TranslateBatchAsync_ShouldRetry_WhenResponseIsMissingPositions()
+    {
+        // Arrange
+        UseSettings(requestTemplate: "", maxRetries: "3");
+        var responses = new Queue<string>(["{\"translations\":[{\"position\":1,\"line\":\"Hallo wereld\"}]}", TranslationsJson]);
+        var requestBodies = CaptureRequestBodies(() => MessagesResponse(responses.Dequeue()));
+
+        // Act
+        var result = await _service.TranslateBatchAsync(Batch(), "en", "nl", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal("Wereld", result[2]);
+        Assert.Equal(2, requestBodies.Count);
+    }
+
+    [Fact]
     public async Task TranslateBatchAsync_ShouldThrowWithParseException_WhenRetriesExhausted()
     {
         // Arrange

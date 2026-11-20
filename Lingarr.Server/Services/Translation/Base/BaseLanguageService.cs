@@ -3,6 +3,7 @@ using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
 using Lingarr.Contracts.Models;
 using Lingarr.Contracts.Models.Batch;
+using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models;
 
@@ -207,6 +208,20 @@ public abstract class BaseLanguageService : BaseTranslationService
             .ToDictionary(
                 group => group.Key,
                 group => string.Join("\n", group.Select(i => i.Line).Where(l => !string.IsNullOrWhiteSpace(l))));
+
+    private protected static Dictionary<int, string> ValidateAllPositions(
+        List<BatchSubtitleItem> subtitleBatch,
+        Dictionary<int, string> translatedBatch)
+    {
+        var missingCount = subtitleBatch.Count(item => !translatedBatch.ContainsKey(item.Position));
+        if (missingCount > 0)
+        {
+            throw new TranslationParseException(
+                $"The response is missing {missingCount} of {subtitleBatch.Count} subtitle positions");
+        }
+
+        return translatedBatch;
+    }
 
     private static void RequireStructuredBatchProperties(JsonTypeInfo typeInfo)
     {

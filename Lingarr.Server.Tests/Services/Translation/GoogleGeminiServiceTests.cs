@@ -453,6 +453,37 @@ public class GoogleGeminiServiceTests
     }
 
     [Fact]
+    public async Task TranslateBatchAsync_ShouldRetry_WhenResponseIsMissingPositions()
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        settings[SettingKeys.Translation.RetryDelay] = "0";
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var batch = new List<BatchSubtitleItem>
+        {
+            new() { Position = 1, Line = "Hello" },
+            new() { Position = 2, Line = "World" }
+        };
+        var responses = new Queue<string>([
+            "[{\"position\":1,\"line\":\"Hola mundo\"}]",
+            "[{\"position\":1,\"line\":\"Hola\"},{\"position\":2,\"line\":\"Mundo\"}]"
+        ]);
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .Returns(() => Task.FromResult(GeminiResponse(responses.Dequeue())));
+
+        // Act
+        var result = await _service.TranslateBatchAsync(batch, "en", "es", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal("Hola", result[1]);
+        Assert.Equal("Mundo", result[2]);
+        VerifyRequestsSent(2);
+    }
+
+    [Fact]
     public async Task TranslateBatchAsync_ShouldThrowWithParseException_WhenParseRetriesExhausted()
     {
         // Arrange

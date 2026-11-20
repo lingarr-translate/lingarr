@@ -271,7 +271,7 @@ public class LocalAiService : BaseLanguageService, ITranslationService, IBatchTr
         {
             try
             {
-                return await TranslateBatchWithLocalAiApi(subtitleBatch, linked.Token);
+                return ValidateAllPositions(subtitleBatch, await TranslateBatchWithLocalAiApi(subtitleBatch, linked.Token));
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {

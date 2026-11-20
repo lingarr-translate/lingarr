@@ -313,7 +313,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         {
             try
             {
-                return await TranslateBatchWithAnthropicApi(subtitleBatch, linked.Token);
+                return ValidateAllPositions(subtitleBatch, await TranslateBatchWithAnthropicApi(subtitleBatch, linked.Token));
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {
