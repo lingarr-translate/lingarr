@@ -1,0 +1,53 @@
+name: API Definition
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release tag, for example 1.4.1'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  publish:
+    name: Publish API Definition
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+      IMAGE: ghcr.io/${{ github.repository }}:${{ inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+
+    steps:
+    - name: Start Lingarr
+      run: |
+        docker run -d --name lingarr -p 8080:8080 \
+          -e ASPNETCORE_ENVIRONMENT=Development \
+          -e DB_CONNECTION=sqlite \
+          "$IMAGE"
+
+    - name: Download API definition
+      run: |
+        for attempt in $(seq 1 30); do
+          if curl -sf -o openapi.json "http://localhost:8080/swagger/$VERSION/swagger.json"; then
+            exit 0
+          fi
+          sleep 2
+        done
+        docker logs lingarr
+        exit 1
+
+    - name: Upload to release
+      run: gh release upload "$VERSION" openapi.json --clobber
+
+    - name: Deploy docs
+      run: gh workflow run docs.yml --ref main

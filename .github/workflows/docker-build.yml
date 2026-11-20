@@ -64,3 +64,14 @@ jobs:
           VERSION=${{ startsWith(github.ref, 'refs/tags/') && steps.meta.outputs.version || '0.0.0-dev' }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+
+  api-definition:
+    name: API Definition
+    if: github.event_name == 'release'
+    needs: build-and-push
+    uses: ./.github/workflows/api-spec.yml
+    with:
+      version: ${{ github.event.release.tag_name }}
+    permissions:
+      contents: write
+      actions: write

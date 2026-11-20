@@ -57,3 +57,6 @@ local_nas.db
 
 # Ansible
 ansible_env/
+
+# Lingarr.Docs API definitions
+Lingarr.Docs/public/api/
