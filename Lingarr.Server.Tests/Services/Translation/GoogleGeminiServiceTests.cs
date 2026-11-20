@@ -52,7 +52,7 @@ public class GoogleGeminiServiceTests
     }
 
     [Fact]
-    public async Task TranslateBatchAsync_ShouldRepairTruncatedJson_WhenResponseIsTruncated()
+    public async Task TranslateBatchAsync_ShouldRetry_WhenRepairedJsonIsMissingLines()
     {
         // Arrange
         var settings = new Dictionary<string, string>
@@ -64,7 +64,7 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.Gemini.RequestTemplate, "" },
             { SettingKeys.Translation.RequestTimeout, "30" },
             { SettingKeys.Translation.MaxRetries, "3" },
-            { SettingKeys.Translation.RetryDelay, "1000" },
+            { SettingKeys.Translation.RetryDelay, "0" },
             { SettingKeys.Translation.RetryDelayMultiplier, "2" },
             { SettingKeys.Translation.LanguageCodeFormat, "false" }
         };
@@ -82,26 +82,8 @@ public class GoogleGeminiServiceTests
         // Full response would be: [{"position":1,"line":"Hola"},{"position":2,"line":"Mundo"}]
         // Truncated: [{"position":1,"line":"Hola"},{"position":2,"line":"Mun
         var truncatedJson = "[{\"position\":1,\"line\":\"Hola\"},{\"position\":2,\"line\":\"Mun";
-        
-        var geminiResponse = new
-        {
-            candidates = new[]
-            {
-                new
-                {
-                    content = new
-                    {
-                        parts = new[]
-                        {
-                            new { text = truncatedJson }
-                        }
-                    }
-                }
-            }
-        };
+        var responses = new Queue<string>([truncatedJson, "[{\"position\":1,\"line\":\"Hola\"},{\"position\":2,\"line\":\"Mundo\"}]"]);
 
-        var responseContent = JsonSerializer.Serialize(geminiResponse);
-        
         _httpMessageHandlerMock
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -109,20 +91,16 @@ public class GoogleGeminiServiceTests
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>()
             )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
-            });
+            .Returns(() => Task.FromResult(GeminiResponse(responses.Dequeue())));
 
         // Act
         var result = await _service.TranslateBatchAsync(batch, "en", "es", CancellationToken.None);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Single(result); // Should contain only the first item which was successfully repaired
         Assert.Equal("Hola", result[1]);
-        
+        Assert.Equal("Mundo", result[2]);
+        VerifyRequestsSent(2);
+
         // Verify that warning was logged
         _loggerMock.Verify(
             x => x.Log(
@@ -135,7 +113,7 @@ public class GoogleGeminiServiceTests
     }
 
     [Fact]
-    public async Task TranslateBatchAsync_ShouldRepairJson_WhenTruncatedInMiddleOfNumber()
+    public async Task TranslateBatchAsync_ShouldRetry_WhenTruncatedInMiddleOfNumber()
     {
         // Arrange
         var settings = new Dictionary<string, string>
@@ -147,7 +125,7 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.Gemini.RequestTemplate, "" },
             { SettingKeys.Translation.RequestTimeout, "30" },
             { SettingKeys.Translation.MaxRetries, "3" },
-            { SettingKeys.Translation.RetryDelay, "1000" },
+            { SettingKeys.Translation.RetryDelay, "0" },
             { SettingKeys.Translation.RetryDelayMultiplier, "2" },
             { SettingKeys.Translation.LanguageCodeFormat, "false" }
         };
@@ -164,26 +142,8 @@ public class GoogleGeminiServiceTests
         // Simulate truncation happening right inside a number, like in Issue #204
         // ...{"position":43
         var truncatedJson = "[{\"position\":1,\"line\":\"Line 1\"},{\"position\":2";
-        
-        var geminiResponse = new
-        {
-            candidates = new[]
-            {
-                new
-                {
-                    content = new
-                    {
-                        parts = new[]
-                        {
-                            new { text = truncatedJson }
-                        }
-                    }
-                }
-            }
-        };
+        var responses = new Queue<string>([truncatedJson, "[{\"position\":1,\"line\":\"Line 1\"},{\"position\":2,\"line\":\"Line 2\"}]"]);
 
-        var responseContent = JsonSerializer.Serialize(geminiResponse);
-        
         _httpMessageHandlerMock
             .Protected()
             .Setup<Task<HttpResponseMessage>>(
@@ -191,19 +151,15 @@ public class GoogleGeminiServiceTests
                 ItExpr.IsAny<HttpRequestMessage>(),
                 ItExpr.IsAny<CancellationToken>()
             )
-            .ReturnsAsync(new HttpResponseMessage
-            {
-                StatusCode = HttpStatusCode.OK,
-                Content = new StringContent(responseContent, Encoding.UTF8, "application/json")
-            });
+            .Returns(() => Task.FromResult(GeminiResponse(responses.Dequeue())));
 
         // Act
         var result = await _service.TranslateBatchAsync(batch, "en", "es", CancellationToken.None);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Single(result); // Should contain only the first item
         Assert.Equal("Line 1", result[1]);
+        Assert.Equal("Line 2", result[2]);
+        VerifyRequestsSent(2);
     }
 
     [Fact]
