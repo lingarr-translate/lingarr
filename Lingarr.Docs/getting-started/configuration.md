@@ -10,6 +10,7 @@ Lingarr is primarily configured through its web interface. However, every settin
 | `BASE_PATH` | Optional URL prefix to host Lingarr under a sub-path (e.g., behind a reverse proxy). Example: `/lingarr`. Leave unset to serve from the root. |
 | `MAX_CONCURRENT_JOBS=1` | Sets the amount of jobs that can run concurrently, defaults to 1. |
 | `JOB_TIMEOUT_MINUTES=30` | Minutes of silence before Hangfire retries a job. `sqlite` only, defaults to `30`. |
+| `FFMPEG_PATH=/app/config/ffmpeg` | Folder for `ffmpeg` and `ffprobe`, used by [subtitle extraction](#subtitle-extraction). Defaults to `/app/config/ffmpeg`. |
 | `TZ=Europe/Amsterdam` | The time zone Lingarr runs in, defaults to UTC. It applies to schedules, log timestamps and every date shown in the web interface, so set it to your own zone. A schedule of `0 3 * * *` runs at 3am in this zone. |
 
 ## Database
@@ -65,6 +66,13 @@ The following settings are all **optional** and can be provided via environment 
 | `AUTH_ENABLED` | Enables or disables authentication. |
 | `ENCRYPTION_KEYS` | The path for storing encryption keys, stored by default in the config directory. |
 
+## Subtitle extraction
+
+With **Extract embedded subtitles** enabled under Settings, Subtitle, Lingarr downloads ffmpeg into `FFMPEG_PATH`, about 220 MB on disk.
+Automation and webhooks then extract the embedded text subtitles of a video next to it before translating. Streams without a language and image subtitles such as PGS are skipped.
+
+Without internet access, copy `ffmpeg` and `ffprobe` into `FFMPEG_PATH` yourself.
+
 ## Telemetry
 
 | **Environment Variable** | **Description** |
@@ -88,6 +96,8 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 ```json
 [{"name":"English","code":"en"},{"name":"Dutch","code":"nl"}]
 ```
+
+The order of the array is the priority order, see [Source and target languages](#source-and-target-languages).
 
 `SERVICE_TYPE` example, with OpenAI as the primary service and Anthropic and LibreTranslate as fallbacks:
 
@@ -155,3 +165,24 @@ Batch translation is used only when at least one service in the cascade supports
 #### Upgrading
 
 The `service_type` setting no longer exists. When you upgrade, each provider in your current list becomes a service with its existing settings, in the same order. Settings of providers that were not in the list are removed. Set the matching environment variables to create them again.
+
+## Source and target languages
+
+Both language lists are ordered. In the web interface, drag a language to change its position.
+With `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` as environment variable, the order of the JSON array is the order.
+
+### Source priority
+
+Lingarr uses the first source language that has a subtitle.
+
+### Target languages
+
+By default, every missing target language is translated.
+
+With **Only translate to the first target language** enabled, an existing subtitle in any target language counts as translated. 
+If none exists, Lingarr translates to the first target language.
+
+For example, with `es-mx` then `es`:
+
+- `Movie.es.srt` or `Movie.es-mx.srt` exists, nothing is translated.
+- Neither exists, `Movie.es-mx.srt` is created.

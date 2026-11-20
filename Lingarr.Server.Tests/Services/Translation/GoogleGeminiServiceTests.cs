@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Lingarr.Contracts.Exceptions;
 using Lingarr.Contracts.Models.Batch;
 using Lingarr.Core.Configuration;
+using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Services;
 using Lingarr.Server.Services.Translation;
@@ -426,6 +427,54 @@ public class GoogleGeminiServiceTests
         Assert.IsType<HttpRequestException>(ex.InnerException);
     }
 
+    [Theory]
+    [InlineData("not json")]
+    [InlineData("[{\"position\":1}]")]
+    public async Task TranslateBatchAsync_ShouldRetry_WhenResponseCannotBeParsed(string unparsableText)
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        settings[SettingKeys.Translation.RetryDelay] = "0";
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var batch = new List<BatchSubtitleItem> { new() { Position = 1, Line = "Hello" } };
+        var responses = new Queue<string>([unparsableText, "[{\"position\":1,\"line\":\"Hola\"}]"]);
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .Returns(() => Task.FromResult(GeminiResponse(responses.Dequeue())));
+
+        // Act
+        var result = await _service.TranslateBatchAsync(batch, "en", "es", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal("Hola", result[1]);
+        VerifyRequestsSent(2);
+    }
+
+    [Fact]
+    public async Task TranslateBatchAsync_ShouldThrowWithParseException_WhenParseRetriesExhausted()
+    {
+        // Arrange
+        var settings = GetDefaultSettings();
+        settings[SettingKeys.Translation.RetryDelay] = "0";
+        _settingsMock.Setup(s => s.GetSettings(It.IsAny<IEnumerable<string>>())).ReturnsAsync(settings);
+
+        var batch = new List<BatchSubtitleItem> { new() { Position = 1, Line = "Hello" } };
+
+        _httpMessageHandlerMock.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .Returns(() => Task.FromResult(GeminiResponse("not json")));
+
+        // Act
+        var ex = await Assert.ThrowsAsync<TranslationException>(
+            () => _service.TranslateBatchAsync(batch, "en", "es", TestContext.Current.CancellationToken));
+
+        // Assert
+        Assert.IsType<TranslationParseException>(ex.InnerException);
+        VerifyRequestsSent(3);
+    }
+
     [Fact]
     public async Task TranslateBatchAsync_ShouldMergeDuplicatePositions_WhenOneLineIsEmpty()
     {
@@ -680,5 +729,23 @@ public class GoogleGeminiServiceTests
             { SettingKeys.Translation.RetryDelayMultiplier, "1" },
             { SettingKeys.Translation.LanguageCodeFormat, "false" }
         };
+    }
+
+    private static HttpResponseMessage GeminiResponse(string text) => new()
+    {
+        StatusCode = HttpStatusCode.OK,
+        Content = new StringContent(
+            JsonSerializer.Serialize(new { candidates = new[] { new { content = new { parts = new[] { new { text } } } } } }),
+            Encoding.UTF8,
+            "application/json")
+    };
+
+    private void VerifyRequestsSent(int count)
+    {
+        _httpMessageHandlerMock.Protected().Verify(
+            "SendAsync",
+            Times.Exactly(count),
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>());
     }
 }

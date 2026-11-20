@@ -18,6 +18,7 @@ using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Models.TranslationRequests;
 using Lingarr.Server.Services.Subtitle;
 using System.Collections.Concurrent;
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -180,10 +181,8 @@ public class TranslationRequestService : ITranslationRequestService
         await _dbContext.SaveChangesAsync();
         await _eventService.LogEvent(translationRequestCopy.Id, TranslationStatus.Pending);
 
-        var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
-            job.Execute(translationRequestCopy, CancellationToken.None)
-        );
-        await UpdateTranslationRequest(translationRequestCopy, TranslationStatus.Pending, jobId);
+        await EnqueueJob<TranslationJob>(translationRequestCopy, job =>
+            job.Execute(translationRequestCopy, CancellationToken.None));
 
         await UpdateActiveCount();
 
@@ -196,8 +195,19 @@ public class TranslationRequestService : ITranslationRequestService
         var sourceLanguages = await _settingService.GetSettingAsJson<SourceLanguage>(
             SettingKeys.Translation.SourceLanguages
             );
-        var sourceCodes = sourceLanguages.Select(sourceLanguage => sourceLanguage.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var sourceCodes = sourceLanguages
+            .Select(sourceLanguage => sourceLanguage.Code)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+        var targetLanguages = await _settingService.GetSettingAsJson<TargetLanguage>(
+            SettingKeys.Translation.TargetLanguages
+            );
+        var targetCodes = targetLanguages
+            .Select(targetLanguage => targetLanguage.Code)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
         var ignoreCaptions = await _settingService.GetSetting(SettingKeys.Translation.IgnoreCaptions) ?? "false";
+        var firstTargetOnly = await _settingService.GetSetting(SettingKeys.Translation.FirstTargetOnly) ?? "false";
 
         switch (request.MediaType)
         {
@@ -220,7 +230,9 @@ public class TranslationRequestService : ITranslationRequestService
                         MediaType.Movie,
                         request.TargetLanguage, 
                         sourceCodes, 
-                        ignoreCaptions);
+                        targetCodes,
+                        ignoreCaptions,
+                        firstTargetOnly);
                 }
                 break;
 
@@ -253,7 +265,9 @@ public class TranslationRequestService : ITranslationRequestService
                                 MediaType.Episode,
                                 request.TargetLanguage,
                                 sourceCodes, 
-                                ignoreCaptions);
+                                targetCodes,
+                                ignoreCaptions,
+                                firstTargetOnly);
                         }
                     }
                 }
@@ -270,8 +284,10 @@ public class TranslationRequestService : ITranslationRequestService
         int mediaId, 
         MediaType mediaType,
         string targetLanguage, 
-        HashSet<string> sourceCodes, 
-        string ignoreCaptions)
+        List<string> sourceCodes, 
+        List<string> targetCodes,
+        string ignoreCaptions,
+        string firstTargetOnly)
     {
         if (string.IsNullOrEmpty(fileName))
         {
@@ -289,16 +305,23 @@ public class TranslationRequestService : ITranslationRequestService
             return;
         }
 
-        var targetExists = subtitles.Any(s =>
-            s.Language.Equals(targetLanguage, StringComparison.OrdinalIgnoreCase) &&
-            (ignoreCaptions == "true" ||
-             string.Equals(s.Caption, selected.Subtitle.Caption, StringComparison.OrdinalIgnoreCase)));
-
-        if (targetExists)
+        if (_subtitleService.TargetSubtitleExists(subtitles, targetLanguage, selected.Subtitle, ignoreCaptions == "true"))
         {
             _logger.LogDebug("Bulk: skipping mediaId {MediaId} — matching target subtitle {Target} already exists",
                 mediaId, targetLanguage);
             return;
+        }
+
+        if (firstTargetOnly == "true" && targetCodes.Contains(targetLanguage, StringComparer.OrdinalIgnoreCase))
+        {
+            var existingTargetCode = targetCodes.FirstOrDefault(targetCode =>
+                _subtitleService.TargetSubtitleExists(subtitles, targetCode, selected.Subtitle, ignoreCaptions == "true"));
+            if (existingTargetCode != null)
+            {
+                _logger.LogDebug("Bulk: skipping mediaId {MediaId} because target subtitle {Existing} exists and only the first target language is translated",
+                    mediaId, existingTargetCode);
+                return;
+            }
         }
 
         await CreateRequest(new TranslateAbleSubtitle
@@ -446,9 +469,8 @@ public class TranslationRequestService : ITranslationRequestService
         await _dbContext.SaveChangesAsync();
         await _eventService.LogEvent(translationRequest.Id, TranslationStatus.Pending, "Resumed");
 
-        var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
+        var jobId = await EnqueueJob<TranslationJob>(translationRequest, job =>
             job.Execute(translationRequest, CancellationToken.None));
-        await UpdateTranslationRequest(translationRequest, TranslationStatus.Pending, jobId);
         await UpdateActiveCount();
 
         return $"Translation request with id {resumeRequest.Id} has been resumed, new job id {jobId}";
@@ -516,9 +538,8 @@ public class TranslationRequestService : ITranslationRequestService
         translationRequest.JobType = TranslationJobType.Proofread;
         await _dbContext.SaveChangesAsync();
 
-        var jobId = _backgroundJobClient.Enqueue<ProofreadJob>(job =>
+        var jobId = await EnqueueJob<ProofreadJob>(translationRequest, job =>
             job.Execute(translationRequest, CancellationToken.None));
-        await UpdateTranslationRequest(translationRequest, TranslationStatus.Pending, jobId);
         await UpdateActiveCount();
 
         return $"Translation request with id {proofreadRequest.Id} is being proofread, new job id {jobId}";
@@ -612,7 +633,39 @@ public class TranslationRequestService : ITranslationRequestService
 
         return request;
     }
-    
+
+    /// <inheritdoc />
+    public async Task<TranslationRequest> FailTranslationRequest(TranslationRequest translationRequest,
+        Exception exception, string? jobId = null)
+    {
+        var request = await UpdateTranslationRequest(translationRequest, TranslationStatus.Failed, jobId);
+        request.ErrorMessage = exception.Message;
+        request.StackTrace = exception.ToString();
+        await _dbContext.SaveChangesAsync();
+        await _eventService.LogEvent(request.Id, TranslationStatus.Failed, exception.Message);
+
+        return request;
+    }
+
+    /// <summary>
+    /// Enqueues the job for a request and stores its job id. When Hangfire cannot create the job the
+    /// request is marked Failed with the cause, so it never stays Pending without a job.
+    /// </summary>
+    private async Task<string> EnqueueJob<TJob>(TranslationRequest request, Expression<Func<TJob, Task>> job)
+    {
+        try
+        {
+            var jobId = _backgroundJobClient.Enqueue(job);
+            await UpdateTranslationRequest(request, TranslationStatus.Pending, jobId);
+            return jobId;
+        }
+        catch (BackgroundJobClientException ex)
+        {
+            await FailTranslationRequest(request, ex.GetBaseException());
+            throw;
+        }
+    }
+
     /// <inheritdoc />
     public async Task ResumeTranslationRequests()
     {
@@ -659,10 +712,8 @@ public class TranslationRequestService : ITranslationRequestService
                     queuedJobId, request.Id);
             }
 
-            var jobId = _backgroundJobClient.Enqueue<TranslationJob>(job =>
-                job.Execute(request, CancellationToken.None)
-            );
-            await UpdateTranslationRequest(request, TranslationStatus.Pending, jobId);
+            await EnqueueJob<TranslationJob>(request, job =>
+                job.Execute(request, CancellationToken.None));
         }
     }
     

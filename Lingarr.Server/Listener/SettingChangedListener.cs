@@ -54,8 +54,15 @@ public class SettingChangedListener
                 ])
             },
             {
+                "subtitleExtraction", ("Job", "SubtitleExtraction", [
+                    SettingKeys.SubtitleExtraction.ExtractionEnabled
+                ])
+            },
+            {
                 "clearHash", ("Action", "ClearHash", [
-                    SettingKeys.Translation.SourceLanguages
+                    SettingKeys.Translation.SourceLanguages,
+                    SettingKeys.Translation.TargetLanguages,
+                    SettingKeys.Translation.FirstTargetOnly
                 ])
             },
             {
@@ -151,7 +158,8 @@ public class SettingChangedListener
                         recurringJobManager.AddOrUpdate<AutomatedTranslationJob>(
                             "AutomatedTranslationJob",
                             job => job.Execute(),
-                            translationSchedule);
+                            translationSchedule,
+                            new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
                     }
                     else
                     {
@@ -169,11 +177,22 @@ public class SettingChangedListener
                         telemetryJobManager.AddOrUpdate<TelemetryJob>(
                             "TelemetryJob",
                             job => job.Execute(),
-                            "0 9 * * 5");
+                            "0 9 * * 5",
+                            new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
                     }
                     else
                     {
                         telemetryJobManager.RemoveIfExists("TelemetryJob");
+                    }
+
+                    break;
+                case "SubtitleExtraction":
+                    if (settings[SettingKeys.SubtitleExtraction.ExtractionEnabled] == "true")
+                    {
+                        _logger.LogInformation(
+                            "Subtitle extraction has been |Orange|enabled|/Orange|, installing ffmpeg.");
+                        scope.ServiceProvider.GetRequiredService<IBackgroundJobClient>()
+                            .Enqueue<FfmpegInstallJob>(job => job.Execute(true, CancellationToken.None));
                     }
 
                     break;
@@ -214,11 +233,13 @@ public class SettingChangedListener
                     scheduleJobManager.AddOrUpdate<SyncMovieJob>(
                         "SyncMovieJob",
                         job => job.Execute(),
-                        settings[SettingKeys.Automation.MovieSchedule]);
+                        settings[SettingKeys.Automation.MovieSchedule],
+                        new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
                     scheduleJobManager.AddOrUpdate<SyncShowJob>(
                         "SyncShowJob",
                         job => job.Execute(),
-                        settings[SettingKeys.Automation.ShowSchedule]);
+                        settings[SettingKeys.Automation.ShowSchedule],
+                        new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
                     break;
             }
         }

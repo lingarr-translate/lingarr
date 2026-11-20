@@ -34,7 +34,8 @@
         <div class="flex flex-col space-x-2">
             <span class="font-semibold">Source and target translation</span>
             Select a source and target language. Both the source and target are used to request
-            translations.
+            translations. The order is the priority: drag a language to reorder it. Lingarr uses
+            the first source language that has a subtitle available.
         </div>
 
         <div v-if="translateStore.isLanguagesLoading" class="py-4">
@@ -59,6 +60,17 @@
                     class="w-full"
                     :options="languages" />
             </div>
+            <div class="flex flex-col space-y-2">
+                <ToggleButton v-model="firstTargetOnly">
+                    <span class="text-primary-content text-sm font-medium">
+                        Only translate to the first target language
+                    </span>
+                </ToggleButton>
+                <p class="text-sm text-secondary-content">
+                    An existing subtitle in any target language counts, otherwise Lingarr
+                    translates to the first one.
+                </p>
+            </div>
         </template>
         <p class="text-sm text-secondary-content">
             If no configured service supports the language code, the language falls back to the
@@ -71,6 +83,7 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
 import CodeSnippet from '@/components/common/CodeSnippet.vue'
+import ToggleButton from '@/components/common/ToggleButton.vue'
 import LanguageSelect from '@/components/features/settings/LanguageSelect.vue'
 import { ILanguage, SETTINGS } from '@/ts'
 import { useTranslateStore } from '@/store/translate'
@@ -94,6 +107,14 @@ const targetLanguages = computed({
     get: (): ILanguage[] => settingsStore.getSetting(SETTINGS.TARGET_LANGUAGES) as ILanguage[],
     set: (newValue: string): void => {
         settingsStore.updateSetting(SETTINGS.TARGET_LANGUAGES, newValue, true, true)
+        emit('save')
+    }
+})
+
+const firstTargetOnly = computed({
+    get: (): string => settingsStore.getSetting(SETTINGS.FIRST_TARGET_ONLY) as string,
+    set: (newValue: string): void => {
+        settingsStore.updateSetting(SETTINGS.FIRST_TARGET_ONLY, newValue, true)
         emit('save')
     }
 })

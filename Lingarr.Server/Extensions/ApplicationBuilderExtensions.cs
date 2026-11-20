@@ -71,18 +71,11 @@ public static class ApplicationBuilderExtensions
 
     private static async Task MigrateApiKeyEncryption(this WebApplication app)
     {
-        string[] apiKeys =
-        [
-            SettingKeys.Authentication.ApiKey,
-            SettingKeys.Integration.RadarrApiKey,
-            SettingKeys.Integration.SonarrApiKey,
-        ];
-
         using var scope = app.Services.CreateScope();
         var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
         var encryptionService = scope.ServiceProvider.GetRequiredService<IEncryptionService>();
 
-        foreach (var key in apiKeys)
+        foreach (var key in SettingKeys.EncryptedKeys)
         {
             var value = await settingService.GetSetting(key);
             if (string.IsNullOrEmpty(value) || encryptionService.IsEncrypted(value))

@@ -2,6 +2,13 @@
 
 public static class SettingKeys
 {
+    public static readonly string[] EncryptedKeys =
+    [
+        Authentication.ApiKey,
+        Integration.RadarrApiKey,
+        Integration.SonarrApiKey
+    ];
+
     public static class Integration
     {
         public const string RadarrUrl = "radarr_url";
@@ -85,6 +92,7 @@ public static class SettingKeys
 
         public const string SourceLanguages = "source_languages";
         public const string TargetLanguages = "target_languages";
+        public const string FirstTargetOnly = "first_target_only";
         public const string AiPrompt = "ai_prompt";
         public const string AiUserPrompt = "ai_user_prompt";
         public const string ProofreadPrompt = "proofread_prompt";
@@ -130,6 +138,11 @@ public static class SettingKeys
         public const string MinDurationMs = "subtitle_validation_mindurationms";
         public const string MaxDurationSecs = "subtitle_validation_maxdurationsecs";
         public const string ValidateSubtitles = "subtitle_validation_enabled";
+    }
+
+    public static class SubtitleExtraction
+    {
+        public const string ExtractionEnabled = "subtitle_extraction_enabled";
     }
 
     public static class Authentication

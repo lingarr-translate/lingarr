@@ -17,24 +17,25 @@ public class LogsController : ControllerBase
         Response.Headers.Append("Cache-Control", "no-cache");
         Response.Headers.Append("Connection", "keep-alive");
         
-        foreach (var log in InMemoryLogSink.GetRecentLogs(100))
+        foreach (var log in InMemoryLogStore.GetRecentLogs(100))
         {
             string json = JsonSerializer.Serialize(log);
             await Response.WriteAsync($"data: {json}\n\n", cancellationToken);
         }
         await Response.Body.FlushAsync(cancellationToken);
         
-        var logQueue = InMemoryLogSink.LogQueue;
-        var lastProcessedCount = logQueue.Count;
+        var logQueue = InMemoryLogStore.LogQueue;
+        var lastProcessedCount = InMemoryLogStore.TotalLogCount;
         
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(2));
         
         while (!cancellationToken.IsCancellationRequested && await timer.WaitForNextTickAsync(cancellationToken))
         {
-            var currentCount = logQueue.Count;
+            var currentCount = InMemoryLogStore.TotalLogCount;
             if (currentCount > lastProcessedCount)
             {
-                var newLogs = logQueue.TakeLast(currentCount - lastProcessedCount);
+                var newLogCount = (int)Math.Min(currentCount - lastProcessedCount, logQueue.Count);
+                var newLogs = logQueue.TakeLast(newLogCount);
                 foreach (var log in newLogs)
                 {
                     string json = JsonSerializer.Serialize(log);

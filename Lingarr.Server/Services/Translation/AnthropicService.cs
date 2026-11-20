@@ -1,11 +1,13 @@
 ﻿using System.Net;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Lingarr.Contracts.Exceptions;
 using Lingarr.Contracts.Models;
 using Lingarr.Contracts.Models.Batch;
 using Lingarr.Contracts.Translation;
 using Lingarr.Core.Configuration;
+using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Services.Translation.Base;
 
@@ -13,6 +15,7 @@ namespace Lingarr.Server.Services.Translation;
 
 public class AnthropicService : BaseLanguageService, ITranslationService, IBatchTranslationService, IProofreadService
 {
+    private const int BatchMaxTokens = 16000;
     private readonly string? _endpoint = "https://api.anthropic.com/v1";
     private readonly HttpClient _httpClient;
     private readonly IRequestTemplateService _requestTemplateService;
@@ -327,6 +330,21 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                     "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
                     "Anthropic", ex.StatusCode, delay, attempt, _maxRetries);
             }
+            catch (TranslationParseException ex)
+            {
+                if (attempt == _maxRetries)
+                {
+                    _logger.LogError(ex, "Max retries exhausted for batch translation, the model kept returning an unparsable response");
+                    throw new TranslationException("Failed to parse translated subtitles", ex);
+                }
+
+                _logger.LogWarning(
+                    "{ServiceName} returned an unparsable response. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    "Anthropic", delay, attempt, _maxRetries);
+
+                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
+                delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
+            }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
@@ -345,55 +363,61 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         List<BatchSubtitleItem> subtitleBatch,
         CancellationToken cancellationToken)
     {
+        // Structured outputs instead of a forced tool: newer Claude models reject tool_choice of type 'tool'.
+        var outputFormat = new
+        {
+            type = "json_schema",
+            schema = new
+            {
+                type = "object",
+                properties = new
+                {
+                    translations = new
+                    {
+                        type = "array",
+                        items = new
+                        {
+                            type = "object",
+                            properties = new
+                            {
+                                position = new
+                                {
+                                    type = "integer"
+                                },
+                                line = new
+                                {
+                                    type = "string",
+                                    description = $"Subtitle text translated into {_replacements["targetLanguage"]}"
+                                }
+                            },
+                            required = new[] { "position", "line" },
+                            additionalProperties = false
+                        }
+                    }
+                },
+                required = new[] { "translations" },
+                additionalProperties = false
+            }
+        };
+
         var replacements = GetBatchReplacements(_model!, JsonSerializer.Serialize(subtitleBatch));
         var bodyJson = _requestTemplateService.BuildRequestBody(_requestTemplate!, replacements);
-        bodyJson = _requestTemplateService.SetRequestFields(bodyJson, new Dictionary<string, object?>
+        var fields = new Dictionary<string, object?>
         {
-            ["tools"] = new[]
-            {
-                new
-                {
-                    name = "record_translation_batch",
-                    description = "Record batch translation results using well-structured JSON.",
-                    input_schema = new
-                    {
-                        type = "object",
-                        properties = new Dictionary<string, object>
-                        {
-                            ["translations"] = new
-                            {
-                                type = "array",
-                                items = new
-                                {
-                                    type = "object",
-                                    properties = new Dictionary<string, object>
-                                    {
-                                        ["position"] = new
-                                        {
-                                            type = "integer",
-                                            description = "Position/index of the subtitle item"
-                                        },
-                                        ["line"] = new
-                                        {
-                                            type = "string",
-                                            description = "Translated subtitle text"
-                                        }
-                                    },
-                                    required = new[] { "position", "line" }
-                                },
-                                description = "Array of translated subtitle items with their positions"
-                            }
-                        },
-                        required = new[] { "translations" }
-                    }
-                }
-            },
-            ["tool_choice"] = new
-            {
-                type = "tool",
-                name = "record_translation_batch"
-            }
-        });
+            ["output_config"] = new { format = outputFormat }
+        };
+
+        // A whole batch needs more room than a single line; a higher value from the request template is kept.
+        var templateMaxTokens = JsonNode.Parse(bodyJson)?["max_tokens"] is JsonValue maxTokensValue &&
+                                maxTokensValue.TryGetValue<int>(out var configuredMaxTokens)
+            ? configuredMaxTokens
+            : 0;
+        if (templateMaxTokens < BatchMaxTokens)
+        {
+            fields["max_tokens"] = BatchMaxTokens;
+        }
+
+        bodyJson = _requestTemplateService.SetRequestFields(bodyJson, fields);
 
         var content = new StringContent(
             bodyJson,
@@ -426,7 +450,7 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
             ? stopReasonProperty.GetString()
             : null;
 
-        // Extract tool use result from Anthropic response
+        // The structured output is in the text block of the response (thinking blocks come before it)
         if (!jsonResponse.TryGetProperty("content", out var contentArray) ||
             contentArray.GetArrayLength() == 0)
         {
@@ -434,27 +458,28 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
                 $"Anthropic returned no content (stop_reason: {stopReason ?? "unknown"}).");
         }
 
-        JsonElement? toolUseContent = null;
+        JsonElement? textContent = null;
         foreach (var contentItem in contentArray.EnumerateArray())
         {
             if (contentItem.TryGetProperty("type", out var typeProperty) &&
-                typeProperty.GetString() == "tool_use")
+                typeProperty.GetString() == "text")
             {
-                toolUseContent = contentItem;
+                textContent = contentItem;
                 break;
             }
         }
 
-        if (!toolUseContent.HasValue ||
-            !toolUseContent.Value.TryGetProperty("input", out var inputProperty) ||
-            !inputProperty.TryGetProperty("translations", out var translationsProperty))
+        if (!textContent.HasValue ||
+            !textContent.Value.TryGetProperty("text", out var textProperty))
         {
             throw new TranslationException(
-                $"Anthropic response contained no tool_use block (stop_reason: {stopReason ?? "unknown"}).");
+                $"Anthropic response contained no text block (stop_reason: {stopReason ?? "unknown"}).");
         }
 
         try
         {
+            var translationsProperty = JsonSerializer.Deserialize<JsonElement>(textProperty.GetString() ?? string.Empty)
+                .GetProperty("translations");
             var translatedItems = translationsProperty.EnumerateArray()
                 .Select(t => new StructuredBatchResponse
                 {
@@ -467,8 +492,8 @@ public class AnthropicService : BaseLanguageService, ITranslationService, IBatch
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to parse translated results from tool use");
-            throw new TranslationException("Failed to parse translated subtitles", ex);
+            _logger.LogError(ex, "Failed to parse translated results (stop_reason: {StopReason})", stopReason ?? "unknown");
+            throw new TranslationParseException("Failed to parse translated subtitles", ex);
         }
     }
 

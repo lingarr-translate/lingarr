@@ -5,6 +5,7 @@ using Lingarr.Core.Enum;
 using Lingarr.Core.Interfaces;
 using Lingarr.Server.Filters;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.OpenApi.Extensions;
@@ -108,9 +109,9 @@ public class AutomatedTranslationJob
             return false;
         }
 
-        var fileInfo = new FileInfo(media.Path);
+        var fileInfo = FindMediaFile(media);
         var fileAge = TimeSpan.Zero;
-        if (!fileInfo.Exists)
+        if (fileInfo == null)
         {
             if (!media.DateAdded.HasValue)
             {
@@ -311,6 +312,27 @@ public class AutomatedTranslationJob
         SetProcessingIndex(ShowProcessingIndexKey, newIndex);
 
         return translationsInitiated;
+    }
+
+    private static FileInfo? FindMediaFile(IMedia media)
+    {
+        if (string.IsNullOrEmpty(media.FileName) || !Directory.Exists(media.Path))
+        {
+            return null;
+        }
+
+        var mediaFile = Directory
+            .EnumerateFiles(media.Path!, media.FileName + ".*")
+            .FirstOrDefault(file =>
+                Path.GetFileNameWithoutExtension(file) == media.FileName &&
+                !SubtitleService.SupportedExtensions.Contains(Path.GetExtension(file).ToLowerInvariant()));
+
+        if (mediaFile == null)
+        {
+            return null;
+        }
+
+        return new FileInfo(mediaFile);
     }
 
     private int GetProcessingIndex(string key)

@@ -1,4 +1,7 @@
+using Lingarr.Core.Configuration;
 using Lingarr.Server.Extensions;
+
+EnvironmentFileConfiguration.Apply();
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configure();

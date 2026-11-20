@@ -3,6 +3,7 @@ using System.Text;
 using Lingarr.Contracts.Translation;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Subtitle;
+using Lingarr.Server.Models;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Services.Subtitle;
 using SubtitleValidationOptions = Lingarr.Server.Models.SubtitleValidationOptions;
@@ -11,7 +12,7 @@ namespace Lingarr.Server.Services;
 
 public class SubtitleService : ISubtitleService
 {
-    private static readonly string[] SupportedExtensions = [".srt", ".ssa", ".ass"];
+    internal static readonly string[] SupportedExtensions = [".srt", ".ssa", ".ass"];
     private static readonly string[] SupportedCaptions = ["sdh", "cc", "forced", "hi"];
 
     private readonly ILogger<SubtitleService> _logger;
@@ -89,13 +90,7 @@ public class SubtitleService : ISubtitleService
     /// <inheritdoc />
     public async Task<List<SubtitleItem>> ReadSubtitles(string filePath)
     {
-        var extension = Path.GetExtension(filePath).ToLower();
-        ISubtitleParser parser = extension switch
-        {
-            ".srt" => new SrtParser(),
-            ".ssa" or ".ass" => new SsaParser(),
-            _ => throw new NotSupportedException($"Subtitle format {extension} is not supported")
-        };
+        var parser = CreateParser(filePath);
 
         await using var fileStream = File.OpenRead(filePath);
         return parser.ParseStream(fileStream, Encoding.UTF8);
@@ -210,6 +205,17 @@ public class SubtitleService : ISubtitleService
         return subtitles;
     }
 
+    private static ISubtitleParser CreateParser(string filePath)
+    {
+        var extension = Path.GetExtension(filePath).ToLower();
+        return extension switch
+        {
+            ".srt" => new SrtParser(),
+            ".ssa" or ".ass" => new SsaParser(),
+            _ => throw new NotSupportedException($"Subtitle format {extension} is not supported")
+        };
+    }
+
     public bool ValidateSubtitle(string filePath, SubtitleValidationOptions options)
     {
         if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
@@ -220,8 +226,9 @@ public class SubtitleService : ISubtitleService
 
         try
         {
+            var parser = CreateParser(filePath);
             using var stream = File.OpenRead(filePath);
-            return ValidateSubtitleStream(stream, Encoding.UTF8, options);
+            return ValidateSubtitleStream(stream, Encoding.UTF8, options, parser);
         }
         catch (Exception ex)
         {
@@ -233,7 +240,8 @@ public class SubtitleService : ISubtitleService
     private bool ValidateSubtitleStream(
         Stream subtitleStream,
         Encoding encoding,
-        SubtitleValidationOptions options)
+        SubtitleValidationOptions options,
+        ISubtitleParser parser)
     {
         try
         {
@@ -252,13 +260,17 @@ public class SubtitleService : ISubtitleService
             // Reset stream position to the beginning before parsing
             subtitleStream.Seek(0, SeekOrigin.Begin);
 
-            var parser = new SrtParser();
             var subtitles = parser.ParseStream(subtitleStream, encoding);
 
             if (subtitles.Count < 2)
             {
                 _logger.LogWarning("Subtitle file contains less than 2 valid subtitles");
                 return false;
+            }
+
+            if (parser is SsaParser)
+            {
+                return true;
             }
 
             var expectedPosition = 1;
@@ -426,19 +438,28 @@ public class SubtitleService : ISubtitleService
     /// <inheritdoc />
     public SelectedSourceSubtitle? SelectSourceSubtitle(
         List<Subtitles> matchingSubtitles,
-        HashSet<string> sourceCodes)
+        IReadOnlyList<string> sourceCodes)
     {
         var availableLanguages = matchingSubtitles
             .Select(s => s.Language.ToLowerInvariant())
             .ToHashSet();
 
-        var sourceLanguage = availableLanguages.FirstOrDefault(language =>
-            sourceCodes.Contains(language, StringComparer.OrdinalIgnoreCase));
+        LanguageMatch? bestMatch = null;
+        foreach (var sourceCode in sourceCodes)
+        {
+            bestMatch = _languageCodeService.GetBestMatch(sourceCode, availableLanguages);
+            if (bestMatch != null)
+            {
+                break;
+            }
+        }
 
-        if (sourceLanguage == null)
+        if (bestMatch == null)
         {
             return null;
         }
+
+        var sourceLanguage = bestMatch.Code;
 
         var sourceSubtitle = matchingSubtitles
             .Where(s => s.Language.Equals(sourceLanguage, StringComparison.OrdinalIgnoreCase))
@@ -456,6 +477,19 @@ public class SubtitleService : ISubtitleService
             SourceLanguage = sourceLanguage,
             AvailableLanguages = availableLanguages
         };
+    }
+
+    /// <inheritdoc />
+    public bool TargetSubtitleExists(
+        List<Subtitles> subtitles,
+        string targetLanguage,
+        Subtitles sourceSubtitle,
+        bool ignoreCaptions)
+    {
+        return subtitles.Any(subtitle =>
+            subtitle.Language.Equals(targetLanguage, StringComparison.OrdinalIgnoreCase)
+            && (ignoreCaptions ||
+                string.Equals(subtitle.Caption, sourceSubtitle.Caption, StringComparison.OrdinalIgnoreCase)));
     }
 
     /// <summary>

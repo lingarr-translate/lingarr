@@ -76,6 +76,24 @@ public class LocalAiServiceTests
     }
 
     [Fact]
+    public async Task TranslateBatchAsync_ShouldRetry_WhenTranslationHasNoLine()
+    {
+        // Arrange
+        UseSettings(GenerateEndpoint);
+        SetupResponseSequence(
+            GenerateResponse("[{\"position\":1,\"line\":\"Hola\"},{\"position\":2}]"),
+            GenerateResponse(ValidJson));
+
+        // Act
+        var result = await _service.TranslateBatchAsync(Batch(), "en", "es", CancellationToken.None);
+
+        // Assert
+        Assert.Equal("Mundo", result[2]);
+        VerifyRequestsSent(2);
+        VerifyWarningLogged("returned an unparsable response", Times.Once());
+    }
+
+    [Fact]
     public async Task TranslateBatchAsync_ShouldThrow_WhenGenerateApiKeepsReturningMalformedJson()
     {
         // Arrange

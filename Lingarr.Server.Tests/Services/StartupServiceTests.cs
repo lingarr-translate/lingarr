@@ -15,6 +15,7 @@ using Lingarr.Server.Services.Plugins;
 using Lingarr.Server.Services.Translation;
 using Lingarr.Server.Tests.Services.Translation;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Moq;
@@ -89,6 +90,7 @@ public class StartupServiceTests : IDisposable
         await File.WriteAllTextAsync(path, "from-file-value", TestContext.Current.CancellationToken);
         Environment.SetEnvironmentVariable(envVar + "_FILE", path);
 
+        EnvironmentFileConfiguration.Apply();
         var serviceProvider = BuildProvider();
         var startupService = new StartupService(serviceProvider, NullLogger<StartupService>.Instance);
 
@@ -109,6 +111,7 @@ public class StartupServiceTests : IDisposable
         Environment.SetEnvironmentVariable("RADARR_URL", "from-env");
         Environment.SetEnvironmentVariable("RADARR_URL_FILE", path);
 
+        EnvironmentFileConfiguration.Apply();
         var serviceProvider = BuildProvider();
         var startupService = new StartupService(serviceProvider, NullLogger<StartupService>.Instance);
 
@@ -134,6 +137,7 @@ public class StartupServiceTests : IDisposable
         await File.WriteAllTextAsync(path, fileContent, TestContext.Current.CancellationToken);
         Environment.SetEnvironmentVariable("RADARR_URL_FILE", path);
 
+        EnvironmentFileConfiguration.Apply();
         var serviceProvider = BuildProvider();
         var startupService = new StartupService(serviceProvider, NullLogger<StartupService>.Instance);
 
@@ -152,6 +156,7 @@ public class StartupServiceTests : IDisposable
         Environment.SetEnvironmentVariable("RADARR_URL_FILE", Path.Combine(_tempDir, "does-not-exist"));
         Environment.SetEnvironmentVariable("RADARR_URL", "fallback-env-value");
 
+        EnvironmentFileConfiguration.Apply();
         var serviceProvider = BuildProvider();
         var startupService = new StartupService(serviceProvider, NullLogger<StartupService>.Instance);
 
@@ -199,6 +204,8 @@ public class StartupServiceTests : IDisposable
         var path = Path.Combine(_tempDir, "local_ai_endpoint_2");
         await File.WriteAllTextAsync(path, "http://second:11434/api/generate\n", TestContext.Current.CancellationToken);
         Environment.SetEnvironmentVariable("LOCAL_AI_ENDPOINT_2_FILE", path);
+
+        EnvironmentFileConfiguration.Apply();
 
         // Act
         await new StartupService(serviceProvider, NullLogger<StartupService>.Instance).StartAsync(CancellationToken.None);
@@ -324,6 +331,23 @@ public class StartupServiceTests : IDisposable
         Assert.Equal(["openai", "deepl"], instances.OrderBy(instance => instance.Position).Select(instance => instance.Provider));
     }
 
+    [Fact]
+    public async Task ApplySettingsFromEnvironment_CachedSetting_RemovesCacheEntry()
+    {
+        // Arrange
+        Environment.SetEnvironmentVariable("RADARR_URL", "http://radarr:7878");
+        var serviceProvider = BuildProvider();
+        var memoryCache = serviceProvider.GetRequiredService<IMemoryCache>();
+        memoryCache.Set(SettingKeys.Integration.RadarrUrl, "");
+        var startupService = new StartupService(serviceProvider, NullLogger<StartupService>.Instance);
+
+        // Act
+        await startupService.StartAsync(CancellationToken.None);
+
+        // Assert
+        Assert.False(memoryCache.TryGetValue(SettingKeys.Integration.RadarrUrl, out _));
+    }
+
     private static void ClearEnv()
     {
         foreach (var (envVar, _) in EnvMap)
@@ -358,6 +382,7 @@ public class StartupServiceTests : IDisposable
         services.AddSingleton<IEncryptionService>(TranslationServiceTestSetup.CreateEncryptionService());
         services.AddSingleton(settingServiceMock.Object);
         services.AddScoped<ITranslationServiceInstanceService, TranslationServiceInstanceService>();
+        services.AddMemoryCache();
 
         var serviceProvider = services.BuildServiceProvider();
 
@@ -412,7 +437,12 @@ public class StartupServiceTests : IDisposable
         await using var scope = serviceProvider.CreateAsyncScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
         var setting = await dbContext.Settings.FindAsync(key);
-        return setting?.Value;
+        if (setting == null)
+        {
+            return null;
+        }
+
+        return scope.ServiceProvider.GetRequiredService<IEncryptionService>().Decrypt(setting.Value);
     }
 }
 

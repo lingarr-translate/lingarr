@@ -44,7 +44,10 @@ export const useTranslationRequestStore = defineStore('translateRequest', {
     },
     actions: {
         async setFilter(filterVal: IFilter) {
-            this.filter = filterVal.searchQuery ? { ...filterVal, pageNumber: 1 } : filterVal
+            this.filter =
+                filterVal.searchQuery !== this.filter.searchQuery
+                    ? { ...filterVal, pageNumber: 1 }
+                    : filterVal
             await this.fetch()
         },
         async fetch() {

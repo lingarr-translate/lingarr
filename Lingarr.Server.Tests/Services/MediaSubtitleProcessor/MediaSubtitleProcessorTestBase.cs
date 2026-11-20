@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Lingarr.Contracts.Models;
@@ -6,6 +6,7 @@ using Lingarr.Core.Configuration;
 using Lingarr.Core.Data;
 using Lingarr.Core.Entities;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Interfaces.Services.Subtitle;
 using Lingarr.Server.Models;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Services;
@@ -24,6 +25,7 @@ public abstract class MediaSubtitleProcessorTestBase : IDisposable
     protected readonly Mock<ILogger<IMediaSubtitleProcessor>> LoggerMock;
     protected readonly Mock<ISubtitleService> SubtitleServiceMock;
     protected readonly Mock<ISettingService> SettingServiceMock;
+    protected readonly Mock<ISubtitleExtractionService> SubtitleExtractionServiceMock;
     protected readonly LingarrDbContext DbContext;
     protected readonly Lingarr.Server.Services.MediaSubtitleProcessor Processor;
 
@@ -33,6 +35,7 @@ public abstract class MediaSubtitleProcessorTestBase : IDisposable
         LoggerMock = new Mock<ILogger<IMediaSubtitleProcessor>>();
         SubtitleServiceMock = new Mock<ISubtitleService>();
         SettingServiceMock = new Mock<ISettingService>();
+        SubtitleExtractionServiceMock = new Mock<ISubtitleExtractionService>();
 
         var options = new DbContextOptionsBuilder<LingarrDbContext>()
             .UseInMemoryDatabase(databaseName: System.Guid.NewGuid().ToString())
@@ -45,15 +48,24 @@ public abstract class MediaSubtitleProcessorTestBase : IDisposable
         SubtitleServiceMock
             .Setup(s => s.SelectSourceSubtitle(
                 It.IsAny<List<Subtitles>>(),
-                It.IsAny<HashSet<string>>()))
-            .Returns((List<Subtitles> subs, HashSet<string> sources) =>
+                It.IsAny<IReadOnlyList<string>>()))
+            .Returns((List<Subtitles> subs, IReadOnlyList<string> sources) =>
                 subtitleService.SelectSourceSubtitle(subs, sources));
+        SubtitleServiceMock
+            .Setup(s => s.TargetSubtitleExists(
+                It.IsAny<List<Subtitles>>(),
+                It.IsAny<string>(),
+                It.IsAny<Subtitles>(),
+                It.IsAny<bool>()))
+            .Returns((List<Subtitles> subs, string target, Subtitles source, bool ignoreCaptions) =>
+                subtitleService.TargetSubtitleExists(subs, target, source, ignoreCaptions));
 
         Processor = new Lingarr.Server.Services.MediaSubtitleProcessor(
             TranslationRequestServiceMock.Object,
             LoggerMock.Object,
             SettingServiceMock.Object,
             SubtitleServiceMock.Object,
+            SubtitleExtractionServiceMock.Object,
             DbContext);
     }
 

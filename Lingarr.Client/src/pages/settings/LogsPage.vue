@@ -112,6 +112,7 @@ const filterOptions = ref<IFilterOptions>({
     logLevel: 'all'
 })
 let eventSource: EventSource | null = null
+let reconnectTimer: ReturnType<typeof setTimeout> | null = null
 
 const filteredLogs = computed(() => {
     return logs.value.filter((log) => {
@@ -212,51 +213,56 @@ watch(
     { deep: true }
 )
 
-onMounted(() => {
-    eventSource = services.logs.getStream()
+const handleLogMessage = (event: MessageEvent) => {
+    try {
+        const logData = JSON.parse(event.data)
+        logs.value = [...logs.value, logData]
+        scrollToBottom()
+    } catch (error) {
+        console.error('Error processing log entry:', error)
+        console.error('Problematic data:', event.data)
 
-    eventSource.onmessage = (event) => {
-        try {
-            const logData = JSON.parse(event.data)
-            logs.value = [...logs.value, logData]
-            scrollToBottom()
-        } catch (error) {
-            console.error('Error processing log entry:', error)
-            console.error('Problematic data:', event.data)
-
-            const fallbackEntry: ILogEntry = {
-                logLevel: 'Error',
-                message: `Failed to process log data: ${typeof event.data === 'string' ? event.data.substring(0, 100) + '...' : 'Invalid format'}`,
-                timestamp: new Date().toISOString(),
-                formattedSource: 'System',
-                category: 'System',
-                stackTrace: error instanceof Error ? error.stack : undefined
-            }
-
-            logs.value = [...logs.value, fallbackEntry]
-        }
-    }
-
-    eventSource.onerror = (error) => {
-        console.error('EventSource error:', error)
-        logs.value.push({
-            logLevel: 'error',
-            message: `Log stream connection error. Attempting to reconnect in 5 seconds...`,
+        const fallbackEntry: ILogEntry = {
+            logLevel: 'Error',
+            message: `Failed to process log data: ${typeof event.data === 'string' ? event.data.substring(0, 100) + '...' : 'Invalid format'}`,
             timestamp: new Date().toISOString(),
             formattedSource: 'System',
-            category: 'System'
-        })
-        // reconnect
-        if (eventSource) {
-            eventSource.close()
-            setTimeout(() => {
-                eventSource = services.logs.getStream()
-            }, 5000)
+            category: 'System',
+            stackTrace: error instanceof Error ? error.stack : undefined
         }
+
+        logs.value = [...logs.value, fallbackEntry]
     }
+}
+
+const handleStreamError = (error: Event) => {
+    console.error('EventSource error:', error)
+    logs.value.push({
+        logLevel: 'error',
+        message: `Log stream connection error. Attempting to reconnect in 5 seconds...`,
+        timestamp: new Date().toISOString(),
+        formattedSource: 'System',
+        category: 'System'
+    })
+    eventSource?.close()
+    reconnectTimer = setTimeout(openLogStream, 5000)
+}
+
+const openLogStream = () => {
+    eventSource = services.logs.getStream()
+    eventSource.onmessage = handleLogMessage
+    eventSource.onerror = handleStreamError
+}
+
+onMounted(() => {
+    openLogStream()
 })
 
 onUnmounted(() => {
+    if (reconnectTimer) {
+        clearTimeout(reconnectTimer)
+        reconnectTimer = null
+    }
     if (eventSource) {
         eventSource.close()
         eventSource = null

@@ -6,6 +6,7 @@ using Lingarr.Contracts.Models;
 using Lingarr.Contracts.Models.Batch;
 using Lingarr.Contracts.Translation;
 using Lingarr.Core.Configuration;
+using Lingarr.Server.Exceptions;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Models.Integrations.Translation;
 using Lingarr.Server.Services.Translation.Base;
@@ -374,6 +375,21 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                     "{ServiceName} received {StatusCode}. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
                     "Gemini", ex.StatusCode, delay, attempt, _maxRetries);
             }
+            catch (TranslationParseException ex)
+            {
+                if (attempt == _maxRetries)
+                {
+                    _logger.LogError(ex, "Max retries exhausted for batch translation, the model kept returning an unparsable response");
+                    throw new TranslationException("Retry limit reached after unparsable response.", ex);
+                }
+
+                _logger.LogWarning(
+                    "{ServiceName} returned an unparsable response. Retrying in {Delay}... (Attempt {Attempt}/{MaxRetries})",
+                    "Gemini", delay, attempt, _maxRetries);
+
+                await Task.Delay(delay, linked.Token).ConfigureAwait(false);
+                delay = TimeSpan.FromTicks(delay.Ticks * _retryDelayMultiplier);
+            }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
@@ -454,10 +470,10 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         var translatedJson = geminiResponse.Candidates[0].Content?.Parts[0].Text ?? string.Empty;
         try
         {
-            var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translatedJson);
+            var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(translatedJson, StructuredBatchSerializerOptions);
             if (translatedItems == null)
             {
-                throw new TranslationException("Failed to deserialize translated subtitles");
+                throw new TranslationParseException("Failed to deserialize translated subtitles");
             }
 
             return MergeByPosition(translatedItems);
@@ -470,7 +486,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
                 var repairedJson = TryRepairJson(translatedJson);
                 if (repairedJson != translatedJson)
                 {
-                    var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(repairedJson);
+                    var translatedItems = JsonSerializer.Deserialize<List<StructuredBatchResponse>>(repairedJson, StructuredBatchSerializerOptions);
                     if (translatedItems != null)
                     {
                         _logger.LogWarning("Successfully repaired the truncated JSON response from Gemini. Please verify the result.");
@@ -484,7 +500,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
             }
 
             _logger.LogError(ex, "Failed to parse translated JSON: {Json}", translatedJson);
-            throw new TranslationException("Failed to parse translated subtitles", ex);
+            throw new TranslationParseException("Failed to parse translated subtitles", ex);
         }
     }
 
