@@ -94,6 +94,23 @@ public class LocalAiServiceTests
     }
 
     [Fact]
+    public async Task TranslateBatchAsync_ShouldRetry_WhenResponseIsMissingPositions()
+    {
+        // Arrange
+        UseSettings(GenerateEndpoint);
+        SetupResponseSequence(
+            GenerateResponse("[{\"position\":1,\"line\":\"Hola mundo\"}]"),
+            GenerateResponse(ValidJson));
+
+        // Act
+        var result = await _service.TranslateBatchAsync(Batch(), "en", "es", CancellationToken.None);
+
+        // Assert
+        Assert.Equal("Mundo", result[2]);
+        VerifyRequestsSent(2);
+    }
+
+    [Fact]
     public async Task TranslateBatchAsync_ShouldThrow_WhenGenerateApiKeepsReturningMalformedJson()
     {
         // Arrange

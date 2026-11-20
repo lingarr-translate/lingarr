@@ -358,7 +358,7 @@ public class GoogleGeminiService : BaseLanguageService, ITranslationService, IBa
         {
             try
             {
-                return await TranslateBatchWithGeminiApi(subtitleBatch, linked.Token);
+                return ValidateAllPositions(subtitleBatch, await TranslateBatchWithGeminiApi(subtitleBatch, linked.Token));
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {

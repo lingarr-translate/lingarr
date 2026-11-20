@@ -283,7 +283,7 @@ public class OpenAiService : BaseLanguageService, ITranslationService, IBatchTra
         {
             try
             {
-                return await TranslateBatchWithOpenAiApi(subtitleBatch, linked.Token);
+                return ValidateAllPositions(subtitleBatch, await TranslateBatchWithOpenAiApi(subtitleBatch, linked.Token));
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {

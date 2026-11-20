@@ -65,6 +65,22 @@ public class MistralServiceTests
     }
 
     [Fact]
+    public async Task TranslateBatchAsync_ShouldRetry_WhenResponseIsMissingPositions()
+    {
+        // Arrange
+        UseSettings();
+        var responses = new Queue<string>(["{\"translations\":[{\"position\":1,\"line\":\"Hallo wereld\"}]}", TranslationsJson]);
+        SetupResponse(() => ChatCompletionResponse(responses.Dequeue()));
+
+        // Act
+        var result = await _service.TranslateBatchAsync(Batch(), "en", "nl", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal("Wereld", result[2]);
+        VerifyRequestsSent(2);
+    }
+
+    [Fact]
     public async Task TranslateBatchAsync_ShouldThrowWithParseException_WhenRetriesExhausted()
     {
         // Arrange

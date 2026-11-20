@@ -283,7 +283,7 @@ public class XAiService : BaseLanguageService, ITranslationService, IBatchTransl
         {
             try
             {
-                return await TranslateBatchWithXAiApi(subtitleBatch, linked.Token);
+                return ValidateAllPositions(subtitleBatch, await TranslateBatchWithXAiApi(subtitleBatch, linked.Token));
             }
             catch (HttpRequestException ex) when (ex.StatusCode is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable)
             {
