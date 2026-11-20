@@ -44,7 +44,9 @@ public class TranslateControllerContentTests : IDisposable
     private readonly Mock<IProgressService> _progressServiceMock;
     private readonly Mock<IStatisticsService> _statisticsServiceMock;
     private readonly Mock<ISettingService> _settingServiceMock;
+    private readonly Mock<ITranslationServiceInstanceService> _translationServiceInstanceServiceMock;
     private readonly Dictionary<string, string> _settings;
+    private List<TranslationServiceInstance> _instances;
     private readonly TranslationRequestService _translationRequestService;
     private readonly TranslateController _controller;
     private readonly Func<IProgressService, TranslationRequestService> _createTranslationRequestService;
@@ -111,18 +113,23 @@ public class TranslateControllerContentTests : IDisposable
 
         _translationServiceFactoryMock = new Mock<ITranslationServiceFactory>();
         _translationServiceFactoryMock
-            .Setup(factory => factory.CreateTranslationServices(It.IsAny<IReadOnlyList<string>>()))
-            .Returns((IReadOnlyList<string> serviceTypes) => serviceTypes
-                .Select(serviceType => new TranslationServiceEntry(
-                    serviceType,
+            .Setup(factory => factory.CreateTranslationServices(It.IsAny<IReadOnlyList<TranslationServiceInstance>>()))
+            .Returns((IReadOnlyList<TranslationServiceInstance> instances) => instances
+                .Select(instance => new TranslationServiceEntry(
+                    instance.Provider,
                     _translationServiceMock.Object,
                     (IBatchTranslationService)_translationServiceMock.Object))
                 .ToList());
 
+        _instances = [NewInstance(1, "openai", 0)];
+        _translationServiceInstanceServiceMock = new Mock<ITranslationServiceInstanceService>();
+        _translationServiceInstanceServiceMock
+            .Setup(instanceService => instanceService.GetInstances())
+            .ReturnsAsync(() => _instances.ToList());
+
         _settings = new Dictionary<string, string>
         {
             { SettingKeys.Translation.UseBatchTranslation, "true" },
-            { SettingKeys.Translation.ServiceType, "[\"openai\"]" },
             { SettingKeys.Translation.MaxBatchSize, "10000" },
             { SettingKeys.Translation.StripSubtitleFormatting, "false" },
             { SettingKeys.Translation.PreserveLineBreaks, "false" },
@@ -134,9 +141,6 @@ public class TranslateControllerContentTests : IDisposable
         _settingServiceMock
             .Setup(settingService => settingService.GetSettings(It.IsAny<IEnumerable<string>>()))
             .ReturnsAsync(() => new Dictionary<string, string>(_settings));
-        _settingServiceMock
-            .Setup(settingService => settingService.GetSetting(SettingKeys.Translation.ServiceType))
-            .ReturnsAsync(() => _settings[SettingKeys.Translation.ServiceType]);
 
         _progressServiceMock = new Mock<IProgressService>();
         _progressServiceMock
@@ -193,6 +197,7 @@ public class TranslateControllerContentTests : IDisposable
             new Mock<IBackgroundJobClient>().Object,
             hubContextMock.Object,
             _translationServiceFactoryMock.Object,
+            _translationServiceInstanceServiceMock.Object,
             progressService,
             _statisticsServiceMock.Object,
             mediaServiceMock.Object,
@@ -205,7 +210,7 @@ public class TranslateControllerContentTests : IDisposable
         _controller = new TranslateController(
             _translationServiceFactoryMock.Object,
             _translationRequestService,
-            _settingServiceMock.Object,
+            _translationServiceInstanceServiceMock.Object,
             new LanguageCodeService(),
             NullLogger<TranslateController>.Instance);
     }
@@ -215,6 +220,14 @@ public class TranslateControllerContentTests : IDisposable
         _context.Dispose();
         _connection.Dispose();
     }
+
+    private static TranslationServiceInstance NewInstance(int id, string provider, int position) => new()
+    {
+        Id = id,
+        Provider = provider,
+        Name = provider,
+        Position = position
+    };
 
     private static TranslateAbleSubtitleContent NewContent(params string[] lines) => new()
     {
@@ -351,15 +364,15 @@ public class TranslateControllerContentTests : IDisposable
     }
 
     [Fact]
-    public async Task TranslateContent_MalformedServiceTypeSetting_UsesDefaultService()
+    public async Task TranslateContent_ConfiguredInstances_BuildsCascadeFromInstances()
     {
-        _settings[SettingKeys.Translation.ServiceType] = "[\"openai\"";
+        _instances = [NewInstance(4, "deepl", 0), NewInstance(2, "openai", 1)];
 
         await _controller.TranslateContent(NewContent("First line", "Second line"));
 
         _translationServiceFactoryMock.Verify(
-            factory => factory.CreateTranslationServices(It.Is<IReadOnlyList<string>>(serviceTypes =>
-                serviceTypes.Count == 1 && serviceTypes[0] == SettingKeys.Translation.DefaultServiceType)),
+            factory => factory.CreateTranslationServices(It.Is<IReadOnlyList<TranslationServiceInstance>>(instances =>
+                instances.Count == 2 && instances[0].Id == 4 && instances[1].Id == 2)),
             Times.Once);
     }
 
@@ -449,7 +462,7 @@ public class TranslateControllerContentTests : IDisposable
     [Fact]
     public async Task TranslateContent_PrimaryServiceFails_FallsBackToNextServiceButReportsPrimary()
     {
-        _settings[SettingKeys.Translation.ServiceType] = "[\"openai\",\"deepl\"]";
+        _instances = [NewInstance(1, "openai", 0), NewInstance(2, "deepl", 1)];
 
         var failingServiceMock = new Mock<ITranslationService>();
         failingServiceMock
@@ -471,11 +484,11 @@ public class TranslateControllerContentTests : IDisposable
             .ThrowsAsync(new InvalidOperationException("provider is down"));
 
         _translationServiceFactoryMock
-            .Setup(factory => factory.CreateTranslationServices(It.IsAny<IReadOnlyList<string>>()))
-            .Returns((IReadOnlyList<string> serviceTypes) => new List<TranslationServiceEntry>
+            .Setup(factory => factory.CreateTranslationServices(It.IsAny<IReadOnlyList<TranslationServiceInstance>>()))
+            .Returns((IReadOnlyList<TranslationServiceInstance> instances) => new List<TranslationServiceEntry>
             {
-                new(serviceTypes[0], failingServiceMock.Object, (IBatchTranslationService)failingServiceMock.Object),
-                new(serviceTypes[1], _translationServiceMock.Object, (IBatchTranslationService)_translationServiceMock.Object)
+                new(instances[0].Provider, failingServiceMock.Object, (IBatchTranslationService)failingServiceMock.Object),
+                new(instances[1].Provider, _translationServiceMock.Object, (IBatchTranslationService)_translationServiceMock.Object)
             });
 
         var response = await _controller.TranslateContent(
@@ -541,9 +554,9 @@ public class TranslateControllerContentTests : IDisposable
             .ReturnsAsync((string text, string _, string _, List<string>? _, List<string>? _, CancellationToken _) =>
                 $"line:{text}");
         _translationServiceFactoryMock
-            .Setup(factory => factory.CreateTranslationServices(It.IsAny<IReadOnlyList<string>>()))
-            .Returns((IReadOnlyList<string> serviceTypes) => serviceTypes
-                .Select(serviceType => new TranslationServiceEntry(serviceType, plainServiceMock.Object, null))
+            .Setup(factory => factory.CreateTranslationServices(It.IsAny<IReadOnlyList<TranslationServiceInstance>>()))
+            .Returns((IReadOnlyList<TranslationServiceInstance> instances) => instances
+                .Select(instance => new TranslationServiceEntry(instance.Provider, plainServiceMock.Object, null))
                 .ToList());
 
         var response = await _controller.TranslateContent(
@@ -774,7 +787,7 @@ public class TranslateControllerContentTests : IDisposable
         var controller = new TranslateController(
             _translationServiceFactoryMock.Object,
             _createTranslationRequestService(_progressService),
-            _settingServiceMock.Object,
+            _translationServiceInstanceServiceMock.Object,
             new LanguageCodeService(),
             NullLogger<TranslateController>.Instance);
         var content = NewContent("First line", "Second line");
@@ -801,7 +814,7 @@ public class TranslateControllerContentTests : IDisposable
         var controller = new TranslateController(
             _translationServiceFactoryMock.Object,
             _createTranslationRequestService(_progressService),
-            _settingServiceMock.Object,
+            _translationServiceInstanceServiceMock.Object,
             new LanguageCodeService(),
             NullLogger<TranslateController>.Instance);
         var content = NewContent("First line", "First line");
@@ -829,7 +842,7 @@ public class TranslateControllerContentTests : IDisposable
     public async Task TranslateContent_NoUsableServices_ReturnsServerError()
     {
         _translationServiceFactoryMock
-            .Setup(factory => factory.CreateTranslationServices(It.IsAny<IReadOnlyList<string>>()))
+            .Setup(factory => factory.CreateTranslationServices(It.IsAny<IReadOnlyList<TranslationServiceInstance>>()))
             .Returns(new List<TranslationServiceEntry>());
 
         var response = await _controller.TranslateContent(

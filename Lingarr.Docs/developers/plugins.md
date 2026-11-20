@@ -1,6 +1,6 @@
 # Lingarr plugin API
 
-Lingarr can be extended with your own translation services (like LLM providers or other services) without changing the main Lingarr code.
+Lingarr can be extended with your own translation services (like AI providers or other services) without changing the main Lingarr code.
 You create a plugin as a .NET 10 class library (a DLL file) that references the `Lingarr.Contracts` package. 
 
 ## What you can extend
@@ -65,11 +65,24 @@ Do not use these plugin identifiers (they are used by built-in providers):
 ## Settings
 
 - Use snake_case keys with a namespace (example: `myprovider_api_key`).
-- Settings defined in your manifest are automatically added when the plugin loads.
+- Settings defined in your manifest are stored per service instance. Lingarr no longer adds plugin setting rows to the global settings table at start. A new instance gets the `Default` of each non-secret manifest field, secrets get no default.
 - PluginSettingType.Secret fields are encrypted.
 - PluginSettingType.Toggle fields show an on/off switch and store `true` or `false`.
 - To read settings, inject `Lingarr.Contracts.Settings.ISettingsAccess` in your constructor.
 - Plugins can only read settings, they cannot write them.
+
+## Instances
+
+Users can add your provider more than once, as long as its manifest has at least one setting. Each copy is an instance with its own name and settings. A provider with no manifest settings can be added once.
+
+Lingarr creates your `ITranslationService` once per instance with `ActivatorUtilities`. It is no longer resolved by key from dependency injection. The `ISettingsAccess` you receive belongs to that instance:
+
+- Keys from your manifest return the value of that instance. A key the instance has no value for returns an empty value, it does not fall back to the global settings.
+- Shared settings, such as the prompts, the retry settings and the HTTP settings from `GetHttpSettingsAsync`, come from the global store.
+
+Do not keep per-instance state in static fields, and read your settings through `ISettingsAccess` instead of caching them across instances.
+
+No member of `Lingarr.Contracts` changed for this, `HostMajorVersion` is still 1, and plugins built against earlier versions work without a rebuild. A service class without an `ISettingsAccess` constructor parameter is still created.
 
 ## HTTP and retry
 Get Lingarr's shared HTTP settings from:

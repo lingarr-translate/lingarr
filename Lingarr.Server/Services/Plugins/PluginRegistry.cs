@@ -15,10 +15,10 @@ public sealed class PluginRegistry : IPluginRegistry
         _plugins = new List<RegisteredPlugin>();
         _byProvider = new Dictionary<string, RegisteredPlugin>(StringComparer.OrdinalIgnoreCase);
 
-        var loadedSourceFiles = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+        var loadedPlugins = new Dictionary<string, RegisteredPlugin>(StringComparer.OrdinalIgnoreCase);
         foreach (var loadedPlugin in pluginLoader.LoadedPlugins)
         {
-            loadedSourceFiles[loadedPlugin.Manifest.Provider] = loadedPlugin.SourceFile;
+            loadedPlugins[loadedPlugin.Manifest.Provider] = loadedPlugin;
         }
 
         foreach (var manifest in manifests)
@@ -33,13 +33,14 @@ public sealed class PluginRegistry : IPluginRegistry
                 continue;
             }
 
-            var isBuiltIn = !loadedSourceFiles.TryGetValue(manifest.Provider, out var sourceFile);
+            var loadedPlugin = loadedPlugins.GetValueOrDefault(manifest.Provider);
 
             var entry = new RegisteredPlugin
             {
                 Manifest = manifest,
-                IsBuiltIn = isBuiltIn,
-                SourceFile = isBuiltIn ? null : sourceFile
+                IsBuiltIn = loadedPlugin is null,
+                SourceFile = loadedPlugin?.SourceFile,
+                ImplementationType = loadedPlugin?.ImplementationType
             };
 
             _plugins.Add(entry);

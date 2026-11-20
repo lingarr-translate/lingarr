@@ -5,7 +5,6 @@ using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Jobs;
 using Lingarr.Server.Services;
-using Lingarr.Server.Services.Translation;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,10 +15,6 @@ public class SettingChangedListener
     private readonly IServiceProvider _serviceProvider;
     private readonly IHubContext<SettingUpdatesHub> _hubContext;
     private readonly ILogger<SettingChangedListener> _logger;
-    private static readonly HashSet<string> BatchServiceTypes = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "openai", "anthropic", "localai", "gemini", "mistral", "xai"
-    };
 
     public SettingChangedListener(IServiceProvider serviceProvider,
         IHubContext<SettingUpdatesHub> hubContext,
@@ -74,11 +69,6 @@ public class SettingChangedListener
                 "schedule", ("Action", "Schedule", [
                     SettingKeys.Automation.MovieSchedule,
                     SettingKeys.Automation.ShowSchedule
-                ])
-            },
-            {
-                "serviceType", ("Action", "ServiceType", [
-                    SettingKeys.Translation.ServiceType
                 ])
             }
         };
@@ -221,7 +211,6 @@ public class SettingChangedListener
     {
         using var scope = _serviceProvider.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<LingarrDbContext>();
-        var settingService = scope.ServiceProvider.GetRequiredService<ISettingService>();
 
         var settings = await dbContext.Settings
             .Where(s => requiredKeys.Contains(s.Key))
@@ -251,15 +240,6 @@ public class SettingChangedListener
                         job => job.Execute(),
                         settings[SettingKeys.Automation.ShowSchedule],
                         new RecurringJobOptions { TimeZone = TimeZoneConfiguration.Current });
-                    break;
-
-                case "ServiceType":
-                    var serviceTypeRaw = await settingService.GetSetting(SettingKeys.Translation.ServiceType);
-                    var primary = TranslationServices.Parse(serviceTypeRaw)[0];
-                    if (!BatchServiceTypes.Contains(primary))
-                    {
-                        await settingService.SetSetting(SettingKeys.Translation.UseBatchTranslation, "false");
-                    }
                     break;
             }
         }

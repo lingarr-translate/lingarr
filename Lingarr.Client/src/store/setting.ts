@@ -1,11 +1,9 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import {
     IEncryptedSettings,
-    IPluginSettingField,
     ISettings,
     IUseSettingStore,
     ENCRYPTED_SETTINGS,
-    PLUGIN_SETTING_TYPE,
     SETTINGS
 } from '@/ts'
 import services from '@/services'
@@ -63,30 +61,6 @@ export const useSettingStore = defineStore('setting', {
         },
         async saveSetting(key: keyof ISettings, value: string) {
             await services.setting.setSetting(key, value)
-        },
-
-        async setPluginSettings(fields: IPluginSettingField[]): Promise<void> {
-            const plainKeys: string[] = []
-            const encryptedKeys: string[] = []
-            for (const field of fields) {
-                if (field.type === PLUGIN_SETTING_TYPE.SECRET) {
-                    encryptedKeys.push(field.key)
-                } else {
-                    plainKeys.push(field.key)
-                }
-            }
-
-            const [plainValues, encryptedValues] = await Promise.all([
-                plainKeys.length > 0
-                    ? services.setting.getSettings<Partial<ISettings>>(plainKeys)
-                    : Promise.resolve({} as Partial<ISettings>),
-                encryptedKeys.length > 0
-                    ? services.setting.getEncryptedSettings<Partial<IEncryptedSettings>>(encryptedKeys)
-                    : Promise.resolve({} as Partial<IEncryptedSettings>)
-            ])
-
-            this.settings = { ...this.settings, ...plainValues }
-            this.encrypted_settings = { ...this.encrypted_settings, ...encryptedValues }
         },
 
         async applySettingsOnLoad(): Promise<void> {

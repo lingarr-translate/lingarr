@@ -13,15 +13,18 @@ public class CleanupJob
     private readonly LingarrDbContext _dbContext;
     private readonly ILogger<CleanupJob> _logger;
     private readonly IScheduleService _scheduleService;
+    private readonly ITranslationRequestService _translationRequestService;
 
     public CleanupJob(
         LingarrDbContext dbContext,
         IScheduleService scheduleService,
+        ITranslationRequestService translationRequestService,
         ILogger<CleanupJob> logger)
     {
         _dbContext = dbContext;
         _logger = logger;
         _scheduleService = scheduleService;
+        _translationRequestService = translationRequestService;
     }
 
     [AutomaticRetry(Attempts = 0)]
@@ -38,6 +41,7 @@ public class CleanupJob
 
         foreach (var job in oldJobs)
         {
+            await _translationRequestService.ClearMediaHash(job);
             _dbContext.TranslationRequests.Remove(job);
         }
 

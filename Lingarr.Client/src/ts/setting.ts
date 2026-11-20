@@ -8,23 +8,11 @@ export const SETTINGS = {
     TARGET_LANGUAGES: 'target_languages',
     SONARR_SETTINGS_COMPLETED: 'sonarr_settings_completed',
     RADARR_SETTINGS_COMPLETED: 'radarr_settings_completed',
-    SERVICE_TYPE: 'service_type',
-    LIBRETRANSLATE_URL: 'libretranslate_url',
     SHOW_SCHEDULE: 'show_schedule',
     MOVIE_SCHEDULE: 'movie_schedule',
     MAX_TRANSLATIONS_PER_RUN: 'max_translations_per_run',
     AUTOMATION_ENABLED: 'automation_enabled',
     TRANSLATION_SCHEDULE: 'translation_schedule',
-    OPENAI_MODEL: 'openai_model',
-    ANTHROPIC_MODEL: 'anthropic_model',
-    ANTHROPIC_VERSION: 'anthropic_version',
-    LOCAL_AI_ENDPOINT: 'local_ai_endpoint',
-    LOCAL_AI_MODEL: 'local_ai_model',
-    LOCAL_AI_STRUCTURED_OUTPUT: 'local_ai_structured_output',
-    GEMINI_MODEL: 'gemini_model',
-    DEEPSEEK_MODEL: 'deepseek_model',
-    MISTRAL_MODEL: 'mistral_model',
-    XAI_MODEL: 'xai_model',
     AI_PROMPT: 'ai_prompt',
     AI_USER_PROMPT: 'ai_user_prompt',
     PROOFREAD_PROMPT: 'proofread_prompt',
@@ -62,14 +50,6 @@ export const SETTINGS = {
     ONBOARDING_COMPLETED: 'onboarding_completed',
     TELEMETRY_ENABLED: 'telemetry_enabled',
     NAVIGATE_TO_DETAILS_ON_REQUEST: 'navigate_to_details_on_request',
-    OPENAI_REQUEST_TEMPLATE: 'openai_request_template',
-    ANTHROPIC_REQUEST_TEMPLATE: 'anthropic_request_template',
-    LOCAL_AI_CHAT_REQUEST_TEMPLATE: 'local_ai_chat_request_template',
-    LOCAL_AI_GENERATE_REQUEST_TEMPLATE: 'local_ai_generate_request_template',
-    DEEPSEEK_REQUEST_TEMPLATE: 'deepseek_request_template',
-    GEMINI_REQUEST_TEMPLATE: 'gemini_request_template',
-    MISTRAL_REQUEST_TEMPLATE: 'mistral_request_template',
-    XAI_REQUEST_TEMPLATE: 'xai_request_template',
     LANGUAGE_CODE_FORMAT: 'language_code_format',
     RADARR_DEFAULT_INCLUDE: 'radarr_default_include',
     SONARR_DEFAULT_INCLUDE: 'sonarr_default_include',
@@ -84,8 +64,6 @@ export interface ISettings {
     sonarr_exclude_unmonitored_series: string
     sonarr_exclude_unmonitored_episodes: string
     sonarr_url: string
-    service_type: string
-    libretranslate_url: string
     show_schedule: string
     movie_schedule: string
     max_translations_per_run: string
@@ -95,16 +73,6 @@ export interface ISettings {
     automation_enabled: string
     sonarr_settings_completed: string
     radarr_settings_completed: string
-    openai_model: string
-    anthropic_model: string
-    anthropic_version: string
-    local_ai_endpoint: string
-    local_ai_model: string
-    local_ai_structured_output: string
-    gemini_model: string
-    deepseek_model: string
-    mistral_model: string
-    xai_model: string
     ai_prompt: string
     ai_user_prompt: string
     proofread_prompt: string
@@ -142,14 +110,6 @@ export interface ISettings {
     onboarding_completed: string
     telemetry_enabled: string
     navigate_to_details_on_request: string
-    openai_request_template: string
-    anthropic_request_template: string
-    local_ai_chat_request_template: string
-    local_ai_generate_request_template: string
-    deepseek_request_template: string
-    gemini_request_template: string
-    mistral_request_template: string
-    xai_request_template: string
     language_code_format: string
     radarr_default_include: string
     sonarr_default_include: string
@@ -159,31 +119,13 @@ export interface ISettings {
 export const ENCRYPTED_SETTINGS = {
     API_KEY: 'api_key',
     RADARR_API_KEY: 'radarr_api_key',
-    SONARR_API_KEY: 'sonarr_api_key',
-    OPENAI_API_KEY: 'openai_api_key',
-    ANTHROPIC_API_KEY: 'anthropic_api_key',
-    GEMINI_API_KEY: 'gemini_api_key',
-    DEEPSEEK_API_KEY: 'deepseek_api_key',
-    MISTRAL_API_KEY: 'mistral_api_key',
-    XAI_API_KEY: 'xai_api_key',
-    DEEPL_API_KEY: 'deepl_api_key',
-    LIBRETRANSLATE_API_KEY: 'libretranslate_api_key',
-    LOCAL_AI_API_KEY: 'local_ai_api_key',
+    SONARR_API_KEY: 'sonarr_api_key'
 } as const
 
 export interface IEncryptedSettings {
     api_key: string
     radarr_api_key: string
     sonarr_api_key: string
-    openai_api_key: string
-    anthropic_api_key: string
-    gemini_api_key: string
-    deepseek_api_key: string
-    mistral_api_key: string
-    xai_api_key: string
-    deepl_api_key: string
-    libretranslate_api_key: string
-    local_ai_api_key: string
 }
 
 export const SERVICE_TYPE = {
@@ -203,6 +145,28 @@ export const SERVICE_TYPE = {
 } as const
 
 export type ServiceType = (typeof SERVICE_TYPE)[keyof typeof SERVICE_TYPE]
+
+export const BATCH_SERVICE_TYPES: string[] = [
+    SERVICE_TYPE.ANTHROPIC,
+    SERVICE_TYPE.GEMINI,
+    SERVICE_TYPE.LOCALAI,
+    SERVICE_TYPE.MISTRAL,
+    SERVICE_TYPE.OPENAI,
+    SERVICE_TYPE.XAI
+]
+
+export const REQUEST_TEMPLATE_KEYS: Record<string, { key: string; generateKey?: string }> = {
+    [SERVICE_TYPE.OPENAI]: { key: 'openai_request_template' },
+    [SERVICE_TYPE.ANTHROPIC]: { key: 'anthropic_request_template' },
+    [SERVICE_TYPE.LOCALAI]: {
+        key: 'local_ai_chat_request_template',
+        generateKey: 'local_ai_generate_request_template'
+    },
+    [SERVICE_TYPE.GEMINI]: { key: 'gemini_request_template' },
+    [SERVICE_TYPE.DEEPSEEK]: { key: 'deepseek_request_template' },
+    [SERVICE_TYPE.MISTRAL]: { key: 'mistral_request_template' },
+    [SERVICE_TYPE.XAI]: { key: 'xai_request_template' }
+}
 
 export interface IFilterOptions {
     logLevel: string

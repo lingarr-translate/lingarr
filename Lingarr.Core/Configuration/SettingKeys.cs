@@ -6,16 +6,7 @@ public static class SettingKeys
     [
         Authentication.ApiKey,
         Integration.RadarrApiKey,
-        Integration.SonarrApiKey,
-        Translation.OpenAi.ApiKey,
-        Translation.Anthropic.ApiKey,
-        Translation.Gemini.ApiKey,
-        Translation.DeepSeek.ApiKey,
-        Translation.Mistral.ApiKey,
-        Translation.XAi.ApiKey,
-        Translation.DeepL.DeeplApiKey,
-        Translation.LibreTranslate.ApiKey,
-        Translation.LocalAi.ApiKey
+        Integration.SonarrApiKey
     ];
 
     public static class Integration
@@ -35,9 +26,6 @@ public static class SettingKeys
 
     public static class Translation
     {
-        public const string ServiceType = "service_type";
-        public const string DefaultServiceType = "libretranslate";
-
         public static class OpenAi
         {
             public const string Model = "openai_model";

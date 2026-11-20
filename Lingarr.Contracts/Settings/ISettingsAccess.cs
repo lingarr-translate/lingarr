@@ -3,8 +3,9 @@
 namespace Lingarr.Contracts.Settings;
 
 /// <summary>
-/// Reads the host's settings store for the configuration keys a plugin declares in its
-/// manifest. Plugins cannot write settings; all changes are made through the settings UI.
+/// Reads the settings of the translation service instance the plugin runs as. Shared settings,
+/// such as prompts and retries, come from the global settings store. Plugins cannot write settings;
+/// all changes are made through the settings UI.
 /// </summary>
 public interface ISettingsAccess
 {

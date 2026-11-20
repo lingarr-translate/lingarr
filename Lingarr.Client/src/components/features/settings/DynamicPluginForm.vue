@@ -13,6 +13,7 @@
         <PluginField
             v-for="field in manifest.settings"
             :key="field.key"
+            :service-id="serviceId"
             :field="field"
             @save="emit('save')" />
     </div>
@@ -23,6 +24,7 @@ import { IPluginManifest } from '@/ts'
 import PluginField from '@/components/features/settings/PluginField.vue'
 
 defineProps<{
+    serviceId: number
     manifest: IPluginManifest
 }>()
 

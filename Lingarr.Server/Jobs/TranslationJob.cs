@@ -10,7 +10,6 @@ using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Services;
-using Lingarr.Server.Services.Translation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Extensions;
 using SubtitleValidationOptions = Lingarr.Server.Models.SubtitleValidationOptions;
@@ -27,6 +26,7 @@ public class TranslationJob
     private readonly IScheduleService _scheduleService;
     private readonly IStatisticsService _statisticsService;
     private readonly ITranslationServiceFactory _translationServiceFactory;
+    private readonly ITranslationServiceInstanceService _translationServiceInstanceService;
     private readonly ITranslationRequestService _translationRequestService;
     private readonly ITranslationRequestEventService _eventService;
 
@@ -39,6 +39,7 @@ public class TranslationJob
         IScheduleService scheduleService,
         IStatisticsService statisticsService,
         ITranslationServiceFactory translationServiceFactory,
+        ITranslationServiceInstanceService translationServiceInstanceService,
         ITranslationRequestService translationRequestService,
         ITranslationRequestEventService eventService)
     {
@@ -50,6 +51,7 @@ public class TranslationJob
         _scheduleService = scheduleService;
         _statisticsService = statisticsService;
         _translationServiceFactory = translationServiceFactory;
+        _translationServiceInstanceService = translationServiceInstanceService;
         _translationRequestService = translationRequestService;
         _eventService = eventService;
     }
@@ -89,7 +91,6 @@ public class TranslationJob
             _logger.LogInformation("TranslateJob started for subtitle: |Green|{filePath}|/Green|",
                 translationRequest.SubtitleToTranslate);
             var settings = await _settings.GetSettings([
-                SettingKeys.Translation.ServiceType,
                 SettingKeys.Translation.FixOverlappingSubtitles,
                 SettingKeys.Translation.StripSubtitleFormatting,
                 SettingKeys.Translation.PreserveLineBreaks,
@@ -111,8 +112,7 @@ public class TranslationJob
                 SettingKeys.Translation.UseSubtitleTagging,
                 SettingKeys.Translation.SubtitleTag
             ]);
-            var serviceNames = TranslationServices.Parse(settings[SettingKeys.Translation.ServiceType]);
-            var serviceType = serviceNames[0];
+            var instances = await _translationServiceInstanceService.GetInstances();
             var stripSubtitleFormatting = settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
             var preserveLineBreaks = settings[SettingKeys.Translation.PreserveLineBreaks] == "true";
             var addTranslatorInfo = settings[SettingKeys.Translation.AddTranslatorInfo] == "true";
@@ -176,11 +176,12 @@ public class TranslationJob
             }
 
             // translate subtitles
-            var services = _translationServiceFactory.CreateTranslationServices(serviceNames);
+            var services = _translationServiceFactory.CreateTranslationServices(instances);
             if (services.Count == 0)
             {
-                throw new TranslationException($"No usable translation services configured: [{string.Join(", ", serviceNames)}]");
+                throw new TranslationException($"No usable translation services configured: [{string.Join(", ", instances.Select(instance => instance.Name))}]");
             }
+            var serviceType = instances[0].Provider;
             var translationService = services[0].Service;
             var translator = new SubtitleTranslationService(services, _logger, _progressService, useTranslatedContext);
             var subtitles = await _subtitleService.ReadSubtitles(request.SubtitleToTranslate);

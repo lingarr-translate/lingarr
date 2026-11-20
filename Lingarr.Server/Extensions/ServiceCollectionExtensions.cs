@@ -186,6 +186,7 @@ public static class ServiceCollectionExtensions
         
         // Register translate services
         builder.Services.AddScoped<ITranslationServiceFactory, TranslationFactory>();
+        builder.Services.AddScoped<ITranslationServiceInstanceService, TranslationServiceInstanceService>();
         builder.Services.AddSingleton<LanguageCodeService>();
         builder.Services.AddSingleton<IRequestTemplateService, RequestTemplateService>();
 

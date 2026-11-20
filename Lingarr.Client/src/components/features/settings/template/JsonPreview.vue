@@ -24,6 +24,7 @@ import StatusMessage from '@/components/common/StatusMessage.vue'
 const props = defineProps<{
     template: string
     serviceType: string
+    serviceId: number
 }>()
 
 const { error, highlightedJson } = useTemplatePreview(props)

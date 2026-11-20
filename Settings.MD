@@ -82,7 +82,7 @@ Each report also carries an installation identifier. This is a random value gene
 
 | **Environment Variable** | **Description**                                                                 |
 |--------------------------|---------------------------------------------------------------------------------|
-| `SERVICE_TYPE`           | An ordered JSON array of translation services. The first entry is the primary; the rest are fallbacks tried in order when the primary fails. A single value (e.g. `openai`) is still accepted and is normalised to a one-element array on startup. |
+| `SERVICE_TYPE`           | An ordered JSON array of providers that defines the translation services. The first entry is the primary; the rest are fallbacks tried in order when the primary fails. A single value (e.g. `openai`) is also accepted. Rebuilds the service list at every start, see [Translation Services](#translation-services). |
 | `SOURCE_LANGUAGES`       | A minified JSON array of source languages for translation. |
 | `TARGET_LANGUAGES`       | A minified JSON array of target languages for translation. |
 | `USE_BATCH_TRANSLATION`  | Set to `true` to translate subtitles in batches with AI services, defaults to false. |
@@ -95,6 +95,8 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 ```
 
 ### Service type
+
+The variables in this section configure a translation service, not a global setting. Without a number a variable targets the oldest service of its provider. Add `_N`, with N from 2, to target the N-th oldest service of that provider, for example `OPENAI_API_KEY_2` or `OPENAI_API_KEY_2_FILE`. See [Translation Services](#translation-services) for the rules. `AI_PROMPT`, `AI_USER_PROMPT` and the proofreading prompts are global and take no number.
 
 #### **LibreTranslate**
 
@@ -171,7 +173,7 @@ The `SOURCE_LANGUAGES` and `TARGET_LANGUAGES` variables should be provided as a 
 
 #### **Proofreading**
 
-Proofreading is only available for the AI services above (OpenAI, Anthropic, Gemini, DeepSeek, Mistral, xAI, LocalAI), and only for a `service_type` entry that supports it. It uses two more settings, shared across all AI services the same way `AI_PROMPT` and `AI_USER_PROMPT` are. These are configured through **Settings > Services > Request Settings** in the web interface, or through their environment variables:
+Proofreading is only available for the AI services above (OpenAI, Anthropic, Gemini, DeepSeek, Mistral, xAI, LocalAI), and only for a service whose provider supports it. It uses two more settings, global in the same way `AI_PROMPT` and `AI_USER_PROMPT` are. A service can replace the global prompts with its own on its **Request Settings** tab. These are configured through **Settings > Services > Request Settings** in the web interface, or through their environment variables:
 
 | **Setting** | **Environment Variable** | **Default** |
 |-------------|--------------------------|-------------|
@@ -190,14 +192,45 @@ See the AI services documentation for the full placeholder list.
 
 ### **Translation Services**
 
-The `SERVICE_TYPE` variable determines which translation services to use. Provide a JSON array, 
+The `SERVICE_TYPE` variable defines which translation services to use. Provide a JSON array, 
 the first entry is the primary service and any remaining entries are fallbacks, tried in order when the primary fails. 
-A single value is also accepted and is rewritten to an array on startup.
+A single value is also accepted.
 
 #### Example:
 ```json
 ["openai","anthropic","libretranslate"]
 ```
+
+#### Service instances
+
+Each configured service is a row in the database with its own name and settings. A provider can be added more than once if it has settings. Google, Bing, Microsoft and Yandex have none and can be added once.
+
+When `SERVICE_TYPE` is set, Lingarr rebuilds the list at every start:
+
+- The k-th time a provider appears in the array maps to the k-th oldest service of that provider.
+- A missing service is created with the default settings of its provider.
+- A service that is not listed is deleted with its settings, and Lingarr logs a warning.
+- The array order becomes the order of the cascade.
+- If the value is not valid JSON, is an empty array, or has no known provider, the existing services are kept and a warning is logged.
+
+Example, two OpenAI services and Anthropic as a fallback:
+
+```yaml
+environment:
+  SERVICE_TYPE: '["openai","openai","anthropic"]'
+  OPENAI_API_KEY_FILE: /run/secrets/openai_api_key
+  OPENAI_API_KEY_2_FILE: /run/secrets/openai_api_key_2
+```
+
+The provider variables are `LIBRE_TRANSLATE_URL`, `LIBRE_TRANSLATE_API_KEY`, `OPENAI_MODEL`, `OPENAI_API_KEY`, `ANTHROPIC_MODEL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_VERSION`, `LOCAL_AI_MODEL`, `LOCAL_AI_API_KEY`, `LOCAL_AI_ENDPOINT`, `LOCAL_AI_STRUCTURED_OUTPUT`, `GEMINI_MODEL`, `GEMINI_API_KEY`, `DEEPSEEK_MODEL`, `DEEPSEEK_API_KEY`, `MISTRAL_MODEL`, `MISTRAL_API_KEY`, `XAI_MODEL`, `XAI_API_KEY` and `DEEPL_API_KEY`. Each also works as `_N`, `_FILE` and `_N_FILE`. API keys are stored encrypted. Provider variables are applied at every start and win over the web interface.
+
+When the service a variable targets does not exist, Lingarr creates it at the end of the cascade, so it becomes a fallback. Lingarr only creates the next number: `OPENAI_API_KEY_3` with only one OpenAI service is skipped with a warning. If `SERVICE_TYPE` is set, Lingarr skips the variable and logs a warning instead.
+
+Batch translation is used only when at least one service in the cascade supports it: OpenAI, Anthropic, LocalAI, Gemini, Mistral or xAI.
+
+#### Upgrading
+
+The `service_type` setting no longer exists. On upgrade each provider in your current list becomes a service with its existing settings, in the same order. Settings of providers that were not in the list are removed. Set the matching environment variables to create them again.
 
 The supported values are:
 

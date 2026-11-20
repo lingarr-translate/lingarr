@@ -1,5 +1,4 @@
 ﻿using Lingarr.Contracts.Models;
-using Lingarr.Core.Configuration;
 using Lingarr.Server.Attributes;
 using Microsoft.AspNetCore.Mvc;
 using Lingarr.Server.Models;
@@ -9,7 +8,6 @@ using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models.Api;
 using Lingarr.Server.Services;
-using Lingarr.Server.Services.Translation;
 
 namespace Lingarr.Server.Controllers;
 
@@ -20,20 +18,20 @@ public class TranslateController : ControllerBase
 {
     private readonly ITranslationServiceFactory _translationServiceFactory;
     private readonly ITranslationRequestService _translationRequestService;
-    private readonly ISettingService _settings;
+    private readonly ITranslationServiceInstanceService _translationServiceInstanceService;
     private readonly LanguageCodeService _languageCodeService;
     private readonly ILogger<TranslateController> _logger;
 
     public TranslateController(
         ITranslationServiceFactory translationServiceFactory,
         ITranslationRequestService translationRequestService,
-        ISettingService settings,
+        ITranslationServiceInstanceService translationServiceInstanceService,
         LanguageCodeService languageCodeService,
         ILogger<TranslateController> logger)
     {
         _translationServiceFactory = translationServiceFactory;
         _translationRequestService = translationRequestService;
-        _settings = settings;
+        _translationServiceInstanceService = translationServiceInstanceService;
         _languageCodeService = languageCodeService;
         _logger = logger;
     }
@@ -86,9 +84,9 @@ public class TranslateController : ControllerBase
         [FromBody] TranslateAbleSubtitleLine translateAbleSubtitleLine,
         CancellationToken cancellationToken)
     {
-        var serviceType = TranslationServices.Parse(await _settings.GetSetting(SettingKeys.Translation.ServiceType))[0];
+        var instances = await _translationServiceInstanceService.GetInstances();
         var subtitleTranslator = new SubtitleTranslationService(
-            _translationServiceFactory.CreateTranslationServices([serviceType]),
+            _translationServiceFactory.CreateTranslationServices(instances.Take(1).ToList()),
             _logger);
 
         if (translateAbleSubtitleLine.SubtitleLine == "")

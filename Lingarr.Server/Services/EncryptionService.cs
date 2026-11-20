@@ -47,5 +47,9 @@ public class EncryptionService : IEncryptionService
         {
             return false;
         }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 }

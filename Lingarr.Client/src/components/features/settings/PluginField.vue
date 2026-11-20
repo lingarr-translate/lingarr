@@ -45,29 +45,28 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import {
-    IEncryptedSettings,
     INPUT_TYPE,
     INPUT_VALIDATION_TYPE,
     InputValidationType,
     IPluginSettingField,
-    ISettings,
     LabelValue,
     PLUGIN_SETTING_TYPE,
     SelectComponentExpose
 } from '@/ts'
 import services from '@/services'
-import { useSettingStore } from '@/store/setting'
+import { useTranslationServiceStore } from '@/store/translationService'
 import InputComponent from '@/components/common/InputComponent.vue'
 import SelectComponent from '@/components/common/SelectComponent.vue'
 import ToggleButton from '@/components/common/ToggleButton.vue'
 
 const props = defineProps<{
+    serviceId: number
     field: IPluginSettingField
 }>()
 
 const emit = defineEmits(['save'])
 
-const settingsStore = useSettingStore()
+const translationServiceStore = useTranslationServiceStore()
 
 const isValid = ref<boolean>(
     props.field.minLength == null && props.field.type !== PLUGIN_SETTING_TYPE.URL
@@ -89,35 +88,22 @@ const validationType = computed<InputValidationType | undefined>(() => {
 
 const fieldValue = computed<string>({
     get: (): string => {
-        if (props.field.type === PLUGIN_SETTING_TYPE.SECRET) {
-            const stored = settingsStore.getEncryptedSetting(
-                props.field.key as keyof IEncryptedSettings
-            )
-            return typeof stored === 'string' ? stored : ''
-        }
-        const stored = settingsStore.getSetting(props.field.key as keyof ISettings)
+        const stored = translationServiceStore.getSetting(props.serviceId, props.field.key)
         if (typeof stored === 'string') {
             return stored
         }
-        if (typeof stored === 'number' || typeof stored === 'boolean') {
-            return String(stored)
+        if (props.field.type === PLUGIN_SETTING_TYPE.SECRET) {
+            return ''
         }
         return props.field.default ?? ''
     },
     set: (newValue: string): void => {
-        if (props.field.type === PLUGIN_SETTING_TYPE.SECRET) {
-            settingsStore.updateEncryptedSetting(
-                props.field.key as keyof IEncryptedSettings,
-                newValue,
-                isValid.value
-            )
-        } else {
-            settingsStore.updateSetting(
-                props.field.key as keyof ISettings,
-                newValue,
-                isValid.value
-            )
-        }
+        translationServiceStore.updateSetting(
+            props.serviceId,
+            props.field.key,
+            newValue,
+            isValid.value
+        )
         if (isValid.value) {
             emit('save')
         }
@@ -133,7 +119,7 @@ async function loadRemoteOptions(): Promise<void> {
 
     try {
         remoteError.value = null
-        const response = await services.plugin.getOptions(props.field.optionsEndpoint)
+        const response = await services.plugin.getOptions(props.field.optionsEndpoint, props.serviceId)
         remoteOptions.value = response.options ?? []
         if (remoteOptions.value.length === 0) {
             remoteError.value = response.message ?? 'No options returned.'

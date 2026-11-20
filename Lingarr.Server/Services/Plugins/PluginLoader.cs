@@ -8,7 +8,7 @@ namespace Lingarr.Server.Services.Plugins;
 
 /// <summary>
 /// Loads plugin assemblies from the directory configured through PLUGINS_PATH and registers
-/// the translation providers and manifests they expose at startup.
+/// the manifests they expose at startup.
 /// </summary>
 public sealed class PluginLoader
 {
@@ -98,6 +98,7 @@ public sealed class PluginLoader
 
         var exportedTypes = assembly.GetExportedTypes();
         var manifestsFromThisAssembly = new List<IPluginManifest>();
+        var implementationTypes = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
         var sourceFileName = Path.GetFileName(pluginFile);
 
         foreach (var type in exportedTypes)
@@ -108,9 +109,9 @@ public sealed class PluginLoader
             }
 
             var providerAttribute = type.GetCustomAttribute<PluginProviderAttribute>();
-            if (providerAttribute is not null)
+            if (providerAttribute is not null && typeof(ITranslationService).IsAssignableFrom(type))
             {
-                RegisterProvider(services, type, providerAttribute);
+                implementationTypes[providerAttribute.Provider] = type;
             }
 
             if (typeof(IPluginManifest).IsAssignableFrom(type))
@@ -130,7 +131,8 @@ public sealed class PluginLoader
             {
                 Manifest = manifest,
                 IsBuiltIn = false,
-                SourceFile = sourceFileName
+                SourceFile = sourceFileName,
+                ImplementationType = implementationTypes.GetValueOrDefault(manifest.Provider)
             });
         }
 
@@ -138,20 +140,6 @@ public sealed class PluginLoader
             "Loaded plugin {PluginFile} ({ManifestCount} manifest(s)).",
             pluginFile,
             manifestsFromThisAssembly.Count);
-    }
-
-    private static void RegisterProvider(
-        IServiceCollection services,
-        Type implementationType,
-        PluginProviderAttribute providerAttribute)
-    {
-        if (typeof(ITranslationService).IsAssignableFrom(implementationType))
-        {
-            services.AddKeyedScoped(
-                typeof(ITranslationService),
-                providerAttribute.Provider.ToLowerInvariant(),
-                implementationType);
-        }
     }
 
     private IPluginManifest? TryCreateManifest(Type manifestType, string pluginFile)

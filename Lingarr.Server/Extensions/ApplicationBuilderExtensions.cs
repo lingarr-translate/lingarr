@@ -4,6 +4,7 @@ using Lingarr.Core.Configuration;
 using Lingarr.Migrations;
 using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Interfaces.Services.Translation;
 
 namespace Lingarr.Server.Extensions;
 
@@ -77,14 +78,16 @@ public static class ApplicationBuilderExtensions
         foreach (var key in SettingKeys.EncryptedKeys)
         {
             var value = await settingService.GetSetting(key);
-            if (string.IsNullOrEmpty(value)) continue;
-
-            if (!encryptionService.IsEncrypted(value))
+            if (string.IsNullOrEmpty(value) || encryptionService.IsEncrypted(value))
             {
-                await settingService.SetEncryptedSetting(key, value);
-                Console.WriteLine($"Migrated '{key}' to encrypted storage.");
+                continue;
             }
+
+            await settingService.SetEncryptedSetting(key, value);
+            Console.WriteLine($"Migrated '{key}' to encrypted storage.");
         }
+
+        await scope.ServiceProvider.GetRequiredService<ITranslationServiceInstanceService>().EncryptPlaintextSecrets();
     }
 
     private static void ConfigureSpa(this WebApplication app, string basePath)

@@ -7,6 +7,16 @@
             <div class="flex flex-col space-y-4">
                 <SaveNotification ref="saveNotification" />
                 <div class="flex flex-col space-x-2">
+                    <span class="font-semibold">Own proofread prompts for this service</span>
+                    When disabled, this service uses the global proofread prompts.
+                </div>
+                <ToggleButton v-model="hasOwnPrompts">
+                    <span class="text-primary-content text-sm font-medium">
+                        {{ hasOwnPrompts == 'true' ? 'Enabled' : 'Disabled' }}
+                    </span>
+                </ToggleButton>
+
+                <div class="flex flex-col space-x-2">
                     <span class="font-semibold">Proofread system prompt</span>
                     Define the AI's behavior when comparing a translated line against its source
                     line.
@@ -38,21 +48,46 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useSettingStore } from '@/store/setting'
+import { useTranslationServiceStore } from '@/store/translationService'
 import { PLACEHOLDER, SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import TextAreaComponent from '@/components/common/TextAreaComponent.vue'
+import ToggleButton from '@/components/common/ToggleButton.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 
-const settingsStore = useSettingStore()
+const props = defineProps<{
+    serviceId: number
+}>()
+
+const translationServiceStore = useTranslationServiceStore()
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const isSystemPromptValid = ref(false)
 const isUserPromptValid = ref(false)
 
+const hasOwnPrompts = computed({
+    get: (): string =>
+        translationServiceStore.getHasOwnPrompt(props.serviceId, SETTINGS.PROOFREAD_PROMPT)
+            ? 'true'
+            : 'false',
+    set: async (newValue: string): Promise<void> => {
+        await translationServiceStore.setOwnPrompts(
+            props.serviceId,
+            [SETTINGS.PROOFREAD_PROMPT, SETTINGS.PROOFREAD_USER_PROMPT],
+            newValue === 'true'
+        )
+        saveNotification.value?.show()
+    }
+})
+
 const proofreadPrompt = computed({
-    get: () => (settingsStore.getSetting(SETTINGS.PROOFREAD_PROMPT) as string) ?? '',
+    get: () => translationServiceStore.getPrompt(props.serviceId, SETTINGS.PROOFREAD_PROMPT),
     set: (newValue: string) => {
-        settingsStore.updateSetting(SETTINGS.PROOFREAD_PROMPT, newValue, isSystemPromptValid.value)
+        translationServiceStore.updatePrompt(
+            props.serviceId,
+            SETTINGS.PROOFREAD_PROMPT,
+            newValue,
+            isSystemPromptValid.value
+        )
         if (isSystemPromptValid.value) {
             saveNotification.value?.show()
         }
@@ -60,9 +95,10 @@ const proofreadPrompt = computed({
 })
 
 const proofreadUserPrompt = computed({
-    get: () => (settingsStore.getSetting(SETTINGS.PROOFREAD_USER_PROMPT) as string) ?? '',
+    get: () => translationServiceStore.getPrompt(props.serviceId, SETTINGS.PROOFREAD_USER_PROMPT),
     set: (newValue: string) => {
-        settingsStore.updateSetting(
+        translationServiceStore.updatePrompt(
+            props.serviceId,
             SETTINGS.PROOFREAD_USER_PROMPT,
             newValue,
             isUserPromptValid.value

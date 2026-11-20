@@ -101,10 +101,10 @@ const routes: RouteRecordRaw[] = [
                         component: () => import('@/pages/settings/TelemetryPage.vue')
                     },
                     {
-                        path: 'request-template/:service',
+                        path: 'request-template/:serviceId',
                         name: 'request-template-settings',
                         component: () => import('@/pages/settings/RequestTemplatePage.vue'),
-                        props: true
+                        props: (route) => ({ serviceId: Number(route.params.serviceId) })
                     },
                     {
                         path: 'plugins',

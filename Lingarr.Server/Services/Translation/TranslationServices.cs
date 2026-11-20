@@ -1,47 +1,43 @@
 using System.Text.Json;
-using Lingarr.Core.Configuration;
 
 namespace Lingarr.Server.Services.Translation;
 
 public static class TranslationServices
 {
     /// <summary>
-    /// Parses a service_type setting value into a list of service identifiers.
+    /// Parses a SERVICE_TYPE value into a list of provider identifiers, or returns false when the value is empty or malformed.
     /// </summary>
-    public static List<string> Parse(string? raw, ILogger? logger = null)
+    public static bool TryParse(string? raw, out List<string> providers)
     {
+        providers = [];
         if (string.IsNullOrWhiteSpace(raw))
         {
-            return [SettingKeys.Translation.DefaultServiceType];
+            return false;
         }
 
         if (!raw.TrimStart().StartsWith('['))
         {
-            return [raw];
+            providers = [raw];
+            return true;
         }
 
         try
         {
-            var parsed = JsonSerializer.Deserialize<List<string>>(raw);
-            if (parsed is { Count: > 0 })
+            var parsed = JsonSerializer.Deserialize<List<string?>>(raw);
+            if (parsed is null)
             {
-                return parsed;
+                return false;
             }
+
+            providers = parsed
+                .Where(provider => !string.IsNullOrWhiteSpace(provider))
+                .Select(provider => provider!)
+                .ToList();
+            return providers.Count > 0;
         }
-        catch (JsonException ex)
+        catch (JsonException)
         {
-            logger?.LogWarning(
-                ex,
-                "service_type setting contained malformed JSON, falling back to '{Default}'.",
-                SettingKeys.Translation.DefaultServiceType);
+            return false;
         }
-
-        return [SettingKeys.Translation.DefaultServiceType];
     }
-
-    /// <summary>
-    /// Returns the JSON array string for a service_type setting
-    /// </summary>
-    public static string Normalise(string? raw, ILogger? logger = null) =>
-        JsonSerializer.Serialize(Parse(raw, logger));
 }

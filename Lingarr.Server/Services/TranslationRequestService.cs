@@ -17,7 +17,6 @@ using Lingarr.Server.Models.Batch.Response;
 using Lingarr.Server.Models.FileSystem;
 using Lingarr.Server.Models.TranslationRequests;
 using Lingarr.Server.Services.Subtitle;
-using Lingarr.Server.Services.Translation;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using Microsoft.AspNetCore.SignalR;
@@ -31,6 +30,7 @@ public class TranslationRequestService : ITranslationRequestService
     private readonly IBackgroundJobClient _backgroundJobClient;
     private readonly IHubContext<TranslationRequestsHub> _hubContext;
     private readonly ITranslationServiceFactory _translationServiceFactory;
+    private readonly ITranslationServiceInstanceService _translationServiceInstanceService;
     private readonly IProgressService _progressService;
     private readonly IStatisticsService _statisticsService;
     private readonly IMediaService _mediaService;
@@ -46,6 +46,7 @@ public class TranslationRequestService : ITranslationRequestService
         IBackgroundJobClient backgroundJobClient,
         IHubContext<TranslationRequestsHub> hubContext,
         ITranslationServiceFactory translationServiceFactory,
+        ITranslationServiceInstanceService translationServiceInstanceService,
         IProgressService progressService,
         IStatisticsService statisticsService,
         IMediaService mediaService,
@@ -58,6 +59,7 @@ public class TranslationRequestService : ITranslationRequestService
         _hubContext = hubContext;
         _backgroundJobClient = backgroundJobClient;
         _translationServiceFactory = translationServiceFactory;
+        _translationServiceInstanceService = translationServiceInstanceService;
         _progressService = progressService;
         _statisticsService = statisticsService;
         _mediaService = mediaService;
@@ -413,6 +415,7 @@ public class TranslationRequestService : ITranslationRequestService
             return null;
         }
         
+        await ClearMediaHash(translationRequest);
         _dbContext.TranslationRequests.Remove(translationRequest);
         await _dbContext.SaveChangesAsync();
         
@@ -597,10 +600,8 @@ public class TranslationRequestService : ITranslationRequestService
 
     private async Task<(string Name, IProofreadService Service)?> ResolveProofreadService()
     {
-        var serviceNames = TranslationServices.Parse(
-            await _settingService.GetSetting(SettingKeys.Translation.ServiceType),
-            _logger);
-        var services = _translationServiceFactory.CreateTranslationServices(serviceNames);
+        var instances = await _translationServiceInstanceService.GetInstances();
+        var services = _translationServiceFactory.CreateTranslationServices(instances);
 
         foreach (var entry in services)
         {
@@ -827,7 +828,6 @@ public class TranslationRequestService : ITranslationRequestService
             // Get Translation Settings
             var settings = await _settingService.GetSettings([
                 SettingKeys.Translation.UseBatchTranslation,
-                SettingKeys.Translation.ServiceType,
                 SettingKeys.Translation.MaxBatchSize,
                 SettingKeys.Translation.StripSubtitleFormatting,
                 SettingKeys.Translation.PreserveLineBreaks,
@@ -837,14 +837,14 @@ public class TranslationRequestService : ITranslationRequestService
             ]);
             var preserveLineBreaks = settings[SettingKeys.Translation.PreserveLineBreaks] == "true";
             var stripSubtitleFormatting = settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
-            var serviceNames = TranslationServices.Parse(settings[SettingKeys.Translation.ServiceType]);
-            var serviceType = serviceNames[0];
-            var services = _translationServiceFactory.CreateTranslationServices(serviceNames);
+            var instances = await _translationServiceInstanceService.GetInstances();
+            var services = _translationServiceFactory.CreateTranslationServices(instances);
             if (services.Count == 0)
             {
                 throw new TranslationException(
-                    $"No usable translation services configured: [{string.Join(", ", serviceNames)}]");
+                    $"No usable translation services configured: [{string.Join(", ", instances.Select(instance => instance.Name))}]");
             }
+            var serviceType = instances[0].Provider;
             var translationService = services[0].Service;
 
             var matchingRequests = _dbContext.TranslationRequests
