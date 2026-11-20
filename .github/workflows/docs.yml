@@ -39,6 +39,17 @@ jobs:
       working-directory: ./Lingarr.Docs
       run: npm ci
 
+    - name: Download API definitions
+      working-directory: ./Lingarr.Docs
+      env:
+        GH_TOKEN: ${{ github.token }}
+        GH_REPO: ${{ github.repository }}
+      run: |
+        mkdir -p public/api/definitions
+        for version in $(gh release list --limit 200 --json tagName --jq '.[].tagName'); do
+          gh release download "$version" --pattern openapi.json --output "public/api/definitions/$version.json" || true
+        done
+
     - name: Build
       working-directory: ./Lingarr.Docs
       run: npm run build
