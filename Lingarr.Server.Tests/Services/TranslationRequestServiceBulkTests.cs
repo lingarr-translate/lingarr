@@ -61,6 +61,7 @@ public class TranslationRequestServiceBulkTests : IDisposable
             new Mock<IBackgroundJobClient>().Object,
             new Mock<IHubContext<TranslationRequestsHub>> { DefaultValue = DefaultValue.Mock }.Object,
             new Mock<ITranslationServiceFactory>().Object,
+            new Mock<ITranslationServiceInstanceService>().Object,
             new Mock<IProgressService>().Object,
             new Mock<IStatisticsService>().Object,
             new Mock<IMediaService>().Object,

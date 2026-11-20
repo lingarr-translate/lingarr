@@ -4,6 +4,7 @@ using Lingarr.Core.Configuration;
 using Lingarr.Migrations;
 using Lingarr.Server.Hubs;
 using Lingarr.Server.Interfaces.Services;
+using Lingarr.Server.Interfaces.Services.Translation;
 
 namespace Lingarr.Server.Extensions;
 
@@ -75,15 +76,6 @@ public static class ApplicationBuilderExtensions
             SettingKeys.Authentication.ApiKey,
             SettingKeys.Integration.RadarrApiKey,
             SettingKeys.Integration.SonarrApiKey,
-            SettingKeys.Translation.OpenAi.ApiKey,
-            SettingKeys.Translation.Anthropic.ApiKey,
-            SettingKeys.Translation.Gemini.ApiKey,
-            SettingKeys.Translation.DeepSeek.ApiKey,
-            SettingKeys.Translation.Mistral.ApiKey,
-            SettingKeys.Translation.XAi.ApiKey,
-            SettingKeys.Translation.DeepL.DeeplApiKey,
-            SettingKeys.Translation.LibreTranslate.ApiKey,
-            SettingKeys.Translation.LocalAi.ApiKey,
         ];
 
         using var scope = app.Services.CreateScope();
@@ -93,18 +85,16 @@ public static class ApplicationBuilderExtensions
         foreach (var key in apiKeys)
         {
             var value = await settingService.GetSetting(key);
-            if (string.IsNullOrEmpty(value)) continue;
+            if (string.IsNullOrEmpty(value) || encryptionService.IsEncrypted(value))
+            {
+                continue;
+            }
 
-            try
-            {
-                encryptionService.Decrypt(value);
-            }
-            catch
-            {
-                await settingService.SetEncryptedSetting(key, value);
-                Console.WriteLine($"Migrated '{key}' to encrypted storage.");
-            }
+            await settingService.SetEncryptedSetting(key, value);
+            Console.WriteLine($"Migrated '{key}' to encrypted storage.");
         }
+
+        await scope.ServiceProvider.GetRequiredService<ITranslationServiceInstanceService>().EncryptPlaintextSecrets();
     }
 
     private static void ConfigureSpa(this WebApplication app, string basePath)

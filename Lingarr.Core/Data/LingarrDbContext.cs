@@ -20,6 +20,8 @@ public class LingarrDbContext : DbContext
     public DbSet<Statistics> Statistics { get; set; }
     public DbSet<DailyStatistics> DailyStatistics { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<TranslationServiceInstance> TranslationServiceInstances { get; set; }
+    public DbSet<TranslationServiceInstanceSetting> TranslationServiceInstanceSettings { get; set; }
 
     public LingarrDbContext(DbContextOptions options) : base(options)
     {
@@ -34,6 +36,8 @@ public class LingarrDbContext : DbContext
         modelBuilder.ApplyConfiguration(new SeasonConfiguration());
         modelBuilder.ApplyConfiguration(new EpisodeConfiguration());
         modelBuilder.ApplyConfiguration(new ImageConfiguration());
+        modelBuilder.ApplyConfiguration(new TranslationServiceInstanceConfiguration());
+        modelBuilder.ApplyConfiguration(new TranslationServiceInstanceSettingConfiguration());
 
         ConvertTimestampsToUtc(modelBuilder, Database.IsNpgsql());
     }

@@ -1,14 +1,17 @@
 import { computed } from 'vue'
 import { SETTINGS } from '@/ts'
 import { useSettingStore } from '@/store/setting'
+import { useTranslationServiceStore } from '@/store/translationService'
 
 interface TemplatePreviewProps {
     readonly template: string
     readonly serviceType: string
+    readonly serviceId: number
 }
 
 export function useTemplatePreview(props: TemplatePreviewProps) {
     const settingsStore = useSettingStore()
+    const translationServiceStore = useTranslationServiceStore()
 
     const sampleValues = computed((): Record<string, string> => {
         const useLanguageCodes = settingsStore.getSetting(SETTINGS.LANGUAGE_CODE_FORMAT) === 'true'
@@ -32,10 +35,11 @@ export function useTemplatePreview(props: TemplatePreviewProps) {
         }
 
         const prompt =
-            (settingsStore.getSetting(SETTINGS.AI_PROMPT) as string) ||
+            translationServiceStore.getPrompt(props.serviceId, SETTINGS.AI_PROMPT) ||
             'Translate from {sourceLanguage} to {targetLanguage}'
         const userPrompt =
-            (settingsStore.getSetting(SETTINGS.AI_USER_PROMPT) as string) || '{lineToTranslate}'
+            translationServiceStore.getPrompt(props.serviceId, SETTINGS.AI_USER_PROMPT) ||
+            '{lineToTranslate}'
 
         const systemPrompt = replacePlaceholders(prompt, values)
         const userMessage = useBatchTranslation

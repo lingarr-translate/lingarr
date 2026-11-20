@@ -7,6 +7,17 @@
             <div class="flex flex-col space-y-4">
                 <SaveNotification ref="saveNotification" />
                 <div class="flex flex-col space-x-2">
+                    <span class="font-semibold">Own translation prompts for this service</span>
+                    When disabled, this service uses the global translation prompts. The context
+                    settings below always apply to all services.
+                </div>
+                <ToggleButton v-model="hasOwnPrompts">
+                    <span class="text-primary-content text-sm font-medium">
+                        {{ hasOwnPrompts == 'true' ? 'Enabled' : 'Disabled' }}
+                    </span>
+                </ToggleButton>
+
+                <div class="flex flex-col space-x-2">
                     <span class="font-semibold">Translation system prompt</span>
                     Define the AI's behavior and tone by setting global instructions.
                 </div>
@@ -77,6 +88,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import { useSettingStore } from '@/store/setting'
+import { useTranslationServiceStore } from '@/store/translationService'
 import { INPUT_TYPE, INPUT_VALIDATION_TYPE, PLACEHOLDER, SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import TextAreaComponent from '@/components/common/TextAreaComponent.vue'
@@ -84,7 +96,12 @@ import InputComponent from '@/components/common/InputComponent.vue'
 import ToggleButton from '@/components/common/ToggleButton.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 
+const props = defineProps<{
+    serviceId: number
+}>()
+
 const settingsStore = useSettingStore()
+const translationServiceStore = useTranslationServiceStore()
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const isSystemPromptValid = ref(false)
 const isUserPromptValid = ref(false)
@@ -109,10 +126,30 @@ const systemPlaceholders = computed(() => {
     return items
 })
 
+const hasOwnPrompts = computed({
+    get: (): string =>
+        translationServiceStore.getHasOwnPrompt(props.serviceId, SETTINGS.AI_PROMPT)
+            ? 'true'
+            : 'false',
+    set: async (newValue: string): Promise<void> => {
+        await translationServiceStore.setOwnPrompts(
+            props.serviceId,
+            [SETTINGS.AI_PROMPT, SETTINGS.AI_USER_PROMPT],
+            newValue === 'true'
+        )
+        saveNotification.value?.show()
+    }
+})
+
 const aiPrompt = computed({
-    get: () => (settingsStore.getSetting(SETTINGS.AI_PROMPT) as string) ?? '',
+    get: () => translationServiceStore.getPrompt(props.serviceId, SETTINGS.AI_PROMPT),
     set: (newValue: string) => {
-        settingsStore.updateSetting(SETTINGS.AI_PROMPT, newValue, isSystemPromptValid.value)
+        translationServiceStore.updatePrompt(
+            props.serviceId,
+            SETTINGS.AI_PROMPT,
+            newValue,
+            isSystemPromptValid.value
+        )
         if (isSystemPromptValid.value) {
             saveNotification.value?.show()
         }
@@ -120,9 +157,14 @@ const aiPrompt = computed({
 })
 
 const aiUserPrompt = computed({
-    get: () => (settingsStore.getSetting(SETTINGS.AI_USER_PROMPT) as string) ?? '',
+    get: () => translationServiceStore.getPrompt(props.serviceId, SETTINGS.AI_USER_PROMPT),
     set: (newValue: string) => {
-        settingsStore.updateSetting(SETTINGS.AI_USER_PROMPT, newValue, isUserPromptValid.value)
+        translationServiceStore.updatePrompt(
+            props.serviceId,
+            SETTINGS.AI_USER_PROMPT,
+            newValue,
+            isUserPromptValid.value
+        )
         if (isUserPromptValid.value) {
             saveNotification.value?.show()
         }

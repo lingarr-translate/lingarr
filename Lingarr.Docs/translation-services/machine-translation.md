@@ -52,7 +52,7 @@ LibreTranslate container variables:
 
 Note that LibreTranslate's configuration can change over time. Refer to the [LibreTranslate project](https://github.com/LibreTranslate/LibreTranslate/) for the current options.
 
-Lingarr variables for LibreTranslate:
+Lingarr variables for LibreTranslate. They configure the oldest LibreTranslate service. Add `_N` for further services, see [Configuration](/getting-started/configuration#service-type-and-service-instances):
 
 | **Environment Variable** | **Description** |
 |--------------------------|-----------------|
@@ -69,4 +69,6 @@ Note: DeepL does not support pt-BR.
 
 ## Google, Bing, Microsoft and Yandex
 
-These services require no API key or further configuration. Set `SERVICE_TYPE` to `google`, `bing`, `microsoft` or `yandex` and they are ready to use.
+These services require no API key or further configuration. Add them with **Add service** in **Settings > Services**, or include `google`, `bing`, `microsoft` or `yandex` in `SERVICE_TYPE`, and they are ready to use. Each of these can be added once.
+
+LibreTranslate and DeepL can be added more than once, for example two LibreTranslate servers. Each copy is a separate service with its own settings. Add `_N` to the variable names for the N-th service, starting at `_2`, for example `LIBRE_TRANSLATE_URL_2`. List the provider once per service in `SERVICE_TYPE`. See [Configuration](/getting-started/configuration#service-type-and-service-instances).

@@ -14,9 +14,13 @@ import {
     IPluginManifest,
     IPluginOptionsResponse,
     IPluginStatus,
-    IPluginSummary,
     IProofreadLineApplyRequest,
-    IProofreadLineRequest
+    IProofreadLineRequest,
+    ICreateTranslationServiceRequest,
+    IReorderTranslationServicesRequest,
+    ISetTranslationServiceSettingRequest,
+    ITranslationServiceInstance,
+    IUpdateTranslationServiceRequest
 } from '@/ts'
 
 export interface Services {
@@ -33,13 +37,14 @@ export interface Services {
     telemetry: ITelemetryService
     requestTemplate: IRequestTemplateService
     plugin: IPluginService
+    translationService: ITranslationServiceService
 }
 
 export interface IPluginService {
-    list(): Promise<IPluginSummary[]>
+    list(): Promise<IPluginManifest[]>
     getManifest(provider: string): Promise<IPluginManifest>
     getStatus(provider: string): Promise<IPluginStatus>
-    getOptions(endpoint: string): Promise<IPluginOptionsResponse>
+    getOptions(endpoint: string, serviceId: number): Promise<IPluginOptionsResponse>
 }
 
 export interface IAuthService {
@@ -150,4 +155,18 @@ export interface ITelemetryService {
 
 export interface IRequestTemplateService {
     getDefaults<T>(): Promise<T>
+}
+
+export interface ITranslationServiceService {
+    list(): Promise<ITranslationServiceInstance[]>
+    create(request: ICreateTranslationServiceRequest): Promise<ITranslationServiceInstance>
+    rename(
+        id: number,
+        request: IUpdateTranslationServiceRequest
+    ): Promise<ITranslationServiceInstance>
+    remove(id: number): Promise<void>
+    reorder(request: IReorderTranslationServicesRequest): Promise<ITranslationServiceInstance[]>
+    getSettings(id: number): Promise<Record<string, string>>
+    setSetting(id: number, request: ISetTranslationServiceSettingRequest): Promise<void>
+    removeSetting(id: number, key: string): Promise<void>
 }

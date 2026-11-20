@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Lingarr.Contracts.Exceptions;
 using Lingarr.Contracts.Models;
 using Lingarr.Contracts.Translation;
-using Lingarr.Core.Configuration;
+using Lingarr.Core.Entities;
 using Lingarr.Core.Enum;
 using Lingarr.Server.Controllers;
 using Lingarr.Server.Interfaces.Services;
@@ -55,29 +55,41 @@ public class TranslateControllerLineTests
     }
 
     private static Harness CreateHarness(
-        string? serviceTypeSetting,
+        IReadOnlyList<string> providers,
         Mock<ITranslationService>? primaryServiceMock = null)
     {
         primaryServiceMock ??= CreateTranslationService(text => $"translated:{text}");
         var fallbackServiceMock = CreateTranslationService(text => $"fallback:{text}");
 
-        var settingServiceMock = new Mock<ISettingService>();
-        settingServiceMock
-            .Setup(settingService => settingService.GetSetting(SettingKeys.Translation.ServiceType))
-            .ReturnsAsync(serviceTypeSetting);
+        var instances = new List<TranslationServiceInstance>();
+        for (var position = 0; position < providers.Count; position++)
+        {
+            instances.Add(new TranslationServiceInstance
+            {
+                Id = position + 1,
+                Provider = providers[position],
+                Name = providers[position],
+                Position = position
+            });
+        }
+
+        var translationServiceInstanceServiceMock = new Mock<ITranslationServiceInstanceService>();
+        translationServiceInstanceServiceMock
+            .Setup(instanceService => instanceService.GetInstances())
+            .ReturnsAsync(instances);
 
         var translationServiceFactoryMock = new Mock<ITranslationServiceFactory>();
         translationServiceFactoryMock
-            .Setup(factory => factory.CreateTranslationServices(It.IsAny<IReadOnlyList<string>>()))
-            .Returns((IReadOnlyList<string> serviceTypes) =>
+            .Setup(factory => factory.CreateTranslationServices(It.IsAny<IReadOnlyList<TranslationServiceInstance>>()))
+            .Returns((IReadOnlyList<TranslationServiceInstance> requestedInstances) =>
             {
                 var entries = new List<TranslationServiceEntry>
                 {
-                    new(serviceTypes[0], primaryServiceMock.Object, null)
+                    new(requestedInstances[0].Provider, primaryServiceMock.Object, null)
                 };
-                for (var index = 1; index < serviceTypes.Count; index++)
+                for (var index = 1; index < requestedInstances.Count; index++)
                 {
-                    entries.Add(new TranslationServiceEntry(serviceTypes[index], fallbackServiceMock.Object, null));
+                    entries.Add(new TranslationServiceEntry(requestedInstances[index].Provider, fallbackServiceMock.Object, null));
                 }
 
                 return entries;
@@ -91,7 +103,7 @@ public class TranslateControllerLineTests
             Controller = new TranslateController(
                 translationServiceFactoryMock.Object,
                 new Mock<ITranslationRequestService>().Object,
-                settingServiceMock.Object,
+                translationServiceInstanceServiceMock.Object,
                 new LanguageCodeService(),
                 NullLogger<TranslateController>.Instance)
         };
@@ -112,7 +124,7 @@ public class TranslateControllerLineTests
     [Fact]
     public async Task TranslateLine_ReturnsTranslationFromConfiguredService()
     {
-        var harness = CreateHarness("openai");
+        var harness = CreateHarness(["openai"]);
 
         var result = await harness.Controller.TranslateLine(NewLine(), CancellationToken.None);
 
@@ -127,16 +139,16 @@ public class TranslateControllerLineTests
     }
 
     [Fact]
-    public async Task TranslateLine_ServiceTypeList_UsesPrimaryServiceOnly()
+    public async Task TranslateLine_SeveralInstances_UsesPrimaryServiceOnly()
     {
-        var harness = CreateHarness("[\"openai\",\"deepl\"]");
+        var harness = CreateHarness(["openai", "deepl"]);
 
         var result = await harness.Controller.TranslateLine(NewLine(), CancellationToken.None);
 
         Assert.Equal("translated:Hello there", result);
         harness.TranslationServiceFactoryMock.Verify(
-            factory => factory.CreateTranslationServices(It.Is<IReadOnlyList<string>>(serviceTypes =>
-                serviceTypes.Count == 1 && serviceTypes[0] == "openai")),
+            factory => factory.CreateTranslationServices(It.Is<IReadOnlyList<TranslationServiceInstance>>(instances =>
+                instances.Count == 1 && instances[0].Provider == "openai")),
             Times.Once);
         harness.FallbackServiceMock.Verify(translationService => translationService.TranslateAsync(
             It.IsAny<string>(),
@@ -148,35 +160,9 @@ public class TranslateControllerLineTests
     }
 
     [Fact]
-    public async Task TranslateLine_MissingServiceTypeSetting_UsesDefaultService()
-    {
-        var harness = CreateHarness(null);
-
-        await harness.Controller.TranslateLine(NewLine(), CancellationToken.None);
-
-        harness.TranslationServiceFactoryMock.Verify(
-            factory => factory.CreateTranslationServices(It.Is<IReadOnlyList<string>>(serviceTypes =>
-                serviceTypes.Count == 1 && serviceTypes[0] == SettingKeys.Translation.DefaultServiceType)),
-            Times.Once);
-    }
-
-    [Fact]
-    public async Task TranslateLine_MalformedServiceTypeSetting_UsesDefaultService()
-    {
-        var harness = CreateHarness("[\"openai\"");
-
-        await harness.Controller.TranslateLine(NewLine(), CancellationToken.None);
-
-        harness.TranslationServiceFactoryMock.Verify(
-            factory => factory.CreateTranslationServices(It.Is<IReadOnlyList<string>>(serviceTypes =>
-                serviceTypes.Count == 1 && serviceTypes[0] == SettingKeys.Translation.DefaultServiceType)),
-            Times.Once);
-    }
-
-    [Fact]
     public async Task TranslateLine_EmptyLine_ReturnsEmptyWithoutTranslating()
     {
-        var harness = CreateHarness("openai");
+        var harness = CreateHarness(["openai"]);
 
         var result = await harness.Controller.TranslateLine(NewLine(""), CancellationToken.None);
 
@@ -193,7 +179,7 @@ public class TranslateControllerLineTests
     [Fact]
     public async Task TranslateLine_PassesContextLinesToTranslationService()
     {
-        var harness = CreateHarness("openai");
+        var harness = CreateHarness(["openai"]);
         var contextLinesBefore = new List<string> { "Previous line" };
         var contextLinesAfter = new List<string> { "Next line" };
 
@@ -213,7 +199,7 @@ public class TranslateControllerLineTests
     [Fact]
     public async Task TranslateLine_ServiceDoesNotSupportLanguagePair_Throws()
     {
-        var harness = CreateHarness("openai", CreateTranslationService(tier: null));
+        var harness = CreateHarness(["openai"], CreateTranslationService(tier: null));
 
         await Assert.ThrowsAsync<TranslationException>(() =>
             harness.Controller.TranslateLine(NewLine(), CancellationToken.None));
@@ -232,7 +218,7 @@ public class TranslateControllerLineTests
                 It.IsAny<List<string>?>(),
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("provider is down"));
-        var harness = CreateHarness("openai", failingServiceMock);
+        var harness = CreateHarness(["openai"], failingServiceMock);
 
         await Assert.ThrowsAsync<TranslationException>(() =>
             harness.Controller.TranslateLine(NewLine(), CancellationToken.None));
@@ -241,7 +227,7 @@ public class TranslateControllerLineTests
     [Fact]
     public async Task TranslateLine_CancelledToken_Throws()
     {
-        var harness = CreateHarness("openai");
+        var harness = CreateHarness(["openai"]);
         using var cancellationTokenSource = new CancellationTokenSource();
         await cancellationTokenSource.CancelAsync();
 

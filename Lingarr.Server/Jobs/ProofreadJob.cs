@@ -9,7 +9,6 @@ using Lingarr.Server.Filters;
 using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models.FileSystem;
-using Lingarr.Server.Services.Translation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Extensions;
 
@@ -24,6 +23,7 @@ public class ProofreadJob
     private readonly ISubtitleService _subtitleService;
     private readonly IScheduleService _scheduleService;
     private readonly ITranslationServiceFactory _translationServiceFactory;
+    private readonly ITranslationServiceInstanceService _translationServiceInstanceService;
     private readonly ITranslationRequestService _translationRequestService;
     private readonly ITranslationRequestEventService _eventService;
 
@@ -35,6 +35,7 @@ public class ProofreadJob
         ISubtitleService subtitleService,
         IScheduleService scheduleService,
         ITranslationServiceFactory translationServiceFactory,
+        ITranslationServiceInstanceService translationServiceInstanceService,
         ITranslationRequestService translationRequestService,
         ITranslationRequestEventService eventService)
     {
@@ -45,6 +46,7 @@ public class ProofreadJob
         _subtitleService = subtitleService;
         _scheduleService = scheduleService;
         _translationServiceFactory = translationServiceFactory;
+        _translationServiceInstanceService = translationServiceInstanceService;
         _translationRequestService = translationRequestService;
         _eventService = eventService;
     }
@@ -77,17 +79,16 @@ public class ProofreadJob
             }
 
             var settings = await _settings.GetSettings([
-                SettingKeys.Translation.ServiceType,
                 SettingKeys.Translation.StripSubtitleFormatting
             ]);
             var stripSubtitleFormatting = settings[SettingKeys.Translation.StripSubtitleFormatting] == "true";
-            var serviceNames = TranslationServices.Parse(settings[SettingKeys.Translation.ServiceType]);
-            var services = _translationServiceFactory.CreateTranslationServices(serviceNames);
+            var instances = await _translationServiceInstanceService.GetInstances();
+            var services = _translationServiceFactory.CreateTranslationServices(instances);
             var proofreadEntry = services.FirstOrDefault(entry => entry.Service is IProofreadService);
             if (proofreadEntry.Service is not IProofreadService proofreadService)
             {
                 throw new TranslationException(
-                    $"No configured translation service supports proofreading: [{string.Join(", ", serviceNames)}]");
+                    $"No configured translation service supports proofreading: [{string.Join(", ", instances.Select(instance => instance.Name))}]");
             }
 
             _logger.LogInformation("ProofreadJob started for subtitle: |Green|{filePath}|/Green|",

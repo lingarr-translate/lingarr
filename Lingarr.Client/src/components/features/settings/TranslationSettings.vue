@@ -6,27 +6,7 @@
         <template #content>
             <SaveNotification ref="saveNotification" />
 
-            <template
-                v-if="
-                [
-                    SERVICE_TYPE.ANTHROPIC,
-                    SERVICE_TYPE.DEEPSEEK,
-                    SERVICE_TYPE.GEMINI,
-                    SERVICE_TYPE.LOCALAI,
-                    SERVICE_TYPE.MISTRAL,
-                    SERVICE_TYPE.OPENAI,
-                    SERVICE_TYPE.XAI
-                ].includes(
-                    serviceType as
-                        | 'openai'
-                        | 'anthropic'
-                        | 'localai'
-                        | 'gemini'
-                        | 'deepseek'
-                        | 'mistral'
-                        | 'xai'
-                )
-            ">
+            <template v-if="supportsBatchTranslation">
                 <div class="flex flex-col space-x-2">
                     <span class="font-semibold">Use batch translation</span>
                     Process multiple subtitle lines together in batches to improve translation
@@ -92,9 +72,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, reactive } from 'vue'
+import { computed, onMounted, ref, reactive } from 'vue'
 import { useSettingStore } from '@/store/setting'
-import { INPUT_VALIDATION_TYPE, SERVICE_TYPE, SETTINGS } from '@/ts'
+import { useTranslationServiceStore } from '@/store/translationService'
+import { BATCH_SERVICE_TYPES, INPUT_VALIDATION_TYPE, SETTINGS } from '@/ts'
 import CardComponent from '@/components/common/CardComponent.vue'
 import SaveNotification from '@/components/common/SaveNotification.vue'
 import InputComponent from '@/components/common/InputComponent.vue'
@@ -102,6 +83,7 @@ import ToggleButton from '@/components/common/ToggleButton.vue'
 
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const settingsStore = useSettingStore()
+const translationServiceStore = useTranslationServiceStore()
 const isValid = reactive({
     maxBatchSize: true,
     requestTimeout: true,
@@ -110,13 +92,17 @@ const isValid = reactive({
     retryDelayMultiplier: true
 })
 
-const serviceType = computed(() => {
+const supportsBatchTranslation = computed(() =>
+    translationServiceStore.getServices.some((service) =>
+        BATCH_SERVICE_TYPES.includes(service.provider)
+    )
+)
+
+onMounted(async () => {
     try {
-        const raw = settingsStore.getSetting(SETTINGS.SERVICE_TYPE) as string
-        const services: string[] = JSON.parse(raw)
-        return services[0] ?? ''
-    } catch {
-        return ''
+        await translationServiceStore.loadServices()
+    } catch (error) {
+        console.error('Failed to load translation services', error)
     }
 })
 

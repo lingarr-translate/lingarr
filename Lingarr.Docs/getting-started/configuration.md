@@ -78,7 +78,7 @@ This is a random value generated once on first submission and stored locally as 
 
 | **Environment Variable** | **Description** |
 |--------------------------|-----------------|
-| `SERVICE_TYPE` | An ordered JSON array of translation services. The first entry is the primary; the rest are fallbacks tried in order when the primary fails. A single value (e.g. `openai`) is still accepted and is normalised to a one-element array on startup. |
+| `SERVICE_TYPE` | An ordered JSON array of providers that defines the translation services. The first entry is the primary; the rest are fallbacks tried in order when the primary fails. A single value (e.g. `openai`) is also accepted. See [SERVICE_TYPE and service instances](#service-type-and-service-instances). |
 | `SOURCE_LANGUAGES` | A minified JSON array of source languages for translation. |
 | `TARGET_LANGUAGES` | A minified JSON array of target languages for translation. |
 | `USE_BATCH_TRANSLATION` | Set to `true` to translate subtitles in batches with AI services, defaults to false. |
@@ -101,3 +101,57 @@ The supported values are:
 - **[Machine translation](/translation-services/machine-translation)**: [`libretranslate`](/translation-services/machine-translation#libretranslate), [`deepl`](/translation-services/machine-translation#deepl), [`google`](/translation-services/machine-translation#google-bing-microsoft-and-yandex), [`bing`](/translation-services/machine-translation#google-bing-microsoft-and-yandex), [`microsoft`](/translation-services/machine-translation#google-bing-microsoft-and-yandex) and [`yandex`](/translation-services/machine-translation#google-bing-microsoft-and-yandex)
 
 Each service has its own configuration variables, such as API keys and model selection, documented on its settings page.
+
+### SERVICE_TYPE and service instances
+
+Each configured translation service is a row in the database with its own name and settings, and the list of services in position order is the cascade. A provider can appear more than once, see [AI services](/translation-services/ai-services#more-than-one-service-of-a-provider).
+
+When `SERVICE_TYPE` is set, Lingarr rebuilds the cascade from it at every start:
+
+- The first time a provider appears in the list maps to the oldest service of that provider, the second time to the second oldest, and so on.
+- A service that does not exist yet is created with the default settings of its provider.
+- A service that is not listed is deleted together with its settings. Lingarr logs a warning for each one.
+- The order of the list becomes the order of the cascade.
+- If the value is not valid JSON, is an empty array, or contains no known provider, Lingarr keeps the existing services and logs a warning.
+
+Without `SERVICE_TYPE`, the services you configured in the web interface are kept.
+
+#### Provider variables
+
+These variables write to a service, not to a global setting:
+
+| **Provider** | **Environment Variables** |
+|--------------|---------------------------|
+| LibreTranslate | `LIBRE_TRANSLATE_URL`, `LIBRE_TRANSLATE_API_KEY` |
+| OpenAI | `OPENAI_MODEL`, `OPENAI_API_KEY` |
+| Anthropic | `ANTHROPIC_MODEL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_VERSION` |
+| LocalAI | `LOCAL_AI_MODEL`, `LOCAL_AI_API_KEY`, `LOCAL_AI_ENDPOINT`, `LOCAL_AI_STRUCTURED_OUTPUT` |
+| Gemini | `GEMINI_MODEL`, `GEMINI_API_KEY` |
+| DeepSeek | `DEEPSEEK_MODEL`, `DEEPSEEK_API_KEY` |
+| Mistral | `MISTRAL_MODEL`, `MISTRAL_API_KEY` |
+| xAI | `XAI_MODEL`, `XAI_API_KEY` |
+| DeepL | `DEEPL_API_KEY` |
+
+A variable without a number targets the oldest service of its provider. Add `_N`, with N from 2, to target the N-th oldest service of that provider. `OPENAI_API_KEY_2` is the API key of the second OpenAI service. The `_FILE` form works for both, as `OPENAI_API_KEY_FILE` and `OPENAI_API_KEY_2_FILE`. API keys are stored encrypted.
+
+When the service does not exist, Lingarr creates it at the end of the cascade, so it becomes a fallback. Lingarr only creates the next number: `OPENAI_API_KEY_3` with only one OpenAI service is skipped with a warning. If `SERVICE_TYPE` is set, Lingarr does not create it and logs a warning instead. Put the provider in `SERVICE_TYPE` as many times as you need services.
+
+Example, two OpenAI services with different models and Anthropic as a fallback:
+
+```yaml
+environment:
+  SERVICE_TYPE: '["openai","openai","anthropic"]'
+  OPENAI_MODEL: gpt-4
+  OPENAI_API_KEY_FILE: /run/secrets/openai_api_key
+  OPENAI_MODEL_2: gpt-4-turbo
+  OPENAI_API_KEY_2_FILE: /run/secrets/openai_api_key_2
+  ANTHROPIC_API_KEY_FILE: /run/secrets/anthropic_api_key
+```
+
+Like every setting variable, these are applied at every start and win over the web interface. Google, Bing, Microsoft, Yandex and third party plugins have no provider variables.
+
+Batch translation is used only when at least one service in the cascade supports it (OpenAI, Anthropic, LocalAI, Gemini, Mistral or xAI).
+
+#### Upgrading
+
+The `service_type` setting no longer exists. When you upgrade, each provider in your current list becomes a service with its existing settings, in the same order. Settings of providers that were not in the list are removed. Set the matching environment variables to create them again.

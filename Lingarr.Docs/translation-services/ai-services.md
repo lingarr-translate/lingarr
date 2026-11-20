@@ -7,8 +7,8 @@ All AI services follow the same pattern: select the service, provide an API key,
 ## How to set up
 
 1. In the Lingarr web interface, go to **Settings > Services**.
-2. Select your AI service in the primary service dropdown, or click **Add fallback service** to use it as a fallback.
-3. Click the gear icon on the service row to configure its credentials.
+2. Click **Add service** and select your AI service. The first service in the list is the primary, the others are fallbacks tried in order. Use the arrows on a row to change the order.
+3. Click the gear icon on the service row to configure its credentials. The name field renames the service.
 4. Enter the API key and choose a model. Self-hosted services such as [LocalAI](#localai) also ask for an endpoint.
 
     When a service asks for an endpoint, enter the full URL that Lingarr sends requests to, including the path. A base URL such as `http://localhost:8080` will not work.
@@ -25,9 +25,19 @@ All AI services follow the same pattern: select the service, provide an API key,
 
 Every setting can also be provided as an environment variable, listed per service below. See [Configuration](/getting-started/configuration) for more details.
 
+## More than one service of a provider
+
+You can add a provider more than once, for example two OpenAI services with different models or API keys. Each copy is a separate service with its own name and settings. A provider can be added again as long as its settings form has fields. Google, Bing, Microsoft and Yandex have none, so they can be added once.
+
+In the web interface, click **Add service** again and select the same provider. Lingarr adds a number to the name when it is already taken.
+
+With environment variables, list the provider once per service in `SERVICE_TYPE` and add `_N` to the variable names, starting at `_2` for the second service. `OPENAI_API_KEY` configures the first OpenAI service and `OPENAI_API_KEY_2` the second. The `_FILE` form works as well, for example `OPENAI_API_KEY_2_FILE`. See [Configuration](/getting-started/configuration#service-type-and-service-instances) for the exact rules, including what happens to services that `SERVICE_TYPE` does not list.
+
+The request template is per service: the `Open Request Settings` page has one tab per service, named after the service. The prompts are global by default. On the same tab, enable **Own translation prompts for this service** or **Own proofread prompts for this service** to give that service its own prompts. Enabling it copies the global prompts as a start. Disabling it removes the own prompts, and the service uses the global prompts again. The context settings (context before, context after and structured context) always apply to all services.
+
 ## Prompts
 
-Each request is built from two templates, and both apply to every AI service.
+Each request is built from two templates. They apply to every AI service that has no own prompts.
 
 `AI_PROMPT` is the system prompt. It carries the standing instruction on how to translate, and is sent as the system message. Lingarr seeds a default on first run. Clearing it sends an empty system message, leaving the service without translation instructions, so keep a value set.
 
@@ -94,6 +104,9 @@ Both accept the placeholders already listed above, plus two more:
 `{lineToTranslate}`, `{contextBefore}` and `{contextAfter}` are sent as empty strings during a proofread call, so a request template that already contains them still renders correctly.
 
 ## Environment variables
+
+The variables below configure the oldest service of the provider. Add `_N` to the name for the N-th service, for example `OPENAI_MODEL_2`. `AI_PROMPT` and `AI_USER_PROMPT` are global and take no number.
+
 ### OpenAI
 
 | **Environment Variable** | **Description**                                             |

@@ -1,4 +1,5 @@
 ﻿using Lingarr.Contracts.Translation;
+using Lingarr.Core.Entities;
 
 namespace Lingarr.Server.Interfaces.Services.Translation;
 
@@ -7,18 +8,14 @@ public readonly record struct TranslationServiceEntry(string Name, ITranslationS
 public interface ITranslationServiceFactory
 {
     /// <summary>
-    /// Creates and returns an instance of a translation service based on the specified service type.
+    /// Creates the translation service of an instance, which reads its provider settings from that instance.
+    /// Throws an ArgumentException when the provider is not supported or not loaded.
     /// </summary>
-    /// <param name="serviceType">The provider name (case-insensitive), e.g. "libretranslate", "openai", "anthropic", "deepl", "gemini", "deepseek", "mistral", "xai", "localai", "google", "bing", "microsoft", "yandex".</param>
-    /// <returns>An instance of <see cref="ITranslationService"/> corresponding to the specified service type.</returns>
-    /// <exception cref="ArgumentException">Thrown when an unsupported service type is specified.</exception>
-    ITranslationService CreateTranslationService(string serviceType);
+    ITranslationService CreateTranslationService(TranslationServiceInstance instance);
 
     /// <summary>
-    /// Builds the ordered list of translation services from a list of provider names. Unknown or unconstructable
-    /// entries are skipped with a warning, so a single bad entry doesn't prevent the list from being usable.
+    /// Builds the ordered list of translation services from the configured instances, the first being the primary.
+    /// Instances whose provider is unknown are skipped with a warning.
     /// </summary>
-    /// <param name="serviceTypes">Ordered provider names. Position 0 is the primary; the rest are fallbacks.</param>
-    /// <returns>Ordered list of (name, service) entries; empty if no entry could be constructed.</returns>
-    IReadOnlyList<TranslationServiceEntry> CreateTranslationServices(IReadOnlyList<string> serviceTypes);
+    IReadOnlyList<TranslationServiceEntry> CreateTranslationServices(IReadOnlyList<TranslationServiceInstance> instances);
 }

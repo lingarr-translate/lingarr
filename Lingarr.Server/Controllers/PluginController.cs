@@ -1,11 +1,11 @@
 ﻿using Lingarr.Contracts.Models;
-using Lingarr.Contracts.Plugins;
+using Lingarr.Core.Entities;
 using Lingarr.Server.Attributes;
-using Lingarr.Server.Interfaces.Services;
 using Lingarr.Server.Interfaces.Services.Translation;
 using Lingarr.Server.Models.Api;
 using Lingarr.Server.Services.Plugins;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Lingarr.Server.Controllers;
 
@@ -15,18 +15,18 @@ namespace Lingarr.Server.Controllers;
 public class PluginController : ControllerBase
 {
     private readonly IPluginRegistry _registry;
-    private readonly ISettingService _settings;
+    private readonly ITranslationServiceInstanceService _translationServiceInstanceService;
     private readonly ITranslationServiceFactory _translationServiceFactory;
     private readonly ILogger<PluginController> _logger;
 
     public PluginController(
         IPluginRegistry registry,
-        ISettingService settings,
+        ITranslationServiceInstanceService translationServiceInstanceService,
         ITranslationServiceFactory translationServiceFactory,
         ILogger<PluginController> logger)
     {
         _registry = registry;
-        _settings = settings;
+        _translationServiceInstanceService = translationServiceInstanceService;
         _translationServiceFactory = translationServiceFactory;
         _logger = logger;
     }
@@ -62,12 +62,12 @@ public class PluginController : ControllerBase
     }
 
     /// <summary>
-    /// Fetches the provider's AI model catalogue for manifest dropdowns. Returns 404 when the
-    /// provider is unknown; providers without a model catalogue (for example DeepL or
-    /// LibreTranslate) return an empty response.
+    /// Fetches the provider's AI model catalogue for manifest dropdowns, using the settings of the given
+    /// translation service. Returns 404 when the provider or service is unknown; providers without a model
+    /// catalogue (for example DeepL or LibreTranslate) return an empty response.
     /// </summary>
     [HttpGet("{provider}/models")]
-    public async Task<ActionResult<ModelsResponse>> GetModels(string provider)
+    public async Task<ActionResult<ModelsResponse>> GetModels(string provider, [FromQuery, BindRequired] int serviceId)
     {
         var plugin = _registry.Find(provider);
         if (plugin is null)
@@ -75,9 +75,15 @@ public class PluginController : ControllerBase
             return NotFound();
         }
 
+        var instance = await GetProviderInstance(plugin, serviceId);
+        if (instance is null)
+        {
+            return NotFound();
+        }
+
         try
         {
-            var translationService = _translationServiceFactory.CreateTranslationService(plugin.Manifest.Provider);
+            var translationService = _translationServiceFactory.CreateTranslationService(instance);
             var models = await translationService.GetModels();
             return Ok(models);
         }
@@ -99,16 +105,25 @@ public class PluginController : ControllerBase
     }
 
     /// <summary>
-    /// Returns the configuration status for a provider.
+    /// Returns the configuration status of a translation service, checked against its settings.
     /// </summary>
     [HttpGet("{provider}/status")]
-    public async Task<ActionResult<PluginStatusResponse>> GetStatus(string provider)
+    public async Task<ActionResult<PluginStatusResponse>> GetStatus(string provider, [FromQuery, BindRequired] int serviceId)
     {
         var plugin = _registry.Find(provider);
         if (plugin is null)
         {
             return NotFound();
         }
+
+        var instance = await GetProviderInstance(plugin, serviceId);
+        if (instance is null)
+        {
+            return NotFound();
+        }
+
+        var settings = await _translationServiceInstanceService.GetInstanceSettings(instance.Id)
+                       ?? new Dictionary<string, string>();
 
         var missingFields = new List<string>();
         foreach (var field in plugin.Manifest.Settings)
@@ -118,17 +133,7 @@ public class PluginController : ControllerBase
                 continue;
             }
 
-            string? settingValue;
-            if (field.Type == PluginSettingType.Secret)
-            {
-                settingValue = await _settings.GetEncryptedSetting(field.Key);
-            }
-            else
-            {
-                settingValue = await _settings.GetSetting(field.Key);
-            }
-
-            if (string.IsNullOrEmpty(settingValue))
+            if (string.IsNullOrEmpty(settings.GetValueOrDefault(field.Key)))
             {
                 missingFields.Add(field.Key);
             }
@@ -140,6 +145,18 @@ public class PluginController : ControllerBase
             Configured = missingFields.Count == 0,
             MissingFields = missingFields
         });
+    }
+
+    private async Task<TranslationServiceInstance?> GetProviderInstance(RegisteredPlugin plugin, int serviceId)
+    {
+        var instance = await _translationServiceInstanceService.GetInstance(serviceId);
+        if (instance is null
+            || !string.Equals(instance.Provider, plugin.Manifest.Provider, StringComparison.OrdinalIgnoreCase))
+        {
+            return null;
+        }
+
+        return instance;
     }
 
     private static PluginResponse BuildResponse(RegisteredPlugin plugin)

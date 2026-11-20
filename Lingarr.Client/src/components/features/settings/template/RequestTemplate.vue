@@ -71,7 +71,10 @@
                                 :placeholders="placeholderItems" />
                         </Transition>
                     </div>
-                    <JsonPreview :template="templateValue" :service-type="serviceType" />
+                    <JsonPreview
+                        :template="templateValue"
+                        :service-type="serviceType"
+                        :service-id="serviceId" />
                 </div>
 
                 <SaveNotification ref="saveNotification" />
@@ -82,8 +85,9 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue'
-import { PLACEHOLDER, SETTINGS, SERVICE_TYPE, ISettings } from '@/ts'
+import { PLACEHOLDER, REQUEST_TEMPLATE_KEYS, SETTINGS, SERVICE_TYPE } from '@/ts'
 import { useSettingStore } from '@/store/setting'
+import { useTranslationServiceStore } from '@/store/translationService'
 import useDebounce from '@/composables/useDebounce'
 import services from '@/services'
 import ButtonComponent from '@/components/common/ButtonComponent.vue'
@@ -95,6 +99,7 @@ import JsonTreeBuilder from './JsonTreeBuilder.vue'
 import JsonPreview from './JsonPreview.vue'
 
 const settingsStore = useSettingStore()
+const translationServiceStore = useTranslationServiceStore()
 const saveNotification = ref<InstanceType<typeof SaveNotification> | null>(null)
 const mode = ref<'builder' | 'json'>('builder')
 const jsonText = ref('')
@@ -111,9 +116,11 @@ const placeholderItems = [
     PLACEHOLDER.CONTEXT_AFTER
 ]
 
-const props = defineProps<{ service: string }>()
+const props = defineProps<{ serviceId: number }>()
 
-const serviceType = computed(() => props.service)
+const serviceType = computed(
+    () => translationServiceStore.getService(props.serviceId)?.provider ?? ''
+)
 
 const languageCodeFormat = computed({
     get: (): string =>
@@ -124,38 +131,29 @@ const languageCodeFormat = computed({
     }
 })
 
-const templateMap: Record<string, keyof ISettings> = {
-    [SERVICE_TYPE.OPENAI]: SETTINGS.OPENAI_REQUEST_TEMPLATE,
-    [SERVICE_TYPE.ANTHROPIC]: SETTINGS.ANTHROPIC_REQUEST_TEMPLATE,
-    [SERVICE_TYPE.LOCALAI]: SETTINGS.LOCAL_AI_CHAT_REQUEST_TEMPLATE,
-    [SERVICE_TYPE.GEMINI]: SETTINGS.GEMINI_REQUEST_TEMPLATE,
-    [SERVICE_TYPE.DEEPSEEK]: SETTINGS.DEEPSEEK_REQUEST_TEMPLATE,
-    [SERVICE_TYPE.MISTRAL]: SETTINGS.MISTRAL_REQUEST_TEMPLATE,
-    [SERVICE_TYPE.XAI]: SETTINGS.XAI_REQUEST_TEMPLATE
-}
-
 const localAiEndpoint = computed(
-    () => settingsStore.getSetting(SETTINGS.LOCAL_AI_ENDPOINT) as string
+    () => translationServiceStore.getSetting(props.serviceId, 'local_ai_endpoint') ?? ''
 )
-const isLocalAiGenerate = computed(() => {
-    const endpoint = localAiEndpoint.value || ''
-    return !endpoint.trimEnd().replace(/\/$/, '').endsWith('completions')
-})
+const isLocalAiGenerate = computed(
+    () => !localAiEndpoint.value.trimEnd().replace(/\/$/, '').endsWith('completions')
+)
 
-const activeTemplateKey = computed((): keyof ISettings | '' => {
-    if (serviceType.value === SERVICE_TYPE.LOCALAI) {
-        return isLocalAiGenerate.value
-            ? SETTINGS.LOCAL_AI_GENERATE_REQUEST_TEMPLATE
-            : SETTINGS.LOCAL_AI_CHAT_REQUEST_TEMPLATE
+const activeTemplateKey = computed((): string => {
+    const keys = REQUEST_TEMPLATE_KEYS[serviceType.value]
+    if (!keys) {
+        return ''
     }
-    return templateMap[serviceType.value] || ''
+    if (serviceType.value === SERVICE_TYPE.LOCALAI && isLocalAiGenerate.value) {
+        return keys.generateKey ?? keys.key
+    }
+    return keys.key
 })
 
 const templateValue = computed(() => {
     if (!activeTemplateKey.value) {
         return '{}'
     }
-    return (settingsStore.getSetting(activeTemplateKey.value) as string) || '{}'
+    return translationServiceStore.getSetting(props.serviceId, activeTemplateKey.value) || '{}'
 })
 
 const prettyTemplate = computed(() => {
@@ -171,8 +169,8 @@ const jsonModel = computed({
     set: (value: string) => onJsonInput(value)
 })
 
-const debouncedSave = useDebounce((key: keyof ISettings, value: string) => {
-    settingsStore.updateSetting(key, value, true)
+const debouncedSave = useDebounce((key: string, value: string) => {
+    translationServiceStore.updateSetting(props.serviceId, key, value, true)
     saveNotification.value?.show()
 }, 500)
 
@@ -233,7 +231,7 @@ function loadPreset(presetKey: string) {
         return
     }
     selectedPreset.value = presetKey
-    settingsStore.updateSetting(key, template, true)
+    translationServiceStore.updateSetting(props.serviceId, key, template, true)
     saveNotification.value?.show()
     if (mode.value === 'json') {
         syncJsonText()
@@ -253,6 +251,14 @@ watch(mode, (newMode) => {
 watch(activeTemplateKey, () => {
     syncJsonText()
 })
+
+watch(
+    () => props.serviceId,
+    (id) => {
+        translationServiceStore.loadSettings(id)
+    },
+    { immediate: true }
+)
 
 watch(serviceType, () => {
     selectedPreset.value = ''

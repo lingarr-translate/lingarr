@@ -3,15 +3,14 @@ import {
     IPluginManifest,
     IPluginOptionsResponse,
     IPluginStatus,
-    IPluginSummary,
     IPluginService
 } from '@/ts'
 
 const service = (http: AxiosStatic, resource = '/api/plugin'): IPluginService => ({
-    list(): Promise<IPluginSummary[]> {
+    list(): Promise<IPluginManifest[]> {
         return new Promise((resolve, reject) => {
             http.get(resource)
-                .then((response: AxiosResponse<IPluginSummary[]>) => {
+                .then((response: AxiosResponse<IPluginManifest[]>) => {
                     resolve(response.data)
                 })
                 .catch((error: AxiosError) => {
@@ -41,9 +40,9 @@ const service = (http: AxiosStatic, resource = '/api/plugin'): IPluginService =>
                 })
         })
     },
-    getOptions(endpoint: string): Promise<IPluginOptionsResponse> {
+    getOptions(endpoint: string, serviceId: number): Promise<IPluginOptionsResponse> {
         return new Promise((resolve, reject) => {
-            http.get(endpoint)
+            http.get(endpoint, { params: { serviceId } })
                 .then((response: AxiosResponse<IPluginOptionsResponse>) => {
                     resolve(response.data)
                 })
